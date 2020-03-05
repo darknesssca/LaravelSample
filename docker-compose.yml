@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  car-insurance-data:
+    container_name: car-insurance-data
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+      args:
+        build_env: devel
+    environment:
+      XDEBUG_PORT: 9000
+      XDEBUG_HOST: 127.0.0.1
+      XDEBUG_IDKEY: DEFKEY
+    ports:
+      - 8000:80
+    volumes:
+      - ./:/var/www

@@ -1,0 +1,11 @@
+vendor
+storage
+node_modules
+.gitignore
+.dockerignore
+.git
+.editorconfig
+docker-compose.yml
+.Dockerfile
+.Makefile
+*.md
