@@ -1,12 +1,12 @@
 <?php
 
 
-namespace App\Http\Controllers\CompanyControllers;
+namespace App\Services\Company;
 
 
-use App\InsuranceCompany;
+use App\Models\InsuranceCompany;
 
-interface CompanyControllerInterface
+interface CompanyServiceInterface
 {
 
     /**

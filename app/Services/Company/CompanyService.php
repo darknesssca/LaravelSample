@@ -1,12 +1,11 @@
 <?php
 
 
-namespace App\Http\Controllers\CompanyControllers;
+namespace App\Services\Company;
 
+use App\Models\InsuranceCompany;
 
-use App\InsuranceCompany;
-
-abstract class CompanyController implements CompanyControllerInterface
+abstract class CompanyService implements CompanyServiceInterface
 {
 
     protected static $allowedHttpMethods = [

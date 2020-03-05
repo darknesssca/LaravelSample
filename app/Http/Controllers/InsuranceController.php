@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\InsuranceCompany;
+use App\Models\InsuranceCompany;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -67,7 +67,7 @@ class InsuranceController extends Controller
 
     protected function getCompanyController($company)
     {
-        $controller = 'App\\Http\\Controllers\\CompanyControllers\\'.ucfirst(strtolower($company->code)).'Controller';
+        $controller = 'App\\Services\\Company\\'.ucfirst(strtolower($company->code)).'Service';
         if (!class_exists($controller) || !method_exists($controller, 'calculate')) {
             return false;
         }
