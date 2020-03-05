@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\InsuranceCompany;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -25,9 +26,6 @@ class InsuranceController extends Controller
             return $this->error('Компания не найдена', 404);
         }
         $companyController = $this->getCompanyController($company);
-        if (!$companyController) {
-            return $this->error('Не найден обработчик компании', 500);
-        }
         if (!$this->isCompanyControllerMethodAllowed($companyController, $method)) {
             return $this->error('метод не найден или не доступен', 404);
         }
@@ -43,6 +41,10 @@ class InsuranceController extends Controller
         catch (ValidationException $exception)
         {
             return $this->error($exception->errors(), 400);
+        }
+        catch (BindingResolutionException $exception)
+        {
+            return $this->error('Не найден обработчик компании: '.$exception->getMessage(), 500);
         }
         catch (\Exception $exception)
         {
@@ -67,11 +69,8 @@ class InsuranceController extends Controller
 
     protected function getCompanyController($company)
     {
-        $controller = 'App\\Services\\Company\\'.ucfirst(strtolower($company->code)).'Service';
-        if (!class_exists($controller) || !method_exists($controller, 'calculate')) {
-            return false;
-        }
-        return $controller;
+        $contract = 'App\\Contracts\\Company\\'.ucfirst(strtolower($company->code)).'ServiceContract';
+        return app($contract);
     }
 
     protected function isCompanyControllerMethodAllowed($controller, $method)
@@ -83,7 +82,7 @@ class InsuranceController extends Controller
     {
         try
         {
-            return response()->json((new $controller)->$method($company, $attributes), 200);
+            return response()->json($controller->$method($company, $attributes), 200);
         }
         catch (\Exception $exception)
         {

@@ -4,10 +4,11 @@
 namespace App\Services\Company;
 
 
+use App\Contracts\Company\RenessansServiceContract;
 use App\Models\InsuranceCompany;
 use GuzzleHttp\Client;
 
-class RenessansService extends CompanyService
+class RenessansService extends CompanyService implements RenessansServiceContract
 {
     private $apiUrl;
     private $secretKey;
@@ -21,16 +22,11 @@ class RenessansService extends CompanyService
 
     public function __construct()
     {
-        if (!(
-            array_key_exists('RENESSANS_API_URL', $_ENV) &&
-            $_ENV['RENESSANS_API_URL'] &&
-            array_key_exists('RENESSANS_API_KEY', $_ENV) &&
-            $_ENV['RENESSANS_API_KEY']
-        )) {
+        $this->apiUrl = config('api_sk.renessans.apiUrl');
+        $this->secretKey = config('api_sk.renessans.apiKey');
+        if (!($this->apiUrl && $this->secretKey)) {
             throw new \Exception('renessans api is not configured');
         }
-        $this->apiUrl = $_ENV['RENESSANS_API_URL'];
-        $this->secretKey = $_ENV['RENESSANS_API_KEY'];
     }
 
     private function setAuth(&$attributes)

@@ -7,7 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use App\Services\Company\RenessansService;
 use App\Contracts\Company\RenessansServiceContract;
 
-class AppServiceProvider extends ServiceProvider implements RenessansServiceContractAlias
+class AppServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
