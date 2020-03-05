@@ -21,6 +21,7 @@ class InsuranceController extends Controller
 
     public function index($code, $method, Request $request)
     {
+
         $company = $this->checkCompany($code);
         if (!$company->count()) {
             return $this->error('Компания не найдена', 404);
