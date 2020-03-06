@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\InsuranceCompany;
+use App\Models\IntermediateData;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class InsuranceController extends Controller
@@ -49,9 +51,44 @@ class InsuranceController extends Controller
 
     private function calculate(InsuranceCompany $company, $request)
     {
+        $methodData = [
+            'policesId' => [],
+        ];
         $calculateData = $this->runService($company, $request, 'Calculate');
-        $checkSegmentData = $this->runService($company, $request, 'Create', ['isCheckSegment' => true]);
-        return $calculateData;
+        $additionalData = [
+            'isCheckSegment' => true,
+            'calculationId' => [],
+        ];
+        foreach ($calculateData as $data) {
+            $additionalData['calculationId'][] = $data['calculationId'];
+        }
+        $createData = $this->runService($company, $request, 'Create', $additionalData);
+        foreach ($createData as $calculationId => $data) {
+            $methodData['policesId'][] = [
+                'calculationId' => $calculationId,
+                'policeId' => $data['policyId'],
+            ];
+        }
+        $hash = $this->saveIntermediateData($methodData);
+        return ['hash' => $hash];
+    }
+
+    private function saveIntermediateData($data, $try = 0)
+    {
+        $hash = Str::random(32);
+        try {
+            IntermediateData::create([
+                'hash' => $hash,
+                'data' => \GuzzleHttp\json_encode($data)
+            ]);
+            return $hash;
+        } catch (\Exception $exception) {
+            $try += 1;
+            if ($try) {
+                throw new \Exception('fail create hash: '.$exception->getMessage());
+            }
+            return $this->saveIntermediateData($data, $try);
+        }
     }
 
     private function runService(InsuranceCompany $company, $request, $serviceMethod, $additionalData = [])
@@ -90,6 +127,6 @@ class InsuranceController extends Controller
 
     protected function useCompanyController($controller, $company, $attributes, $additionalData)
     {
-        return response()->json($controller->run($company, $attributes, $additionalData), 200);
+        return $controller->run($company, $attributes, $additionalData);
     }
 }

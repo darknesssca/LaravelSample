@@ -9,67 +9,195 @@ use App\Models\InsuranceCompany;
 
 class RenessansCreateService extends RenessansService implements RenessansCreateServiceContract
 {
-    private $apiPath = [
-        'sendCalculate' => '/create/',
-        'receiveCalculate' => '/policy/:policyId/status/',
+    protected $apiPath = [
+        'sendCreate' => '/create/',
+        //'receiveCalculate' => '/policy/:policyId/status/',
     ];
 
     private $catalogPurpose = ["Личная", "Такси"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-    private $catalogTypeOfDocument = []; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-    private $catalogCatCategory = ["A", "B"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
+    private $catalogTypeOfDocument = [31, 32, 30]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
+    private $catalogStsDocType = []; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
+
+    private function setAdditionalFields(&$attributes, $additionalFields) {
+        $attributes['CheckSegment'] = intval(isset($additionalFields['isCheckSegment']) && $additionalFields['isCheckSegment']);
+    }
+
+    private function setCalculationId(&$attributes, $calculationId) {
+        $attributes['calculationId'] = $calculationId;
+    }
 
     public function run(InsuranceCompany $company, $attributes, $additionalFields = []): array
     {
-        $data = $this->sendCalculate($attributes);
-        $calculatedData = [];
-        foreach ($data as $calcData) {
-            if (!isset($calcData['id'])) {
-                continue;
-            }
-            $requestData = [
-                'id' => $calcData['id'],
-            ];
-            $calculatedData[] = $this->receiveCalculate($requestData);
+        $this->setAdditionalFields($attributes, $additionalFields);
+        $result = [];
+        foreach ($additionalFields['calculationId'] as $calculationId) {
+            $result[$calculationId] = $this->sendCreate($attributes, $calculationId);
         }
-        return $calculatedData;
+        return $result;
+    }
+
+    private function sendCreate($attributes, $calculationId)
+    {
+        $this->setCalculationId($attributes, $calculationId);
+        $this->setAuth($attributes);
+        $url = $this->getUrl(__FUNCTION__);
+        $this->prepareData($attributes);
+        $response = $this->postRequest($url, $attributes);
+        if (!$response) {
+            throw new \Exception('api not return answer');
+        }
+        if (!$response['result']) {
+            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
+        }
+        return $response['data'];
     }
 
     public function map(): array
     {
         return [
-            'dateStart' => [
-                'required' => true,
-                'type' => 'date',
-                'date_format' => 'Y-m-d',
-            ],
-            'period' => [
-                'required' => false,
-                'type' => 'integer',
-                'default' => 12,
-            ],
             'purpose' => [
                 'required' => true,
                 'type' => 'string',
                 'in' => $this->catalogPurpose,
             ],
-            'limitDrivers' => [
-                'required' => true,
-                'type' => 'boolean',
-            ],
-            'trailer' => [
-                'required' => true,
-                'type' => 'boolean',
-            ],
-            'isJuridical' => [
+            'isInsurerJuridical' => [
                 'required' => false,
                 'type' => 'boolean',
                 'default' => 0,
             ],
-            'codeKladr' => [
+            'cabinet' => [
                 'required' => true,
-                'type' => 'string',
+                'type' => 'object',
+                'array' => [
+                    'email' => [
+                        'required' => true,
+                        'type' => 'email',
+                    ],
+                ],
             ],
             'owner' => [
+                'required' => true,
+                'type' => 'object',
+                'array' => [
+                    'email' => [
+                        'required' => true,
+                        'type' => 'email',
+                    ],
+                    'phone' => [
+                        'required' => true,
+                        'type' => 'integer',
+                    ],
+                    'addressJuridical' => [
+                        'required' => true,
+                        'type' => 'object',
+                        'array' => [
+                            'country' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'zip' => [
+                                'required' => true,
+                                'type' => 'integer',
+                            ],
+                            'city' => [
+                                'required' => false,
+                                'type' => 'string',
+                            ],
+                            'settlement' => [
+                                'required_without' => 'owner.addressJuridical.city',
+                                'type' => 'string',
+                            ],
+                            'street' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'home' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'flat' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'kladr' => [
+                                'required' => true,
+                                'type' => 'integer',
+                            ],
+                        ],
+                    ],
+                    'addressFact' => [
+                        'required' => true,
+                        'type' => 'object',
+                        'array' => [
+                            'country' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'zip' => [
+                                'required' => true,
+                                'type' => 'integer',
+                            ],
+                            'city' => [
+                                'required' => false,
+                                'type' => 'string',
+                            ],
+                            'settlement' => [
+                                'required_without' => 'owner.addressFact.city',
+                                'type' => 'string',
+                            ],
+                            'street' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'home' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'flat' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'kladr' => [
+                                'required' => true,
+                                'type' => 'integer',
+                            ],
+                        ],
+                    ],
+                    'document' => [
+                        'required' => false,
+                        'type' => 'object',
+                        'array' => [
+                            'typeofdocument' => [
+                                'required' => false,
+                                'type' => 'string',
+                                'in' => $this->catalogTypeOfDocument,
+                            ],
+                            'dateIssue' => [
+                                'required' => true,
+                                'type' => 'date',
+                                'date_format' => 'Y-m-d',
+                            ],
+                            'issued' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'number' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'series' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'codeDivision' => [
+                                'required' => false,
+                                'type' => 'integer',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'insurer' => [
                 'required' => true,
                 'type' => 'object',
                 'array' => [
@@ -90,6 +218,90 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
                         'type' => 'date',
                         'date_format' => 'Y-m-d',
                     ],
+                    'email' => [
+                        'required' => true,
+                        'type' => 'email',
+                    ],
+                    'phone' => [
+                        'required' => true,
+                        'type' => 'integer',
+                    ],
+                    'addressJuridical' => [
+                        'required' => true,
+                        'type' => 'object',
+                        'array' => [
+                            'country' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'zip' => [
+                                'required' => true,
+                                'type' => 'integer',
+                            ],
+                            'city' => [
+                                'required' => false,
+                                'type' => 'string',
+                            ],
+                            'settlement' => [
+                                'required_without' => 'insurer.addressJuridical.city',
+                                'type' => 'string',
+                            ],
+                            'street' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'home' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'flat' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'kladr' => [
+                                'required' => true,
+                                'type' => 'integer',
+                            ],
+                        ],
+                    ],
+                    'addressFact' => [
+                        'required' => true,
+                        'type' => 'object',
+                        'array' => [
+                            'country' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'zip' => [
+                                'required' => true,
+                                'type' => 'integer',
+                            ],
+                            'city' => [
+                                'required' => false,
+                                'type' => 'string',
+                            ],
+                            'settlement' => [
+                                'required_without' => 'insurer.addressFact.city',
+                                'type' => 'string',
+                            ],
+                            'street' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'home' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'flat' => [
+                                'required' => true,
+                                'type' => 'string',
+                            ],
+                            'kladr' => [
+                                'required' => true,
+                                'type' => 'integer',
+                            ],
+                        ],
+                    ],
                     'document' => [
                         'required' => true,
                         'type' => 'object',
@@ -97,6 +309,7 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
                             'typeofdocument' => [
                                 'required' => false,
                                 'type' => 'string',
+                                'in' => $this->catalogTypeOfDocument,
                             ],
                             'dateIssue' => [
                                 'required' => true,
@@ -123,132 +336,67 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
                 'required' => true,
                 'type' => 'object',
                 'array' => [
-                    'make' => [
-                        'required' => true,
-                        'type' => 'string',
-                    ],
-                    'model' => [
-                        'required' => true,
-                        'type' => 'string',
-                    ],
-                    'MarkAndModelString' => [
-                        'required' => true,
-                        'type' => 'string',
-                    ],
-                    'category' => [
-                        'required' => true,
-                        'type' => 'string',
-                        'in' => $this->catalogCatCategory,
-                    ],
-                    'power' => [
+                    'year' => [
                         'required' => true,
                         'type' => 'integer',
                     ],
-                    'UnladenMass' => [
-                        'required' => false,
-                        'required_if' => [
-                            'field' => 'category',
-                            'value' => [
-                                'C',
-                                'D',
-                            ],
+                ],
+                'pts' => [
+                    'required_without' => 'car.sts',
+                    'type' => 'object',
+                    'array' => [
+                        'dateIssue' => [
+                            'required' => true,
+                            'type' => 'date',
+                            'date_format' => 'Y-m-d',
                         ],
-                        'type' => 'integer',
-                    ],
-                    'ResolutionMaxWeight' => [
-                        'required' => false,
-                        'required_if' => [
-                            'field' => 'category',
-                            'value' => [
-                                'C',
-                                'D',
-                            ],
+                        'number' => [
+                            'required' => true,
+                            'type' => 'string',
                         ],
-                        'type' => 'integer',
-                    ],
-                    'NumberOfSeats' => [
-                        'required' => false,
-                        'required_if' => [
-                            'field' => 'category',
-                            'value' => [
-                                'C',
-                                'D',
-                            ],
+                        'serie' => [
+                            'required' => true,
+                            'type' => 'string',
                         ],
-                        'type' => 'integer',
                     ],
-                    'documents' => [
-                        'required' => true,
-                        'type' => 'object',
-                        'array' => [
-                            'vin' => [
-                                'required' => true,
-                                'type' => 'string',
-                            ],
+                ],
+                'sts' => [
+                    'required_without' => 'car.pts',
+                    'type' => 'object',
+                    'array' => [
+                        'dateIssue' => [
+                            'required' => true,
+                            'type' => 'date',
+                            'date_format' => 'Y-m-d',
+                        ],
+                        'number' => [
+                            'required' => true,
+                            'type' => 'string',
+                        ],
+                        'serie' => [
+                            'required' => true,
+                            'type' => 'string',
+                        ],
+                        'docType' => [
+                            'required' => true,
+                            'type' => 'string',
+                            'in' => $this->catalogStsDocType,
                         ],
                     ],
                 ],
             ],
-            'usagePeriod' => [
-                'required' => true,
-                'type' => 'array',
+            'diagnostic' => [
+                'required' => false,
+                'type' => 'object',
                 'array' => [
-                    'dateStart' => [
-                        'required' => true,
-                        'type' => 'date',
-                        'date_format' => 'Y-m-d',
-                    ],
-                    'dateEnd' => [
-                        'required' => true,
-                        'type' => 'date',
-                        'date_format' => 'Y-m-d',
-                    ],
-                ],
-            ],
-            'drivers' => [
-                'required' => true,
-                'type' => 'array',
-                'array' => [
-                    'name' => [
+                    'number' => [
                         'required' => true,
                         'type' => 'string',
                     ],
-                    'lastname' => [
-                        'required' => true,
-                        'type' => 'string',
-                    ],
-                    'middlename' => [
-                        'required' => false,
-                        'type' => 'string',
-                    ],
-                    'birthday' => [
+                    'validDate' => [
                         'required' => true,
                         'type' => 'date',
                         'date_format' => 'Y-m-d',
-                    ],
-                    'license' => [
-                        'required' => true,
-                        'type' => 'object',
-                        'array' => [
-                            'dateBeginDrive' => [
-                                'required' => true,
-                                'type' => 'date',
-                                'date_format' => 'Y-m-d',
-                            ],
-                            'dateIssue' => [
-                                'required' => true,
-                                'type' => 'date',
-                                'date_format' => 'Y-m-d',
-                            ],
-                            'number' => [
-                                'required' => true,
-                                'type' => 'string',
-                            ],
-                            'series' => [
-                                'required' => true,
-                                'type' => 'string',
-                            ],
-                        ],
                     ],
                 ],
             ],

@@ -9,7 +9,7 @@ use App\Models\InsuranceCompany;
 
 class RenessansCalculateService extends RenessansService implements RenessansCalculateServiceContract
 {
-    private $apiPath = [
+    protected $apiPath = [
         'sendCalculate' => '/calculate/?fullInformation=true',
         'receiveCalculate' => '/calculate/{{id}}/',
     ];
@@ -21,6 +21,9 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
     public function run(InsuranceCompany $company, $attributes, $additionalFields = []): array
     {
         $data = $this->sendCalculate($attributes);
+        if (!($data && count($data))) {
+            throw new \Exception('SK api not return data!');
+        }
         $calculatedData = [];
         foreach ($data as $calcData) {
             if (!isset($calcData['id'])) {
@@ -29,7 +32,10 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             $requestData = [
                 'id' => $calcData['id'],
             ];
-            $calculatedData[] = $this->receiveCalculate($requestData);
+            $calculatedData[] = [
+                'calculationId' => $calcData['id'],
+                'calculateData' => $this->receiveCalculate($requestData)
+            ];
         }
         return $calculatedData;
     }
@@ -127,6 +133,7 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
                             'typeofdocument' => [
                                 'required' => false,
                                 'type' => 'string',
+                                'in' => $this->catalogTypeOfDocument,
                             ],
                             'dateIssue' => [
                                 'required' => true,

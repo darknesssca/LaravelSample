@@ -66,13 +66,12 @@ abstract class CompanyService implements CompanyServiceInterface
                             $this->addRule($rule, null, $value);
                         }
                         break;
+                    case 'required_without':
                     case 'date_format':
                         $this->addRule($rule, $parameter, $value);
                         break;
                     case 'in':
                         $this->addRule($rule, $parameter, implode(',', $value));
-                        break;
-                    case '':
                         break;
                 }
             }
@@ -97,6 +96,10 @@ abstract class CompanyService implements CompanyServiceInterface
                     case 'type':
                         if (($value == 'array') || ($value == 'object')) {
                             $this->prepareData($data[$field], $settings['array']);
+                        } elseif ($value == 'boolean') {
+                            if (array_key_exists($field, $data)) {
+                                $data[$field] = (int)$data[$field];
+                            }
                         }
                         break;
                 }
