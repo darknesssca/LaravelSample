@@ -31,8 +31,8 @@ class InsuranceController extends Controller
         {
             $attributes = $this->validate(
                 $request,
-                $companyController->validationRules($method),
-                $companyController->validationMessages($method)
+                $companyController->validationRules(),
+                $companyController->validationMessages()
             );
             return $this->useCompanyController($companyController, $method, $company, $attributes);
         }

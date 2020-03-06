@@ -65,7 +65,7 @@ abstract class CompanyCalculateService implements CompanyCalculateServiceInterfa
                             $this->addRule($rule, null, $value);
                         }
                         break;
-                    case 'format':
+                    case 'date_format':
                         $this->addRule($rule, $parameter, $value);
                         break;
                     case 'in':
@@ -80,9 +80,27 @@ abstract class CompanyCalculateService implements CompanyCalculateServiceInterfa
         return $rules;
     }
 
-    public function prepareData()
+    public function prepareData(&$data, $fields = null)
     {
-        $fields = $this->map();
+        if (!$fields) {
+            $fields = $this->map();
+        }
+        foreach ($fields as $field => $settings) {
+            foreach ($settings as $parameter => $value) {
+                switch ($parameter) {
+                    case 'default':
+                        if (!array_key_exists($field, $data)) {
+                            $data[$field] = $value;
+                        }
+                        break;
+                    case 'type':
+                        if (($value == 'array') || ($value == 'object')) {
+                            $this->prepareData($data[$field], $settings['array']);
+                        }
+                        break;
+                }
+            }
+        }
     }
 
     public function validationRules(): array

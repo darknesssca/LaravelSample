@@ -21,7 +21,7 @@ $router->group(
                 'prefix' => 'policies',
             ],
             function () use ($router) {
-                $router->get('/insurance/{code}/{method}', 'InsuranceController@index');
+                $router->post('/insurance/{code}/{method}', 'InsuranceController@index');
                 // тут будут остальные контроллеры
             }
         );

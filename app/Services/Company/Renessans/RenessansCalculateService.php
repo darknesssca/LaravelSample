@@ -9,20 +9,18 @@ use App\Models\InsuranceCompany;
 use App\Services\Company\CompanyCalculateService;
 use GuzzleHttp\Client;
 
-class RenessansCalculateCalculateService extends CompanyCalculateService implements RenessansCalculateServiceContract
+class RenessansCalculateService extends CompanyCalculateService implements RenessansCalculateServiceContract
 {
     private $apiUrl;
     private $secretKey;
-
-    private $catalogPurpose = []; // todo: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-    private $catalogTypeOfDocument = [];
-
     private $apiPath = [
-        'calculate' => '/calculate/?fullInformation=true',
-        'create' => '/',
-        'getStatus' => '/',
-        'getCatalog' => '/',
+        'sendCalculate' => '/calculate/?fullInformation=true',
+        'receiveCalculate' => '/calculate/{{id}}/',
     ];
+
+    private $catalogPurpose = ["Личная", "Такси"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
+    private $catalogTypeOfDocument = []; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
+    private $catalogCatCategory = ["A", "B"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
 
     public function __construct()
     {
@@ -38,21 +36,63 @@ class RenessansCalculateCalculateService extends CompanyCalculateService impleme
         $attributes['key'] = $this->secretKey;
     }
 
-    private  function getUrl($method)
+    private  function getUrl($method, $data = null)
     {
-        if (!array_key_exists($method, $this->apiPath)) {
-            throw new \Exception('not found api path');
-        }
-        return (substr($this->apiUrl, -1) == '/' ? substr($this->apiUrl, 0, -1) : $this->apiUrl) .
+        $url = (substr($this->apiUrl, -1) == '/' ? substr($this->apiUrl, 0, -1) : $this->apiUrl) .
             $this->apiPath[$method];
+        if (!$data || !count($data)) {
+            return $url;
+        }
+        foreach ($data as $key => $value) {
+            $url = str_replace('{{'.$key.'}}', $value, $url);
+        }
+        return $url;
     }
 
     public function run(InsuranceCompany $company, $attributes): array
     {
+        $data = $this->sendCalculate($attributes);
+        $calculatedData = [];
+        foreach ($data as $calcData) {
+            if (!isset($calcData['id'])) {
+                continue;
+            }
+            $requestData = [
+                'id' => $calcData['id'],
+            ];
+            $calculatedData[] = $this->receiveCalculate($requestData);
+        }
+        return $calculatedData;
+    }
+
+    private function sendCalculate($attributes): array
+    {
         $this->setAuth($attributes);
         $url = $this->getUrl(__FUNCTION__);
+        $this->prepareData($attributes);
         $response = $this->postRequest($url, $attributes);
-        return ['calculate', __CLASS__, $url, $attributes, $response];
+        if (!$response) {
+            throw new \Exception('api not return answer');
+        }
+        if (!$response['result']) {
+            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
+        }
+        return $response['data'];
+    }
+
+    private function receiveCalculate($attributes)
+    {
+        $data = [];
+        $this->setAuth($data);
+        $url = $this->getUrl(__FUNCTION__, $attributes);
+        $response = $this->getRequest($url, $data);
+        if (!$response) {
+            throw new \Exception('api not return answer');
+        }
+        if (!$response['result']) {
+            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
+        }
+        return $response['data'];
     }
 
     public function postRequest($url, $data = [], $headers = [])
@@ -65,17 +105,30 @@ class RenessansCalculateCalculateService extends CompanyCalculateService impleme
         if ($data and count($data)) {
             $params['form_params'] = $data;
         }
-        $response = $client->post($url,  $params);
+        $response = $client->post($url, $params);
         return \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
     }
 
+    public function getRequest($url, $data = [], $headers = [])
+    {
+        $client = new Client();
+        $params = [];
+        if ($headers and count($headers)) {
+            $params['headers'] = $headers;
+        }
+        if ($data and count($data)) {
+            $params['query'] = $data;
+        }
+        $response = $client->get($url, $params);
+        return \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
+    }
     public function map(): array
     {
         return [
             'dateStart' => [
                 'required' => true,
                 'type' => 'date',
-                'format' => 'Y-m-d',
+                'date_format' => 'Y-m-d',
             ],
             'period' => [
                 'required' => false,
@@ -123,7 +176,7 @@ class RenessansCalculateCalculateService extends CompanyCalculateService impleme
                     'birthday' => [
                         'required' => true,
                         'type' => 'date',
-                        'format' => 'Y-m-d',
+                        'date_format' => 'Y-m-d',
                     ],
                     'document' => [
                         'required' => true,
@@ -136,7 +189,7 @@ class RenessansCalculateCalculateService extends CompanyCalculateService impleme
                             'dateIssue' => [
                                 'required' => true,
                                 'type' => 'date',
-                                'format' => 'Y-m-d',
+                                'date_format' => 'Y-m-d',
                             ],
                             'issued' => [
                                 'required' => true,
@@ -173,7 +226,7 @@ class RenessansCalculateCalculateService extends CompanyCalculateService impleme
                     'category' => [
                         'required' => true,
                         'type' => 'string',
-                        'in' => $this->catalogTypeOfDocument,
+                        'in' => $this->catalogCatCategory,
                     ],
                     'power' => [
                         'required' => true,
@@ -218,7 +271,7 @@ class RenessansCalculateCalculateService extends CompanyCalculateService impleme
                         'array' => [
                             'vin' => [
                                 'required' => true,
-                                'type' => 'integer',
+                                'type' => 'string',
                             ],
                         ],
                     ],
@@ -228,21 +281,15 @@ class RenessansCalculateCalculateService extends CompanyCalculateService impleme
                 'required' => true,
                 'type' => 'array',
                 'array' => [
-                    'drivers' => [
+                    'dateStart' => [
                         'required' => true,
-                        'type' => 'object',
-                        'array' => [
-                            'dateStart' => [
-                                'required' => true,
-                                'type' => 'date',
-                                'format' => 'Y-m-d',
-                            ],
-                            'dateEnd' => [
-                                'required' => true,
-                                'type' => 'date',
-                                'format' => 'Y-m-d',
-                            ],
-                        ],
+                        'type' => 'date',
+                        'date_format' => 'Y-m-d',
+                    ],
+                    'dateEnd' => [
+                        'required' => true,
+                        'type' => 'date',
+                        'date_format' => 'Y-m-d',
                     ],
                 ],
             ],
@@ -265,7 +312,7 @@ class RenessansCalculateCalculateService extends CompanyCalculateService impleme
                     'birthday' => [
                         'required' => true,
                         'type' => 'date',
-                        'format' => 'Y-m-d',
+                        'date_format' => 'Y-m-d',
                     ],
                     'license' => [
                         'required' => true,
@@ -274,12 +321,12 @@ class RenessansCalculateCalculateService extends CompanyCalculateService impleme
                             'dateBeginDrive' => [
                                 'required' => true,
                                 'type' => 'date',
-                                'format' => 'Y-m-d',
+                                'date_format' => 'Y-m-d',
                             ],
                             'dateIssue' => [
                                 'required' => true,
                                 'type' => 'date',
-                                'format' => 'Y-m-d',
+                                'date_format' => 'Y-m-d',
                             ],
                             'number' => [
                                 'required' => true,

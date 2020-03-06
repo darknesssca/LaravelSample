@@ -4,7 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
-use App\Services\Company\Renessans\RenessansCalculateCalculateService;
+use App\Services\Company\Renessans\RenessansCalculateService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
     public function registerServices()
     {
         $this->app->singleton(RenessansCalculateServiceContract::class, function($app) {
-            return new RenessansCalculateCalculateService();
+            return new RenessansCalculateService();
         });
     }
 }
