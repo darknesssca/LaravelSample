@@ -21,21 +21,18 @@ class InsuranceController extends Controller
 
     public function index($code, $method, Request $request)
     {
-
         $company = $this->checkCompany($code);
         if (!$company->count()) {
             return $this->error('Компания не найдена', 404);
         }
-        $companyController = $this->getCompanyController($company);
-        if (!$this->isCompanyControllerMethodAllowed($companyController, $method)) {
-            return $this->error('метод не найден или не доступен', 404);
-        }
+        $method = (string)$method;
+        $companyController = $this->getCompanyController($company, $method);
         try
         {
             $attributes = $this->validate(
                 $request,
-                $companyController::validationRules($method),
-                $companyController::validationMessages($method)
+                $companyController->validationRules($method),
+                $companyController->validationMessages($method)
             );
             return $this->useCompanyController($companyController, $method, $company, $attributes);
         }
@@ -45,7 +42,7 @@ class InsuranceController extends Controller
         }
         catch (BindingResolutionException $exception)
         {
-            return $this->error('Не найден обработчик компании: '.$exception->getMessage(), 500);
+            return $this->error('Не найден обработчик компании: '.$exception->getMessage(), 404);
         }
         catch (\Exception $exception)
         {
@@ -68,22 +65,19 @@ class InsuranceController extends Controller
     }
 
 
-    protected function getCompanyController($company)
+    protected function getCompanyController($company, $method)
     {
-        $contract = 'App\\Contracts\\Company\\'.ucfirst(strtolower($company->code)).'ServiceContract';
+        $company = ucfirst(strtolower($company->code));
+        $method = ucfirst(strtolower($method));
+        $contract = 'App\\Contracts\\Company\\'.$company.'\\'.$company.$method.'ServiceContract';
         return app($contract);
-    }
-
-    protected function isCompanyControllerMethodAllowed($controller, $method)
-    {
-        return $controller::isMethodAllowed($method);
     }
 
     protected function useCompanyController($controller, $method, $company, $attributes)
     {
         try
         {
-            return response()->json($controller->$method($company, $attributes), 200);
+            return response()->json($controller->run($company, $attributes), 200);
         }
         catch (\Exception $exception)
         {

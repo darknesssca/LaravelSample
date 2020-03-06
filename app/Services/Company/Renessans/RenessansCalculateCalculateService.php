@@ -1,14 +1,15 @@
 <?php
 
 
-namespace App\Services\Company;
+namespace App\Services\Company\Renessans;
 
 
-use App\Contracts\Company\RenessansServiceContract;
+use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
 use App\Models\InsuranceCompany;
+use App\Services\Company\CompanyCalculateService;
 use GuzzleHttp\Client;
 
-class RenessansService extends CompanyService implements RenessansServiceContract
+class RenessansCalculateCalculateService extends CompanyCalculateService implements RenessansCalculateServiceContract
 {
     private $apiUrl;
     private $secretKey;
@@ -46,40 +47,12 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
             $this->apiPath[$method];
     }
 
-    public function calculate(InsuranceCompany $company, $attributes): array
+    public function run(InsuranceCompany $company, $attributes): array
     {
         $this->setAuth($attributes);
         $url = $this->getUrl(__FUNCTION__);
         $response = $this->postRequest($url, $attributes);
         return ['calculate', __CLASS__, $url, $attributes, $response];
-    }
-
-    public static function validationRules(): array
-    {
-        return self::getRules(self::map());
-    }
-
-    public static function validationMessages(): array
-    {
-        return [];
-    }
-
-    public function create(InsuranceCompany $company, $attributes): array
-    {
-        // TODO: Implement create() method.
-        return ['create'];
-    }
-
-    public function getStatus(InsuranceCompany $company, $attributes): array
-    {
-        // TODO: Implement getStatus() method.
-        return ['getStatus'];
-    }
-
-    public function getCatalog(InsuranceCompany $company, $attributes): array
-    {
-        // TODO: Implement getCatalog() method.
-        return ['getCatalog'];
     }
 
     public function postRequest($url, $data = [], $headers = [])
@@ -96,7 +69,7 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
         return \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
     }
 
-    public static function map()
+    public function map(): array
     {
         return [
             'dateStart' => [
@@ -323,77 +296,4 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
         ];
     }
 
-    public static function addRule(&$rule, $parameter = null, $value = null)
-    {
-        if (strlen($rule)) {
-            $rule .= '|';
-        }
-        if ($parameter) {
-            $rule .= $parameter;
-        }
-        if ($value) {
-            if ($parameter) {
-                $rule .= ':';
-            }
-            switch (gettype($value)) {
-                case 'string':
-                    $rule .= $value;
-                    break;
-                case 'array':
-                    $rule .= array_shift($value);
-                    $rule .= implode(',', $value);
-                    break;
-            }
-        }
-    }
-
-    public static function getRules($fields, $prefix = '')
-    {
-        $rules = [];
-        foreach ($fields as $field => $settings) {
-            $rule = '';
-            foreach ($settings as $parameter => $value) {
-                switch ($parameter) {
-                    case 'required':
-                        if ($value) {
-                            self::addRule($rule, $parameter);
-                        } else {
-                            continue;
-                        }
-                        break;
-                    case 'required_if':
-                        $array = $value['value'];
-                        array_unshift($array, $value['field']);
-                        self::addRule($rule, $parameter, $array);
-                        break;
-                    case 'type':
-                        if ($value == 'object') {
-                            self::addRule($rule, null, 'array');
-                            $rules = array_merge($rules, self::getRules($settings['array'], $prefix.$field . '.'));
-                        } elseif ($value == 'array') {
-                            self::addRule($rule, null, 'array');
-                            $rules = array_merge($rules, self::getRules($settings['array'], $prefix.$field . '.*.'));
-                        } else {
-                            self::addRule($rule, null, $value);
-                        }
-                        break;
-                    case 'format':
-                        self::addRule($rule, $parameter, $value);
-                        break;
-                    case 'in':
-                        self::addRule($rule, $parameter, implode(',', $value));
-                        break;
-                    case '':
-                        break;
-                }
-            }
-            $rules[$prefix . $field] = $rule;
-        }
-        return $rules;
-    }
-
-    public function prepareData()
-    {
-        $fields = $this->map();
-    }
 }
