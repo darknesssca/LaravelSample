@@ -6,15 +6,16 @@ namespace App\Services\Company;
 
 use App\Models\InsuranceCompany;
 
-interface CompanyCalculateServiceInterface
+interface CompanyServiceInterface
 {
 
     /**
      * @param InsuranceCompany $company
-     * @param $attributes
+     * @param array $attributes
+     * @param array $additionalFields
      * @return array
      */
-    public function run(InsuranceCompany $company, array $attributes): array;
+    public function run(InsuranceCompany $company, array $attributes, array $additionalFields): array;
 
 
     /**
@@ -38,4 +39,20 @@ interface CompanyCalculateServiceInterface
      * @return array
      */
     public function validationMessages(): array;
+
+    /**
+     * @param $url
+     * @param $data
+     * @param $headers
+     * @return array
+     */
+    public function postRequest($url, $data, $headers): array;
+
+    /**
+     * @param $url
+     * @param $data
+     * @param $headers
+     * @return array
+     */
+    public function getRequest($url, $data, $headers): array;
 }

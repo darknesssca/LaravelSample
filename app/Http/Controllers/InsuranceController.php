@@ -25,16 +25,13 @@ class InsuranceController extends Controller
         if (!$company->count()) {
             return $this->error('Компания не найдена', 404);
         }
-        $method = (string)$method;
-        $companyController = $this->getCompanyController($company, $method);
+        $method = strtolower((string)$method);
+        if (!method_exists($this, $method)) {
+            return $this->error('Метод не найден', 404);
+        }
         try
         {
-            $attributes = $this->validate(
-                $request,
-                $companyController->validationRules(),
-                $companyController->validationMessages()
-            );
-            return $this->useCompanyController($companyController, $method, $company, $attributes);
+            return $this->$method($company, $request);
         }
         catch (ValidationException $exception)
         {
@@ -48,6 +45,24 @@ class InsuranceController extends Controller
         {
             return $this->error($exception->getMessage(), 500);
         }
+    }
+
+    private function calculate(InsuranceCompany $company, $request)
+    {
+        $calculateData = $this->runService($company, $request, 'Calculate');
+        $checkSegmentData = $this->runService($company, $request, 'Create', ['isCheckSegment' => true]);
+        return $calculateData;
+    }
+
+    private function runService(InsuranceCompany $company, $request, $serviceMethod, $additionalData = [])
+    {
+        $controller = $this->getCompanyController($company, $serviceMethod);
+        $attributes = $this->validate(
+            $request,
+            $controller->validationRules(),
+            $controller->validationMessages()
+        );
+        return $this->useCompanyController($controller, $company, $attributes, $additionalData);
     }
 
     public function checkCompany($code)
@@ -73,16 +88,8 @@ class InsuranceController extends Controller
         return app($contract);
     }
 
-    protected function useCompanyController($controller, $method, $company, $attributes)
+    protected function useCompanyController($controller, $company, $attributes, $additionalData)
     {
-        try
-        {
-            return response()->json($controller->run($company, $attributes), 200);
-        }
-        catch (\Exception $exception)
-        {
-            return $this->error($exception->getMessage(), 500);
-        }
-
+        return response()->json($controller->run($company, $attributes, $additionalData), 200);
     }
 }

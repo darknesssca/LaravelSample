@@ -4,14 +4,14 @@
 namespace App\Services\Company\Renessans;
 
 
-use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
+use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
 use App\Models\InsuranceCompany;
 
-class RenessansCalculateService extends RenessansService implements RenessansCalculateServiceContract
+class RenessansCreateService extends RenessansService implements RenessansCreateServiceContract
 {
     private $apiPath = [
-        'sendCalculate' => '/calculate/?fullInformation=true',
-        'receiveCalculate' => '/calculate/{{id}}/',
+        'sendCalculate' => '/create/',
+        'receiveCalculate' => '/policy/:policyId/status/',
     ];
 
     private $catalogPurpose = ["Личная", "Такси"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
@@ -32,36 +32,6 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             $calculatedData[] = $this->receiveCalculate($requestData);
         }
         return $calculatedData;
-    }
-
-    private function sendCalculate($attributes): array
-    {
-        $this->setAuth($attributes);
-        $url = $this->getUrl(__FUNCTION__);
-        $this->prepareData($attributes);
-        $response = $this->postRequest($url, $attributes);
-        if (!$response) {
-            throw new \Exception('api not return answer');
-        }
-        if (!$response['result']) {
-            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
-        }
-        return $response['data'];
-    }
-
-    private function receiveCalculate($attributes)
-    {
-        $data = [];
-        $this->setAuth($data);
-        $url = $this->getUrl(__FUNCTION__, $attributes);
-        $response = $this->getRequest($url, $data);
-        if (!$response) {
-            throw new \Exception('api not return answer');
-        }
-        if (!$response['result']) {
-            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
-        }
-        return $response['data'];
     }
 
     public function map(): array

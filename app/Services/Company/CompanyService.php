@@ -4,11 +4,12 @@
 namespace App\Services\Company;
 
 use App\Models\InsuranceCompany;
+use GuzzleHttp\Client;
 
-abstract class CompanyCalculateService implements CompanyCalculateServiceInterface
+abstract class CompanyService implements CompanyServiceInterface
 {
 
-    abstract public function run(InsuranceCompany $company, $attributes): array;
+    abstract public function run(InsuranceCompany $company, $attributes, $additionalData): array;
     abstract public function map(): array;
 
     public function addRule(&$rule, $parameter = null, $value = null)
@@ -101,6 +102,34 @@ abstract class CompanyCalculateService implements CompanyCalculateServiceInterfa
                 }
             }
         }
+    }
+
+    public function postRequest($url, $data = [], $headers = []): array
+    {
+        $client = new Client();
+        $params = [];
+        if ($headers and count($headers)) {
+            $params['headers'] = $headers;
+        }
+        if ($data and count($data)) {
+            $params['form_params'] = $data;
+        }
+        $response = $client->post($url, $params);
+        return \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
+    }
+
+    public function getRequest($url, $data = [], $headers = []): array
+    {
+        $client = new Client();
+        $params = [];
+        if ($headers and count($headers)) {
+            $params['headers'] = $headers;
+        }
+        if ($data and count($data)) {
+            $params['query'] = $data;
+        }
+        $response = $client->get($url, $params);
+        return \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
     }
 
     public function validationRules(): array
