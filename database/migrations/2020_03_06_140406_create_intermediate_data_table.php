@@ -14,7 +14,7 @@ class CreateIntermediateDataTable extends Migration
     public function up()
     {
         Schema::create('intermediate_data', function (Blueprint $table) {
-            $table->string('hash')->primary()->unique();
+            $table->string('token')->primary()->unique();
             $table->text('data');
             $table->timestamps();
         });

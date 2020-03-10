@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\Company\CompanyServiceContract;
 use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
 use Illuminate\Contracts\Container\BindingResolutionException;
@@ -49,7 +50,37 @@ class InsuranceController extends Controller
         }
     }
 
-    private function calculate(InsuranceCompany $company, $request)
+    public function store(Request $request)
+    {
+        try
+        {
+            $controller = app(CompanyServiceContract::class);
+            $attributes = $this->validate(
+                $request,
+                $controller->validationRulesForm(),
+                $controller->validationMessagesForm()
+            );
+            $data = [
+                'form' => $attributes,
+            ];
+            $token = IntermediateData::createToken($data);
+            return ['token' => $token];
+        }
+        catch (ValidationException $exception)
+        {
+            return $this->error($exception->errors(), 400);
+        }
+        catch (BindingResolutionException $exception)
+        {
+            return $this->error('Не найден обработчик компании: '.$exception->getMessage(), 404);
+        }
+        catch (\Exception $exception)
+        {
+            return $this->error($exception->getMessage(), 500);
+        }
+    }
+
+    private function calculate($company, $request)
     {
         $methodData = [
             'policesId' => [],
@@ -73,32 +104,34 @@ class InsuranceController extends Controller
         return ['hash' => $hash];
     }
 
-    private function saveIntermediateData($data, $try = 0)
-    {
-        $hash = Str::random(32);
-        try {
-            IntermediateData::create([
-                'hash' => $hash,
-                'data' => \GuzzleHttp\json_encode($data)
-            ]);
-            return $hash;
-        } catch (\Exception $exception) {
-            $try += 1;
-            if ($try) {
-                throw new \Exception('fail create hash: '.$exception->getMessage());
-            }
-            return $this->saveIntermediateData($data, $try);
-        }
-    }
+//    private function saveIntermediateData($data, $try = 0)
+//    {
+//        $token = Str::random(32);
+//        try {
+//            IntermediateData::create([
+//                'token' => $token,
+//                'data' => \GuzzleHttp\json_encode($data)
+//            ]);
+//            return $token;
+//        } catch (\Exception $exception) {
+//            $try += 1;
+//            if ($try) {
+//                throw new \Exception('fail create token: '.$exception->getMessage());
+//            }
+//            return $this->saveIntermediateData($data, $try);
+//        }
+//    }
 
-    private function runService(InsuranceCompany $company, $request, $serviceMethod, $additionalData = [])
+    private function runService($company, $request, $serviceMethod, $additionalData = [])
     {
         $controller = $this->getCompanyController($company, $serviceMethod);
-        $attributes = $this->validate(
+        $validatedFields = $this->validate(
             $request,
-            $controller->validationRules(),
-            $controller->validationMessages()
+            $controller->validationRulesProcess(),
+            $controller->validationMessagesProcess()
         );
+        $attributes = IntermediateData::getData($validatedFields['token']);
+        $attributes['token'] = $validatedFields['token'];
         return $this->useCompanyController($controller, $company, $attributes, $additionalData);
     }
 

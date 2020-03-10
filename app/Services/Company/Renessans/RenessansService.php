@@ -19,6 +19,33 @@ abstract class RenessansService extends CompanyService
         }
     }
 
+    public function prepareData(&$data, $fields = null)
+    {
+        if (!$fields) {
+            $fields = $this->map();
+        }
+        foreach ($fields as $field => $settings) {
+            foreach ($settings as $parameter => $value) {
+                switch ($parameter) {
+                    case 'default':
+                        if (!array_key_exists($field, $data)) {
+                            $data[$field] = $value;
+                        }
+                        break;
+                    case 'type':
+                        if (($value == 'array') || ($value == 'object')) {
+                            $this->prepareData($data[$field], $settings['array']);
+                        } elseif ($value == 'boolean') {
+                            if (array_key_exists($field, $data)) {
+                                $data[$field] = (int)$data[$field];
+                            }
+                        }
+                        break;
+                }
+            }
+        }
+    }
+
     protected function setAuth(&$attributes)
     {
         $attributes['key'] = $this->secretKey;

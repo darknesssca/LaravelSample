@@ -6,11 +6,13 @@ namespace App\Services\Company;
 use App\Models\InsuranceCompany;
 use GuzzleHttp\Client;
 
-abstract class CompanyService implements CompanyServiceInterface
+class CompanyService implements CompanyServiceInterface
 {
 
-    abstract public function run(InsuranceCompany $company, $attributes, $additionalData): array;
-    abstract public function map(): array;
+    public function run(InsuranceCompany $company, $attributes, $additionalData): array
+    {
+        //
+    }
 
     public function addRule(&$rule, $parameter = null, $value = null)
     {
@@ -80,33 +82,6 @@ abstract class CompanyService implements CompanyServiceInterface
         return $rules;
     }
 
-    public function prepareData(&$data, $fields = null)
-    {
-        if (!$fields) {
-            $fields = $this->map();
-        }
-        foreach ($fields as $field => $settings) {
-            foreach ($settings as $parameter => $value) {
-                switch ($parameter) {
-                    case 'default':
-                        if (!array_key_exists($field, $data)) {
-                            $data[$field] = $value;
-                        }
-                        break;
-                    case 'type':
-                        if (($value == 'array') || ($value == 'object')) {
-                            $this->prepareData($data[$field], $settings['array']);
-                        } elseif ($value == 'boolean') {
-                            if (array_key_exists($field, $data)) {
-                                $data[$field] = (int)$data[$field];
-                            }
-                        }
-                        break;
-                }
-            }
-        }
-    }
-
     public function postRequest($url, $data = [], $headers = []): array
     {
         $client = new Client();
@@ -135,12 +110,90 @@ abstract class CompanyService implements CompanyServiceInterface
         return \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
     }
 
-    public function validationRules(): array
+    public function validationRulesForm(): array
     {
-        return $this->getRules($this->map());
+        return [
+            'token' => "required|string",
+            'subjects' => "required|array",
+            "subjects.*.id" => "required|integer",
+            "subjects.*.fields.lastName" => "required|string",
+            "subjects.*.fields.firstName" => "required|string",
+            "subjects.*.fields.middleName" => "string",
+            "subjects.*.fields.birthdate" => "required|date|format:Y-m-d",
+            "subjects.*.fields.email" => "email",
+            "subjects.*.fields.gender" => "required|string|in",
+            "subjects.*.fields.citizenship" => "string|in",
+            "subjects.*.fields.addresses" => "required|array",
+            "subjects.*.fields.addresses.*.address.addressType" => "required|string|in",
+            "subjects.*.fields.addresses.*.address.country" => "required|string|in",
+            "subjects.*.fields.addresses.*.address.postCode" => "string",
+            "subjects.*.fields.addresses.*.address.region" => "required|string|in",
+            "subjects.*.fields.addresses.*.address.regionKladr" => "required|string",
+            "subjects.*.fields.addresses.*.address.district" => "string",
+            "subjects.*.fields.addresses.*.address.districtKladr" => "string",
+            "subjects.*.fields.addresses.*.address.city" => "string",
+            "subjects.*.fields.addresses.*.address.cityKladr" => "string",
+            "subjects.*.fields.addresses.*.address.populatedCenter" => "string",
+            "subjects.*.fields.addresses.*.address.populatedCenterKladr" => "string",
+            "subjects.*.fields.addresses.*.address.street" => "string",
+            "subjects.*.fields.addresses.*.address.streetKladr" => "string",
+            "subjects.*.fields.addresses.*.address.building" => "string",
+            "subjects.*.fields.addresses.*.address.buildingKladr" => "string",
+            "subjects.*.fields.addresses.*.address.flat" => "string",
+            "subjects.*.fields.document" => "required|array",
+            "subjects.*.fields.document.*.documentType" => "required|string", // TODO: in справочник
+            "subjects.*.fields.document.*.series" => "string",
+            "subjects.*.fields.document.*.number" => "required|string",
+            "subjects.*.fields.document.*.issuedBy" => "required|string",
+            "subjects.*.fields.document.*.dateIssue" => "required|date|format:Y-m-d",
+            "subjects.*.fields.document.*.validTo" => "date|format:Y-m-d",
+            "subjects.*.fields.document.*.subdivisionCode" => "string",
+            "subjects.*.fields.phone" => "required",
+            "subjects.*.fields.phone.numberPhone" => "required|string",
+            'car' => "required",
+            "car.model" => "required|string", // TODO: in справочник
+            "car.maker" => "required|string", // TODO: in справочник
+            "car.enginePower" => "required|integer",
+            "car.countryOfRegistration" => "required|string", // TODO: in справочник
+            "car.isUsedWithTrailer" => "required|boolean",
+            "car.mileage" => "required|integer",
+            "car.sourceAcquisition" => "required|string", // TODO: in справочник
+            "car.vehicleCost" => "required|integer",
+            "car.vehicleUsage" => "required|string", // TODO: in справочник
+            "car.vehicleUseRegion" => "required|string", // TODO: in справочник
+            "car.isIrregularVIN" => "required|boolean",
+            "car.vin" => "required|string",
+            "car.year" => "required|string|min:4|max:4",
+            "car.documents" => "required|array",
+            "car.documents.*.document" => "required",
+            "car.documents.*.document.documentType" => "required|string", // TODO: in справочник
+            "car.documents.*.document.documentSeries" => "required|string", // TODO: in справочник
+            "car.documents.*.document.documentNumber" => "required|string", // TODO: in справочник
+            "car.documents.*.document.documentIssued" => "required|string", // TODO: in справочник
+            'policy' => "required",
+            'policy.beginDate' => "required|date|format:Y-m-d",
+            'policy.insurantId' => "required|integer",
+            'policy.ownerId' => "required|integer",
+            'policy.isMultidrive' => "required|boolean",
+            'drivers' => "required|array",
+            'drivers.*.driver' => "required",
+            'drivers.*.driver.driverId' => "integer",
+        ];
     }
 
-    public function validationMessages(): array
+    public function validationMessagesForm(): array
+    {
+        return [];
+    }
+
+    public function validationRulesProcess(): array
+    {
+        return [
+            'token' => "required|string",
+        ];
+    }
+
+    public function validationMessagesProcess(): array
     {
         return [];
     }

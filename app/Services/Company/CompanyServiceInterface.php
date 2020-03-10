@@ -21,7 +21,7 @@ interface CompanyServiceInterface
     /**
      * @return array
      */
-    public function map(): array;
+    //public function map(): array;
 
     /**
      * @param array $fields
