@@ -64,7 +64,7 @@ class InsuranceController extends Controller
                 'form' => $attributes,
             ];
             $token = IntermediateData::createToken($data);
-            return ['token' => $token];
+            return response()->json(['token' => $token], 200);
         }
         catch (ValidationException $exception)
         {
@@ -80,8 +80,13 @@ class InsuranceController extends Controller
         }
     }
 
+    public function get(Request $request) {
+        return $request->token ? $request->token : 'fuck of';
+    }
+
     private function calculate($company, $request)
     {
+        //todo переделать, вынести логику в базовый сервис
         $methodData = [
             'policesId' => [],
         ];
@@ -100,36 +105,21 @@ class InsuranceController extends Controller
                 'policeId' => $data['policyId'],
             ];
         }
-        $hash = $this->saveIntermediateData($methodData);
-        return ['hash' => $hash];
+        //$hash = $this->saveIntermediateData($methodData);
+        //return ['hash' => $hash];
     }
-
-//    private function saveIntermediateData($data, $try = 0)
-//    {
-//        $token = Str::random(32);
-//        try {
-//            IntermediateData::create([
-//                'token' => $token,
-//                'data' => \GuzzleHttp\json_encode($data)
-//            ]);
-//            return $token;
-//        } catch (\Exception $exception) {
-//            $try += 1;
-//            if ($try) {
-//                throw new \Exception('fail create token: '.$exception->getMessage());
-//            }
-//            return $this->saveIntermediateData($data, $try);
-//        }
-//    }
 
     private function runService($company, $request, $serviceMethod, $additionalData = [])
     {
         $controller = $this->getCompanyController($company, $serviceMethod);
-        $validatedFields = $this->validate(
-            $request,
-            $controller->validationRulesProcess(),
-            $controller->validationMessagesProcess()
-        );
+//        $validatedFields = $this->validate(
+//            $request,
+//            $controller->validationRulesProcess(),
+//            $controller->validationMessagesProcess()
+//        );
+        if (!$request->token) {
+            die();
+        }
         $attributes = IntermediateData::getData($validatedFields['token']);
         $attributes['token'] = $validatedFields['token'];
         return $this->useCompanyController($controller, $company, $attributes, $additionalData);

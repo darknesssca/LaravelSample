@@ -22,6 +22,7 @@ $router->group(
             ],
             function () use ($router) {
                 $router->post('/insurance/send', 'InsuranceController@store');
+                $router->get('/insurance/get', 'InsuranceController@get');
                 $router->post('/insurance/{code}/{method}', 'InsuranceController@index');
                 // тут будут остальные контроллеры
             }

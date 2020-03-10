@@ -10,7 +10,7 @@ class IntermediateData extends Model
 {
     protected $table = 'intermediate_data';
     protected $fillable = [
-        'hash',
+        'token',
         'data'
     ];
     protected $primaryKey = 'token';
@@ -37,6 +37,9 @@ class IntermediateData extends Model
     public static function getData($token)
     {
         $data = self::find($token);
+        if (!$data || !isset($data['form'])) {
+            throw new \Exception('not found data by token');
+        }
         return $data;
     }
 }
