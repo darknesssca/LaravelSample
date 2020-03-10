@@ -3,9 +3,10 @@
 
 namespace App\Services\Company\Tinkoff;
 
+use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
 use App\Services\Company\CompanyService;
 
-abstract class TinkoffService extends CompanyService
+class TinkoffService extends CompanyService implements TinkoffServiceContract
 {
     protected $apiWsdlUrl;
     protected $apiUser;
@@ -18,7 +19,7 @@ abstract class TinkoffService extends CompanyService
         $this->apiUser = config('api_sk.tinkoff.user');
         $this->apiPassword = config('api_sk.tinkoff.password');
         $this->apiProducerCode = config('api_sk.tinkoff.producerCode');
-        if (!($this->apiWsdlUrl && $this->apiUser && $this->apiPassword)) {
+        if (!($this->apiWsdlUrl && $this->apiUser && $this->apiPassword && $this->apiProducerCode)) {
             throw new \Exception('tinkoff api is not configured');
         }
     }
@@ -30,24 +31,5 @@ abstract class TinkoffService extends CompanyService
             'password' => $this->apiPassword,
         ];
         $data['producerCode'] = $this->apiProducerCode;
-    }
-
-    public function setValue(&$target, $targetName, $sourceName, $source)
-    {
-        if (isset($source[$sourceName]) && $source[$sourceName]) {
-            $target[$targetName] = $source[$sourceName];
-        }
-    }
-
-    public function setValuesByArray(&$target, $dependencies, $source)
-    {
-        foreach ($dependencies as $targetName => $sourceName) {
-            if (isset($source[$sourceName]) && $source[$sourceName]) {
-                if (typeof($source[$sourceName]) == 'array') {
-                    continue;
-                }
-                $target[$targetName] = $source[$sourceName];
-            }
-        }
     }
 }

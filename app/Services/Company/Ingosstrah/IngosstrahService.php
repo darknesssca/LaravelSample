@@ -3,9 +3,10 @@
 
 namespace App\Services\Company\Ingosstrah;
 
+use App\Contracts\Company\Ingosstrah\IngosstrahServiceContract;
 use App\Services\Company\CompanyService;
 
-abstract class IngosstrahService extends CompanyService
+class IngosstrahService extends CompanyService implements IngosstrahServiceContract
 {
     protected $apiWsdlUrl;
     protected $apiUser;
@@ -14,12 +15,11 @@ abstract class IngosstrahService extends CompanyService
 
     public function __construct()
     {
-        $this->apiWsdlUrl = config('api_sk.tinkoff.wsdlUrl');
-        $this->apiUser = config('api_sk.tinkoff.user');
-        $this->apiPassword = config('api_sk.tinkoff.password');
-        $this->apiProducerCode = config('api_sk.tinkoff.producerCode');
+        $this->apiWsdlUrl = config('api_sk.ingosstrah.wsdlUrl');
+        $this->apiUser = config('api_sk.ingosstrah.user');
+        $this->apiPassword = config('api_sk.ingosstrah.password');
         if (!($this->apiWsdlUrl && $this->apiUser && $this->apiPassword)) {
-            throw new \Exception('tinkoff api is not configured');
+            throw new \Exception('ingosstrah api is not configured');
         }
     }
 
@@ -30,24 +30,5 @@ abstract class IngosstrahService extends CompanyService
             'password' => $this->apiPassword,
         ];
         $data['producerCode'] = $this->apiProducerCode;
-    }
-
-    public function setValue(&$target, $targetName, $sourceName, $source)
-    {
-        if (isset($source[$sourceName]) && $source[$sourceName]) {
-            $target[$targetName] = $source[$sourceName];
-        }
-    }
-
-    public function setValuesByArray(&$target, $dependencies, $source)
-    {
-        foreach ($dependencies as $targetName => $sourceName) {
-            if (isset($source[$sourceName]) && $source[$sourceName]) {
-                if (typeof($source[$sourceName]) == 'array') {
-                    continue;
-                }
-                $target[$targetName] = $source[$sourceName];
-            }
-        }
     }
 }

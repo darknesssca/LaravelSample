@@ -1,18 +1,17 @@
 <?php
 
 
-namespace App\Services\Company\Tinkoff;
+namespace App\Services\Company\Ingosstrah;
 
 
-use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
+use App\Contracts\Company\Ingosstrah\IngosstrahCalculateServiceContract;
+use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
 use App\Http\Controllers\SoapController;
 use App\Models\InsuranceCompany;
+use App\Services\Company\Ingosstrah\IngosstrahService;
 
-class TinkoffCalculateService extends TinkoffService implements TinkoffCalculateServiceContract
+class IngosstrahLoginService extends IngosstrahService implements IngosstrahLoginServiceContract
 {
-    protected $apiMethods = [
-        'sendCalculate' => 'calcPartnerFQuote',
-    ];
 
     private $catalogPurpose = ["Личная", "Такси"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
     private $catalogTypeOfDocument = []; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
@@ -20,18 +19,17 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
 
     public function run($company, $attributes, $additionalFields = []): array
     {
-        $data = $this->sendCalculate($company, $attributes);
+        $data = $this->sendLogin($company, $attributes);
         return $data;
     }
 
-    private function sendCalculate($company, $attributes): array
+    private function sendLogin($company, $attributes): array
     {
-        $method = $this->apiMethods[__FUNCTION__];
         $data = $this->prepareData($attributes);
         $soapRequest = new SoapController();
         $soapRequest->configure($this->apiWsdlUrl);
         $response = $soapRequest->requestBySoap($company, 'calculate', $data);
-        dd($response); // TODO
+        dd($response);
         if (!$response) {
             throw new \Exception('api not return answer');
         }

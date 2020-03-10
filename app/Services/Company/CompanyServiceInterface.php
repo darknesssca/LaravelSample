@@ -28,17 +28,17 @@ interface CompanyServiceInterface
      * @param string $prefix
      * @return array
      */
-    public function getRules(array $fields, string $prefix): array;
+    //public function getRules(array $fields, string $prefix): array;
 
     /**
      * @return array
      */
-    public function validationRules(): array;
+    //public function validationRules(): array;
 
     /**
      * @return array
      */
-    public function validationMessages(): array;
+    //public function validationMessages(): array;
 
     /**
      * @param $url

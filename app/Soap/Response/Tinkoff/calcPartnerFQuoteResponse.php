@@ -1,10 +1,10 @@
 <?php
 
 
-namespace App\Soap\Request;
+namespace App\Soap\Request\Tinkoff;
 
 
-class TinkoffCalculateResponse
+class calcPartnerFQuoteResponse
 {
     protected $responseData;
 

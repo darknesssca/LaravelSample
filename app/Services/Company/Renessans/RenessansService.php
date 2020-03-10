@@ -3,9 +3,10 @@
 
 namespace App\Services\Company\Renessans;
 
+use App\Contracts\Company\Renessans\RenessansServiceContract;
 use App\Services\Company\CompanyService;
 
-abstract class RenessansService extends CompanyService
+class RenessansService extends CompanyService implements RenessansServiceContract
 {
     private $apiUrl;
     private $secretKey;

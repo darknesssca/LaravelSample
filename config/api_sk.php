@@ -10,4 +10,9 @@ return [
         'password' => $_ENV['TINKOFF_API_PASSWORD'],
         'producerCode' => $_ENV['TINKOFF_API_PRODUCER_CODE'],
     ],
+    'ingosstrah' => [
+        'wsdlUrl' => $_ENV['INGOSSTRAH_API_WSDL_URL'],
+        'user' => env('INGOSSTRAH_API_USER'),
+        'password' => $_ENV['INGOSSTRAH_API_PASSWORD'],
+    ],
 ];

@@ -30,16 +30,19 @@ class SoapController
 
     public function requestBySoap($company, $method, $data = [])
     {
-        $name = ucfirst(strtolower($company->code)) . ucfirst(strtolower($method));
-        $this->soapWrapper->add($name, function ($service) use ($name) {
+        $name = ucfirst(strtolower($company->code));
+        $code = $company->code;
+        $request = 'App\\Soap\\Request\\'.$code.'\\'.$method;
+        $response = 'App\\Soap\\Request\\'.$code.'\\'.$method.'Response';
+        $this->soapWrapper->add($name, function ($service) use ($request, $response) {
             $service
                 ->wsdl($this->wsdlUrl)
                 ->trace(true)
                 ->classmap([
-                    'App\\Soap\\Request\\'.$name.'Request',
-                    'App\\Soap\\Request\\'.$name.'Response',
+                    $request,
+                    $response,
                 ]);
         });
-        return $this->soapWrapper->call($name . '.' . $name.'Request', $data);
+        return $this->soapWrapper->call($name . '.' . $method, $data);
     }
 }

@@ -197,4 +197,23 @@ class CompanyService implements CompanyServiceInterface
     {
         return [];
     }
+
+    public function setValue(&$target, $targetName, $sourceName, $source)
+    {
+        if (isset($source[$sourceName]) && $source[$sourceName]) {
+            $target[$targetName] = $source[$sourceName];
+        }
+    }
+
+    public function setValuesByArray(&$target, $dependencies, $source)
+    {
+        foreach ($dependencies as $targetName => $sourceName) {
+            if (isset($source[$sourceName]) && $source[$sourceName]) {
+                if (typeof($source[$sourceName]) == 'array') {
+                    continue;
+                }
+                $target[$targetName] = $source[$sourceName];
+            }
+        }
+    }
 }
