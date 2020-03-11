@@ -22,10 +22,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
 
     public function run($company, $attributes, $additionalFields = []): array
     {
-        $data = [
-            'premium' => $this->sendCalculate($company, $attributes),
-        ];
-        return $data;
+        return $this->sendCalculate($company, $attributes);
     }
 
     private function sendCalculate($company, $attributes): array
@@ -48,13 +45,11 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
         if (!isset($response->OSAGOFQ->totalPremium)) {
             throw new \Exception('api not return premium');
         }
-        $tokenData = IntermediateData::getData($attributes['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
-        $tokenData[$company->code] = [
+        $data = [
             'setNumber' => $response->setNumber,
-        ];
-        return [
             'premium' => $response->OSAGOFQ->totalPremium,
         ];
+        return $data;
     }
 
     public function prepareData($attributes)
@@ -75,6 +70,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     "citizenship" => $subject['fields']['citizenship'], // TODO: справочник
                 ],
             ];
+            $this->setValue($pSubject['subjectDetails'], 'middleName', 'middleName', $attributes['fields']['middleName']);
             foreach ($subject['fields']['addresses'] as $iAddress => $address) {
                 $pAddress = [
                     'addressType' => $address['address']['addressType'],  // TODO: справочник

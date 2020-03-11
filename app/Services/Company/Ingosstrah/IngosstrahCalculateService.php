@@ -18,161 +18,194 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
 
     public function run($company, $attributes, $additionalFields = []): array
     {
-        $data = $this->sendCalculate($company, $attributes);
-        return $data;
+        return $this->sendCalculate($company, $attributes);
     }
 
     private function sendCalculate($company, $attributes): array
     {
         $data = $this->prepareData($attributes);
-        $soapRequest = new SoapController();
-        $soapRequest->configure($this->apiWsdlUrl);
-        $response = $soapRequest->requestBySoap($company, 'calculate', $data);
+        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetTariff', $data);
         dd($response);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
-        if (!$response['result']) {
+        if ($response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
-        return $response['data'];
+        if (isset($response->ErrorCode) && $response->ErrorCode) {
+            throw new \Exception('api return validation error code: '.
+                $response->ErrorCode.
+                ' | message: '.
+                (isset($response->ErrorMessage) ? $response->ErrorMessage : 'nocode')
+            );
+        }
+        if (!isset($response->PremiumAmount)) {
+            throw new \Exception('api not return premium');
+        }
+        $data = [
+            'premium' => $response->PremiumAmount,
+        ];
+        return $data;
     }
 
     public function prepareData($attributes)
     {
-        $data = [];
-        $this->setHeader($data);
-        //subjectInfo
+        $data = [
+            'SessionToken' => $attributes['sessionToken'],
+            'TariffParameters' => [
+                'Agreement' => [
+                    "General" => [
+                        "Product" => '753518300', //todo из справочника, вероятно статика
+                        'DateBeg' => $this->formatDateTime($attributes['policy']['beginDate']),
+                        'DateEnd' => $attributes['policy']['endDate'],
+//                        "PrevAgrID" => "", //todo пролонгация
+//                        "ParentISN" => "", //todo пролонгация
+                        "Individual" => $this->transformBoolean(false),
+                        "IsEOsago" => $this->transformBoolean(true),
+                    ],
+                    "Insurer" => [
+                        "SbjRef" => $attributes['policy']['insurantId'],
+                    ],
+                    "Owner" => [
+                        'SbjRef' => $attributes['policy']['ownerId'],
+                    ],
+                    "SubjectList" => [
+                        "Subject" => [],
+                    ],
+                    "Vehicle" => [
+                        'Model' => $attributes['car']['model'], // TODO: справочник
+                        'VIN' => $attributes['car']['vin'],
+                        "Category" => "B", // TODO из справочника
+                        "Constructed" => $attributes['car']['year'],
+                        'EnginePowerHP' => $attributes['car']['enginePower'],
+                        "Document" => [],
+                        "DocInspection" => [
+                            "DocType" => $attributes['car']['docInspection']['documentType'],
+                        ],
+                    ],
+                    "Condition" => [
+                        "Liability" => [
+                            "RiskCtg" => "28966116", // TODO из справочника
+                            'UsageType' => $attributes['car']['usageType'],
+                            "UsageTarget" => [
+                                $attributes['car']['vehicleUsage'] => $this->transformBoolean(true), // TODO имя параметра из справочника
+                            ],
+                            "UseWithTrailer" => $this->transformBoolean($attributes['car']['isUsedWithTrailer']),
+                            "PeriodList" => [
+                                "Period" => [
+                                    "DateBeg" =>  $attributes['policy']['beginDate'],
+                                    "DateEnd" =>  $attributes['policy']['endDate'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        $this->setValue($data['TariffParameters']['Agreement']['Insurer'], 'MobilePhone', 'numberPhone', $attributes['subjects'][$attributes['policy']['insurantId']]['fields']['numberPhone']);
+        $this->setValue($data['TariffParameters']['Agreement']['Insurer'], 'Email', 'email', $attributes['subjects'][$attributes['policy']['insurantId']]['fields']);
+        $this->setValuesByArray($data['TariffParameters']['Agreement']['Vehicle'], [
+            'NetWeight' => 'minWeight',
+            'GrossWeigh' => 'maxWeight',
+            'Seats' => 'seats',
+        ], $attributes['car']);
+        //SubjectList
         foreach ($attributes['subjects'] as $iSubject => $subject) {
             $pSubject = [
-                'subjectNumber' => $subject['id'],
-                'subjectDetails' => [
-                    "lastName" => $subject['fields']['lastName'],
-                    "firstName" => $subject['fields']['firstName'],
-                    "middleName" => $subject['fields']['middleName'],
-                    "birthdate" => $subject['fields']['birthdate'],
-                    "email" => $subject['fields']['email'],
-                    "gender" => $subject['fields']['gender'], // TODO: справочник
-                    "citizenship" => $subject['fields']['citizenship'], // TODO: справочник
+                'SbjKey' => $subject['id'],
+                '_' => [
+                    "SbjType" => 0, // TODO: справочник
+                    "SbjResident" => $this->transformBoolean($subject['fields']['isResident']),
+                    'FullName' => $subject['fields']['lastName'] . ' ' . $subject['fields']['firstName'] .
+                        (isset($subject['fields']['middleName']) ? ' ' . $subject['fields']['middleName'] : ''),
+                    "Gender" => $subject['fields']['gender'], // TODO: справочник
+                    "BirthDate" => $subject['fields']['birthdate'], // TODO: справочник
+                    "CountryCode" => $subject['fields']['citizenship'], // TODO: справочник
+
                 ],
             ];
             foreach ($attributes['fields']['addresses'] as $iAddress => $address) {
                 $pAddress = [
-                    'addressType' => $address['address']['addressType'],  // TODO: справочник
-                    'country' => $address['address']['country'],  // TODO: справочник
-                    'region' => $address['address']['region'],  // TODO: справочник
+                    "CountryCode" => $subject['fields']['citizenship'], // TODO: справочник
+                    'CityCode' => $address['address']['cityKladr'],
+                    'StreetCode' => $address['address']['streetKladr'],
+                    'StreetName' => $address['address']['street'],
+                    'House' => $address['address']['building'],
                 ];
                 $this->setValuesByArray($pAddress, [
-                    "postCode" => 'postCode',
-                    "KLADR1" => 'regionKladr',
-                    "district" => 'district',
-                    "KLADR2" => 'districtKladr',
-                    "city" => 'city',
-                    "KLADR3" => 'cityKladr',
-                    "populatedCenter" => 'populatedCenter',
-                    "KLADR4" => 'populatedCenterKladr',
-                    "street" => 'street',
-                    "KLADR5" => 'streetKladr',
-                    "building" => 'building',
-                    "KLADR6" => 'buildingKladr',
                     "flat" => 'flat',
                 ], $address['address']);
-                $pSubject['address:'.$iAddress] = $pAddress;
+                $pSubject['address'] = $pAddress;
             }
             foreach ($attributes['fields']['documents'] as $iDocument => $document) {
                 $pDocument = [
-                    'documentType' => $document['address']['documentType'],  // TODO: справочник
+                    'DocType' => $document['document']['documentType'],  // TODO: справочник
                 ];
                 $this->setValuesByArray($pDocument, [
-                    "series" => 'series',
-                    "number" => 'number',
-                    "issuedBy" => 'issuedBy',
-                    "dateIssue" => 'dateIssue',
-                    "validTo" => 'validTo',
+                    "Serial" => 'series',
+                    "Number" => 'number',
+                    "DocIssuedBy" => 'issuedBy',
+                    "DocDate" => 'dateIssue',
                 ], $document['document']);
-                $pSubject['document:'.$iDocument] = $pDocument;
+                $pSubject['IdentityDocument'][] = $pDocument;
             }
-            $pSubject['phone'] = [
-                "isPrimary" => true,
-                "typePhone" => $subject['fields']['phone']['typePhone'], // TODO: справочник
-                "numberPhone" => $subject['fields']['phone']['typePhone'],
-            ];
-            $data['subjectInfo:'.$iSubject] = $pSubject;
+            $data['TariffParameters']['Agreement']['Insurer']['SubjectList']['Subject'][] = $pSubject;
         }
-        //vehicleInfo
-        $data['vehicleInfo'] = [
-            'vehicleDetails' => [
-                'vehicleReferenceInfo' => [
-                    'vehicleReferenceDetails' => [
-                        'modelID' => $attributes['car']['model'], // TODO: справочник
-                        'engPwrHP' => $attributes['car']['enginePower'],
-                    ],
-                ],
-                'isChangeNumAgg' => false,
-                'countryOfRegistration' => [
-                    'isNoCountryOfRegistration' => false,
-                    'countryOfRegistration' => $attributes['car']['countryOfRegistration']
-                ],
-                'chassis' => [
-                    'isChassisMissing' => true,
-                ],
-                'isKeyless' => false, // TODO: понять будет ли поле или заглушка
-                'isUsedWithTrailer' => $attributes['car']['isUsedWithTrailer'],
-                'kuzovNumber' => [
-                    'isKuzovMissing' => true,
-                ],
-                'mileage' => $attributes['car']['mileage'],
-                'numberOfOwners' => 1, // TODO: понять будет ли поле или заглушка
-                'sourceAcquisition' => $attributes['car']['sourceAcquisition'], // TODO: справочник
-                'vehicleCost' => $attributes['car']['vehicleCost'],
-                'vehicleUsage' => $attributes['car']['vehicleUsage'], // TODO: справочник
-                'vehicleUseRegion' => $attributes['car']['vehicleUseRegion'], // TODO: справочник
-                'VIN' => [
-                    'isVINMissing' => false,
-                    'isIrregularVIN' => $attributes['car']['isIrregularVIN'],
-                    'VIN' => $attributes['car']['vin'],
-                ],
-                'year' => $attributes['car']['year'],
-                'isRightHandDrive' => false, // TODO: понять будет ли поле или заглушка
-                'numberOfKeys' => [
-                    'IsUnknownNumberOfKeys' => true,
-                ],
-            ],
-        ];
+        //Vehicle
         foreach ($attributes['car']['documents'] as $iDocument => $document) {
             $pDocument = [
-                "documentType" => $document['document']['documentType'], // TODO: справочник
-                "documentSeries" => $document['document']['documentSeries'],
-                "documentNumber" => $document['document']['documentNumber'],
-                "documentIssued" => $document['document']['documentIssued'],
+                'DocType' => $document['document']['documentType'],  // TODO: справочник
             ];
-            $data['vehicleInfo']['vehicleDetails']['vehicleDocument:'.$iDocument] = $pDocument;
+            $this->setValuesByArray($pDocument, [
+                "Serial" => 'documentSeries',
+                "Number" => 'documentNumber',
+                "DocDate" => 'documentIssued',
+            ], $document['document']);
+            $data['TariffParameters']['Agreement']['Vehicle']['Document'][] = $pDocument;
         }
-        //OSAGOFQ
-        $data['OSAGOFQ'] = [
-            'effectiveDate' => $attributes['policy']['beginDate'],
-            'isEOSAGO' => true,
-            'insurant' => [
-                'subjectNumber' => $attributes['policy']['insurantId'],
-            ],
-            'owner' => [
-                'subjectNumber' => $attributes['policy']['ownerId'],
-            ],
-            'driversList' => [
-                'isMultidrive' => $attributes['policy']['isMultidrive'],
-            ],
-        ];
+        $this->setValuesByArray($data['TariffParameters']['Agreement']['Vehicle']['DocInspection'], [
+            "Serial" => 'documentSeries',
+            "Number" => 'documentNumber',
+            "DateEnd" => 'documentDateEmd',
+        ], $attributes['car']['docInspection']);
+        //DriverList
         if (!$attributes['policy']['isMultidrive']) {
-            $data['OSAGOFQ']['driversList']['namedList'] = [];
+            $data['TariffParameters']['Agreement']['DriverList'] = [];
             foreach ($attributes['drivers'] as $iDriver => $driver) {
-                $data['OSAGOFQ']['driversList']['namedList']['driver:'.$iDriver] = [
-                    'subjectNumber' => $driver['driver']['driverId'],
+                $pDriver = [
+                    'SbjRef' => $driver['driver']['driverId'],
+                    'DrvDateBeg' => $driver['driver']['drivingLicenseIssueDateOriginal'],
                 ];
+                $sDocument = $this->searchDocumentByType($attributes, $driver['driver']['driverId'], 'driverLicense'); // todo занчение из справочника
+                if ($sDocument) {
+                    $pDriver['DriverLicense'] = [
+                        'DocType' => $sDocument['documentType'],  // TODO: справочник
+                    ];
+                    $this->setValuesByArray($pDriver['DriverLicense'], [
+                        "Serial" => 'series',
+                        "Number" => 'number',
+                        "DocDate" => 'dateIssue',
+                    ], $sDocument);
+                }
+                $data['TariffParameters']['Agreement']['DriverList'][] = $pDriver;
             }
-        } else {
-            $data['OSAGOFQ']['driversList']['namedList'] = "";
         }
         return $data;
+    }
+
+    protected function searchDocumentByType($attributes, $subjectId, $type)
+    {
+        foreach ($attributes['subjects'] as $iSubject => $subject) {
+            if ($subject['id'] != $subjectId) {
+                continue;
+            }
+            foreach ($subject['fields']['documents'] as $iDocument => $document) {
+                if ($document['document']['documentType'] == $type) { // TODO значение из справочника
+                    return $document['document'];
+                }
+            }
+        }
+        return false;
     }
 
 }

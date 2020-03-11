@@ -121,7 +121,8 @@ class CompanyService implements CompanyServiceInterface
             "subjects.*.fields.birthdate" => "required|date|date_format:Y-m-d",
             "subjects.*.fields.email" => "email",
             "subjects.*.fields.gender" => "required|string", // TODO: in справочник
-            "subjects.*.fields.citizenship" => "string", // TODO: in справочник
+            "subjects.*.fields.citizenship" => "required|string", // TODO: in справочник
+            "subjects.*.fields.isResident" => "required|boolean", // TODO: in справочник
             "subjects.*.fields.addresses" => "required|array",
             "subjects.*.fields.addresses.*.address.addressType" => "required|string", // TODO: in справочник
             "subjects.*.fields.addresses.*.address.country" => "required|string", // TODO: in справочник
@@ -134,11 +135,11 @@ class CompanyService implements CompanyServiceInterface
             "subjects.*.fields.addresses.*.address.cityKladr" => "string",
             "subjects.*.fields.addresses.*.address.populatedCenter" => "string",
             "subjects.*.fields.addresses.*.address.populatedCenterKladr" => "string",
-            "subjects.*.fields.addresses.*.address.street" => "string",
-            "subjects.*.fields.addresses.*.address.streetKladr" => "string",
-            "subjects.*.fields.addresses.*.address.building" => "string",
+            "subjects.*.fields.addresses.*.address.street" => "required|string",
+            "subjects.*.fields.addresses.*.address.streetKladr" => "required|string",
+            "subjects.*.fields.addresses.*.address.building" => "required|string",
             "subjects.*.fields.addresses.*.address.buildingKladr" => "string",
-            "subjects.*.fields.addresses.*.address.flat" => "string",
+            "subjects.*.fields.addresses.*.address.flat" => "required|string",
 //            "subjects.*.fields.document" => "array",
             "subjects.*.fields.document.*.documentType" => "required|string", // TODO: in справочник
             "subjects.*.fields.document.*.series" => "string",
@@ -155,6 +156,9 @@ class CompanyService implements CompanyServiceInterface
             "car.enginePower" => "required|integer",
             "car.countryOfRegistration" => "required|string", // TODO: in справочник
             "car.isUsedWithTrailer" => "required|boolean",
+            "car.minWeight" => "integer",
+            "car.maxWeight" => "integer",
+            "car.seats" => "integer",
             "car.mileage" => "required|integer",
             "car.sourceAcquisition" => "required|string", // TODO: in справочник
             "car.vehicleCost" => "required|integer",
@@ -171,6 +175,7 @@ class CompanyService implements CompanyServiceInterface
             "car.documents.*.document.documentIssued" => "required|string", // TODO: in справочник
             'policy' => "required",
             'policy.beginDate' => "required|date|date_format:Y-m-d",
+            'policy.endDate' => "required|date|date_format:Y-m-d",
             'policy.insurantId' => "required|integer",
             'policy.ownerId' => "required|integer",
             'policy.isMultidrive' => "required|boolean",

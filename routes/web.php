@@ -18,14 +18,23 @@ $router->group(
     function () use ($router) {
         $router->group(
             [
-                'prefix' => 'policies',
+                'prefix' => 'api',
             ],
             function () use ($router) {
-                $router->post('/insurance/send', 'InsuranceController@store');
-                $router->post('/insurance/{code}/{method}', 'InsuranceController@index');
+                $router->group(
+                    [
+                        'prefix' => 'policies',
+                    ],
+                    function () use ($router) {
+                        $router->post('/insurance/send', 'InsuranceController@store');
+                        $router->post('/insurance/{code}/{method}', 'InsuranceController@index');
+                        // тут будут остальные контроллеры
+                    }
+                );
                 // тут будут остальные контроллеры
             }
         );
+
 
     }
 );

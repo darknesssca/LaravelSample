@@ -3,15 +3,18 @@
 
 namespace App\Services\Company\Ingosstrah;
 
+use App\Contracts\Company\Ingosstrah\IngosstrahCalculateServiceContract;
+use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahServiceContract;
+use App\Models\IntermediateData;
 use App\Services\Company\CompanyService;
+use Illuminate\Support\Carbon;
 
 class IngosstrahService extends CompanyService implements IngosstrahServiceContract
 {
     protected $apiWsdlUrl;
     protected $apiUser;
     protected $apiPassword;
-    protected $apiProducerCode;
 
     public function __construct()
     {
@@ -23,12 +26,34 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
         }
     }
 
-    protected function setHeader(&$data)
+    public function calculate($company, $attributes, $additionalData = [])
     {
-        $data['Header'] = [
-            'user' => $this->apiUser,
-            'password' => $this->apiPassword,
+        $serviceLogin = app(IngosstrahLoginServiceContract::class);
+        $loginData = $serviceLogin->run($company, $attributes, $additionalData);
+        $attributes['sessionToken'] = $loginData['sessionToken'];
+        $serviceCalculate = app(IngosstrahCalculateServiceContract::class);
+        $data = $serviceCalculate->run($company, $attributes, $additionalData);
+        $tokenData = IntermediateData::getData($attributes['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
+        $tokenData[$company->code] = [
+            'calculated' => true,
         ];
-        $data['producerCode'] = $this->apiProducerCode;
+        IntermediateData::where('token', $attributes['token'])->update([
+            'data' => $tokenData,
+        ]);
+        return [
+            'premium' => $data['premium'],
+        ];
     }
+
+    protected function formatDateTime($date)
+    {
+        $date = Carbon::createFromFormat('Y-m-d', $date);
+        return $date->format('Y-m-d\TH:i:s');
+    }
+
+    protected function transformBoolean($boolean)
+    {
+        return $boolean ? 'Y' : 'N';
+    }
+
 }

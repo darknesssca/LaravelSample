@@ -5,6 +5,7 @@ namespace App\Services\Company\Tinkoff;
 
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
+use App\Models\IntermediateData;
 use App\Services\Company\CompanyService;
 use Illuminate\Support\Carbon;
 
@@ -29,7 +30,17 @@ class TinkoffService extends CompanyService implements TinkoffServiceContract
     public function calculate($company, $attributes, $additionalData = [])
     {
         $service = app(TinkoffCalculateServiceContract::class);
-        return $service->run($company, $attributes, $additionalData);
+        $data = $service->run($company, $attributes, $additionalData);
+        $tokenData = IntermediateData::getData($attributes['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
+        $tokenData[$company->code] = [
+            'setNumber' => $data['setNumber'],
+        ];
+        IntermediateData::where('token', $attributes['token'])->update([
+            'data' => $tokenData,
+        ]);
+        return [
+            'premium' => $data['premium'],
+        ];
     }
 
     protected function setHeader(&$data)
