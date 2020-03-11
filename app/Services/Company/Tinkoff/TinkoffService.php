@@ -3,8 +3,10 @@
 
 namespace App\Services\Company\Tinkoff;
 
+use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
 use App\Services\Company\CompanyService;
+use Illuminate\Support\Carbon;
 
 class TinkoffService extends CompanyService implements TinkoffServiceContract
 {
@@ -24,6 +26,12 @@ class TinkoffService extends CompanyService implements TinkoffServiceContract
         }
     }
 
+    public function calculate($company, $attributes, $additionalData = [])
+    {
+        $service = app(TinkoffCalculateServiceContract::class);
+        return $service->run($company, $attributes, $additionalData);
+    }
+
     protected function setHeader(&$data)
     {
         $data['Header'] = [
@@ -31,5 +39,11 @@ class TinkoffService extends CompanyService implements TinkoffServiceContract
             'password' => $this->apiPassword,
         ];
         $data['producerCode'] = $this->apiProducerCode;
+    }
+
+    protected function formatDateTimeZone($date)
+    {
+        $date = Carbon::createFromFormat('Y-m-d', $date);
+        return $date->format('Y-m-d\TH:i:sP');
     }
 }

@@ -113,21 +113,20 @@ class CompanyService implements CompanyServiceInterface
     public function validationRulesForm(): array
     {
         return [
-            'token' => "required|string",
             'subjects' => "required|array",
             "subjects.*.id" => "required|integer",
             "subjects.*.fields.lastName" => "required|string",
             "subjects.*.fields.firstName" => "required|string",
             "subjects.*.fields.middleName" => "string",
-            "subjects.*.fields.birthdate" => "required|date|format:Y-m-d",
+            "subjects.*.fields.birthdate" => "required|date|date_format:Y-m-d",
             "subjects.*.fields.email" => "email",
-            "subjects.*.fields.gender" => "required|string|in",
-            "subjects.*.fields.citizenship" => "string|in",
+            "subjects.*.fields.gender" => "required|string", // TODO: in справочник
+            "subjects.*.fields.citizenship" => "string", // TODO: in справочник
             "subjects.*.fields.addresses" => "required|array",
-            "subjects.*.fields.addresses.*.address.addressType" => "required|string|in",
-            "subjects.*.fields.addresses.*.address.country" => "required|string|in",
+            "subjects.*.fields.addresses.*.address.addressType" => "required|string", // TODO: in справочник
+            "subjects.*.fields.addresses.*.address.country" => "required|string", // TODO: in справочник
             "subjects.*.fields.addresses.*.address.postCode" => "string",
-            "subjects.*.fields.addresses.*.address.region" => "required|string|in",
+            "subjects.*.fields.addresses.*.address.region" => "required|string", // TODO: in справочник
             "subjects.*.fields.addresses.*.address.regionKladr" => "required|string",
             "subjects.*.fields.addresses.*.address.district" => "string",
             "subjects.*.fields.addresses.*.address.districtKladr" => "string",
@@ -140,13 +139,13 @@ class CompanyService implements CompanyServiceInterface
             "subjects.*.fields.addresses.*.address.building" => "string",
             "subjects.*.fields.addresses.*.address.buildingKladr" => "string",
             "subjects.*.fields.addresses.*.address.flat" => "string",
-            "subjects.*.fields.document" => "required|array",
+//            "subjects.*.fields.document" => "array",
             "subjects.*.fields.document.*.documentType" => "required|string", // TODO: in справочник
             "subjects.*.fields.document.*.series" => "string",
             "subjects.*.fields.document.*.number" => "required|string",
             "subjects.*.fields.document.*.issuedBy" => "required|string",
-            "subjects.*.fields.document.*.dateIssue" => "required|date|format:Y-m-d",
-            "subjects.*.fields.document.*.validTo" => "date|format:Y-m-d",
+            "subjects.*.fields.document.*.dateIssue" => "required|date|date_format:Y-m-d",
+            "subjects.*.fields.document.*.validTo" => "date|date_format:Y-m-d",
             "subjects.*.fields.document.*.subdivisionCode" => "string",
             "subjects.*.fields.phone" => "required",
             "subjects.*.fields.phone.numberPhone" => "required|string",
@@ -171,13 +170,14 @@ class CompanyService implements CompanyServiceInterface
             "car.documents.*.document.documentNumber" => "required|string", // TODO: in справочник
             "car.documents.*.document.documentIssued" => "required|string", // TODO: in справочник
             'policy' => "required",
-            'policy.beginDate' => "required|date|format:Y-m-d",
+            'policy.beginDate' => "required|date|date_format:Y-m-d",
             'policy.insurantId' => "required|integer",
             'policy.ownerId' => "required|integer",
             'policy.isMultidrive' => "required|boolean",
             'drivers' => "required|array",
             'drivers.*.driver' => "required",
             'drivers.*.driver.driverId' => "integer",
+            'drivers.*.driver.drivingLicenseIssueDateOriginal' => "date|date_format:Y-m-d",
         ];
     }
 
@@ -189,7 +189,7 @@ class CompanyService implements CompanyServiceInterface
     public function validationRulesProcess(): array
     {
         return [
-            'token' => "required|string",
+            'token' => "required|string|min:32|max:32",
         ];
     }
 
@@ -209,7 +209,7 @@ class CompanyService implements CompanyServiceInterface
     {
         foreach ($dependencies as $targetName => $sourceName) {
             if (isset($source[$sourceName]) && $source[$sourceName]) {
-                if (typeof($source[$sourceName]) == 'array') {
+                if (gettype($source[$sourceName]) == 'array') {
                     continue;
                 }
                 $target[$targetName] = $source[$sourceName];

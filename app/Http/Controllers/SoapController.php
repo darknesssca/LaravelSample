@@ -2,47 +2,35 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\InsuranceCompany;
-use Artisaninweb\SoapWrapper\SoapWrapper;
+use SoapClient;
+use SoapFault;
 
 class SoapController
 {
-    /**
-     * @var SoapWrapper
-     */
-    protected $soapWrapper;
-    protected $wsdlUrl = '';
-
-    /**
-     * SoapController constructor.
-     *
-     * @param SoapWrapper $soapWrapper
-     */
-    public function __construct(SoapWrapper $soapWrapper)
+    public static function requestBySoap($url, $method, $data = [])
     {
-        $this->soapWrapper = $soapWrapper;
-    }
-
-    public function configure($wsdlUrl)
-    {
-        $this->wsdlUrl = $wsdlUrl;
-    }
-
-    public function requestBySoap($company, $method, $data = [])
-    {
-        $name = ucfirst(strtolower($company->code));
-        $code = $company->code;
-        $request = 'App\\Soap\\Request\\'.$code.'\\'.$method;
-        $response = 'App\\Soap\\Request\\'.$code.'\\'.$method.'Response';
-        $this->soapWrapper->add($name, function ($service) use ($request, $response) {
-            $service
-                ->wsdl($this->wsdlUrl)
-                ->trace(true)
-                ->classmap([
-                    $request,
-                    $response,
-                ]);
-        });
-        return $this->soapWrapper->call($name . '.' . $method, $data);
+        try {
+            $opts = [
+                'trace'=>1,
+                'stream_context' => stream_context_create([
+                    'ssl' => [
+                        'verify_peer' => false,
+                        'verify_peer_name' => false,
+                        'allow_self_signed' => true
+                    ]
+                ])];
+            $client = new SoapClient($url, $opts);
+            return $client->$method($data);
+        }catch(SoapFault $fault){
+            return [
+                'fault' => true,
+                'message' => $fault->getMessage(),
+            ];
+        } catch (\Exception $exception) {
+            return [
+                'fault' => true,
+                'message' => $exception->getMessage(),
+            ];
+        }
     }
 }

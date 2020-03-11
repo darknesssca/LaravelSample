@@ -29,12 +29,9 @@ class InsuranceController extends Controller
             return $this->error('Компания не найдена', 404);
         }
         $method = strtolower((string)$method);
-        if (!method_exists($this, $method)) {
-            return $this->error('Метод не найден', 404);
-        }
         try
         {
-            return $this->$method($company, $request);
+            return response()->json($this->runService($company, $request, $method, $request), 200);
         }
         catch (ValidationException $exception)
         {
@@ -80,10 +77,6 @@ class InsuranceController extends Controller
         }
     }
 
-    public function get(Request $request) {
-        return $request->token ? $request->token : 'fuck of';
-    }
-
     private function calculate($company, $request)
     {
         //todo переделать, вынести логику в базовый сервис
@@ -105,24 +98,29 @@ class InsuranceController extends Controller
                 'policeId' => $data['policyId'],
             ];
         }
-        //$hash = $this->saveIntermediateData($methodData);
-        //return ['hash' => $hash];
     }
 
     private function runService($company, $request, $serviceMethod, $additionalData = [])
     {
-        $controller = $this->getCompanyController($company, $serviceMethod);
-//        $validatedFields = $this->validate(
-//            $request,
-//            $controller->validationRulesProcess(),
-//            $controller->validationMessagesProcess()
-//        );
-        if (!$request->token) {
-            die();
+        $controller = $this->getCompanyController($company);
+        if (!method_exists($controller, $serviceMethod)) {
+            return $this->error('Метод не найден', 404); // todo вынести в отдельные эксепшены
         }
-        $attributes = IntermediateData::getData($validatedFields['token']);
+        $validatedFields = $this->validate(
+            $request,
+            $controller->validationRulesProcess(),
+            $controller->validationMessagesProcess()
+        );
+        $tokenData = IntermediateData::getData($validatedFields['token']);
+        if (!$tokenData) {
+            throw new \Exception('token not valid'); // todo вынести в отдельные эксепшены
+        }if (!isset($tokenData['form']) || !$tokenData['form']) {
+            throw new \Exception('token have no data'); // todo вынести в отдельные эксепшены
+        }
+        $attributes = $tokenData['form'];
         $attributes['token'] = $validatedFields['token'];
-        return $this->useCompanyController($controller, $company, $attributes, $additionalData);
+        $response = $controller->$serviceMethod($company, $attributes, $additionalData);
+        return $response;
     }
 
     public function checkCompany($code)
@@ -140,16 +138,11 @@ class InsuranceController extends Controller
     }
 
 
-    protected function getCompanyController($company, $method)
+    protected function getCompanyController($company)
     {
         $company = ucfirst(strtolower($company->code));
-        $method = ucfirst(strtolower($method));
-        $contract = 'App\\Contracts\\Company\\'.$company.'\\'.$company.$method.'ServiceContract';
+        //$method = ucfirst(strtolower($method));
+        $contract = 'App\\Contracts\\Company\\'.$company.'\\'.$company.'ServiceContract';
         return app($contract);
-    }
-
-    protected function useCompanyController($controller, $company, $attributes, $additionalData)
-    {
-        return $controller->run($company, $attributes, $additionalData);
     }
 }

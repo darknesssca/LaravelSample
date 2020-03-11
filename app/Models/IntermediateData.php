@@ -37,9 +37,10 @@ class IntermediateData extends Model
     public static function getData($token)
     {
         $data = self::find($token);
-        if (!$data || !isset($data['form'])) {
+        if (!$data || !isset($data['data'])) {
             throw new \Exception('not found data by token');
         }
-        return $data;
+        $array = \GuzzleHttp\json_decode($data['data'], true);
+        return $array;
     }
 }

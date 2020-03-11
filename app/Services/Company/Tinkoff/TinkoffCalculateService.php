@@ -7,6 +7,8 @@ namespace App\Services\Company\Tinkoff;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Http\Controllers\SoapController;
 use App\Models\InsuranceCompany;
+use App\Models\IntermediateData;
+use SoapClient;
 
 class TinkoffCalculateService extends TinkoffService implements TinkoffCalculateServiceContract
 {
@@ -20,25 +22,39 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
 
     public function run($company, $attributes, $additionalFields = []): array
     {
-        $data = $this->sendCalculate($company, $attributes);
+        $data = [
+            'premium' => $this->sendCalculate($company, $attributes),
+        ];
         return $data;
     }
 
     private function sendCalculate($company, $attributes): array
     {
-        $method = $this->apiMethods[__FUNCTION__];
         $data = $this->prepareData($attributes);
-        $soapRequest = new SoapController();
-        $soapRequest->configure($this->apiWsdlUrl);
-        $response = $soapRequest->requestBySoap($company, 'calculate', $data);
-        dd($response); // TODO
+        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'calcPartnerFQuote', $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
-        if (!$response['result']) {
+        if ($response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
-        return $response['data'];
+        if (isset($response->validInfo->status) && $response->validInfo->status == "ERROR") {
+            throw new \Exception('api return validation error code: '.
+                (isset($response->validInfo->code) ? $response->validInfo->code : 'nocode').
+                ' | message: '.
+                (isset($response->validInfo->description) ? $response->validInfo->description : 'nocode')
+            );
+        }
+        if (!isset($response->OSAGOFQ->totalPremium)) {
+            throw new \Exception('api not return premium');
+        }
+        $tokenData = IntermediateData::getData($attributes['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
+        $tokenData[$company->code] = [
+            'setNumber' => $response->setNumber,
+        ];
+        return [
+            'premium' => $response->OSAGOFQ->totalPremium,
+        ];
     }
 
     public function prepareData($attributes)
@@ -59,7 +75,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     "citizenship" => $subject['fields']['citizenship'], // TODO: справочник
                 ],
             ];
-            foreach ($attributes['fields']['addresses'] as $iAddress => $address) {
+            foreach ($subject['fields']['addresses'] as $iAddress => $address) {
                 $pAddress = [
                     'addressType' => $address['address']['addressType'],  // TODO: справочник
                     'country' => $address['address']['country'],  // TODO: справочник
@@ -80,11 +96,12 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     "KLADR6" => 'buildingKladr',
                     "flat" => 'flat',
                 ], $address['address']);
-                $pSubject['address:'.$iAddress] = $pAddress;
+//                $pSubject[$iAddress.':address'] = $pAddress;
+                $pSubject['subjectDetails']['address'][] = $pAddress;
             }
-            foreach ($attributes['fields']['documents'] as $iDocument => $document) {
+            foreach ($subject['fields']['documents'] as $iDocument => $document) {
                 $pDocument = [
-                    'documentType' => $document['address']['documentType'],  // TODO: справочник
+                    'documentType' => $document['document']['documentType'],  // TODO: справочник
                 ];
                 $this->setValuesByArray($pDocument, [
                     "series" => 'series',
@@ -93,14 +110,16 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     "dateIssue" => 'dateIssue',
                     "validTo" => 'validTo',
                 ], $document['document']);
-                $pSubject['document:'.$iDocument] = $pDocument;
+//                $pSubject[$iDocument.':document'] = $pDocument;
+                $pSubject['subjectDetails']['document'][] = $pDocument;
             }
-            $pSubject['phone'] = [
+            $pSubject['subjectDetails']['phone'] = [
                 "isPrimary" => true,
-                "typePhone" => $subject['fields']['phone']['typePhone'], // TODO: справочник
-                "numberPhone" => $subject['fields']['phone']['typePhone'],
+                "typePhone" => 'mobile',//$subject['fields']['phone']['typePhone'], // TODO: справочник
+                "numberPhone" => $subject['fields']['phone']['numberPhone'],
             ];
-            $data['subjectInfo:'.$iSubject] = $pSubject;
+            //$data[$iSubject.':subjectInfo'] = $pSubject;
+            $data['subjectInfo'][] = $pSubject;
         }
         //vehicleInfo
         $data['vehicleInfo'] = [
@@ -149,16 +168,17 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 "documentNumber" => $document['document']['documentNumber'],
                 "documentIssued" => $document['document']['documentIssued'],
             ];
-            $data['vehicleInfo']['vehicleDetails']['vehicleDocument:'.$iDocument] = $pDocument;
+//            $data['vehicleInfo']['vehicleDetails'][$iDocument.':vehicleDocument'] = $pDocument;
+            $data['vehicleInfo']['vehicleDetails']['vehicleDocument'][] = $pDocument;
         }
         //OSAGOFQ
         $data['OSAGOFQ'] = [
-            'effectiveDate' => $attributes['policy']['beginDate'],
+            'effectiveDate' => $this->formatDateTimeZone($attributes['policy']['beginDate']),
             'isEOSAGO' => true,
             'insurant' => [
                 'subjectNumber' => $attributes['policy']['insurantId'],
             ],
-            'owner' => [
+            'carOwner' => [
                 'subjectNumber' => $attributes['policy']['ownerId'],
             ],
             'driversList' => [
@@ -168,8 +188,10 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
         if (!$attributes['policy']['isMultidrive']) {
             $data['OSAGOFQ']['driversList']['namedList'] = [];
             foreach ($attributes['drivers'] as $iDriver => $driver) {
-                $data['OSAGOFQ']['driversList']['namedList']['driver:'.$iDriver] = [
+//                $data['OSAGOFQ']['driversList']['namedList'][$iDriver.':driver'] = [
+                $data['OSAGOFQ']['driversList']['namedList']['driver'][] = [
                     'subjectNumber' => $driver['driver']['driverId'],
+                    'drivingLicenseIssueDateOriginal' => $driver['driver']['drivingLicenseIssueDateOriginal'],
                 ];
             }
         } else {
