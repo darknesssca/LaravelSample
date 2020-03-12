@@ -45,12 +45,6 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
         ];
     }
 
-    protected function formatDateTime($date)
-    {
-        $date = Carbon::createFromFormat('Y-m-d', $date);
-        return $date->format('Y-m-d\TH:i:s');
-    }
-
     protected function transformBoolean($boolean)
     {
         return $boolean ? 'Y' : 'N';

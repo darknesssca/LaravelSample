@@ -52,9 +52,8 @@ class TinkoffService extends CompanyService implements TinkoffServiceContract
         $data['producerCode'] = $this->apiProducerCode;
     }
 
-    protected function formatDateTimeZone($date)
+    protected function transformBoolean($boolean)
     {
-        $date = Carbon::createFromFormat('Y-m-d', $date);
-        return $date->format('Y-m-d\TH:i:sP');
+        return (bool)$boolean;
     }
 }

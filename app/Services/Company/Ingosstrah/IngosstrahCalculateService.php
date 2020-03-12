@@ -29,7 +29,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
         if (!$response) {
             throw new \Exception('api not return answer');
         }
-        if ($response['fault']) {
+        if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
         if (isset($response->ErrorCode) && $response->ErrorCode) {
@@ -135,7 +135,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                 $this->setValuesByArray($pAddress, [
                     "flat" => 'flat',
                 ], $address['address']);
-                $pSubject['address'] = $pAddress;
+                $pSubject['_']['address'] = $pAddress;
             }
             foreach ($attributes['fields']['documents'] as $iDocument => $document) {
                 $pDocument = [
@@ -147,7 +147,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                     "DocIssuedBy" => 'issuedBy',
                     "DocDate" => 'dateIssue',
                 ], $document['document']);
-                $pSubject['IdentityDocument'][] = $pDocument;
+                $pSubject['_']['IdentityDocument'][] = $pDocument;
             }
             $data['TariffParameters']['Agreement']['Insurer']['SubjectList']['Subject'][] = $pSubject;
         }
@@ -176,7 +176,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                     'SbjRef' => $driver['driver']['driverId'],
                     'DrvDateBeg' => $driver['driver']['drivingLicenseIssueDateOriginal'],
                 ];
-                $sDocument = $this->searchDocumentByType($attributes, $driver['driver']['driverId'], 'driverLicense'); // todo занчение из справочника
+                $sDocument = $this->searchDocumentByTypeAndId($attributes, $driver['driver']['driverId'], 'driverLicense'); // todo занчение из справочника
                 if ($sDocument) {
                     $pDriver['DriverLicense'] = [
                         'DocType' => $sDocument['documentType'],  // TODO: справочник
@@ -191,21 +191,6 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
             }
         }
         return $data;
-    }
-
-    protected function searchDocumentByType($attributes, $subjectId, $type)
-    {
-        foreach ($attributes['subjects'] as $iSubject => $subject) {
-            if ($subject['id'] != $subjectId) {
-                continue;
-            }
-            foreach ($subject['fields']['documents'] as $iDocument => $document) {
-                if ($document['document']['documentType'] == $type) { // TODO значение из справочника
-                    return $document['document'];
-                }
-            }
-        }
-        return false;
     }
 
 }

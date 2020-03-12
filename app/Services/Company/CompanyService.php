@@ -5,6 +5,7 @@ namespace App\Services\Company;
 
 use App\Models\InsuranceCompany;
 use GuzzleHttp\Client;
+use Illuminate\Support\Carbon;
 
 class CompanyService implements CompanyServiceInterface
 {
@@ -119,6 +120,7 @@ class CompanyService implements CompanyServiceInterface
             "subjects.*.fields.firstName" => "required|string",
             "subjects.*.fields.middleName" => "string",
             "subjects.*.fields.birthdate" => "required|date|date_format:Y-m-d",
+            "subjects.*.fields.birthPlace" => "required|string",
             "subjects.*.fields.email" => "email",
             "subjects.*.fields.gender" => "required|string", // TODO: in справочник
             "subjects.*.fields.citizenship" => "required|string", // TODO: in справочник
@@ -129,7 +131,7 @@ class CompanyService implements CompanyServiceInterface
             "subjects.*.fields.addresses.*.address.postCode" => "string",
             "subjects.*.fields.addresses.*.address.region" => "required|string", // TODO: in справочник
             "subjects.*.fields.addresses.*.address.regionKladr" => "required|string",
-            "subjects.*.fields.addresses.*.address.district" => "string",
+            "subjects.*.fields.addresses.*.address.district" => "required|string",
             "subjects.*.fields.addresses.*.address.districtKladr" => "string",
             "subjects.*.fields.addresses.*.address.city" => "string",
             "subjects.*.fields.addresses.*.address.cityKladr" => "string",
@@ -221,4 +223,71 @@ class CompanyService implements CompanyServiceInterface
             }
         }
     }
+
+    protected function formatDateTimeZone($date)
+    {
+        $date = Carbon::createFromFormat('Y-m-d', $date);
+        return $date->format('Y-m-d\TH:i:sP');
+    }
+
+    protected function formatDateToRuFormat($date)
+    {
+        $date = Carbon::createFromFormat('Y-m-d', $date);
+        return $date->format('d-m-Y');
+    }
+
+    protected function formatDateTime($date)
+    {
+        $date = Carbon::createFromFormat('Y-m-d', $date);
+        return $date->format('Y-m-d\TH:i:s');
+    }
+
+    protected function searchDocumentByTypeAndId($attributes, $subjectId, $type)
+    {
+        foreach ($attributes['subjects'] as $iSubject => $subject) {
+            if ($subject['id'] != $subjectId) {
+                continue;
+            }
+            foreach ($subject['fields']['documents'] as $iDocument => $document) {
+                if ($document['document']['documentType'] == $type) { // TODO значение из справочника
+                    return $document['document'];
+                }
+            }
+        }
+        return false;
+    }
+
+    protected function searchDocumentByType($subject, $type)
+    {
+        foreach ($subject['documents'] as $iDocument => $document) {
+            if ($document['document']['documentType'] == $type) { // TODO значение из справочника
+                return $document['document'];
+            }
+        }
+        return false;
+    }
+
+    protected function searchSubjectById($attributes, $subjectId)
+    {
+        foreach ($attributes['subjects'] as $iSubject => $subject) {
+            if ($subject['id'] == $subjectId) {
+                return $subject['fields'];
+            }
+        }
+        return false;
+    }
+
+    protected function searchDrivers($attributes)
+    {
+        $driversList = [];
+        foreach ($attributes['drivers'] as $driver) {
+            foreach ($attributes['subjects'] as $subject) {
+                if ($subject['id'] == $driver['driverId']) {
+                    $driversList[$subject['id']] = $subject['fields'];
+                }
+            }
+        }
+        return $driversList;
+    }
+
 }

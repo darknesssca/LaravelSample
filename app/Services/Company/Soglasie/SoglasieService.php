@@ -3,6 +3,8 @@
 
 namespace App\Services\Company\Soglasie;
 
+use App\Contracts\Company\Soglasie\SoglasieCalculateServiceContract;
+use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Models\IntermediateData;
@@ -14,23 +16,36 @@ class SoglasieService extends CompanyService implements SoglasieServiceContract
     protected $apiWsdlUrl;
     protected $apiUser;
     protected $apiPassword;
-    protected $apiProducerCode;
+    protected $apiSubUser;
+    protected $apiSubPassword;
+    protected $apiIsTest;
+
+    // wsdl url прописывается в дочерних классах
 
     public function __construct()
     {
-        $this->apiWsdlUrl = config('api_sk.tinkoff.wsdlUrl');
-        $this->apiUser = config('api_sk.tinkoff.user');
-        $this->apiPassword = config('api_sk.tinkoff.password');
-        $this->apiProducerCode = config('api_sk.tinkoff.producerCode');
-        if (!($this->apiWsdlUrl && $this->apiUser && $this->apiPassword && $this->apiProducerCode)) {
-            throw new \Exception('tinkoff api is not configured');
+        $this->apiUser = config('api_sk.soglasie.user');
+        $this->apiPassword = config('api_sk.soglasie.password');
+        $this->apiSubUser = config('api_sk.soglasie.password');
+        $this->apiSubPassword = config('api_sk.soglasie.password');
+        $this->apiIsTest = config('api_sk.soglasie.isTest');
+        if (!($this->apiWsdlUrl && $this->apiUser && $this->apiPassword && $this->apiSubUser && $this->apiSubPassword)) {
+            throw new \Exception('soglasie api is not configured');
         }
     }
 
     public function calculate($company, $attributes, $additionalData = [])
     {
-//        $service = app(TinkoffCalculateServiceContract::class);
-//        $data = $service->run($company, $attributes, $additionalData);
+        $serviceKbm = app(SoglasieKbmServiceContract::class);
+        $dataKbm = $serviceKbm->run($company, $attributes, $additionalData);
+        $serviceKbm = app(SoglasieKbmServiceContract::class);
+        $dataScoring = $serviceKbm->run($company, $attributes, $additionalData);
+        $attributes['serviceData'] = [
+            'kbmId' => $serviceKbm['idKbm'],
+            'scoringId' => $dataScoring['scoringId'],
+        ];
+        $serviceKbm = app(SoglasieCalculateServiceContract::class);
+        $dataCalculate = $serviceKbm->run($company, $attributes, $additionalData);
 //        $tokenData = IntermediateData::getData($attributes['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
 //        $tokenData[$company->code] = [
 //            'setNumber' => $data['setNumber'],
@@ -41,6 +56,16 @@ class SoglasieService extends CompanyService implements SoglasieServiceContract
 //        return [
 //            'premium' => $data['premium'],
 //        ];
+    }
+
+    protected function transformBoolean($boolean)
+    {
+        return (bool)$boolean;
+    }
+
+    protected function transformBooleanToInteger($boolean)
+    {
+        return (int)$boolean;
     }
 
 }

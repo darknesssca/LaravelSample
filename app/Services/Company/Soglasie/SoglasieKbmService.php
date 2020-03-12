@@ -15,6 +15,12 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
     private $catalogTypeOfDocument = []; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
     private $catalogCatCategory = ["A", "B"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
 
+    public function __construct()
+    {
+        $this->apiWsdlUrl = config('api_sk.soglasie.kbmWsdlUrl');
+        parent::__construct();
+    }
+
     public function run($company, $attributes, $additionalFields = []): array
     {
         return $this->sendKbm($company, $attributes);
@@ -22,29 +28,88 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
 
     private function sendKbm($company, $attributes): array
     {
-        $data = $this->prepareData();
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'Login', $data);
+        $data = $this->prepareData($attributes);
+        $headers = $this->getHeaders();
+        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'Login', $data, $headers);
         dd($response);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
-        if ($response['fault']) {
+        if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
-        if (!isset($response->SessionToken)) {
-            throw new \Exception('api not return SessionToken');
+        if (!isset($response->response->ErrorList->ErrorInfo->Code) || ($response->response->ErrorList->ErrorInfo->Code != 3)) { // согласно приведенному примеру 3 является кодом успешного ответа
+            throw new \Exception('api not return error Code: '.
+                isset($response->response->ErrorList->ErrorInfo->Code) ? $response->response->ErrorList->ErrorInfo->Code : 'no code | message: '.
+                isset($response->response->ErrorList->ErrorInfo->Message) ? $response->response->ErrorList->ErrorInfo->Message : 'no message');
+        }
+        if (!isset($response->response->IdRequestCalc) || !$response->response->CalcResponseValue->IdRequestCalc) {
+            throw new \Exception('api not return IdRequestCalc');
         }
         return [
-            'sessionToken' => $response->SessionToken,
+            'kbmId' => $response->response->CalcResponseValue->IdRequestCalc,
         ];
     }
 
-    public function prepareData()
+    protected function getHeaders()
+    {
+        return [
+            'Authorization' => base64_encode($this->apiUser . "::" . $this->apiPassword),
+        ];
+    }
+
+    public function prepareData($attributes)
     {
         $data = [
-            'User' => $this->apiUser,
-            'Password' => $this->apiPassword,
+            'request' => [
+                'CalcRequestValue' => [
+                    'CalcKBMRequest' => [
+                        'CarIdent' => [
+                            'VIN' => $attributes['car']['vin'],
+                        ],
+                        'DriversRestriction' => $this->transformBoolean($attributes['policy']['isMultidrive']),
+                        'DateKBM' => $this->formatDateTime($attributes['policy']['beginDate']),
+                        'PhysicalPersons' => [
+                            'PhysicalPerson' => [],
+                        ],
+                    ],
+                ],
+            ],
         ];
+        //PhysicalPerson
+        foreach ($attributes['subjects'] as $iSubject => $subject) {
+            $pSubject = [];
+            foreach ($attributes['fields']['documents'] as $iDocument => $document) {
+                $pDocument = [];
+                if ($document['document']['documentType'] != 'driverLicense') {
+                    $pDocument['DocPerson'] = $document['document']['documentType'];  // TODO: справочник
+                }
+                $this->setValuesByArray($pDocument, [
+                    "Serial" => 'series',
+                    "Number" => 'number',
+                ], $document['document']);
+                $targetName = '';
+                switch ($document['document']['documentType']) {
+                    case 'driverLicense':
+                        $targetName = 'DriverDocument';
+                        break;
+                    case 'passport':
+                        $targetName = 'PersonDocument';
+                        break;
+                    default:
+                        $targetName = 'PersonDocumentAdd';
+                        break;
+                }
+                $pSubject[$targetName] = $pDocument;
+                $pSubject['PersonNameBirthHash'] = '### '.
+                    $subject['fields']['lastName'] . '|'.
+                    $subject['fields']['firstName'] . '|'.
+                    (isset($subject['fields']['middleName']) ? $subject['fields']['middleName'] : '') . '|' .
+                    $this->formatDateToRuFormat($subject['fields']['birthdate']);
+            }
+            $data['request']['CalcRequestValue']['CalcKBMRequest']['PhysicalPersons']['PhysicalPerson'][] = $pSubject;
+        }
+        return $data;
     }
 
 }

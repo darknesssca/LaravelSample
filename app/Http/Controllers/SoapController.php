@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use SoapClient;
 use SoapFault;
+use SoapHeader;
 
 class SoapController
 {
-    public static function requestBySoap($url, $method, $data = [])
+    public static function requestBySoap($url, $method, $data = [], $headers = [])
     {
         try {
             $opts = [
@@ -20,6 +21,12 @@ class SoapController
                     ]
                 ])];
             $client = new SoapClient($url, $opts);
+            if ($headers && count($headers)) {
+                foreach ($headers as $header) {
+                    $h = new SoapHeader('http://schemas.xmlsoap.org/soap/envelope/', $header['name'], $header['value']);
+                    $client->__setSoapHeaders($h);
+                }
+            }
             return $client->$method($data);
         }catch(SoapFault $fault){
             return [

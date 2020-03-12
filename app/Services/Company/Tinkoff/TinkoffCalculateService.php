@@ -32,7 +32,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
         if (!$response) {
             throw new \Exception('api not return answer');
         }
-        if ($response['fault']) {
+        if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
         if (isset($response->validInfo->status) && $response->validInfo->status == "ERROR") {
@@ -135,7 +135,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     'isChassisMissing' => true,
                 ],
                 'isKeyless' => false, // TODO: понять будет ли поле или заглушка
-                'isUsedWithTrailer' => $attributes['car']['isUsedWithTrailer'],
+                'isUsedWithTrailer' => $this->transformBoolean($attributes['car']['isUsedWithTrailer']),
                 'kuzovNumber' => [
                     'isKuzovMissing' => true,
                 ],
@@ -147,7 +147,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 'vehicleUseRegion' => $attributes['car']['vehicleUseRegion'], // TODO: справочник
                 'VIN' => [
                     'isVINMissing' => false,
-                    'isIrregularVIN' => $attributes['car']['isIrregularVIN'],
+                    'isIrregularVIN' => $this->transformBoolean($attributes['car']['isIrregularVIN']),
                     'VIN' => $attributes['car']['vin'],
                 ],
                 'year' => $attributes['car']['year'],
@@ -178,7 +178,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 'subjectNumber' => $attributes['policy']['ownerId'],
             ],
             'driversList' => [
-                'isMultidrive' => $attributes['policy']['isMultidrive'],
+                'isMultidrive' => $this->transformBoolean($attributes['policy']['isMultidrive']),
             ],
         ];
         if (!$attributes['policy']['isMultidrive']) {
