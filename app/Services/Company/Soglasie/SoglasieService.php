@@ -5,6 +5,7 @@ namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieCalculateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
+use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Models\IntermediateData;
@@ -26,36 +27,49 @@ class SoglasieService extends CompanyService implements SoglasieServiceContract
     {
         $this->apiUser = config('api_sk.soglasie.user');
         $this->apiPassword = config('api_sk.soglasie.password');
-        $this->apiSubUser = config('api_sk.soglasie.password');
-        $this->apiSubPassword = config('api_sk.soglasie.password');
+        $this->apiSubUser = config('api_sk.soglasie.subUser');
+        $this->apiSubPassword = config('api_sk.soglasie.subPassword');
         $this->apiIsTest = config('api_sk.soglasie.isTest');
-        if (!($this->apiWsdlUrl && $this->apiUser && $this->apiPassword && $this->apiSubUser && $this->apiSubPassword)) {
+        if (!($this->apiUser && $this->apiPassword && $this->apiSubUser && $this->apiSubPassword)) {
             throw new \Exception('soglasie api is not configured');
         }
     }
 
     public function calculate($company, $attributes, $additionalData = [])
     {
-        $serviceKbm = app(SoglasieKbmServiceContract::class);
-        $dataKbm = $serviceKbm->run($company, $attributes, $additionalData);
-        $serviceKbm = app(SoglasieKbmServiceContract::class);
-        $dataScoring = $serviceKbm->run($company, $attributes, $additionalData);
+//        $serviceKbm = app(SoglasieKbmServiceContract::class);
+//        $dataKbm = $serviceKbm->run($company, $attributes, $additionalData);
+        $serviceScoring = app(SoglasieScoringServiceContract::class);
+        $dataScoring = $serviceScoring->run($company, $attributes, $additionalData);
         $attributes['serviceData'] = [
-            'kbmId' => $serviceKbm['idKbm'],
+            //'kbmId' => $dataKbm['idKbm'],
             'scoringId' => $dataScoring['scoringId'],
         ];
         $serviceKbm = app(SoglasieCalculateServiceContract::class);
         $dataCalculate = $serviceKbm->run($company, $attributes, $additionalData);
-//        $tokenData = IntermediateData::getData($attributes['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
-//        $tokenData[$company->code] = [
-//            'setNumber' => $data['setNumber'],
-//        ];
-//        IntermediateData::where('token', $attributes['token'])->update([
-//            'data' => $tokenData,
-//        ]);
-//        return [
-//            'premium' => $data['premium'],
-//        ];
+        $tokenData = IntermediateData::getData($attributes['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
+        $tokenData[$company->code] = [
+            'scoringId' => $dataScoring['scoringId'],
+        ];
+        IntermediateData::where('token', $attributes['token'])->update([
+            'data' => $tokenData,
+        ]);
+        return [
+            'premium' => $dataCalculate['premium'],
+        ];
+    }
+
+    protected function getHeaders()
+    {
+        return [];
+    }
+
+    protected function getAuth()
+    {
+        return [
+            'login' => $this->apiUser,
+            'password' => $this->apiPassword,
+        ];
     }
 
     protected function transformBoolean($boolean)

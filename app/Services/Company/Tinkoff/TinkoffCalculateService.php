@@ -29,25 +29,23 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
     {
         $data = $this->prepareData($attributes);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'calcPartnerFQuote', $data);
-        if (!$response) {
-            throw new \Exception('api not return answer');
-        }
         if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
-        if (isset($response->validInfo->status) && $response->validInfo->status == "ERROR") {
-            throw new \Exception('api return validation error code: '.
-                (isset($response->validInfo->code) ? $response->validInfo->code : 'nocode').
-                ' | message: '.
-                (isset($response->validInfo->description) ? $response->validInfo->description : 'nocode')
-            );
-        }
-        if (!isset($response->OSAGOFQ->totalPremium)) {
+        //тут странная ситуация, валидация на рег номер срабатывает даже если передан параметр рег номера, поэтому проверку валидации пришлось выпилить
+//        if (isset($response->validInfo->status) && $response->validInfo->status == "ERROR") {
+//            throw new \Exception('api return validation error code: '.
+//                (isset($response->validInfo->code) ? $response->validInfo->code : 'nocode').
+//                ' | message: '.
+//                (isset($response->validInfo->description) ? $response->validInfo->description : 'nocode')
+//            );
+//        }
+        if (!isset($response['response']->OSAGOFQ->totalPremium)) {
             throw new \Exception('api not return premium');
         }
         $data = [
-            'setNumber' => $response->setNumber,
-            'premium' => $response->OSAGOFQ->totalPremium,
+            'setNumber' => $response['response']->setNumber,
+            'premium' => $response['response']->OSAGOFQ->totalPremium,
         ];
         return $data;
     }
@@ -70,7 +68,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     "citizenship" => $subject['fields']['citizenship'], // TODO: справочник
                 ],
             ];
-            $this->setValue($pSubject['subjectDetails'], 'middleName', 'middleName', $attributes['fields']['middleName']);
+            $this->setValue($pSubject['subjectDetails'], 'middleName', 'middleName', $subject['fields']['middleName']);
             foreach ($subject['fields']['addresses'] as $iAddress => $address) {
                 $pAddress = [
                     'addressType' => $address['address']['addressType'],  // TODO: справочник
@@ -141,6 +139,9 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 ],
                 'mileage' => $attributes['car']['mileage'],
                 'numberOfOwners' => 1, // TODO: понять будет ли поле или заглушка
+                'registrationNumber' => [
+                    'isNoRegistrationNumber' => true,
+                ],
                 'sourceAcquisition' => $attributes['car']['sourceAcquisition'], // TODO: справочник
                 'vehicleCost' => $attributes['car']['vehicleCost'],
                 'vehicleUsage' => $attributes['car']['vehicleUsage'], // TODO: справочник

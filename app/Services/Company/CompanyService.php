@@ -282,7 +282,7 @@ class CompanyService implements CompanyServiceInterface
         $driversList = [];
         foreach ($attributes['drivers'] as $driver) {
             foreach ($attributes['subjects'] as $subject) {
-                if ($subject['id'] == $driver['driverId']) {
+                if ($subject['id'] == $driver['driver']['driverId']) {
                     $driversList[$subject['id']] = $subject['fields'];
                 }
             }

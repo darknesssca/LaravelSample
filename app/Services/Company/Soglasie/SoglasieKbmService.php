@@ -18,6 +18,9 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
     public function __construct()
     {
         $this->apiWsdlUrl = config('api_sk.soglasie.kbmWsdlUrl');
+        if (!($this->apiWsdlUrl)) {
+            throw new \Exception('soglasie api is not configured');
+        }
         parent::__construct();
     }
 
@@ -30,7 +33,8 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
     {
         $data = $this->prepareData($attributes);
         $headers = $this->getHeaders();
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'Login', $data, $headers);
+        $auth = $this->getAuth();
+        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'getKbm', $data, $auth, $headers);
         dd($response);
         if (!$response) {
             throw new \Exception('api not return answer');
@@ -51,18 +55,12 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
         ];
     }
 
-    protected function getHeaders()
-    {
-        return [
-            'Authorization' => base64_encode($this->apiUser . "::" . $this->apiPassword),
-        ];
-    }
-
     public function prepareData($attributes)
     {
         $data = [
             'request' => [
                 'CalcRequestValue' => [
+                    'InsurerID' => '000-241790',
                     'CalcKBMRequest' => [
                         'CarIdent' => [
                             'VIN' => $attributes['car']['vin'],
@@ -78,8 +76,11 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
         ];
         //PhysicalPerson
         foreach ($attributes['subjects'] as $iSubject => $subject) {
+            if ($subject['id'] != $attributes['policy']['ownerId']) {
+                continue;
+            }
             $pSubject = [];
-            foreach ($attributes['fields']['documents'] as $iDocument => $document) {
+            foreach ($subject['fields']['documents'] as $iDocument => $document) {
                 $pDocument = [];
                 if ($document['document']['documentType'] != 'driverLicense') {
                     $pDocument['DocPerson'] = $document['document']['documentType'];  // TODO: справочник

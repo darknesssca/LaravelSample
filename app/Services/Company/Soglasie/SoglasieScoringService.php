@@ -7,6 +7,7 @@ use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
 use App\Http\Controllers\SoapController;
 use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
+use SoapVar;
 
 class SoglasieScoringService extends SoglasieService implements SoglasieScoringServiceContract
 {
@@ -17,21 +18,30 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
 
     public function __construct()
     {
-        $this->apiWsdlUrl = config('api_sk.soglasie.kbmWsdlUrl');
+        $this->apiWsdlUrl = config('api_sk.soglasie.scoringWsdlUrl');
+        if (!($this->apiWsdlUrl)) {
+            throw new \Exception('soglasie api is not configured');
+        }
         parent::__construct();
     }
 
     public function run($company, $attributes, $additionalFields = []): array
     {
-        return $this->sendKbm($company, $attributes);
+        return $this->sendScoring($company, $attributes);
     }
 
-    private function sendKbm($company, $attributes): array
+    private function sendScoring($company, $attributes): array
     {
         $data = $this->prepareData($attributes);
         $headers = $this->getHeaders();
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'Login', $data, $headers);
-        dd($response);
+        $auth = $this->getAuth();
+        $xmlAttributes = [
+            'request' => [
+                'test' => $this->transformBoolean($this->apiIsTest),
+                'partial' => $this->transformBoolean(false),
+            ],
+        ];
+        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'getScoringId', $data, $auth, $headers, $xmlAttributes);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
@@ -43,20 +53,25 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
 //                isset($response->response->ErrorList->ErrorInfo->Code) ? $response->response->ErrorList->ErrorInfo->Code : 'no code | message: '.
 //                isset($response->response->ErrorList->ErrorInfo->Message) ? $response->response->ErrorList->ErrorInfo->Message : 'no message');
 //        }
-        if (!isset($response->response->scoringid) || !$response->response->scoringid) {
-            throw new \Exception('api not return IdRequestCalc');
+        if (!isset($response['response']->response->scoringid) || !$response['response']->response->scoringid) {
+            throw new \Exception('api not return scoringid');
         }
         return [
-            'scoringId' => $response->response->scoringid,
+            'scoringId' => $response['response']->response->scoringid,
         ];
     }
 
     protected function getHeaders()
     {
         return [
-            'Authorization' => base64_encode($this->apiUser . "::" . $this->apiPassword),
-            'Content-Type' => 'application/xml',
-            'Accept' => 'application/xml',
+            [
+                'name' => 'Content-Type',
+                'value' => 'application/xml',
+            ],
+            [
+                'name' => 'Accept',
+                'value' => 'application/xml',
+            ],
         ];
     }
 
@@ -64,17 +79,19 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
     {
         $data = [
             'request' => [
-                'test' => $this->transformBoolean($this->apiIsTest),
-                'partial' => $this->transformBoolean(false),
-                '_' => [
-                    'private' => [],
-                ],
+//                "_" => [
+//                    'private' => [],
+//                ],
+//                'test' => $this->transformBoolean($this->apiIsTest),
+//                'partial' => $this->transformBoolean(false),
+                'private' => [],
             ],
         ];
         //private
         $owner = $this->searchSubjectById($attributes, $attributes['policy']['ownerId']);
         if ($owner) {
-            $data['request']['_']['private'] = [
+            //$data['request']['_']['private'] = [
+            $data['request']['private'] = [
                 "lastname" => $owner['lastName'],
                 "firstname" => $owner['firstName'],
                 "middlename" => isset($owner['middleName']) ? $owner['middleName'] : '',
@@ -100,15 +117,15 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
                     "docdatebegin" => 'dateIssue',
                 ], $document['document']);
 //                $pSubject[$iDocument.':document'] = $pDocument;
-                $data['request']['_']['private']['documents']['document'][] = $pDocument;
+                //$data['request']['_']['private']['documents']['document'][] = $pDocument;
+                $data['request']['private']['documents']['document'][] = $pDocument;
             }
             foreach ($owner['addresses'] as $iAddress => $address) {
                 $pAddress = [
-                    'addressType' => $address['address']['addressType'],  // TODO: справочник
-                    'address' => $address['address']['country'] . ', ' .
-                    $address['address']['region'] . ', ' .
-                    $address['address']['district'] . ', ' .
-                    isset($address['address']['city']) ? $address['address']['city'] : $address['address']['populatedCenter'] . ', ' .
+                    'type' => $address['address']['addressType'] , // TODO: справочник
+                    'address' => $address['address']['country'] . ', ' . $address['address']['region'] . ', ' .
+                        $address['address']['district'] . ', ' .
+                        (isset($address['address']['city']) ? $address['address']['city'] : $address['address']['populatedCenter']) . ', ' .
                         $address['address']['street'] . ', ' .
                         $address['address']['building'] . ', ' .
                         $address['address']['flat'],
@@ -122,7 +139,8 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
                     "region" => 'region',
                     "zone" => 'district',
                 ], $address['address']);
-                $data['request']['_']['private']['addresses']['address'][] = $pAddress;
+                //$data['request']['_']['private']['addresses']['address'][] = $pAddress;
+                $data['request']['private']['addresses']['address'][] = $pAddress;
             }
         }
         return $data;

@@ -13,12 +13,12 @@
 
 $router->group(
     [
-        'prefix' => 'v1',
+        'prefix' => 'api',
     ],
     function () use ($router) {
         $router->group(
             [
-                'prefix' => 'api',
+                'prefix' => 'v1',
             ],
             function () use ($router) {
                 $router->group(

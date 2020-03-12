@@ -18,7 +18,10 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
 
     public function __construct()
     {
-        $this->apiWsdlUrl = config('api_sk.soglasie.kbmWsdlUrl');
+        $this->apiWsdlUrl = config('api_sk.soglasie.calculateWsdlUrl');
+        if (!($this->apiWsdlUrl)) {
+            throw new \Exception('soglasie api is not configured');
+        }
         parent::__construct();
     }
 
@@ -31,11 +34,8 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
     {
         $data = $this->prepareData($attributes);
         $headers = $this->getHeaders();
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'Login', $data, $headers);
-        dd($response);
-        if (!$response) {
-            throw new \Exception('api not return answer');
-        }
+        $auth = $this->getAuth();
+        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'CalcProduct', $data, $auth, $headers);
         if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
@@ -44,27 +44,18 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
 //                isset($response->response->ErrorList->ErrorInfo->Code) ? $response->response->ErrorList->ErrorInfo->Code : 'no code | message: '.
 //                isset($response->response->ErrorList->ErrorInfo->Message) ? $response->response->ErrorList->ErrorInfo->Message : 'no message');
 //        }
-        if (!isset($response->response->scoringid) || !$response->response->scoringid) {
-            throw new \Exception('api not return IdRequestCalc');
+        if (!isset($response['response']->data->contract->result) || !$response['response']->data->contract->result) {
+            throw new \Exception('api not return premium');
         }
         return [
-            'scoringId' => $response->response->scoringid,
-        ];
-    }
-
-    protected function getHeaders()
-    {
-        return [
-            'Authorization' => base64_encode($this->apiUser . "::" . $this->apiPassword),
-            'Content-Type' => 'application/xml',
-            'Accept' => 'application/xml',
+            'premium' => $response['response']->data->contract->result,
         ];
     }
 
     public function prepareData($attributes)
     {
         $data = [
-            'debug' => $this->apiIsTest,
+            //'debug' => $this->apiIsTest,
             'subuser' => $this->apiSubUser,
             'product' => [
                 'brief' => 'ОСАГО', // todo из справочника, возможно заменить на id
@@ -89,10 +80,6 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                     [
                         'id' => 1421,
                         'val' => $attributes['car']['vin'],
-                    ],
-                    [
-                        'id' => 1329,
-                        'val' => $attributes['policy']['isMultidrive'] ? 1 :  $attributes['serviceData']['kbmId'],
                     ],
                     [
                         'id' => 22,
@@ -161,6 +148,13 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                 ],
             ],
         ];
+        //kbm
+        if ($attributes['policy']['isMultidrive']) {
+            $data['contract']['param'][] = [
+                'id' => 1329,
+                'val' => 1,
+            ];
+        }
         //drivers
         if (!$attributes['policy']['isMultidrive']) {
             $drivers = $this->searchDrivers($attributes);
@@ -234,7 +228,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         ];
         $data['contract']['param'][] = [
             'id' => 4763,
-            'val' => $owner['sex'],
+            'val' => $owner['gender'],
         ];
         $data['contract']['param'][] = [
             'id' => 4024,
@@ -276,7 +270,10 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         ];
         $data['contract']['param'][] = [
             'id' => 4764,
-            'val' => $owner['sex'],
+            'val' => $owner['gender'],
+        ];
+        $data = [
+            'data' => $data,
         ];
         return $data;
     }
