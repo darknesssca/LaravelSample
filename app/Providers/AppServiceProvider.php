@@ -6,6 +6,7 @@ use App\Contracts\Company\CompanyServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahCalculateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahServiceContract;
+use App\Contracts\Company\Renessans\RenessansCheckCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansServiceContract;
@@ -20,6 +21,7 @@ use App\Services\Company\Ingosstrah\IngosstrahCalculateService;
 use App\Services\Company\Ingosstrah\IngosstrahLoginService;
 use App\Services\Company\Ingosstrah\IngosstrahService;
 use App\Services\Company\Renessans\RenessansCalculateService;
+use App\Services\Company\Renessans\RenessansCheckCalculateService;
 use App\Services\Company\Renessans\RenessansCreateService;
 use App\Services\Company\Renessans\RenessansService;
 use App\Services\Company\Soglasie\SoglasieCalculateService;
@@ -53,6 +55,9 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->singleton(RenessansCalculateServiceContract::class, function($app) {
             return new RenessansCalculateService();
+        });
+        $this->app->singleton(RenessansCheckCalculateServiceContract::class, function($app) {
+            return new RenessansCheckCalculateService();
         });
         $this->app->singleton(RenessansCreateServiceContract::class, function($app) {
             return new RenessansCreateService();

@@ -31,7 +31,7 @@ class InsuranceController extends Controller
         $method = strtolower((string)$method);
         try
         {
-            return response()->json($this->runService($company, $request, $method, $request), 200);
+            return response()->json($this->runService($company, $request, $method), 200);
         }
         catch (ValidationException $exception)
         {
@@ -77,29 +77,6 @@ class InsuranceController extends Controller
         }
     }
 
-    private function calculate($company, $request)
-    {
-        //todo переделать, вынести логику в базовый сервис
-        $methodData = [
-            'policesId' => [],
-        ];
-        $calculateData = $this->runService($company, $request, 'Calculate');
-        $additionalData = [
-            'isCheckSegment' => true,
-            'calculationId' => [],
-        ];
-        foreach ($calculateData as $data) {
-            $additionalData['calculationId'][] = $data['calculationId'];
-        }
-        $createData = $this->runService($company, $request, 'Create', $additionalData);
-        foreach ($createData as $calculationId => $data) {
-            $methodData['policesId'][] = [
-                'calculationId' => $calculationId,
-                'policeId' => $data['policyId'],
-            ];
-        }
-    }
-
     private function runService($company, $request, $serviceMethod, $additionalData = [])
     {
         $controller = $this->getCompanyController($company);
@@ -117,6 +94,7 @@ class InsuranceController extends Controller
         }if (!isset($tokenData['form']) || !$tokenData['form']) {
             throw new \Exception('token have no data'); // todo вынести в отдельные эксепшены
         }
+        $additionalData['tokenData'] = isset($tokenData[$company->code]) ? $tokenData[$company->code] : false;
         $attributes = $tokenData['form'];
         $attributes['token'] = $validatedFields['token'];
         $response = $controller->$serviceMethod($company, $attributes, $additionalData);

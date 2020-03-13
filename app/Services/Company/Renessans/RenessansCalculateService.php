@@ -45,7 +45,6 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
         $url = $this->getUrl();
         $data = $this->prepareData($attributes);
         $response = RestController::postRequest($url, $data);
-        dd($response);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
@@ -147,21 +146,6 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             }
         }
         return $data;
-    }
-
-    private function receiveCalculate($attributes)
-    {
-        $data = [];
-        $this->setAuth($data);
-        $url = $this->getUrl(__FUNCTION__, $attributes);
-        $response = $this->getRequest($url, $data);
-        if (!$response) {
-            throw new \Exception('api not return answer');
-        }
-        if (!$response['result']) {
-            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
-        }
-        return $response['data'];
     }
 
 }
