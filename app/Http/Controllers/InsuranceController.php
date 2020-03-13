@@ -13,15 +13,6 @@ use Illuminate\Validation\ValidationException;
 
 class InsuranceController extends Controller
 {
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        //
-    }
 
     public function index($code, $method, Request $request)
     {
@@ -61,6 +52,7 @@ class InsuranceController extends Controller
             $data = [
                 'form' => $attributes,
             ];
+            RestController::checkToken($attributes);
             RestController::sendLog($attributes);
             $token = IntermediateData::createToken($data);
             return response()->json(['token' => $token], 200);
@@ -90,6 +82,7 @@ class InsuranceController extends Controller
             $controller->validationRulesProcess(),
             $controller->validationMessagesProcess()
         );
+        RestController::checkToken($validatedFields);
         $tokenData = IntermediateData::getData($validatedFields['token']);
         if (!$tokenData) {
             throw new \Exception('token not valid'); // todo вынести в отдельные эксепшены
