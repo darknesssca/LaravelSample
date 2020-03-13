@@ -24,8 +24,12 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
     private function sendCalculate($company, $attributes): array
     {
         $data = $this->prepareData($attributes);
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetTariff', $data);
-        dd($response);
+        $soapAttributes = [
+            'Subject' => [
+                'SbjKey' => '@number'
+            ],
+        ];
+        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetTariff', $data, [], [], $soapAttributes);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
@@ -112,17 +116,13 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
         //SubjectList
         foreach ($attributes['subjects'] as $iSubject => $subject) {
             $pSubject = [
-                'SbjKey' => $subject['id'],
-                '_' => [
-                    "SbjType" => 0, // TODO: справочник
-                    "SbjResident" => $this->transformBoolean($subject['fields']['isResident']),
-                    'FullName' => $subject['fields']['lastName'] . ' ' . $subject['fields']['firstName'] .
-                        (isset($subject['fields']['middleName']) ? ' ' . $subject['fields']['middleName'] : ''),
-                    "Gender" => $subject['fields']['gender'], // TODO: справочник
-                    "BirthDate" => $subject['fields']['birthdate'], // TODO: справочник
-                    "CountryCode" => $subject['fields']['citizenship'], // TODO: справочник
-
-                ],
+                "SbjType" => 0, // TODO: справочник
+                "SbjResident" => $this->transformBoolean($subject['fields']['isResident']),
+                'FullName' => $subject['fields']['lastName'] . ' ' . $subject['fields']['firstName'] .
+                    (isset($subject['fields']['middleName']) ? ' ' . $subject['fields']['middleName'] : ''),
+                "Gender" => $subject['fields']['gender'], // TODO: справочник
+                "BirthDate" => $subject['fields']['birthdate'], // TODO: справочник
+                "CountryCode" => $subject['fields']['citizenship'], // TODO: справочник
             ];
             foreach ($attributes['fields']['addresses'] as $iAddress => $address) {
                 $pAddress = [
@@ -135,7 +135,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                 $this->setValuesByArray($pAddress, [
                     "flat" => 'flat',
                 ], $address['address']);
-                $pSubject['_']['address'] = $pAddress;
+                $pSubject['address'] = $pAddress;
             }
             foreach ($attributes['fields']['documents'] as $iDocument => $document) {
                 $pDocument = [
@@ -147,7 +147,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                     "DocIssuedBy" => 'issuedBy',
                     "DocDate" => 'dateIssue',
                 ], $document['document']);
-                $pSubject['_']['IdentityDocument'][] = $pDocument;
+                $pSubject['IdentityDocument'][] = $pDocument;
             }
             $data['TariffParameters']['Agreement']['Insurer']['SubjectList']['Subject'][] = $pSubject;
         }

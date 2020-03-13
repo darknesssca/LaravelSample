@@ -37,12 +37,18 @@ class SoglasieService extends CompanyService implements SoglasieServiceContract
 
     public function calculate($company, $attributes, $additionalData = [])
     {
-//        $serviceKbm = app(SoglasieKbmServiceContract::class);
-//        $dataKbm = $serviceKbm->run($company, $attributes, $additionalData);
+        if (!$attributes['policy']['isMultidrive']) {
+            $serviceKbm = app(SoglasieKbmServiceContract::class);
+            $dataKbm = $serviceKbm->run($company, $attributes, $additionalData);
+        } else {
+            $dataKbm = [
+                'kbmId' => 1,
+            ];
+        }
         $serviceScoring = app(SoglasieScoringServiceContract::class);
         $dataScoring = $serviceScoring->run($company, $attributes, $additionalData);
         $attributes['serviceData'] = [
-            //'kbmId' => $dataKbm['idKbm'],
+            'kbmId' => $dataKbm['kbmId'],
             'scoringId' => $dataScoring['scoringId'],
         ];
         $serviceKbm = app(SoglasieCalculateServiceContract::class);

@@ -35,23 +35,22 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
         $headers = $this->getHeaders();
         $auth = $this->getAuth();
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'getKbm', $data, $auth, $headers);
-        dd($response);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
         if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
-        if (!isset($response->response->ErrorList->ErrorInfo->Code) || ($response->response->ErrorList->ErrorInfo->Code != 3)) { // согласно приведенному примеру 3 является кодом успешного ответа
+        if (!isset($response['response']->response->ErrorList->ErrorInfo->Code) || ($response['response']->response->ErrorList->ErrorInfo->Code != 3)) { // согласно приведенному примеру 3 является кодом успешного ответа
             throw new \Exception('api not return error Code: '.
-                isset($response->response->ErrorList->ErrorInfo->Code) ? $response->response->ErrorList->ErrorInfo->Code : 'no code | message: '.
-                isset($response->response->ErrorList->ErrorInfo->Message) ? $response->response->ErrorList->ErrorInfo->Message : 'no message');
+                isset($response['response']->response->ErrorList->ErrorInfo->Code) ? $response['response']->response->ErrorList->ErrorInfo->Code : 'no code | message: '.
+                isset($response['response']->response->ErrorList->ErrorInfo->Message) ? $response['response']->response->ErrorList->ErrorInfo->Message : 'no message');
         }
-        if (!isset($response->response->IdRequestCalc) || !$response->response->CalcResponseValue->IdRequestCalc) {
+        if (!isset($response['response']->response->CalcResponseValue->IdRequestCalc) || !$response['response']->response->CalcResponseValue->IdRequestCalc) {
             throw new \Exception('api not return IdRequestCalc');
         }
         return [
-            'kbmId' => $response->response->CalcResponseValue->IdRequestCalc,
+            'kbmId' => $response['response']->response->CalcResponseValue->IdRequestCalc,
         ];
     }
 
@@ -65,7 +64,7 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
                         'CarIdent' => [
                             'VIN' => $attributes['car']['vin'],
                         ],
-                        'DriversRestriction' => $this->transformBoolean($attributes['policy']['isMultidrive']),
+                        'DriversRestriction' => $this->transformBoolean(!$attributes['policy']['isMultidrive']),
                         'DateKBM' => $this->formatDateTime($attributes['policy']['beginDate']),
                         'PhysicalPersons' => [
                             'PhysicalPerson' => [],
@@ -83,7 +82,7 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
             foreach ($subject['fields']['documents'] as $iDocument => $document) {
                 $pDocument = [];
                 if ($document['document']['documentType'] != 'driverLicense') {
-                    $pDocument['DocPerson'] = $document['document']['documentType'];  // TODO: справочник
+                    $pDocument['DocPerson'] = 20; //$document['document']['documentType'];  // TODO: справочник, ВАЖНО тут передается тоже driveLicense
                 }
                 $this->setValuesByArray($pDocument, [
                     "Serial" => 'series',

@@ -149,12 +149,10 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
             ],
         ];
         //kbm
-        if ($attributes['policy']['isMultidrive']) {
-            $data['contract']['param'][] = [
-                'id' => 1329,
-                'val' => 1,
-            ];
-        }
+        $data['contract']['param'][] = [
+            'id' => 1329,
+            'val' => $attributes['serviceData']['kbmId'],
+        ];
         //drivers
         if (!$attributes['policy']['isMultidrive']) {
             $drivers = $this->searchDrivers($attributes);
