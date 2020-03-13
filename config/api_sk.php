@@ -26,4 +26,6 @@ return [
         'subPassword' => env('SOGLASIE_API_SUB_PASSWORD'),
         'isTest' => env('SOGLASIE_API_TEST_MODE'),
     ],
+    'logMicroserviceUrl' => env('LOG_MICROSERVICE_URL'),
+    'logMicroserviceCode' => env('LOG_MICROSERVICE_CODE'),
 ];

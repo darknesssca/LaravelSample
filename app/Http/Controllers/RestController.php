@@ -8,6 +8,16 @@ class RestController
 {
     protected static $client;
 
+    public static function sendLog($data)
+    {
+        $body = [
+            'auth_token' => $data['auth_token'],
+            'message' => 'пользователь отправил форму со следующими полями: '.\GuzzleHttp\json_encode($data),
+            'code' => config('api_sk.logMicroserviceCode'),
+        ];
+        self::postRequest(config('api_sk.logMicroserviceUrl'), $body);
+    }
+
     public static function postRequest($url, $data = [], $headers = []): array
     {
         if (!self::$client) {

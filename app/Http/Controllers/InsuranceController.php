@@ -61,6 +61,7 @@ class InsuranceController extends Controller
             $data = [
                 'form' => $attributes,
             ];
+            RestController::sendLog($attributes);
             $token = IntermediateData::createToken($data);
             return response()->json(['token' => $token], 200);
         }
