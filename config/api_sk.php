@@ -3,6 +3,7 @@ return [
     'renessans' => [
         'apiUrl' => env('RENESSANS_API_URL'),
         'apiKey' => env('RENESSANS_API_KEY'),
+        'apiCheckCountByCommand' => env('RENESSANS_API_CHECK_COUNT_BY_COMMAND'),
     ],
     'tinkoff' => [
         'wsdlUrl' => env('TINKOFF_API_WSDL_URL'),

@@ -2,23 +2,24 @@
 
 namespace App\Console\Commands;
 
+use App\Http\Controllers\InsuranceController;
 use Illuminate\Console\Command;
 
-class StatusCommand extends Command
+class CheckRenessancCalculateCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'check:status';
+    protected $signature = 'renessans:calculate';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'check status';
+    protected $description = 'get calculate response';
 
     /**
      * Create a new command instance.
@@ -37,7 +38,7 @@ class StatusCommand extends Command
      */
     public function handle()
     {
-        //$controller = new HashController();
-        //$controller->status();
+        $controller = new InsuranceController();
+        $controller->getCalculate();
     }
 }

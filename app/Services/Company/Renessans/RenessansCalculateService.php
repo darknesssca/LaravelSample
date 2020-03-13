@@ -18,25 +18,7 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
 
     public function run(InsuranceCompany $company, $attributes, $additionalFields = []): array
     {
-        $data = $this->sendCalculate($attributes);
-        return $data;
-//        if (!($data && count($data))) {
-//            throw new \Exception('SK api not return data!');
-//        }
-//        $calculatedData = [];
-//        foreach ($data as $calcData) {
-//            if (!isset($calcData['id'])) {
-//                continue;
-//            }
-//            $requestData = [
-//                'id' => $calcData['id'],
-//            ];
-//            $calculatedData[] = [
-//                'calculationId' => $calcData['id'],
-//                'calculateData' => $this->receiveCalculate($requestData)
-//            ];
-//        }
-//        return $calculatedData;
+        return $this->sendCalculate($attributes);
     }
 
     private function sendCalculate($attributes): array

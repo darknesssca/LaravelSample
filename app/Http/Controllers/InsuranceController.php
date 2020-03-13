@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Contracts\Company\CompanyServiceContract;
 use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
+use App\Models\RequestProcess;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -104,6 +105,27 @@ class InsuranceController extends Controller
     public function checkCompany($code)
     {
         return InsuranceCompany::getCompany($code);
+    }
+
+    public function getCalculate()
+    {
+        $count = config('api_sk.renessans.apiCheckCountByCommand');
+        $process = RequestProcess::where('state', 1)->limit($count);
+        if ($process) {
+            $company = $this->checkCompany('renessans');
+            foreach ($process as $processItem) {
+                $token = $processItem->token;
+                $tokenData = IntermediateData::getData($token);
+                $additionalData['tokenData'] = isset($tokenData[$company->code]) ? $tokenData[$company->code] : false;
+                $attributes = $tokenData['form'];
+                $attributes['token'] = $token;
+                $controller = app('App\\Contracts\\Company\\Renessans\\RenessansServiceContract');
+                $response = $controller->calculate($company, $attributes, $additionalData);
+            }
+        } else {
+            sleep(5);
+            return;
+        }
     }
 
     protected function error($messages, $httpCode = 500)

@@ -42,37 +42,65 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
         if ($additionalData['tokenData']) {
             $state = $additionalData['tokenData']['state'];
         }
+        $test = false; // fixme test
         $dataCalculate = [];
         if ($state == 0) {
             $serviceCalculate = app(RenessansCalculateServiceContract::class);
             $dataCalculate = $serviceCalculate->run($company, $attributes, $additionalData);
             $state = 1;
+            $test = true;// fixme test
         } else {
-            $dataCalculate = $additionalData['tokenData'][$company->code]['calcIds'];
+            $dataCalculate = $additionalData['tokenData']['calcIds'];
         }
+        // get process
+        $process = RequestProcess::where('token', $attributes['token'])->where('state', '<>', 99)->first();
         // check calculate
         if ($state == 1) {
+            if ($process && $process['state'] == 1) {
+                $dataCalculate = $process['data'];
+            }
             $isNotChecked = false;
-            $serviceCheckCalculate = app(RenessansCheckCalculateServiceContract::class);
             $dataCheckCalculate = [];
+            $serviceCheckCalculate = app(RenessansCheckCalculateServiceContract::class);
             foreach ($dataCalculate as $dataCalculateItem) {
-                $responseCheckCalculate = $serviceCheckCalculate->run($company, $dataCalculateItem, $additionalData);
+                if (isset($dataCalculateItem['premium']) && ($dataCalculateItem['premium'] !== false)) {
+                    $dataCheckCalculate[] = $dataCalculateItem;
+                    continue;
+                }
+                if ($test) { // fixme test
+                    $responseCheckCalculate = false;// fixme test
+                } else {// fixme test
+                    $responseCheckCalculate = $serviceCheckCalculate->run($company, $dataCalculateItem, $additionalData);// fixme test
+                }// fixme test
+                //$responseCheckCalculate = $serviceCheckCalculate->run($company, $dataCalculateItem, $additionalData);// fixme test
                 if ($responseCheckCalculate === false) {
                     $isNotChecked = true;
                     $dataCheckCalculate[] = [
                         'premium' => false,
                         'state' => 1,
+                        'calcId' => $dataCalculateItem['calcId'],
                     ];
                 } else {
                     $dataCheckCalculate[] = $responseCheckCalculate;
                 }
             }
             if ($isNotChecked) {
-                RequestProcess::create([
-                    'token' => $attributes['token'],
-                    'state' => $state,
-                    'data' => \GuzzleHttp\json_encode($dataCheckCalculate),
-                ]);
+                if ($process) {
+                    if ($process->checkCount == 5) {
+                        RequestProcess::where('token', $attributes['token'])->delete();
+                    } else {
+                        RequestProcess::where('token', $attributes['token'])->update([
+                            'checkCount' => ++$process->checkCount,
+                            'data' => \GuzzleHttp\json_encode($dataCheckCalculate),
+                        ]);
+                    }
+                } else {
+                    RequestProcess::create([
+                        'token' => $attributes['token'],
+                        'state' => $state,
+                        'data' => \GuzzleHttp\json_encode($dataCheckCalculate),
+                    ]);
+                }
                 return $dataCheckCalculate;
             } else {
                 $state = 2;
@@ -87,7 +115,7 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
             'data' => $tokenData,
         ]);
         //todo тут идет проверка сегментации
-        return $dataCheckCalculate;
+        return isset($dataCheckCalculate) ? $dataCheckCalculate : [false]; // todo temp crutch
     }
 
 
