@@ -42,13 +42,13 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
         if ($additionalData['tokenData']) {
             $state = $additionalData['tokenData']['state'];
         }
-        $test = false; // fixme test
+        //$test = false; // fixme test
         $dataCalculate = [];
         if ($state == 0) {
             $serviceCalculate = app(RenessansCalculateServiceContract::class);
             $dataCalculate = $serviceCalculate->run($company, $attributes, $additionalData);
             $state = 1;
-            $test = true;// fixme test
+            //$test = true;// fixme test
         } else {
             $dataCalculate = $additionalData['tokenData']['calcIds'];
         }
@@ -67,12 +67,12 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
                     $dataCheckCalculate[] = $dataCalculateItem;
                     continue;
                 }
-                if ($test) { // fixme test
-                    $responseCheckCalculate = false;// fixme test
-                } else {// fixme test
-                    $responseCheckCalculate = $serviceCheckCalculate->run($company, $dataCalculateItem, $additionalData);// fixme test
-                }// fixme test
-                //$responseCheckCalculate = $serviceCheckCalculate->run($company, $dataCalculateItem, $additionalData);// fixme test
+//                if ($test) { // fixme test
+//                    $responseCheckCalculate = false;// fixme test
+//                } else {// fixme test
+//                    $responseCheckCalculate = $serviceCheckCalculate->run($company, $dataCalculateItem, $additionalData);// fixme test
+//                }// fixme test
+                $responseCheckCalculate = $serviceCheckCalculate->run($company, $dataCalculateItem, $additionalData);// fixme test
                 if ($responseCheckCalculate === false) {
                     $isNotChecked = true;
                     $dataCheckCalculate[] = [
