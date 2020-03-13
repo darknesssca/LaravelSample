@@ -127,7 +127,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                     ],
                     [
                         'id' => 846,
-                        'val' => $attributes['car']['usageType'], // todo справочник
+                        'val' => $attributes['car']['vehicleUsage'], // todo справочник
                     ],
                     [
                         'id' => 961,

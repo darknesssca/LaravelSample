@@ -5,14 +5,12 @@ namespace App\Services\Company\Renessans;
 
 
 use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
+use App\Http\Controllers\RestController;
 use App\Models\InsuranceCompany;
 
 class RenessansCalculateService extends RenessansService implements RenessansCalculateServiceContract
 {
-    protected $apiPath = [
-        'sendCalculate' => '/calculate/?fullInformation=true',
-        'receiveCalculate' => '/calculate/{{id}}/',
-    ];
+    protected $apiPath = '/calculate/?fullInformation=true';
 
     private $catalogPurpose = ["Личная", "Такси"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
     private $catalogTypeOfDocument = []; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
@@ -21,38 +19,134 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
     public function run(InsuranceCompany $company, $attributes, $additionalFields = []): array
     {
         $data = $this->sendCalculate($attributes);
-        if (!($data && count($data))) {
-            throw new \Exception('SK api not return data!');
-        }
-        $calculatedData = [];
-        foreach ($data as $calcData) {
-            if (!isset($calcData['id'])) {
-                continue;
-            }
-            $requestData = [
-                'id' => $calcData['id'],
-            ];
-            $calculatedData[] = [
-                'calculationId' => $calcData['id'],
-                'calculateData' => $this->receiveCalculate($requestData)
-            ];
-        }
-        return $calculatedData;
+        return $data;
+//        if (!($data && count($data))) {
+//            throw new \Exception('SK api not return data!');
+//        }
+//        $calculatedData = [];
+//        foreach ($data as $calcData) {
+//            if (!isset($calcData['id'])) {
+//                continue;
+//            }
+//            $requestData = [
+//                'id' => $calcData['id'],
+//            ];
+//            $calculatedData[] = [
+//                'calculationId' => $calcData['id'],
+//                'calculateData' => $this->receiveCalculate($requestData)
+//            ];
+//        }
+//        return $calculatedData;
     }
 
     private function sendCalculate($attributes): array
     {
         $this->setAuth($attributes);
-        $url = $this->getUrl(__FUNCTION__);
-        $this->prepareData($attributes);
-        $response = $this->postRequest($url, $attributes);
+        $url = $this->getUrl();
+        $data = $this->prepareData($attributes);
+        $response = RestController::postRequest($url, $data);
+        dd($response);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
         if (!$response['result']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
-        return $response['data'];
+        $result = [];
+        foreach ($response['data'] as $responseData) {
+            $result[] = [
+                'calcId' => $responseData['id'],
+            ];
+        }
+        return $result;
+    }
+
+    public function prepareData($attributes)
+    {
+        $data = [
+            'key' => $attributes['key'],
+            'dateStart' => $attributes['policy']['beginDate'],
+            'period' => 12,
+            'purpose' => $attributes['car']['vehicleUsage'], // todo справочник
+            'limitDrivers' => $this->transformBooleanToInteger($attributes['policy']['isMultidrive']),
+            'trailer' => $this->transformBooleanToInteger($attributes['car']['isUsedWithTrailer']),
+            'isJuridical' => 0,
+            'owner' => [],
+            'car' => [
+                'make' => $attributes['car']['maker'], // TODO: справочник,
+                'model' => $attributes['car']['model'], // TODO: справочник,
+                //'MarkAndModelString' => [], //todo после реализации справочников, при отсутствии модели или марки в справочнике указывать строку
+                'category' => 'B', // TODO: справочник,
+                'power' => $attributes['car']['enginePower'],
+                'documents' => [
+                    'vin' => $attributes['car']['vin'],
+                ],
+            ],
+            'usagePeriod' => [
+                [
+                    'dateStart' => $attributes['policy']['beginDate'],
+                    'dateEnd' => $attributes['policy']['endDate'],
+                ]
+            ],
+        ];
+        //owner
+        $owner = $this->searchSubjectById($attributes, $attributes['policy']['ownerId']);
+        $data['owner'] = [
+            "lastname" => $owner['lastName'],
+            "name" => $owner['firstName'],
+            //"middlename" => $owner['middleName'],
+            "birthday" => $owner['birthdate'],
+            'document' => [],
+        ];
+        $this->setValue($data['owner'], 'middlename', 'middleName', $owner);
+        $ownerAddress = $this->searchAddressByType($owner, 'registration');
+        $data['codeKladr'] = $ownerAddress['regionKladr'];
+        $ownerPassport = $this->searchDocumentByType($owner, 'RussianPassport');
+        $data['owner']['document'] = [
+            'typeofdocument' => $ownerPassport['documentType'],  // TODO: справочник
+        ];
+        $this->setValuesByArray($data['owner']['document'], [
+            "series" => 'series',
+            "number" => 'number',
+            "issued" => 'issuedBy',
+            "dateIssue" => 'dateIssue',
+        ], $ownerPassport);
+        //car
+        $this->setValuesByArray($data['car'], [
+            "UnladenMass" => 'minWeight',
+            "ResolutionMaxWeight" => 'maxWeight',
+            "NumberOfSeats" => 'seats',
+        ], $attributes['car']);
+        //drivers
+        if (!$attributes['policy']['isMultidrive']) {
+            $data['drivers'] = [];
+            $drivers = $this->searchDrivers($attributes);
+            foreach ($drivers as $iDriver => $driver) {
+                $pDriver = [
+                    'name' => $owner['firstName'],
+                    'lastname' => $owner['firstName'],
+                    'birthday' => $owner['birthdate'],
+                ];
+                foreach ($data['drivers'] as $tDriver) {
+                    if ($iDriver == $tDriver['driver']['driverId']) {
+                        $pDriver['license'] = [
+                            "dateBeginDrive" => $tDriver['driver']['drivingLicenseIssueDateOriginal'],
+                        ];
+                    }
+                }
+                $this->setValue($pDriver, 'middlename', 'middleName', $driver);
+                $driverLicense = $this->searchDocumentByType($driver, 'DriverLicense'); // todo значение из справочника
+                if ($driverLicense) {
+                    $this->setValuesByArray($pDriver['license'], [
+                        "series" => 'series',
+                        "number" => 'number',
+                        "dateIssue" => 'dateIssue',
+                    ], $driverLicense);
+                }
+                $data['drivers'][] = $pDriver;
+            }
+        }
+        return $data;
     }
 
     private function receiveCalculate($attributes)
@@ -68,228 +162,6 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
         return $response['data'];
-    }
-
-    public function map(): array
-    {
-        return [
-            'dateStart' => [
-                'required' => true,
-                'type' => 'date',
-                'date_format' => 'Y-m-d',
-            ],
-            'period' => [
-                'required' => false,
-                'type' => 'integer',
-                'default' => 12,
-            ],
-            'purpose' => [
-                'required' => true,
-                'type' => 'string',
-                'in' => $this->catalogPurpose,
-            ],
-            'limitDrivers' => [
-                'required' => true,
-                'type' => 'boolean',
-            ],
-            'trailer' => [
-                'required' => true,
-                'type' => 'boolean',
-            ],
-            'isJuridical' => [
-                'required' => false,
-                'type' => 'boolean',
-                'default' => 0,
-            ],
-            'codeKladr' => [
-                'required' => true,
-                'type' => 'string',
-            ],
-            'owner' => [
-                'required' => true,
-                'type' => 'object',
-                'array' => [
-                    'name' => [
-                        'required' => true,
-                        'type' => 'string',
-                    ],
-                    'lastname' => [
-                        'required' => true,
-                        'type' => 'string',
-                    ],
-                    'middlename' => [
-                        'required' => false,
-                        'type' => 'string',
-                    ],
-                    'birthday' => [
-                        'required' => true,
-                        'type' => 'date',
-                        'date_format' => 'Y-m-d',
-                    ],
-                    'document' => [
-                        'required' => true,
-                        'type' => 'object',
-                        'array' => [
-                            'typeofdocument' => [
-                                'required' => false,
-                                'type' => 'string',
-                                'in' => $this->catalogTypeOfDocument,
-                            ],
-                            'dateIssue' => [
-                                'required' => true,
-                                'type' => 'date',
-                                'date_format' => 'Y-m-d',
-                            ],
-                            'issued' => [
-                                'required' => true,
-                                'type' => 'string',
-                            ],
-                            'number' => [
-                                'required' => true,
-                                'type' => 'string',
-                            ],
-                            'series' => [
-                                'required' => true,
-                                'type' => 'string',
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-            'car' => [
-                'required' => true,
-                'type' => 'object',
-                'array' => [
-                    'make' => [
-                        'required' => true,
-                        'type' => 'string',
-                    ],
-                    'model' => [
-                        'required' => true,
-                        'type' => 'string',
-                    ],
-                    'MarkAndModelString' => [
-                        'required' => true,
-                        'type' => 'string',
-                    ],
-                    'category' => [
-                        'required' => true,
-                        'type' => 'string',
-                        'in' => $this->catalogCatCategory,
-                    ],
-                    'power' => [
-                        'required' => true,
-                        'type' => 'integer',
-                    ],
-                    'UnladenMass' => [
-                        'required' => false,
-                        'required_if' => [
-                            'field' => 'category',
-                            'value' => [
-                                'C',
-                                'D',
-                            ],
-                        ],
-                        'type' => 'integer',
-                    ],
-                    'ResolutionMaxWeight' => [
-                        'required' => false,
-                        'required_if' => [
-                            'field' => 'category',
-                            'value' => [
-                                'C',
-                                'D',
-                            ],
-                        ],
-                        'type' => 'integer',
-                    ],
-                    'NumberOfSeats' => [
-                        'required' => false,
-                        'required_if' => [
-                            'field' => 'category',
-                            'value' => [
-                                'C',
-                                'D',
-                            ],
-                        ],
-                        'type' => 'integer',
-                    ],
-                    'documents' => [
-                        'required' => true,
-                        'type' => 'object',
-                        'array' => [
-                            'vin' => [
-                                'required' => true,
-                                'type' => 'string',
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-            'usagePeriod' => [
-                'required' => true,
-                'type' => 'array',
-                'array' => [
-                    'dateStart' => [
-                        'required' => true,
-                        'type' => 'date',
-                        'date_format' => 'Y-m-d',
-                    ],
-                    'dateEnd' => [
-                        'required' => true,
-                        'type' => 'date',
-                        'date_format' => 'Y-m-d',
-                    ],
-                ],
-            ],
-            'drivers' => [
-                'required' => true,
-                'type' => 'array',
-                'array' => [
-                    'name' => [
-                        'required' => true,
-                        'type' => 'string',
-                    ],
-                    'lastname' => [
-                        'required' => true,
-                        'type' => 'string',
-                    ],
-                    'middlename' => [
-                        'required' => false,
-                        'type' => 'string',
-                    ],
-                    'birthday' => [
-                        'required' => true,
-                        'type' => 'date',
-                        'date_format' => 'Y-m-d',
-                    ],
-                    'license' => [
-                        'required' => true,
-                        'type' => 'object',
-                        'array' => [
-                            'dateBeginDrive' => [
-                                'required' => true,
-                                'type' => 'date',
-                                'date_format' => 'Y-m-d',
-                            ],
-                            'dateIssue' => [
-                                'required' => true,
-                                'type' => 'date',
-                                'date_format' => 'Y-m-d',
-                            ],
-                            'number' => [
-                                'required' => true,
-                                'type' => 'string',
-                            ],
-                            'series' => [
-                                'required' => true,
-                                'type' => 'string',
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-        ];
     }
 
 }

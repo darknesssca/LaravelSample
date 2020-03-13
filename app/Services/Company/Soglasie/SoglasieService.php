@@ -56,6 +56,7 @@ class SoglasieService extends CompanyService implements SoglasieServiceContract
         $tokenData = IntermediateData::getData($attributes['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
         $tokenData[$company->code] = [
             'scoringId' => $dataScoring['scoringId'],
+            'kbmId' => $dataKbm['kbmId'],
         ];
         IntermediateData::where('token', $attributes['token'])->update([
             'data' => $tokenData,

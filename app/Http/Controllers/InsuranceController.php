@@ -130,9 +130,21 @@ class InsuranceController extends Controller
 
     protected function error($messages, $httpCode = 500)
     {
+        $errors = [];
+        if (gettype($messages) == 'array') {
+            foreach ($messages as $message) {
+                $errors[] = [
+                    'message' => $message,
+                ];
+            }
+        } else {
+            $errors[] = [
+                'message' => (string)$messages,
+            ];
+        }
         $message = [
             'error' => true,
-            'errors' => $messages,
+            'errors' => $errors,
         ];
         return response()->json($message, $httpCode);
     }

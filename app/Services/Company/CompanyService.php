@@ -83,34 +83,6 @@ class CompanyService implements CompanyServiceInterface
         return $rules;
     }
 
-    public function postRequest($url, $data = [], $headers = []): array
-    {
-        $client = new Client();
-        $params = [];
-        if ($headers and count($headers)) {
-            $params['headers'] = $headers;
-        }
-        if ($data and count($data)) {
-            $params['form_params'] = $data;
-        }
-        $response = $client->post($url, $params);
-        return \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
-    }
-
-    public function getRequest($url, $data = [], $headers = []): array
-    {
-        $client = new Client();
-        $params = [];
-        if ($headers and count($headers)) {
-            $params['headers'] = $headers;
-        }
-        if ($data and count($data)) {
-            $params['query'] = $data;
-        }
-        $response = $client->get($url, $params);
-        return \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
-    }
-
     public function validationRulesForm(): array
     {
         return [
@@ -262,6 +234,16 @@ class CompanyService implements CompanyServiceInterface
         foreach ($subject['documents'] as $iDocument => $document) {
             if ($document['document']['documentType'] == $type) { // TODO значение из справочника
                 return $document['document'];
+            }
+        }
+        return false;
+    }
+
+    protected function searchAddressByType($subject, $type)
+    {
+        foreach ($subject['addresses'] as $iAddress => $address) {
+            if ($address['address']['addressType'] == $type) { // TODO значение из справочника
+                return $address['address'];
             }
         }
         return false;
