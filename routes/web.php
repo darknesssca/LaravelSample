@@ -11,6 +11,41 @@
 |
 */
 
-$router->get('/', function () use ($router) {
-    return $router->app->version();
-});
+$router->group(
+    [
+        'prefix' => 'api',
+    ],
+    function () use ($router) {
+        $router->group(
+            [
+                'prefix' => 'v1',
+            ],
+            function () use ($router) {
+                $router->group(
+                    [
+                        'prefix' => 'policies',
+                    ],
+                    function () use ($router) {
+                        $router->post('/insurance/send', 'InsuranceController@store');
+                        $router->post('/insurance/{code}/{method}', 'InsuranceController@index');
+                        // тут будут остальные контроллеры
+                        $router->group(
+                            [
+                                'prefix' => 'drafts',
+                            ],
+                            function () use ($router) {
+                                $router->get('/', 'DraftController@index');
+                                $router->post('/', 'DraftController@store');
+                                $router->get('/{policeId}', 'DraftController@show');
+                                $router->patch('/{policeId}', 'DraftController@update');
+                                $router->delete('/{policeId}', 'DraftController@delete');
+                            }
+                        );
+                    }
+                );
+            }
+        );
+
+
+    }
+);
