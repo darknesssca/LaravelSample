@@ -14,6 +14,11 @@ class InsuranceCompany extends Model
         return 'code';
     }
 
+    public function logo()
+    {
+        return $this->belongsTo('App\Models\Files');
+    }
+
     public static function scopeGetCompany($query, $code)
     {
         return $query->where([

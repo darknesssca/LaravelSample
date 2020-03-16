@@ -8,20 +8,30 @@ class CreateCarInsuranceDataTables extends Migration
 {
     private $tables = [
         'Files',
-        'PolicyStatuses',
         'InsuranceCompanies',
-        'CarMarks',
-        'CarModels',
         'PolicyTypes',
-        'RegDocTypes',
-        'Drivers',
+        'PolicyStatuses',
+        'DocTypes',
+        'DocTypeInsurance',
+        'CarMarks',
+        'MarkInsurance',
+        'CarModels',
+        'ModelInsurance',
+        'RegCountry',
+        'RegCountryInsurance',
+        'SourceAcquisition',
+        'AcquisitionInsurance',
+        'UsageTypes',
+        'UsageTypeInsurance',
+        'UsageTargets',
+        'UsageTargetInsurance',
+        'DraftClient',
         'Policies',
+        'Drivers',
         'PolicyDriver',
-        'Vehicles',
         'ReportTypes',
         'Reports',
         'ReportPolicy',
-        'ModelInsurance'
     ];
     /**
      * Run the migrations.
@@ -51,6 +61,7 @@ class CreateCarInsuranceDataTables extends Migration
         }
     }
 
+    // страховые компании
     private function upFiles()
     {
         Schema::create('files', function (Blueprint $table) {
@@ -68,6 +79,43 @@ class CreateCarInsuranceDataTables extends Migration
         Schema::dropIfExists('files');
     }
 
+    private function upInsuranceCompanies()
+    {
+        Schema::create('insurance_companies', function (Blueprint $table){
+            $table->integerIncrements('id');
+            $table->boolean('active');
+            $table->unsignedInteger('logo_id');
+            $table->string('code');
+            $table->string('name');
+            $table->timestamps();
+
+            $table->foreign('logo_id')->references('id')->on('files');
+        });
+    }
+
+    private function downInsuranceCompanies()
+    {
+        Schema::dropIfExists('insurance_companies');
+    }
+
+    // справочники
+    // тип полиса
+    private function upPolicyTypes()
+    {
+        Schema::create('policy_types', function (Blueprint $table){
+            $table->integerIncrements('id');
+            $table->string('name');
+            $table->string('code');
+            $table->timestamps();
+        });
+    }
+
+    private function downPolicyTypes()
+    {
+        Schema::dropIfExists('policy_types');
+    }
+
+    // статус полиса
     private function upPolicyStatuses()
     {
         Schema::create('policy_statuses', function (Blueprint $table) {
@@ -84,43 +132,10 @@ class CreateCarInsuranceDataTables extends Migration
         Schema::dropIfExists('policy_statuses');
     }
 
-    private function upInsuranceCompanies()
+    // тип документа
+    private function upDocTypes()
     {
-        Schema::create('insurance_companies', function (Blueprint $table){
-            $table->integerIncrements('id');
-            $table->boolean('active');
-            $table->integer('logo_id');
-            $table->string('code');
-            $table->string('name');
-            $table->timestamps();
-
-            $table->foreign('logo_id')->references('id')->on('files');
-        });
-    }
-
-    private function downInsuranceCompanies()
-    {
-        Schema::dropIfExists('insurance_companies');
-    }
-
-    private function upPolicyTypes()
-    {
-        Schema::create('policy_types', function (Blueprint $table){
-           $table->integerIncrements('id');
-           $table->string('name');
-           $table->string('code');
-           $table->timestamps();
-        });
-    }
-
-    private function downPolicyTypes()
-    {
-        Schema::dropIfExists('policy_types');
-    }
-
-    private function upRegDocTypes()
-    {
-        Schema::create('reg_doc_types', function (Blueprint $table) {
+        Schema::create('doc_types', function (Blueprint $table) {
             $table->integerIncrements('id');
             $table->string('code');
             $table->string('name');
@@ -128,23 +143,344 @@ class CreateCarInsuranceDataTables extends Migration
         });
     }
 
-    private function downRegDocTypes()
+    private function downDocTypes()
     {
-        Schema::dropIfExists('reg_doc_types');
+        Schema::dropIfExists('doc_types');
+    }
+
+    private function upDocTypeInsurance()
+    {
+        Schema::create('doctype_insurance', function (Blueprint $table) {
+            $table->integer('doctype_id');
+            $table->integer('insurance_company_id');
+            $table->string('reference_doctype_code');
+            $table->timestamps();
+
+            $table->foreign('doctype_id')->references('id')->on('doc_types')->onDelete('cascade');
+            $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');
+        });
+    }
+
+    private function downDocTypeInsurance()
+    {
+        Schema::dropIfExists('doctype_insurance');
+    }
+
+    // марка автомобиля
+    private function upCarMarks()
+    {
+        Schema::create('car_marks', function (Blueprint $table) {
+            $table->integerIncrements('id');
+            $table->string('code');
+            $table->string('name');
+            $table->timestamps();
+        });
+    }
+
+    private function downCarMarks()
+    {
+        Schema::dropIfExists('car_marks');
+    }
+
+    private function upMarkInsurance()
+    {
+        Schema::create('insurance_mark', function (Blueprint $table) {
+            $table->integer('mark_id');
+            $table->integer('insurance_company_id');
+            $table->string('reference_mark_code');
+            $table->timestamps();
+
+            $table->foreign('mark_id')->references('id')->on('car_marks')->onDelete('cascade');
+            $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');
+        });
+    }
+
+    private function downMarkInsurance()
+    {
+        Schema::dropIfExists('insurance_mark');
+    }
+
+    // модель автомобиля
+    private function upCarModels()
+    {
+        Schema::create('car_models', function (Blueprint $table) {
+            $table->integerIncrements('id');
+            $table->unsignedInteger('mark_id');
+            $table->string('code');
+            $table->string('name');
+            $table->timestamps();
+
+            $table->foreign('mark_id')->references('id')->on('car_marks');
+        });
+    }
+
+    private function downCarModels()
+    {
+        Schema::dropIfExists('car_models');
+    }
+
+    private function upModelInsurance()
+    {
+        Schema::create('insurance_model', function (Blueprint $table) {
+            $table->integer('model_id');
+            $table->integer('insurance_company_id');
+            $table->string('reference_model_code');
+            $table->string('reference_category_code');
+            $table->timestamps();
+
+            $table->foreign('model_id')->references('id')->on('car_models')->onDelete('cascade');
+            $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');
+        });
+    }
+
+    private function downModelInsurance()
+    {
+        Schema::dropIfExists('insurance_model');
+    }
+
+    // страна регистрации
+    private function upRegCountry()
+    {
+        Schema::create('reg_countries', function (Blueprint $table) {
+            $table->integerIncrements('id');
+            $table->string('code');
+            $table->string('name');
+            $table->timestamps();
+        });
+    }
+
+    private function downRegCountry()
+    {
+        Schema::dropIfExists('reg_countries');
+    }
+
+    private function upRegCountryInsurance()
+    {
+        Schema::create('insurance_country', function (Blueprint $table) {
+            $table->integer('country_id');
+            $table->integer('insurance_company_id');
+            $table->string('reference_country_code');
+            $table->timestamps();
+
+            $table->foreign('country_id')->references('id')->on('reg_countries')->onDelete('cascade');
+            $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');
+        });
+    }
+
+    private function downRegCountryInsurance()
+    {
+        Schema::dropIfExists('insurance_country');
+    }
+
+    // способ приобретения автомобиля
+    private function upSourceAcquisition()
+    {
+        Schema::create('source_acquisitions', function (Blueprint $table) {
+            $table->integerIncrements('id');
+            $table->string('code');
+            $table->string('name');
+            $table->timestamps();
+        });
+    }
+
+    private function downSourceAcquisition()
+    {
+        Schema::dropIfExists('source_acquisitions');
+    }
+
+    private function upAcquisitionInsurance()
+    {
+        Schema::create('acquisition_insurance', function (Blueprint $table) {
+            $table->integer('acquisition_id');
+            $table->integer('insurance_company_id');
+            $table->string('reference_acquisition_code');
+            $table->timestamps();
+
+            $table->foreign('acquisition_id')->references('id')->on('source_acquisitions')->onDelete('cascade');
+            $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');
+        });
+    }
+
+    private function downAcquisitionInsurance()
+    {
+        Schema::dropIfExists('acquisition_insurance');
+    }
+
+    // способ использования
+    private function upUsageTypes()
+    {
+        Schema::create('usage_types', function (Blueprint $table) {
+            $table->integerIncrements('id');
+            $table->string('code');
+            $table->string('name');
+            $table->timestamps();
+        });
+    }
+
+    private function downUsageTypes()
+    {
+        Schema::dropIfExists('usage_types');
+    }
+
+    private function upUsageTypeInsurance()
+    {
+        Schema::create('usage_type_insurance', function (Blueprint $table) {
+            $table->integer('type_id');
+            $table->integer('insurance_company_id');
+            $table->string('reference_usage_type_code');
+            $table->timestamps();
+
+            $table->foreign('type_id')->references('id')->on('usage_types')->onDelete('cascade');
+            $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');
+        });
+    }
+
+    private function downUsageTypeInsurance()
+    {
+        Schema::dropIfExists('usage_type_insurance');
+    }
+
+    // цель использования
+    private function upUsageTargets()
+    {
+        Schema::create('usage_targets', function (Blueprint $table) {
+            $table->integerIncrements('id');
+            $table->string('code');
+            $table->string('name');
+            $table->timestamps();
+        });
+    }
+
+    private function downUsageTargets()
+    {
+        Schema::dropIfExists('usage_targets');
+    }
+
+    private function upUsageTargetInsurance()
+    {
+        Schema::create('usage_target_insurance', function (Blueprint $table) {
+            $table->integer('target_id');
+            $table->integer('insurance_company_id');
+            $table->string('reference_usage_target_code');
+            $table->timestamps();
+
+            $table->foreign('target_id')->references('id')->on('usage_targets')->onDelete('cascade');
+            $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');
+        });
+    }
+
+    private function downUsageTargetInsurance()
+    {
+        Schema::dropIfExists('usage_target_insurance');
+    }
+
+    // полисы
+
+    private function upDraftClient()
+    {
+        Schema::create('draft_clients', function (Blueprint $table) {
+            $table->integerIncrements('id');
+            $table->string('last_name');
+            $table->string('first_name');
+            $table->string('patronymic');
+            $table->date('birth_date');
+            $table->string('passport_series');
+            $table->string('passport_number');
+            $table->date('passport_date');
+            $table->string('passport_issuer');
+            $table->string('passport_unit_code');
+            $table->string('address');
+            $table->boolean('is_russian')->default(true);
+            $table->timestamps();
+        });
+    }
+
+    private function downDraftClient()
+    {
+        Schema::dropIfExists('draft_clients');
+    }
+
+    private function upPolicies()
+    {
+        Schema::create('policies', function (Blueprint $table) {
+            // base
+            $table->integerIncrements('id');
+            $table->unsignedInteger('agent_id');
+            $table->string('number')->nullable();
+            $table->unsignedInteger('insurance_company_id')->nullable();
+            $table->unsignedInteger('status_id');
+            $table->unsignedInteger('type_id')->nullable();
+            $table->unsignedInteger('region_id')->nullable();
+            $table->unsignedInteger('premium')->nullable();
+            $table->unsignedInteger('commission_id')->nullable();
+            $table->boolean('commission_paid')->default(false);
+            $table->date('registration_date')->nullable();
+            $table->boolean('paid')->default(false);
+            // subject
+            $table->unsignedInteger('client_id')->nullable();
+            $table->unsignedInteger('insurant_id')->nullable();
+            // car
+            $table->unsignedInteger('vehicle_model_id')->nullable();
+            $table->unsignedInteger('vehicle_engine_power')->nullable();
+            $table->string('vehicle_vin')->nullable();
+            $table->unsignedInteger('vehicle_reg_country')->nullable();
+            $table->unsignedInteger('vehicle_made_year')->nullable();
+            $table->unsignedInteger('vehicle_unladen_mass')->nullable();
+            $table->unsignedInteger('vehicle_loaded_mass')->nullable();
+            $table->unsignedInteger('vehicle_count_seats')->nullable();
+            $table->unsignedInteger('vehicle_mileage')->nullable();
+            $table->unsignedInteger('vehicle_cost')->nullable();
+            $table->unsignedInteger('vehicle_acquisition')->nullable();
+            $table->unsignedInteger('vehicle_usage_target')->nullable();
+            $table->unsignedInteger('vehicle_usage_type')->nullable();
+            $table->boolean('vehicle_with_trailer')->default(false);
+            // car.document
+            $table->unsignedInteger('vehicle_reg_doc_type_id')->nullable();
+            $table->string('vehicle_doc_series')->nullable();
+            $table->string('vehicle_doc_number')->nullable();
+            $table->string('vehicle_doc_issued')->nullable();
+            // car.inspection
+            $table->string('vehicle_inspection_doc_series')->nullable();
+            $table->string('vehicle_inspection_doc_number')->nullable();
+            $table->string('vehicle_inspection_doc_issued')->nullable();
+            // policy
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
+            $table->boolean('is_multi_drive')->default(false);
+
+            $table->timestamps();
+
+            $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');
+            $table->foreign('vehicle_model_id')->references('id')->on('car_models');
+            $table->foreign('vehicle_reg_doc_type_id')->references('id')->on('doc_types');
+            $table->foreign('status_id')->references('id')->on('policy_statuses');
+            $table->foreign('type_id')->references('id')->on('policy_types');
+            $table->foreign('client_id')->references('id')->on('draft_clients');
+            $table->foreign('insurant_id')->references('id')->on('draft_clients');
+            $table->foreign('vehicle_reg_country')->references('id')->on('reg_countries');
+            $table->foreign('vehicle_acquisition')->references('id')->on('source_acquisitions');
+            $table->foreign('vehicle_usage_target')->references('id')->on('usage_targets');
+            $table->foreign('vehicle_usage_type')->references('id')->on('usage_types');
+        });
+    }
+
+    private function downPolicies()
+    {
+        Schema::dropIfExists('policies');
     }
 
     private function upDrivers()
     {
         Schema::create('drivers', function (Blueprint $table) {
             $table->integerIncrements('id');
-            $table->string('first_name');
-            $table->string('last_name');
+            $table->string('first_name')->nullable();
+            $table->string('last_name')->nullable();
             $table->string('patronymic')->nullable();
-            $table->date('birth_date');
-            $table->string('license_series');
-            $table->string('license_number');
-            $table->string('license_date');
-            $table->date('exp_start_date');
+            $table->date('birth_date')->nullable();
+            $table->string('license_series')->nullable();
+            $table->string('license_number')->nullable();
+            $table->date('license_date')->nullable();
+            $table->date('exp_start_date')->nullable();
             $table->timestamps();
         });
     }
@@ -154,61 +490,15 @@ class CreateCarInsuranceDataTables extends Migration
         Schema::dropIfExists('drivers');
     }
 
-    private function upPolicies()
-    {
-        Schema::create('policies', function (Blueprint $table) {
-            $table->integerIncrements('id');
-            $table->boolean('active');
-            $table->integer('agent_id');
-            $table->integer('client_id');
-            $table->string('number');
-            $table->integer('insurance_company_id');
-            $table->integer('vehicle_model_id');
-            $table->integer('vehicle_made_year');
-            $table->integer('vehicle_reg_doc_type_id');
-            $table->string('vehicle_doc_series');
-            $table->string('vehicle_doc_number');
-            $table->string('vehicle_vin');
-            $table->string('vehicle_category');
-            $table->string('vehicle_engine_power');
-            $table->string('vehicle_unladen_mass')->nullable();
-            $table->string('vehicle_loaded_mass')->nullable();
-            $table->string('vehicle_purpose_using')->nullable();
-            $table->string('count_seats')->nullable();
-            $table->integer('status_id');
-            $table->integer('type_id');
-            $table->integer('region_id');
-            $table->integer('cost');
-            $table->integer('commission_id');
-            $table->boolean('commission_paid');
-            $table->date('registration_date');
-            $table->date('start_date');
-            $table->date('end_date');
-            $table->boolean('paid');
-            $table->timestamps();
-
-            $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');
-            $table->foreign('vehicle_model_id')->references('id')->on('car_models');
-            $table->foreign('vehicle_reg_doc_type_id')->references('id')->on('reg_doc_types');
-            $table->foreign('status_id')->references('id')->on('policy_statuses');
-            $table->foreign('type_id')->references('id')->on('policy_types');
-        });
-    }
-
-    private function downPolicies()
-    {
-        Schema::dropIfExists('policies');
-    }
-
     private function upPolicyDriver()
     {
         Schema::create('driver_policy', function (Blueprint $table) {
-            $table->integer('driver_id');
-            $table->integer('policy_id');
+            $table->unsignedInteger('driver_id');
+            $table->unsignedInteger('policy_id');
             $table->timestamps();
 
-            $table->foreign('driver_id')->references('id')->on('drivers');
-            $table->foreign('policy_id')->references('id')->on('policies');
+            $table->foreign('driver_id')->references('id')->on('drivers')->onDelete('cascade');
+            $table->foreign('policy_id')->references('id')->on('policies')->onDelete('cascade');
         });
     }
 
@@ -217,25 +507,7 @@ class CreateCarInsuranceDataTables extends Migration
         Schema::dropIfExists('driver_policy');
     }
 
-    private function upVehicles()
-    {
-        Schema::create('vehicles', function (Blueprint $table) {
-            $table->integerIncrements('id');
-            $table->string('mark');
-            $table->string('model');
-            $table->date('made_year');
-            $table->string('vin');
-            $table->string('category');
-            $table->integer('engine_power');
-            $table->timestamps();
-        });
-    }
-
-    private function downVehicles()
-    {
-        Schema::dropIfExists('vehicles');
-    }
-
+    // репорты
     private function upReportTypes()
     {
         Schema::create('report_types', function (Blueprint $table) {
@@ -291,54 +563,4 @@ class CreateCarInsuranceDataTables extends Migration
         Schema::dropIfExists('report_policy');
     }
 
-    private function upCarMarks()
-    {
-        Schema::create('car_marks', function (Blueprint $table) {
-            $table->integerIncrements('id');
-            $table->string('code');
-            $table->string('name');
-            $table->timestamps();
-        });
-    }
-
-    private function downCarMarks()
-    {
-        Schema::dropIfExists('car_marks');
-    }
-
-    private function upCarModels()
-    {
-        Schema::create('car_models', function (Blueprint $table) {
-            $table->integerIncrements('id');
-            $table->integer('mark_id');
-            $table->string('code');
-            $table->string('name');
-            $table->timestamps();
-
-            $table->foreign('mark_id')->references('id')->on('car_marks');
-        });
-    }
-
-    private function downCarModels()
-    {
-        Schema::dropIfExists('car_models');
-    }
-
-    private function upModelInsurance()
-    {
-        Schema::create('model_insurance', function (Blueprint $table) {
-            $table->integer('model_id');
-            $table->integer('insurance_company_id');
-            $table->string('reference_code');
-            $table->timestamps();
-
-            $table->foreign('model_id')->references('id')->on('car_marks');
-            $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');
-        });
-    }
-
-    private function downModelInsurance()
-    {
-        Schema::dropIfExists('model_insurance');
-    }
 }
