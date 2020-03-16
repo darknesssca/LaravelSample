@@ -2,13 +2,8 @@
 
 use Illuminate\Database\Seeder;
 
-class PolicyTablesSeeder extends Seeder
+class PolicySeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
     protected static $files = [
         [
             'name' => 1,
@@ -236,25 +231,21 @@ class PolicyTablesSeeder extends Seeder
         [
             'model_id' => 1,
             'insurance_company_id' => 1,
-            'category_id' => 1,
             'reference_model_code' => 'Pixo',
         ],
         [
             'model_id' => 1,
             'insurance_company_id' => 2,
-            'category_id' => 1,
             'reference_model_code' => 'Pixo',
         ],
         [
             'model_id' => 1,
             'insurance_company_id' => 3,
-            'category_id' => 1,
             'reference_model_code' => '36892',
         ],
         [
             'model_id' => 1,
             'insurance_company_id' => 4,
-            'category_id' => 1,
             'reference_model_code' => '1360',
         ],
     ];
@@ -330,22 +321,22 @@ class PolicyTablesSeeder extends Seeder
         [
             'type_id' => 1,
             'insurance_company_id' => 1,
-            'reference_acquisition_code' => 'Личная',
+            'reference_usage_type_code' => 'Личная',
         ],
         [
             'type_id' => 1,
             'insurance_company_id' => 2,
-            'reference_acquisition_code' => 'PURCHASED_FROM_PERSON',
+            'reference_usage_type_code' => 'PURCHASED_FROM_PERSON',
         ],
         [
             'type_id' => 1,
             'insurance_company_id' => 3,
-            'reference_acquisition_code' => '1',
+            'reference_usage_type_code' => '1',
         ],
         [
             'type_id' => 1,
             'insurance_company_id' => 4,
-            'reference_acquisition_code' => 'personal',
+            'reference_usage_type_code' => 'personal',
         ],
     ];
 
@@ -388,10 +379,10 @@ class PolicyTablesSeeder extends Seeder
         \App\Models\DocType::insert(self::$docTypes);
         \App\Models\DocTypeInsurance::insert(self::$docTypeInsurance);
         \App\Models\CarMark::insert(self::$carMarks);
-        \App\Models\CarMarkInsuranceAlias::insert(self::$insuranceMark);
+        \App\Models\CarMarkInsurance::insert(self::$insuranceMark);
         \App\Models\CarCategory::insert(self::$carCategory);
         \App\Models\CarModel::insert(self::$carModel);
-        \App\Models\CarMarkInsurance::insert(self::$insuranceModel);
+        \App\Models\CarModelInsurance::insert(self::$insuranceModel);
         \App\Models\RegCountry::insert(self::$regCountry);
         \App\Models\RegCountryInsurance::insert(self::$insuranceCountry);
         \App\Models\SourceAcquisition::insert(self::$sourceAcquisition);

@@ -248,7 +248,6 @@ class CreateCarInsuranceDataTables extends Migration
             $table->timestamps();
 
             $table->foreign('model_id')->references('id')->on('car_models')->onDelete('cascade');
-            $table->foreign('category_id')->references('id')->on('car_categories')->onDelete('cascade');
             $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');
         });
     }
