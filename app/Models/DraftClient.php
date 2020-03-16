@@ -31,4 +31,14 @@ class DraftClient extends Model
         return $this->belongsToMany('App\Models\Policy');
     }
 
+    public function gender()
+    {
+        return $this->belongsTo('App\Models\Gender');
+    }
+
+    public function citizenship()
+    {
+        return $this->belongsTo('App\Models\Citizenship');
+    }
+
 }

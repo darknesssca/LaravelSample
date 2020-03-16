@@ -532,8 +532,8 @@ class CreateCarInsuranceDataTables extends Migration
             $table->foreign('vehicle_reg_doc_type_id')->references('id')->on('doc_types');
             $table->foreign('status_id')->references('id')->on('policy_statuses');
             $table->foreign('type_id')->references('id')->on('policy_types');
-            $table->foreign('client_id')->references('id')->on('draft_clients');
-            $table->foreign('insurant_id')->references('id')->on('draft_clients');
+            $table->foreign('client_id')->references('id')->on('draft_clients')->onDelete('cascade');
+            $table->foreign('insurant_id')->references('id')->on('draft_clients')->onDelete('cascade');
             $table->foreign('vehicle_reg_country')->references('id')->on('reg_countries');
             $table->foreign('vehicle_acquisition')->references('id')->on('source_acquisitions');
             $table->foreign('vehicle_usage_target')->references('id')->on('usage_targets');

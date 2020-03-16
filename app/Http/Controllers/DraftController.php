@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DraftClient;
+use App\Models\Driver;
 use App\Models\Policy;
 use App\Models\PolicyStatus;
 use App\Models\PolicyType;
@@ -28,10 +29,11 @@ class DraftController extends Controller
         if (!$userId) {
             return $this->error('user not parsed', 400);
         }
-        return Policy::getPolicies($userId);
+        $policy = Policy::getPolicies($userId);
+        return $policy;
     }
 
-    public function show($id, Request $request)
+    public function show($policeId, Request $request)
     {
         $attributes = $this->validate(
             $request,
@@ -44,14 +46,14 @@ class DraftController extends Controller
         $tokenEncoded = new TokenEncoded($attributes['auth_token']);
         $payload = $tokenEncoded->decode()->getPayload();
         $userId = $payload['user_id'];
-        $id = (int)$id;
+        $policeId = (int)$policeId;
         if (!$userId) {
             return $this->error('user not parsed', 400);
         }
-        if (!$id) {
+        if (!$policeId) {
             return $this->error('id not correct', 400);
         }
-        return Policy::getPolicyById($id);
+        return Policy::getPolicyById($userId, $policeId);
     }
 
     public function store(Request $request)
@@ -85,7 +87,6 @@ class DraftController extends Controller
             $policyData['end_date'] = Carbon::createFromFormat('Y-m-d', $attributes['policy']['endDate']);
         }
         //subjects
-        $subjects = [];
         if (
             isset($attributes['subjects']) && $attributes['subjects'] &&
             (
@@ -141,7 +142,7 @@ class DraftController extends Controller
         }
         //car
         if (isset($attributes['car']) && $attributes['car']) {
-            $this->pushData($subjectData, $attributes['car'], [
+            $this->pushData($policyData, $attributes['car'], [
                 'vehicle_model_id' => 'model',
                 'vehicle_engine_power' => 'enginePower',
                 'vehicle_vin' => 'vin',
@@ -173,7 +174,6 @@ class DraftController extends Controller
             }
         }
         $policy = Policy::create($policyData);
-        return $policy;
         if (isset($attributes['drivers']) && $attributes['drivers']) {
             foreach ($attributes['drivers'] as $driver) {
                 $driverData = [];
@@ -196,10 +196,12 @@ class DraftController extends Controller
                 $policy->drivers()->create($driverData);
             }
         }
-        return [true];
+        return response()->json([
+            'id' => $policy->id,
+        ], 200);
     }
 
-    public function update($id, Request $request)
+    public function update($policeId, Request $request)
     {
         $attributes = $this->validate(
             $request,
@@ -207,9 +209,172 @@ class DraftController extends Controller
             []
         );
         RestController::checkToken($attributes);
+        $tokenEncoded = new TokenEncoded($attributes['auth_token']);
+        $payload = $tokenEncoded->decode()->getPayload();
+        $userId = $payload['user_id'];
+        if (!$userId) {
+            return $this->error('user not parsed', 400);
+        }
+        $policeId = (int)$policeId;
+        if (!$policeId) {
+            return $this->error('id not correct', 400);
+        }
+        //old data
+        $oldPolicy = Policy::where('id', $policeId)->where('agent_id', $userId)->first();
+        //policy
+        $policyData = [
+            'agent_id' => $userId,
+            'status_id' => PolicyStatus::where('code', 'draft')->get()->first()->id,
+            'type_id' => PolicyType::where('code', 'osago')->get()->first()->id,
+        ];
+        $this->pushData($policyData, $attributes['policy'], [
+            'region_id' => 'policyProcessingRegion',
+            'is_multi_drive' => 'isMultidrive',
+        ]);
+        if (isset($attributes['policy']['beginDate']) && $attributes['policy']['beginDate']) {
+            $policyData['start_date'] = Carbon::createFromFormat('Y-m-d', $attributes['policy']['beginDate']);
+        }
+        if (isset($attributes['policy']['endDate']) && $attributes['policy']['endDate']) {
+            $policyData['end_date'] = Carbon::createFromFormat('Y-m-d', $attributes['policy']['endDate']);
+        }
+        //subjects
+        if (
+            isset($attributes['subjects']) && $attributes['subjects'] &&
+            (
+                (isset($attributes['policy']['ownerId']) && $attributes['policy']['ownerId']) ||
+                (isset($attributes['policy']['insurantId']) && $attributes['policy']['insurantId'])
+            )
+        ) {
+            foreach ($attributes['subjects'] as $subject) {
+                $subjectData = [];
+                $this->pushData($subjectData, $subject['fields'], [
+                    'last_name' => 'lastName',
+                    'first_name' => 'firstName',
+                    'patronymic' => 'middleName',
+                    'birth_place' => 'birthPlace',
+                    'gender_id' => 'gender',
+                    'address' => 'address',
+                    'phone' => 'phone',
+                    'email' => 'email',
+                    'citizenship_id' => 'citizenship',
+                    'is_russian' => 'isResident',
+                ]);
+                if (isset($subject['fields']['passport']) && $subject['fields']['passport']) {
+                    $this->pushData($subjectData, $subject['fields']['passport'], [
+                        'passport_series' => 'series',
+                        'passport_number' => 'number',
+                        'passport_date' => 'dateIssue',
+                        'passport_issuer' => 'issuedBy',
+                        'passport_unit_code' => 'subdivisionCode',
+                    ]);
+                }
+                if (isset($subject['fields']['birthdate']) && $subject['fields']['birthdate']) {
+                    $subjectData['birth_date'] = Carbon::createFromFormat('Y-m-d', $subject['fields']['birthdate']);
+                }
+                if (
+                    isset($attributes['policy']['ownerId']) && $attributes['policy']['ownerId'] &&
+                    isset($attributes['policy']['insurantId']) && $attributes['policy']['insurantId'] &&
+                    ($attributes['policy']['insurantId'] == $attributes['policy']['ownerId']) &&
+                    ($subject['id'] == $attributes['policy']['ownerId'])
+                ) {
+                    DraftClient::where('id', $oldPolicy->client_id)->update($subjectData);
+                    if ($oldPolicy->client_id != $oldPolicy->insurant_id) {
+                        $oldInsurer = DraftClient::where('id', $oldPolicy->insurant_id)->first();
+                        $oldInsurer->delete();
+                    }
+                    $policyData['client_id'] = $oldPolicy->client_id;
+                    $policyData['insurant_id'] = $oldPolicy->client_id;
+                } elseif (isset($attributes['policy']['ownerId']) && $attributes['policy']['ownerId'] && ($subject['id'] == $attributes['policy']['ownerId'])) { // если это овнер
+                    if ($oldPolicy->client_id) {
+                        DraftClient::where('id', $oldPolicy->client_id)->update($subjectData);
+                        $policyData['client_id'] = $oldPolicy->client_id;
+                    } else {
+                        $result = DraftClient::create($subjectData);
+                        $policyData['client_id'] = $result->id;
+                    }
+                } elseif (isset($attributes['policy']['insurantId']) && $attributes['policy']['insurantId'] && ($subject['id'] == $attributes['policy']['insurantId'])) {
+                    if ($oldPolicy->insurant_id) {
+                        DraftClient::where('id', $oldPolicy->insurant_id)->update($subjectData);
+                        $policyData['insurant_id'] = $oldPolicy->insurant_id;
+                    } else {
+                        $result = DraftClient::create($subjectData);
+                        $policyData['insurant_id'] = $result->id;
+                    }
+                } else {
+                    continue;
+                }
+            }
+        }
+        //car
+        if (isset($attributes['car']) && $attributes['car']) {
+            $this->pushData($policyData, $attributes['car'], [
+                'vehicle_model_id' => 'model',
+                'vehicle_engine_power' => 'enginePower',
+                'vehicle_vin' => 'vin',
+                'vehicle_reg_country' => 'countryOfRegistration',
+                'vehicle_made_year' => 'year',
+                'vehicle_unladen_mass' => 'minWeight',
+                'vehicle_loaded_mass' => 'maxWeight',
+                'vehicle_count_seats' => 'seats',
+                'vehicle_mileage' => 'mileage',
+                'vehicle_cost' => 'vehicleCost',
+                'vehicle_acquisition' => 'sourceAcquisition',
+                'vehicle_usage_target' => 'vehicleUsage',
+                'vehicle_usage_type' => 'usageType',
+                'vehicle_with_trailer' => 'isUsedWithTrailer',
+            ]);
+            if (isset($attributes['car']['document']) && $attributes['car']['document']) {
+                $this->pushData($policyData, $attributes['car']['document'], [
+                    'vehicle_reg_doc_type_id' => 'documentType',
+                    'vehicle_doc_series' => 'documentSeries',
+                    'vehicle_doc_number' => 'documentNumber',
+                    'vehicle_doc_issued' => 'documentIssued',
+                ]);
+            }
+            if (isset($attributes['car']['docInspection']) && $attributes['car']['docInspection']) {
+                $this->pushData($policyData, $attributes['car']['docInspection'], [
+                    'vehicle_inspection_doc_series' => 'documentSeries',
+                    'vehicle_inspection_doc_number' => 'documentNumber',
+                ]);
+            }
+        }
+        $policy = Policy::create($policyData);
+        if (isset($attributes['drivers']) && $attributes['drivers']) {
+            $driverDataUpdate = [];
+            foreach ($attributes['drivers'] as $driver) {
+                $driverData = [];
+                $this->pushData($driverData, $driver, [
+                    'first_name' => 'firstName',
+                    'last_name' => 'lastName',
+                    'patronymic' => 'middleName',
+                    'license_series' => 'license_series',
+                    'license_number' => 'license_number',
+                ]);
+                if (isset($driver['birthdate']) && $driver['birthdate']) {
+                    $driverData['birth_date'] = Carbon::createFromFormat('Y-m-d', $driver['birthdate']);
+                }
+                if (isset($driver['license_date']) && $driver['license_date']) {
+                    $driverData['license_date'] = Carbon::createFromFormat('Y-m-d', $driver['license_date']);
+                }
+                if (isset($driver['drivingLicenseIssueDateOriginal']) && $driver['drivingLicenseIssueDateOriginal']) {
+                    $driverData['exp_start_date'] = Carbon::createFromFormat('Y-m-d', $driver['drivingLicenseIssueDateOriginal']);
+                }
+                $driverDataUpdate[] = $driverData;
+            }
+            for ($i = 0; $i < count($oldPolicy->drivers); $i++) {
+                if (isset($oldPolicy->drivers[$i]) && isset($driverDataUpdate[$i])) {
+                    Driver::where('id', $oldPolicy->drivers[$i]->id)->update($driverDataUpdate[$i]);
+                } elseif (isset($oldPolicy->drivers[$i]) && !isset($driverDataUpdate[$i])) {
+                    $policy->drivers()->delete($oldPolicy->drivers[$i]->id);
+                } else {
+                    $policy->drivers()->create($driverDataUpdate[$i]);
+                }
+            }
+        }
+        return response()->json([], 200);
     }
 
-    public function delete($id, Request $request)
+    public function delete($policeId, Request $request)
     {
         $attributes = $this->validate(
             $request,
@@ -225,8 +390,15 @@ class DraftController extends Controller
         if (!$userId) {
             return $this->error('user not parsed', 400);
         }
-        $policy = Policy::where('id', $id)->where('agent_id', $userId)->first()->get();
-        return $policy;
+        $policeId = (int)$policeId;
+        if (!$policeId) {
+            return $this->error('id not correct', 400);
+        }
+        $policy = Policy::where('id', $policeId)->where('agent_id', $userId)->first();
+        $policy->drivers()->delete();
+        $policy->delete();
+
+        return response()->json([], 200);
     }
 
     protected function pushData(&$target, $source, $relations)
