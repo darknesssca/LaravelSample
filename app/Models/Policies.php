@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Policies extends Model
 {
-    protected $table = 'insurance_companies';
+    protected $table = 'policies';
 
     protected $fillable = [
         'agent_id',
@@ -111,6 +111,11 @@ class Policies extends Model
 
     public static function scopeGetPolicies($query, $agentId)
     {
+        return self::where('agent_id', $agentId)->get();
+    }
 
+    public static function scopeGetPolicyById($query, $id)
+    {
+        return self::where('id', $id)->get();
     }
 }

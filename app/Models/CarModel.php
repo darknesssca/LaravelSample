@@ -8,6 +8,7 @@ class CarModel extends Model
 {
     protected $fillable = [
         'mark_id',
+        'category_id',
         'code',
         'name',
     ];
@@ -16,5 +17,15 @@ class CarModel extends Model
     public function carMark()
     {
         return $this->belongsTo('App\Models\CarMark');
+    }
+
+    public function carCategory()
+    {
+        return $this->belongsTo('App\Models\CarCategory');
+    }
+
+    public function insuranceCodes()
+    {
+        return $this->belongsToMany('App\Models\CarModelInsurance');
     }
 }

@@ -12,4 +12,9 @@ class UsageType extends Model
     ];
     protected $table = 'usage_types';
 
+    public function insuranceCodes()
+    {
+        return $this->belongsToMany('App\Models\UsageTypeInsurance');
+    }
+
 }

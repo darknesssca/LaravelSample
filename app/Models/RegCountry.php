@@ -12,4 +12,8 @@ class RegCountry extends Model
     ];
     protected $table = 'reg_countries';
 
+    public function insuranceCodes()
+    {
+        return $this->belongsToMany('App\Models\RegCountryInsurance');
+    }
 }

@@ -7,6 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class InsuranceCompany extends Model
 {
+
+    protected $fillable = [
+        'active',
+        'logo_id',
+        'code',
+        'name',
+    ];
+
     protected $table = 'insurance_companies';
 
     public function getRouteKey()

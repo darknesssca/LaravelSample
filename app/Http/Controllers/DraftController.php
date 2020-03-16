@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Policies;
 use Illuminate\Http\Request;
 use Nowakowskir\JWT\TokenEncoded;
 
@@ -19,7 +20,11 @@ class DraftController extends Controller
         RestController::checkToken($attributes);
         $tokenEncoded = new TokenEncoded($attributes['auth_token']);
         $payload = $tokenEncoded->decode()->getPayload();
-        dd($payload);
+        $userId = $payload['user_id'];
+        if (!$userId) {
+            return $this->error('user not parsed', 400);
+        }
+        return Policies::getPolicies($userId);
     }
 
     public function show($id, Request $request)
@@ -32,6 +37,17 @@ class DraftController extends Controller
             []
         );
         RestController::checkToken($attributes);
+        $tokenEncoded = new TokenEncoded($attributes['auth_token']);
+        $payload = $tokenEncoded->decode()->getPayload();
+        $userId = $payload['user_id'];
+        $id = (int)$id;
+        if (!$userId) {
+            return $this->error('user not parsed', 400);
+        }
+        if (!$id) {
+            return $this->error('id not correct', 400);
+        }
+        return Policies::getPolicyById($id);
     }
 
     public function store(Request $request)
@@ -137,5 +153,26 @@ class DraftController extends Controller
             'drivers.*.driver.driverId' => "integer",
             'drivers.*.driver.drivingLicenseIssueDateOriginal' => "date|date_format:Y-m-d",
         ];
+    }
+
+    protected function error($messages, $httpCode = 500)
+    {
+        $errors = [];
+        if (gettype($messages) == 'array') {
+            foreach ($messages as $message) {
+                $errors[] = [
+                    'message' => $message,
+                ];
+            }
+        } else {
+            $errors[] = [
+                'message' => (string)$messages,
+            ];
+        }
+        $message = [
+            'error' => true,
+            'errors' => $errors,
+        ];
+        return response()->json($message, $httpCode);
     }
 }

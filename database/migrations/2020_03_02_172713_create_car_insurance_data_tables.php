@@ -15,6 +15,7 @@ class CreateCarInsuranceDataTables extends Migration
         'DocTypeInsurance',
         'CarMarks',
         'MarkInsurance',
+        'CarCategories',
         'CarModels',
         'ModelInsurance',
         'RegCountry',
@@ -151,8 +152,8 @@ class CreateCarInsuranceDataTables extends Migration
     private function upDocTypeInsurance()
     {
         Schema::create('doctype_insurance', function (Blueprint $table) {
-            $table->integer('doctype_id');
-            $table->integer('insurance_company_id');
+            $table->unsignedInteger('doctype_id');
+            $table->unsignedInteger('insurance_company_id');
             $table->string('reference_doctype_code');
             $table->timestamps();
 
@@ -185,8 +186,8 @@ class CreateCarInsuranceDataTables extends Migration
     private function upMarkInsurance()
     {
         Schema::create('insurance_mark', function (Blueprint $table) {
-            $table->integer('mark_id');
-            $table->integer('insurance_company_id');
+            $table->unsignedInteger('mark_id');
+            $table->unsignedInteger('insurance_company_id');
             $table->string('reference_mark_code');
             $table->timestamps();
 
@@ -200,17 +201,36 @@ class CreateCarInsuranceDataTables extends Migration
         Schema::dropIfExists('insurance_mark');
     }
 
+    // категория автомобиля
+    private function upCarCategories()
+    {
+        Schema::create('car_categories', function (Blueprint $table) {
+            $table->integerIncrements('id');
+            $table->string('code');
+            $table->string('name');
+            $table->timestamps();
+        });
+    }
+
+    private function downCarCategories()
+    {
+        Schema::dropIfExists('car_categories');
+    }
+
+
     // модель автомобиля
     private function upCarModels()
     {
         Schema::create('car_models', function (Blueprint $table) {
             $table->integerIncrements('id');
             $table->unsignedInteger('mark_id');
+            $table->unsignedInteger('category_id');
             $table->string('code');
             $table->string('name');
             $table->timestamps();
 
             $table->foreign('mark_id')->references('id')->on('car_marks');
+            $table->foreign('category_id')->references('id')->on('car_categories');
         });
     }
 
@@ -222,13 +242,13 @@ class CreateCarInsuranceDataTables extends Migration
     private function upModelInsurance()
     {
         Schema::create('insurance_model', function (Blueprint $table) {
-            $table->integer('model_id');
-            $table->integer('insurance_company_id');
+            $table->unsignedInteger('model_id');
+            $table->unsignedInteger('insurance_company_id');
             $table->string('reference_model_code');
-            $table->string('reference_category_code');
             $table->timestamps();
 
             $table->foreign('model_id')->references('id')->on('car_models')->onDelete('cascade');
+            $table->foreign('category_id')->references('id')->on('car_categories')->onDelete('cascade');
             $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');
         });
     }
@@ -257,8 +277,8 @@ class CreateCarInsuranceDataTables extends Migration
     private function upRegCountryInsurance()
     {
         Schema::create('insurance_country', function (Blueprint $table) {
-            $table->integer('country_id');
-            $table->integer('insurance_company_id');
+            $table->unsignedInteger('country_id');
+            $table->unsignedInteger('insurance_company_id');
             $table->string('reference_country_code');
             $table->timestamps();
 
@@ -291,8 +311,8 @@ class CreateCarInsuranceDataTables extends Migration
     private function upAcquisitionInsurance()
     {
         Schema::create('acquisition_insurance', function (Blueprint $table) {
-            $table->integer('acquisition_id');
-            $table->integer('insurance_company_id');
+            $table->unsignedInteger('acquisition_id');
+            $table->unsignedInteger('insurance_company_id');
             $table->string('reference_acquisition_code');
             $table->timestamps();
 
@@ -325,8 +345,8 @@ class CreateCarInsuranceDataTables extends Migration
     private function upUsageTypeInsurance()
     {
         Schema::create('usage_type_insurance', function (Blueprint $table) {
-            $table->integer('type_id');
-            $table->integer('insurance_company_id');
+            $table->unsignedInteger('type_id');
+            $table->unsignedInteger('insurance_company_id');
             $table->string('reference_usage_type_code');
             $table->timestamps();
 
@@ -359,8 +379,8 @@ class CreateCarInsuranceDataTables extends Migration
     private function upUsageTargetInsurance()
     {
         Schema::create('usage_target_insurance', function (Blueprint $table) {
-            $table->integer('target_id');
-            $table->integer('insurance_company_id');
+            $table->unsignedInteger('target_id');
+            $table->unsignedInteger('insurance_company_id');
             $table->string('reference_usage_target_code');
             $table->timestamps();
 
