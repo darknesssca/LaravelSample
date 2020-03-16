@@ -370,6 +370,36 @@ class PolicySeeder extends Seeder
         ],
     ];
 
+    protected static $gender = [
+        [
+            'code' => 'male',
+            'name' => 'мужской',
+        ],
+    ];
+
+    protected static $insuranceGender = [
+        [
+            'gender_id' => 1,
+            'insurance_company_id' => 1,
+            'reference_gender_code' => 'male',
+        ],
+        [
+            'gender_id' => 1,
+            'insurance_company_id' => 2,
+            'reference_gender_code' => 'male',
+        ],
+        [
+            'gender_id' => 1,
+            'insurance_company_id' => 3,
+            'reference_gender_code' => 'male',
+        ],
+        [
+            'gender_id' => 1,
+            'insurance_company_id' => 4,
+            'reference_gender_code' => 'male',
+        ],
+    ];
+
     public function run()
     {
         \App\Models\File::insert(self::$files);
@@ -391,5 +421,7 @@ class PolicySeeder extends Seeder
         \App\Models\UsageTypeInsurance::insert(self::$insuranceUsageType);
         \App\Models\UsageTarget::insert(self::$usageTarget);
         \App\Models\UsageTargetInsurance::insert(self::$insuranceUsageTarget);
+        \App\Models\Gender::insert(self::$gender);
+        \App\Models\GenderInsurance::insert(self::$insuranceGender);
     }
 }

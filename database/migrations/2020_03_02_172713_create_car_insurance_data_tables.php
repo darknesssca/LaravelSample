@@ -26,6 +26,8 @@ class CreateCarInsuranceDataTables extends Migration
         'UsageTypeInsurance',
         'UsageTargets',
         'UsageTargetInsurance',
+        'Gender',
+        'GenderInsurance',
         'DraftClient',
         'Policies',
         'Drivers',
@@ -393,6 +395,40 @@ class CreateCarInsuranceDataTables extends Migration
         Schema::dropIfExists('usage_target_insurance');
     }
 
+    // цель использования
+    private function upGender()
+    {
+        Schema::create('genders', function (Blueprint $table) {
+            $table->integerIncrements('id');
+            $table->string('code');
+            $table->string('name');
+            $table->timestamps();
+        });
+    }
+
+    private function downGender()
+    {
+        Schema::dropIfExists('genders');
+    }
+
+    private function upGenderInsurance()
+    {
+        Schema::create('gender_insurance', function (Blueprint $table) {
+            $table->unsignedInteger('gender_id');
+            $table->unsignedInteger('insurance_company_id');
+            $table->string('reference_gender_code');
+            $table->timestamps();
+
+            $table->foreign('gender_id')->references('id')->on('genders')->onDelete('cascade');
+            $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');
+        });
+    }
+
+    private function downGenderInsurance()
+    {
+        Schema::dropIfExists('gender_insurance');
+    }
+
     // полисы
 
     private function upDraftClient()
@@ -402,6 +438,7 @@ class CreateCarInsuranceDataTables extends Migration
             $table->string('last_name');
             $table->string('first_name');
             $table->string('patronymic');
+            $table->unsignedInteger('gender_id');
             $table->date('birth_date');
             $table->string('passport_series');
             $table->string('passport_number');
@@ -411,6 +448,8 @@ class CreateCarInsuranceDataTables extends Migration
             $table->string('address');
             $table->boolean('is_russian')->default(true);
             $table->timestamps();
+
+            $table->foreign('gender_id')->references('id')->on('genders');
         });
     }
 

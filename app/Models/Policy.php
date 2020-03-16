@@ -5,7 +5,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
-class Policies extends Model
+class Policy extends Model
 {
     protected $table = 'policies';
 
