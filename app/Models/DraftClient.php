@@ -10,13 +10,18 @@ class DraftClient extends Model
         'last_name',
         'first_name',
         'patronymic',
+        'gender_id',
         'birth_date',
+        'birth_place',
         'passport_series',
         'passport_number',
         'passport_date',
         'passport_issuer',
         'passport_unit_code',
         'address',
+        'phone',
+        'email',
+        'citizenship_id',
         'is_russian',
     ];
     protected $table = 'draft_clients';

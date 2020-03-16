@@ -400,6 +400,13 @@ class PolicySeeder extends Seeder
         ],
     ];
 
+    protected static $citizenship = [
+        [
+            'code' => 'RU',
+            'name' => 'россия',
+        ],
+    ];
+
     public function run()
     {
         \App\Models\File::insert(self::$files);
@@ -423,5 +430,6 @@ class PolicySeeder extends Seeder
         \App\Models\UsageTargetInsurance::insert(self::$insuranceUsageTarget);
         \App\Models\Gender::insert(self::$gender);
         \App\Models\GenderInsurance::insert(self::$insuranceGender);
+        \App\Models\Citizenship::insert(self::$citizenship);
     }
 }
