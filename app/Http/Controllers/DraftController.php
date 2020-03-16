@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Policies;
+use App\Models\Policy;
 use Illuminate\Http\Request;
 use Nowakowskir\JWT\TokenEncoded;
 
@@ -24,7 +24,7 @@ class DraftController extends Controller
         if (!$userId) {
             return $this->error('user not parsed', 400);
         }
-        return Policies::getPolicies($userId);
+        return Policy::getPolicies($userId);
     }
 
     public function show($id, Request $request)
@@ -47,7 +47,7 @@ class DraftController extends Controller
         if (!$id) {
             return $this->error('id not correct', 400);
         }
-        return Policies::getPolicyById($id);
+        return Policy::getPolicyById($id);
     }
 
     public function store(Request $request)
@@ -58,7 +58,25 @@ class DraftController extends Controller
             []
         );
         RestController::checkToken($attributes);
+        if ($attributes['subject']) {
+            foreach ($attributes['subject'] as $subject) {
+                $data = [];
+                $this->prepareData($data, $subject['fields'], [
+                    'last_name' => 'lastName',
+                    'first_name' => 'firstName',
+                    'patronymic' => 'middleName',
+                    'birth_date' => 'birthdate',
+//                    'passport_series' => '',
+//                    'passport_number' => '',
+//                    'passport_date' => '',
+//                    'passport_issuer' => '',
+//                    'passport_unit_code' => '',
+                    'address' => '',
+                    'is_russian' => '',
+                ]);
 
+            }
+        }
     }
 
     public function update($id, Request $request)
@@ -83,6 +101,15 @@ class DraftController extends Controller
         RestController::checkToken($attributes);
     }
 
+    protected function prepareData(&$target, $source, $relations)
+    {
+        foreach ($relations as $targetName => $sourceName) {
+            if (isset($source[$sourceName]) && $source[$sourceName]) {
+                $target[$targetName] = $source[$sourceName];
+            }
+        }
+    }
+
     public function validationRulesForm(): array
     {
         return [
@@ -98,23 +125,7 @@ class DraftController extends Controller
             "subjects.*.fields.gender" => "string", // TODO: in справочник
             "subjects.*.fields.citizenship" => "string", // TODO: in справочник
             "subjects.*.fields.isResident" => "boolean", // TODO: in справочник
-            "subjects.*.fields.addresses" => "array",
-            "subjects.*.fields.addresses.*.address.addressType" => "string", // TODO: in справочник
-            "subjects.*.fields.addresses.*.address.country" => "string", // TODO: in справочник
-            "subjects.*.fields.addresses.*.address.postCode" => "string",
-            "subjects.*.fields.addresses.*.address.region" => "string", // TODO: in справочник
-            "subjects.*.fields.addresses.*.address.regionKladr" => "string",
-            "subjects.*.fields.addresses.*.address.district" => "string",
-            "subjects.*.fields.addresses.*.address.districtKladr" => "string",
-            "subjects.*.fields.addresses.*.address.city" => "string",
-            "subjects.*.fields.addresses.*.address.cityKladr" => "string",
-            "subjects.*.fields.addresses.*.address.populatedCenter" => "string",
-            "subjects.*.fields.addresses.*.address.populatedCenterKladr" => "string",
-            "subjects.*.fields.addresses.*.address.street" => "string",
-            "subjects.*.fields.addresses.*.address.streetKladr" => "string",
-            "subjects.*.fields.addresses.*.address.building" => "string",
-            "subjects.*.fields.addresses.*.address.buildingKladr" => "string",
-            "subjects.*.fields.addresses.*.address.flat" => "string",
+            "subjects.*.fields.address" => "string",
             "subjects.*.fields.document.*.documentType" => "string", // TODO: in справочник
             "subjects.*.fields.document.*.series" => "string",
             "subjects.*.fields.document.*.number" => "string",
