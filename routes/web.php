@@ -43,6 +43,8 @@ $router->group(
             ],
             function () use ($router) {
                 $router->post('/reports', 'ReportController@create');
+                $router->get('/reports', 'ReportController@index');
+                $router->get('/reports/{id}', 'ReportController@show');
             }
         );
     }
