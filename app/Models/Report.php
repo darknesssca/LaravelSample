@@ -17,6 +17,6 @@ class Report extends Model
 
     public function policies()
     {
-        return $this->belongsToMany('App\Models\Policy');
+        return $this->belongsToMany('App\Models\Policy', 'report_policy');
     }
 }

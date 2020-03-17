@@ -110,7 +110,7 @@ class Policy extends Model
 
     public function reports()
     {
-        return $this->belongsToMany('App\Models\Report');
+        return $this->belongsToMany('App\Models\Report', 'report_policy');
     }
 
     public function delete() {

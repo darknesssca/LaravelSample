@@ -23,8 +23,12 @@ class ReportController extends Controller
 
             $user_id = $this->getUserId($validation_result['creator_id']);
             $reward = $this->getReward($validation_result['policies']);
+            
+            echo '<pre>';
+            print_r($validation_result);
+            echo '</pre>';
 
-            if ($user_id && $reward){
+            if ($reward > 0){
                 $report = Report::create([
                     'name' => $validation_result['name'],
                     'creator_id' => $user_id,
@@ -32,10 +36,11 @@ class ReportController extends Controller
                     'reward' => $reward
                 ]);
 
-                $report->policies()->sync([$validation_result['policies']]);
+                $report->policies()->sync($validation_result['policies']);
+                return $this->success();
+            } else {
+                throw new Exception('Отсутствует доступное вознаграждение');
             }
-
-            return $this->success();
         } catch (Exception $exception) {
             return $this->error($exception->getMessage(), 500);
         }
@@ -49,6 +54,10 @@ class ReportController extends Controller
 
 
     //Вспомогательные методы
+
+    /**
+     * @return array
+     */
     private function createReportValidationRules()
     {
         return [
@@ -58,6 +67,9 @@ class ReportController extends Controller
         ];
     }
 
+    /**
+     * @return array
+     */
     private function createReportValidationMessages()
     {
         return [
@@ -67,13 +79,18 @@ class ReportController extends Controller
         ];
     }
 
+    /**
+     * @param array $policies_ids
+     * @return int
+     * @throws Exception
+     */
     private function getReward(array $policies_ids)
     {
         $reward = 0;
         $policy_collection = Policy::whereIn('id', $policies_ids)->get();
 
         if (count($policy_collection) != count($policies_ids)){ //Найдены не все полисы
-           return $this->error('Найдены не все полисы');
+            throw new Exception('Отсутсвтуют некоторые полисы');
         }
 
         if (env("APP_DEBUG")) {
@@ -88,18 +105,21 @@ class ReportController extends Controller
         return $reward;
     }
 
+    /**
+     * @param $token
+     * @return int
+     * @throws EmptyTokenException
+     * @throws Exception
+     */
     private function getUserId($token){
-        try {
-            $tokenEncoded = new TokenEncoded($token);
-        } catch (EmptyTokenException $exception) {
-            return $this->error($exception->getMessage(), 500);
-        }
+        $tokenEncoded = new TokenEncoded($token);
         $payload = $tokenEncoded->decode()->getPayload();
+        $user_id = intval($payload['user_id']);
 
-        if (empty($payload['user_id'])){
-            return $this->error('Пользователь не авторизован');
+        if (empty($user_id) || $user_id <= 0){
+            throw new Exception('Пользователь не авторизован');
         }
 
-        return $payload['user_id'];
+        return $user_id;
     }
 }
