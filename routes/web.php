@@ -13,39 +13,24 @@
 
 $router->group(
     [
-        'prefix' => 'api',
+        'prefix' => 'v1',
     ],
     function () use ($router) {
         $router->group(
             [
-                'prefix' => 'v1',
+                'prefix' => 'insurance',
             ],
             function () use ($router) {
-                $router->group(
-                    [
-                        'prefix' => 'policies',
-                    ],
-                    function () use ($router) {
-                        $router->post('/insurance/send', 'InsuranceController@store');
-                        $router->post('/insurance/{code}/{method}', 'InsuranceController@index');
-                        // тут будут остальные контроллеры
-                        $router->group(
-                            [
-                                'prefix' => 'drafts',
-                            ],
-                            function () use ($router) {
-                                $router->get('/', 'DraftController@index');
-                                $router->post('/', 'DraftController@store');
-                                $router->get('/{policeId}', 'DraftController@show');
-                                $router->patch('/{policeId}', 'DraftController@update');
-                                $router->delete('/{policeId}', 'DraftController@delete');
-                            }
-                        );
-                    }
-                );
+                // drafts
+                $router->get('/drafts', 'DraftController@index');
+                $router->post('/drafts', 'DraftController@store');
+                $router->get('/drafts/{policeId}', 'DraftController@show');
+                $router->patch('/drafts/{policeId}', 'DraftController@update');
+                $router->delete('/drafts/{policeId}', 'DraftController@delete');
+                // policies
+                $router->post('policies/send', 'InsuranceController@store');
+                $router->post('/policies/{code}/{method}', 'InsuranceController@index');
             }
         );
-
-
     }
 );

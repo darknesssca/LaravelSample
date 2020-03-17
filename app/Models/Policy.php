@@ -49,54 +49,59 @@ class Policy extends Model
         'is_multi_drive',
     ];
 
-    public function insuranceCompany()
+    public function company()
     {
         return $this->belongsTo('App\Models\InsuranceCompany');
     }
 
-    public function carModel()
+    public function model()
     {
-        return $this->belongsTo('App\Models\CarModel');
+        return $this->belongsTo('App\Models\CarModel', 'vehicle_model_id', 'id');
     }
 
-    public function docType()
+    public function doctype()
     {
-        return $this->belongsTo('App\Models\CarModel');
+        return $this->belongsTo('App\Models\DocType', 'vehicle_reg_doc_type_id', 'id');
     }
 
-    public function policyStatus()
+    public function status()
     {
         return $this->belongsTo('App\Models\PolicyStatus');
     }
 
-    public function policyType()
+    public function type()
     {
         return $this->belongsTo('App\Models\PolicyType');
     }
 
-    public function draftClients()
+    public function owner()
     {
-        return $this->belongsTo('App\Models\DraftClient');
+        return $this->belongsTo('App\Models\DraftClient', 'client_id', 'id');
     }
 
-    public function carRegCountry()
+    public function insurer()
     {
-        return $this->belongsTo('App\Models\PolicyType');
+        return $this->belongsTo('App\Models\DraftClient', 'insurant_id', 'id');
     }
 
-    public function carAcquisition()
+    public function regcountry()
     {
-        return $this->belongsTo('App\Models\PolicyType');
+        return $this->belongsTo('App\Models\PolicyType', 'vehicle_reg_country', 'id');
     }
 
-    public function carUsageType()
+    public function acquisition()
     {
-        return $this->belongsTo('App\Models\UsageType');
+        return $this->belongsTo('App\Models\PolicyType', 'vehicle_acquisition', 'id');
     }
 
-    public function carUsageTarget()
+    public function usagetype()
     {
-        return $this->belongsTo('App\Models\UsageTarget');
+        return $this->belongsTo('App\Models\UsageType', 'vehicle_usage_target', 'id');
+    }
+
+    public function usagetarget()
+    {
+        return $this->belongsTo('App\Models\UsageTarget', 'vehicle_usage_type', 'id');
     }
 
     public function drivers()
@@ -105,17 +110,58 @@ class Policy extends Model
     }
 
     public function delete() {
-        $this->drivers()->delete();
+//        $this->drivers()->delete();
+        $this->owner()->delete();
+        $this->insurer()->delete();
         parent::delete();
     }
 
     public static function scopeGetPolicies($query, $agentId)
     {
-        return self::where('agent_id', $agentId)->get();
+        return self::with([
+            'model',
+            'model.mark',
+            'model.category',
+            'doctype',
+            'status',
+            'type',
+            'owner',
+            'owner.gender',
+            'owner.citizenship',
+            'insurer',
+            'insurer.gender',
+            'insurer.citizenship',
+            'regcountry',
+            'acquisition',
+            'usagetype',
+            'usagetarget',
+            'drivers',
+        ])->where('agent_id', $agentId)->get();
     }
 
-    public static function scopeGetPolicyById($query, $id)
+    public static function scopeGetPolicyById($query, $agentId, $id)
     {
-        return self::where('id', $id)->get();
+        return self::with([
+            'model',
+            'model.mark',
+            'model.category',
+            'doctype',
+            'status',
+            'type',
+            'owner',
+            'owner.gender',
+            'owner.citizenship',
+            'insurer',
+            'insurer.gender',
+            'insurer.citizenship',
+            'regcountry',
+            'acquisition',
+            'usagetype',
+            'usagetarget',
+            'drivers',
+        ])
+            ->where('agent_id', $agentId)
+            ->where('id', $id)->get()
+            ->first();
     }
 }
