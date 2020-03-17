@@ -16,7 +16,7 @@ class ReportController extends Controller
 {
 
     //Методы обработки маршрутов
-    public function createReport(Request $request)
+    public function create(Request $request)
     {
         try {
             $validation_result = $this->validate($request, $this->createReportValidationRules(), $this->createReportValidationMessages());

@@ -11,6 +11,9 @@
 |
 */
 
+use Illuminate\Support\Facades\Route;
+
+/**@var Route $router */
 $router->group(
     [
         'prefix' => 'v1',
@@ -30,6 +33,16 @@ $router->group(
                 // policies
                 $router->post('/policies/send', 'InsuranceController@store');
                 $router->post('/policies/{code}/{method}', 'InsuranceController@index');
+            }
+        );
+
+
+        $router->group(
+            [
+                'prefix' => 'policies'
+            ],
+            function () use ($router) {
+                $router->post('/reports', 'ReportController@create');
             }
         );
     }
