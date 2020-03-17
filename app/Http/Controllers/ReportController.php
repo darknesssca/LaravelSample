@@ -42,6 +42,11 @@ class ReportController extends Controller
 
     }
 
+    public function index(Request $request)
+    {
+
+    }
+
 
     //Вспомогательные методы
     private function createReportValidationRules()
@@ -70,6 +75,11 @@ class ReportController extends Controller
         if (count($policy_collection) != count($policies_ids)){ //Найдены не все полисы
            return $this->error('Найдены не все полисы');
         }
+
+        if (env("APP_DEBUG")) {
+            return 1;
+        }
+
 
         foreach ($policy_collection as $policy){
             $reward += 1;

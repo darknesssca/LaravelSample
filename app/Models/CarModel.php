@@ -14,17 +14,17 @@ class CarModel extends Model
     ];
     protected $table = 'car_models';
 
-    public function carMark()
+    public function mark()
     {
         return $this->belongsTo('App\Models\CarMark');
     }
 
-    public function carCategory()
+    public function category()
     {
         return $this->belongsTo('App\Models\CarCategory');
     }
 
-    public function insuranceCodes()
+    public function company()
     {
         return $this->belongsToMany('App\Models\CarModelInsurance');
     }

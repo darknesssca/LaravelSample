@@ -28,6 +28,7 @@ class CreateCarInsuranceDataTables extends Migration
         'UsageTargetInsurance',
         'Gender',
         'GenderInsurance',
+        'Citizenship',
         'DraftClient',
         'Policies',
         'Drivers',
@@ -394,7 +395,7 @@ class CreateCarInsuranceDataTables extends Migration
         Schema::dropIfExists('usage_target_insurance');
     }
 
-    // цель использования
+    // пол
     private function upGender()
     {
         Schema::create('genders', function (Blueprint $table) {
@@ -428,27 +429,47 @@ class CreateCarInsuranceDataTables extends Migration
         Schema::dropIfExists('gender_insurance');
     }
 
-    // полисы
+    // цель использования
+    private function upCitizenship()
+    {
+        Schema::create('citizenship', function (Blueprint $table) {
+            $table->integerIncrements('id');
+            $table->string('code');
+            $table->string('name');
+            $table->timestamps();
+        });
+    }
 
+    private function downCitizenship()
+    {
+        Schema::dropIfExists('citizenship');
+    }
+
+    // полисы
     private function upDraftClient()
     {
         Schema::create('draft_clients', function (Blueprint $table) {
             $table->integerIncrements('id');
-            $table->string('last_name');
-            $table->string('first_name');
-            $table->string('patronymic');
-            $table->unsignedInteger('gender_id');
-            $table->date('birth_date');
-            $table->string('passport_series');
-            $table->string('passport_number');
-            $table->date('passport_date');
-            $table->string('passport_issuer');
-            $table->string('passport_unit_code');
-            $table->string('address');
+            $table->string('last_name')->nullable();
+            $table->string('first_name')->nullable();
+            $table->string('patronymic')->nullable();
+            $table->unsignedInteger('gender_id')->nullable();
+            $table->date('birth_date')->nullable();
+            $table->string('birth_place')->nullable();
+            $table->string('passport_series')->nullable();
+            $table->string('passport_number')->nullable();
+            $table->date('passport_date')->nullable();
+            $table->string('passport_issuer')->nullable();
+            $table->string('passport_unit_code')->nullable();
+            $table->string('address')->nullable();
+            $table->string('phone')->nullable();
+            $table->string('email')->nullable();
+            $table->unsignedInteger('citizenship_id')->nullable();
             $table->boolean('is_russian')->default(true);
             $table->timestamps();
 
             $table->foreign('gender_id')->references('id')->on('genders');
+            $table->foreign('citizenship_id')->references('id')->on('citizenship');
         });
     }
 
@@ -473,6 +494,9 @@ class CreateCarInsuranceDataTables extends Migration
             $table->boolean('commission_paid')->default(false);
             $table->date('registration_date')->nullable();
             $table->boolean('paid')->default(false);
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
+            $table->boolean('is_multi_drive')->default(false);
             // subject
             $table->unsignedInteger('client_id')->nullable();
             $table->unsignedInteger('insurant_id')->nullable();
@@ -499,11 +523,6 @@ class CreateCarInsuranceDataTables extends Migration
             // car.inspection
             $table->string('vehicle_inspection_doc_series')->nullable();
             $table->string('vehicle_inspection_doc_number')->nullable();
-            $table->string('vehicle_inspection_doc_issued')->nullable();
-            // policy
-            $table->date('start_date')->nullable();
-            $table->date('end_date')->nullable();
-            $table->boolean('is_multi_drive')->default(false);
 
             $table->timestamps();
 
@@ -512,8 +531,8 @@ class CreateCarInsuranceDataTables extends Migration
             $table->foreign('vehicle_reg_doc_type_id')->references('id')->on('doc_types');
             $table->foreign('status_id')->references('id')->on('policy_statuses');
             $table->foreign('type_id')->references('id')->on('policy_types');
-            $table->foreign('client_id')->references('id')->on('draft_clients');
-            $table->foreign('insurant_id')->references('id')->on('draft_clients');
+            $table->foreign('client_id')->references('id')->on('draft_clients')->onDelete('cascade');
+            $table->foreign('insurant_id')->references('id')->on('draft_clients')->onDelete('cascade');
             $table->foreign('vehicle_reg_country')->references('id')->on('reg_countries');
             $table->foreign('vehicle_acquisition')->references('id')->on('source_acquisitions');
             $table->foreign('vehicle_usage_target')->references('id')->on('usage_targets');
