@@ -57,6 +57,7 @@ class CreateCarInsuranceDataTables extends Migration
      */
     public function down()
     {
+        $this->tables = array_reverse($this->tables);
         foreach ($this->tables as $tableName) {
             if (method_exists($this, $method = "down{$tableName}")) {
                 $this->{$method}();
@@ -594,8 +595,6 @@ class CreateCarInsuranceDataTables extends Migration
             $table->integer('reward');
             $table->boolean('is_payed')->default(false);
             $table->timestamps();
-
-            $table->foreign('report_type_id')->references('id')->on('report_types');
         });
     }
 
