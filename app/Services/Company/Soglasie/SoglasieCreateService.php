@@ -4,7 +4,7 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
-use App\Http\Controllers\SoapController;
+use App\Http\Controllers\RestController;
 use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
 use Illuminate\Support\Carbon;
@@ -35,7 +35,8 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         $data = $this->prepareData($attributes);
         $headers = $this->getHeaders();
         return $data;
-        //$response = SoapController::requestBySoap($this->apiWsdlUrl, 'CalcProduct', $data, $auth, $headers);
+        $response = RestController::postRequest($this->apiWsdlUrl, $data, $headers);
+        return $response;
     }
 
     protected function getHeaders()
@@ -50,6 +51,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
     public function prepareData($attributes)
     {
         $owner = $this->searchSubjectById($attributes, $attributes['policy']['ownerId']);
+        $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         if (!$owner) {
             throw new \Exception('no owner');
         }
@@ -58,31 +60,45 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
             'BeginDate' => $this->formatDateTime($attributes['policy']['beginDate']),
             'EndDate' => $this->formatDateTime($attributes['policy']['endDate']),
             //'PrevPolicy' => '', //todo пролонгация
-            'Period1Begin' => $this->formatDateTime($attributes['policy']['beginDate']),
-            'Period1End' => $this->formatDateTime($attributes['policy']['endDate']),
+            'Period1Begin' => $attributes['policy']['beginDate'],
+            'Period1End' => $attributes['policy']['endDate'],
             'IsTransCar' => false, // fixme заглушка
             'IsInsureTrailer' => $this->transformBoolean($attributes['car']['isUsedWithTrailer']),
             'CarInfo' => [
                 'VIN' => $attributes['car']['vin'],
                 'MarkModelCarCode' => $attributes['car']['model'],
-                'MarkPTS' => $attributes['car']['mark'], // todo справочник
+                'MarkPTS' => 'NISSAN',//$attributes['car']['mark'], // todo справочник
                 'ModelPTS' => $attributes['car']['model'], // todo справочник
                 'YearIssue' => $attributes['car']['year'],
                 'DocumentCar' => [],
                 'TicketCar' => [
-                    'TypeRSA' => $attributes['car']['docInspection']['documentType'],
-                    'Number' => $attributes['car']['docInspection']['documentNumber'],
-                    'Date' => $attributes['car']['docInspection']['documentIssued'],
+                    'TypeRSA' => $attributes['car']['inspection']['documentType'],
+                    'Number' => $attributes['car']['inspection']['documentNumber'],
+                    'Date' => $attributes['car']['inspection']['documentIssuedDate'],
                 ],
-                'TicketCarYear' => Carbon::createFromFormat('Y-m-d', $attributes['car']['docInspection']['documentDateEmd'])->format('Y'),
-                'TicketCarMonth' => Carbon::createFromFormat('Y-m-d', $attributes['car']['docInspection']['documentDateEmd'])->format('m'),
-                'TicketDiagnosticDate' => $attributes['car']['docInspection']['documentIssuedDate'],
+                'TicketCarYear' => Carbon::createFromFormat('Y-m-d', $attributes['car']['inspection']['documentDateEmd'])->format('Y'),
+                'TicketCarMonth' => Carbon::createFromFormat('Y-m-d', $attributes['car']['inspection']['documentDateEmd'])->format('m'),
+                'TicketDiagnosticDate' => $attributes['car']['inspection']['documentIssuedDate'],
                 'EngCap' => $attributes['car']['enginePower'],
-                'GoalUse' => $attributes['car']['vehicleUsage'], // todo справочник
+                'GoalUse' => "Personal", //$attributes['car']['vehicleUsage'], // todo справочник
                 'Rented' => false, // todo зависит от предыдущего справочника
             ],
             'Insurer' => [
-                'Phisical' => [],
+                'Phisical' => [
+                    'Resident' => $insurer['isResident'],
+                    'Surname' => $insurer['lastName'],
+                    'Name' => $insurer['firstName'],
+                    'BirthDate' => $insurer['birthdate'],
+                    'Sex' => $insurer['gender'],
+                    'Email' => $insurer['email'],
+                    'PhoneMobile' => $insurer['phone']['numberPhone'],
+                    'Documents' => [
+                        'Document' => [],
+                    ],
+                    'Addresses' => [
+                        'Address' => [],
+                    ],
+                ],
             ],
             'CarOwner' => [
                 'Phisical' => [
@@ -93,9 +109,17 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
                     'Sex' => $owner['gender'],
                     'Email' => $owner['email'],
                     'PhoneMobile' => $owner['phone']['numberPhone'],
+                    'Documents' => [
+                        'Document' => [],
+                    ],
+                    'Addresses' => [
+                        'Address' => [],
+                    ],
                 ],
             ],
-            //'Drivers {Driver}' => [],
+            'Drivers' => [
+                'Driver' => [],
+            ],
             'IKP1l' => ' ',
         ];
         $this->setValuesByArray($data['CarInfo'], [
@@ -104,11 +128,11 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         ], $attributes['car']);
         $this->setValuesByArray($data['CarInfo']['TicketCar'], [
             "Serial" => 'documentSeries',
-        ], $attributes['car']['docInspection']);
+        ], $attributes['car']['inspection']);
         //car.documents
         $carDocument = $this->searchDocumentByType($attributes['car'], 'PTS'); // todo справочник
         if (!$carDocument) {
-            $carDocument = $this->searchDocumentByType($attributes['car'], 'STS'); // todo справочник
+            $carDocument = $this->searchDocumentByType($attributes['car'], '31'); // todo справочник
             if (!$carDocument) {
                 throw new \Exception('no pts and sts');
             }
@@ -122,170 +146,15 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         $this->setValuesByArray($data['CarInfo']['DocumentCar'], [
             "Serial" => 'documentSeries',
         ], $carDocument);
-        //subjects
+        //owner
         $this->setValuesByArray($data['CarOwner']['Phisical'], [
             "Patronymic" => 'middleName',
         ], $owner);
-        if (count($owner['documents']) > 1) {
-            $data['CarOwner']['Phisical']['Documents'] = [];
-            foreach ($owner['documents'] as $document) {
-                $pDocument = [
-                    'TypeRSA' => $document['documentType'],
-                    'Number' => $document['number'],
-                    'Date' => $document['dateIssue'],
-                    'Exit' => $document['issuedBy'],
-                    'IsPrimary' => $document['documentType'] == 'passport' ? true : false, // todo из справочника
-                ];
-                $this->setValuesByArray($pDocument, [
-                    "Serial" => 'series',
-                ], $document);
-                $data['CarOwner']['Phisical']['Documents'][] = $pDocument;
-            }
-        } else {
-            $document = array_shift($owner['documents']);
-            $data['CarOwner']['Phisical']['Document'] = [
-                'TypeRSA' => $document['documentType'],
-                'Number' => $document['number'],
-                'Date' => $document['dateIssue'],
-                'Exit' => $document['issuedBy'],
-                'IsPrimary' => $document['documentType'] == 'passport' ? true : false, // todo из справочника
-            ];
-            $this->setValuesByArray($data['CarOwner']['Phisical']['Document'], [
-                "Serial" => 'series',
-            ], $document);
-        }
-        if (count($owner['addresses']) > 1) {
-            $data['CarOwner']['Phisical']['Addresses'] = [];
-            foreach ($owner['addresses'] as $address) {
-                $pAddress = [
-                    'Type' => $address['addressType'],
-                    'Country' => $address['country'], // todo из справочника
-                    'AddressCode' => $address['streetKladr'],
-                ];
-                $this->setValuesByArray($pAddress, [
-                    'Street' => 'street',
-                    'Hous' => 'building',
-                    'Flat' => 'flat',
-                    'Index' => 'postCode',
-                ], $address);
-                if (!$owner['isResident']) {
-                    $pAddress['AddressString'] = isset($address['region']) ? $address['region'] . ', ' : '' .
-                                                isset($address['district']) ? $address['district'] . ', ' : '' .
-                                                isset($address['city']) ? $address['city'] . ', ' : '' .
-                                                isset($address['populatedCenter']) ? $address['populatedCenter'] . ', ' : '' .
-                                                isset($address['street']) ? $address['street'] . ', ' : '' .
-                                                isset($address['building']) ? $address['building'] . ', ' : '' .
-                                                isset($address['flat']) ? $address['flat'] . ', ' : '';
-                }
-                $data['CarOwner']['Phisical']['Addresses'][] = $pAddress;
-            }
-        } else {
-            $address = array_shift($owner['addresses']);
-            $data['CarOwner']['Phisical']['Address'] = [
-                'Type' => $address['addressType'],
-                'Country' => $address['country'], // todo из справочника
-                'AddressCode' => $address['streetKladr'],
-            ];
-            $this->setValuesByArray($data['CarOwner']['Phisical']['Address'], [
-                'Street' => 'street',
-                'Hous' => 'building',
-                'Flat' => 'flat',
-                'Index' => 'postCode',
-            ], $address);
-            if (!$owner['isResident']) {
-                $data['CarOwner']['Phisical']['Address']['AddressString'] = isset($address['region']) ? $address['region'] . ', ' : '' .
-                isset($address['district']) ? $address['district'] . ', ' : '' .
-                isset($address['city']) ? $address['city'] . ', ' : '' .
-                isset($address['populatedCenter']) ? $address['populatedCenter'] . ', ' : '' .
-                isset($address['street']) ? $address['street'] . ', ' : '' .
-                isset($address['building']) ? $address['building'] . ', ' : '' .
-                isset($address['flat']) ? $address['flat'] . ', ' : '';
-            }
-        }
-        if ($attributes['policy']['ownerId'] == $attributes['policy']['insurantId']) {
-            $data['Insurer']['Phisical'] = $data['CarOwner']['Phisical'];
-        } else {
-            $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
-            if (!$insurer) {
-                throw new \Exception('no insurer');
-            }
-            if (count($insurer['documents']) > 1) {
-                $data['Insurer']['Phisical']['Documents'] = [];
-                foreach ($insurer['documents'] as $document) {
-                    $pDocument = [
-                        'TypeRSA' => $document['documentType'],
-                        'Number' => $document['number'],
-                        'Date' => $document['dateIssue'],
-                        'Exit' => $document['issuedBy'],
-                        'IsPrimary' => $document['documentType'] == 'passport' ? true : false, // todo из справочника
-                    ];
-                    $this->setValuesByArray($pDocument, [
-                        "Serial" => 'series',
-                    ], $document);
-                    $data['Insurer']['Phisical']['Documents'][] = $pDocument;
-                }
-            } else {
-                $document = array_shift($insurer['documents']);
-                $data['Insurer']['Phisical']['Document'] = [
-                    'TypeRSA' => $document['documentType'],
-                    'Number' => $document['number'],
-                    'Date' => $document['dateIssue'],
-                    'Exit' => $document['issuedBy'],
-                    'IsPrimary' => $document['documentType'] == 'passport' ? true : false, // todo из справочника
-                ];
-                $this->setValuesByArray($data['Insurer']['Phisical']['Document'], [
-                    "Serial" => 'series',
-                ], $document);
-            }
-            if (count($insurer['addresses']) > 1) {
-                $data['Insurer']['Phisical']['Addresses'] = [];
-                foreach ($insurer['addresses'] as $address) {
-                    $pAddress = [
-                        'Type' => $address['addressType'],
-                        'Country' => $address['country'], // todo из справочника
-                        'AddressCode' => $address['streetKladr'],
-                    ];
-                    $this->setValuesByArray($pAddress, [
-                        'Street' => 'street',
-                        'Hous' => 'building',
-                        'Flat' => 'flat',
-                        'Index' => 'postCode',
-                    ], $address);
-                    if (!$insurer['isResident']) {
-                        $pAddress['AddressString'] = isset($address['region']) ? $address['region'] . ', ' : '' .
-                        isset($address['district']) ? $address['district'] . ', ' : '' .
-                        isset($address['city']) ? $address['city'] . ', ' : '' .
-                        isset($address['populatedCenter']) ? $address['populatedCenter'] . ', ' : '' .
-                        isset($address['street']) ? $address['street'] . ', ' : '' .
-                        isset($address['building']) ? $address['building'] . ', ' : '' .
-                        isset($address['flat']) ? $address['flat'] . ', ' : '';
-                    }
-                    $data['Insurer']['Phisical']['Addresses'][] = $pAddress;
-                }
-            } else {
-                $address = array_shift($insurer['addresses']);
-                $data['Insurer']['Phisical']['Address'] = [
-                    'Type' => $address['addressType'],
-                    'Country' => $address['country'], // todo из справочника
-                    'AddressCode' => $address['streetKladr'],
-                ];
-                $this->setValuesByArray($data['Insurer']['Phisical']['Address'], [
-                    'Street' => 'street',
-                    'Hous' => 'building',
-                    'Flat' => 'flat',
-                    'Index' => 'postCode',
-                ], $address);
-                if (!$insurer['isResident']) {
-                    $data['Insurer']['Phisical']['Address']['AddressString'] = isset($address['region']) ? $address['region'] . ', ' : '' .
-                    isset($address['district']) ? $address['district'] . ', ' : '' .
-                    isset($address['city']) ? $address['city'] . ', ' : '' .
-                    isset($address['populatedCenter']) ? $address['populatedCenter'] . ', ' : '' .
-                    isset($address['street']) ? $address['street'] . ', ' : '' .
-                    isset($address['building']) ? $address['building'] . ', ' : '' .
-                    isset($address['flat']) ? $address['flat'] . ', ' : '';
-                }
-            }
-        }
+        $data['CarOwner']['Phisical']['Documents']["Document"] = $this->prepareSubjectDocument($owner);
+        $data['CarOwner']['Phisical']['Addresses']["Address"] = $this->prepareSubjectAddress($owner);
+        //insurer
+        $data['Insurer']['Phisical']['Documents']["Document"] = $this->prepareSubjectDocument($insurer);
+        $data['Insurer']['Phisical']['Addresses']["Address"] = $this->prepareSubjectAddress($insurer);
         // drivers
         if (count($attributes['drivers'])) {
             $data['Drivers'] = [];
@@ -302,9 +171,72 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         return $data;
     }
 
+    protected function prepareSubjectDocument($subject)
+    {
+        $documents = [];
+        foreach ($subject['documents'] as $document) {
+            $pDocument = [
+                'TypeRSA' => $document['document']['documentType'],
+                'Number' => $document['document']['number'],
+                'Date' => $document['document']['dateIssue'],
+                'Exit' => $document['document']['issuedBy'],
+                'IsPrimary' => $document['document']['documentType'] == 'passport' ? true : false, // todo из справочника
+            ];
+            $this->setValuesByArray($pDocument, [
+                "Serial" => 'series',
+            ], $document['document']);
+            $documents[] = $pDocument;
+        }
+        return $documents;
+    }
+
+    protected function prepareDriverDocument($subject)
+    {
+        $documents = [];
+        foreach ($subject['documents'] as $document) {
+            $pDocument = [
+                'TypeRSA' => $document['document']['documentType'],
+                'Number' => $document['document']['number'],
+            ];
+            $this->setValuesByArray($pDocument, [
+                "Serial" => 'series',
+            ], $document['document']);
+            $documents[] = $pDocument;
+        }
+        return $documents;
+    }
+
+    protected function prepareSubjectAddress($subject)
+    {
+        $addresses = [];
+        foreach ($subject['addresses'] as $address) {
+            $pAddress = [
+                'Type' => $address['address']['addressType'],
+                'Country' => '643',//$address['address']['country'], // todo из справочника
+                'AddressCode' => $address['address']['streetKladr'],
+            ];
+            $this->setValuesByArray($pAddress, [
+                'Street' => 'street',
+                'Hous' => 'building',
+                'Flat' => 'flat',
+                'Index' => 'postCode',
+            ], $address['address']);
+            if (!$subject['isResident']) {
+                $pAddress['AddressString'] = isset($address['address']['region']) ? $address['address']['region'] . ', ' : '' .
+                isset($address['address']['district']) ? $address['address']['district'] . ', ' : '' .
+                isset($address['address']['city']) ? $address['address']['city'] . ', ' : '' .
+                isset($address['address']['populatedCenter']) ? $address['address']['populatedCenter'] . ', ' : '' .
+                isset($address['address']['street']) ? $address['address']['street'] . ', ' : '' .
+                isset($address['address']['building']) ? $address['address']['building'] . ', ' : '' .
+                isset($address['address']['flat']) ? $address['address']['flat'] . ', ' : '';
+            }
+            $addresses[] = $pAddress;
+        }
+        return $addresses;
+    }
+
     protected function prepareDriver($driver, $driverRef)
     {
-        $driverDocument = $this->searchDocumentByType($driver, 'driverLicense'); // todo справочник
         $pDriver = [
             'Face' => [
                 'Resident' => $driver['isResident'],
@@ -312,10 +244,11 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
                 'Name' => $driver['firstName'],
                 'BirthDate' => $driver['birthdate'],
                 'Sex' => $driver['gender'],
-                'Document' => [
-                    'TypeRSA' => $driverDocument['documentType'],
-                    'Number' => $driverDocument['number'],
-                    'Date' => $driverDocument['dateIssue'],
+                'Documents' => [
+                    'Document' => [],
+                ],
+                'Addresses' => [
+                    'Address' => [],
                 ],
             ],
             'DrivingExpDate' => $driverRef['driver']['drivingLicenseIssueDateOriginal'],
@@ -323,57 +256,84 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         $this->setValuesByArray($pDriver['Face'], [
             'Patronymic' => 'middleName',
         ], $driver);
-        $this->setValuesByArray($pDriver['Face']['Document'], [
-            "Serial" => 'series',
-        ], $driverDocument);
-        if (count($driver['addresses']) > 1) {
-            $pDriver['Face']['Addresses'] = [];
-            foreach ($driver['addresses'] as $address) {
-                $pAddress = [
-                    'Type' => $address['addressType'],
-                    'Country' => $address['country'], // todo из справочника
-                    'AddressCode' => $address['streetKladr'],
-                ];
-                $this->setValuesByArray($pAddress, [
-                    'Street' => 'street',
-                    'Hous' => 'building',
-                    'Flat' => 'flat',
-                    'Index' => 'postCode',
-                ], $address);
-                if (!$driver['isResident']) {
-                    $pAddress['AddressString'] = isset($address['region']) ? $address['region'] . ', ' : '' .
-                    isset($address['district']) ? $address['district'] . ', ' : '' .
-                    isset($address['city']) ? $address['city'] . ', ' : '' .
-                    isset($address['populatedCenter']) ? $address['populatedCenter'] . ', ' : '' .
-                    isset($address['street']) ? $address['street'] . ', ' : '' .
-                    isset($address['building']) ? $address['building'] . ', ' : '' .
-                    isset($address['flat']) ? $address['flat'] . ', ' : '';
-                }
-                $pDriver['Face']['Addresses'][] = $pAddress;
-            }
-        } else {
-            $address = array_shift($driver['addresses']);
-            $pDriver['Face']['Address'] = [
-                'Type' => $address['addressType'],
-                'Country' => $address['country'], // todo из справочника
-                'AddressCode' => $address['streetKladr'],
-            ];
-            $this->setValuesByArray($pDriver['Face']['Address'], [
-                'Street' => 'street',
-                'Hous' => 'building',
-                'Flat' => 'flat',
-                'Index' => 'postCode',
-            ], $address);
-            if (!$driver['isResident']) {
-                $data['Insurer']['Phisical']['Address']['AddressString'] = isset($address['region']) ? $address['region'] . ', ' : '' .
-                isset($address['district']) ? $address['district'] . ', ' : '' .
-                isset($address['city']) ? $address['city'] . ', ' : '' .
-                isset($address['populatedCenter']) ? $address['populatedCenter'] . ', ' : '' .
-                isset($address['street']) ? $address['street'] . ', ' : '' .
-                isset($address['building']) ? $address['building'] . ', ' : '' .
-                isset($address['flat']) ? $address['flat'] . ', ' : '';
-            }
-        }
+        $pDriver['Face']['Documents']['Document'] = $this->prepareDriverDocument($driver);
+        $pDriver['Face']['Addresses']['Address'] = $this->prepareSubjectAddress($driver);
+        return $pDriver;
     }
+
+//    protected function prepareDriver($driver, $driverRef)
+//    {
+//        $driverDocument = $this->searchDocumentByType($driver, 'driverLicense'); // todo справочник
+//        $pDriver = [
+//            'Face' => [
+//                'Resident' => $driver['isResident'],
+//                'Surname' => $driver['lastName'],
+//                'Name' => $driver['firstName'],
+//                'BirthDate' => $driver['birthdate'],
+//                'Sex' => $driver['gender'],
+//                'Document' => [
+//                    'TypeRSA' => $driverDocument['documentType'],
+//                    'Number' => $driverDocument['number'],
+//                    'Date' => $driverDocument['dateIssue'],
+//                ],
+//            ],
+//            'DrivingExpDate' => $driverRef['driver']['drivingLicenseIssueDateOriginal'],
+//        ];
+//        $this->setValuesByArray($pDriver['Face'], [
+//            'Patronymic' => 'middleName',
+//        ], $driver);
+//        $this->setValuesByArray($pDriver['Face']['Document'], [
+//            "Serial" => 'series',
+//        ], $driverDocument);
+//        if (count($driver['addresses']) > 1) {
+//            $pDriver['Face']['Addresses'] = [];
+//            foreach ($driver['addresses'] as $address) {
+//                $pAddress = [
+//                    'Type' => $address['address']['addressType'],
+//                    'Country' => $address['address']['country'], // todo из справочника
+//                    'AddressCode' => $address['address']['streetKladr'],
+//                ];
+//                $this->setValuesByArray($pAddress, [
+//                    'Street' => 'street',
+//                    'Hous' => 'building',
+//                    'Flat' => 'flat',
+//                    'Index' => 'postCode',
+//                ], $address['address']);
+//                if (!$driver['isResident']) {
+//                    $pAddress['AddressString'] = isset($address['address']['region']) ? $address['address']['region'] . ', ' : '' .
+//                    isset($address['address']['district']) ? $address['address']['district'] . ', ' : '' .
+//                    isset($address['address']['city']) ? $address['address']['city'] . ', ' : '' .
+//                    isset($address['address']['populatedCenter']) ? $address['address']['populatedCenter'] . ', ' : '' .
+//                    isset($address['address']['street']) ? $address['address']['street'] . ', ' : '' .
+//                    isset($address['address']['building']) ? $address['address']['building'] . ', ' : '' .
+//                    isset($address['address']['flat']) ? $address['address']['flat'] . ', ' : '';
+//                }
+//                $pDriver['Face']['Addresses'][] = $pAddress;
+//            }
+//        } else {
+//            $address = array_shift($driver['addresses']);
+//            $pDriver['Face']['Address'] = [
+//                'Type' => $address['address']['addressType'],
+//                'Country' => $address['address']['country'], // todo из справочника
+//                'AddressCode' => $address['address']['streetKladr'],
+//            ];
+//            $this->setValuesByArray($pDriver['Face']['Address'], [
+//                'Street' => 'street',
+//                'Hous' => 'building',
+//                'Flat' => 'flat',
+//                'Index' => 'postCode',
+//            ], $address);
+//            if (!$driver['isResident']) {
+//                $data['Insurer']['Phisical']['Address']['AddressString'] = isset($address['address']['region']) ? $address['address']['region'] . ', ' : '' .
+//                isset($address['address']['district']) ? $address['address']['district'] . ', ' : '' .
+//                isset($address['address']['city']) ? $address['address']['city'] . ', ' : '' .
+//                isset($address['address']['populatedCenter']) ? $address['address']['populatedCenter'] . ', ' : '' .
+//                isset($address['address']['street']) ? $address['address']['street'] . ', ' : '' .
+//                isset($address['address']['building']) ? $address['address']['building'] . ', ' : '' .
+//                isset($address['address']['flat']) ? $address['address']['flat'] . ', ' : '';
+//            }
+//        }
+//        return $pDriver;
+//    }
 
 }

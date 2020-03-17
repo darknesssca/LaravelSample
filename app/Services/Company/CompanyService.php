@@ -81,11 +81,11 @@ class CompanyService implements CompanyServiceInterface
             "car.documents.*.document.documentSeries" => "required|string", // TODO: in справочник
             "car.documents.*.document.documentNumber" => "required|string", // TODO: in справочник
             "car.documents.*.document.documentIssued" => "required|string", // TODO: in справочник
-            "car.documents.*.docInspection.documentType" => "required|string", // TODO: in справочник
-            "car.documents.*.docInspection.documentSeries" => "required|string",
-            "car.documents.*.docInspection.documentNumber" => "required|string",
-            "car.documents.*.docInspection.documentIssuedDate" => "required|date|date_format:Y-m-d",
-            "car.documents.*.docInspection.documentDateEmd" => "required|date|date_format:Y-m-d",
+            "car.inspection.documentType" => "required|integer", // TODO: in справочник
+            "car.inspection.documentSeries" => "required|string",
+            "car.inspection.documentNumber" => "required|string",
+            "car.inspection.documentIssuedDate" => "required|date|date_format:Y-m-d",
+            "car.inspection.documentDateEmd" => "required|date|date_format:Y-m-d",
             'policy' => "required",
             'policy.beginDate' => "required|date|date_format:Y-m-d",
             'policy.endDate' => "required|date|date_format:Y-m-d",

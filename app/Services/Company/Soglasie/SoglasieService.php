@@ -67,14 +67,14 @@ class SoglasieService extends CompanyService implements SoglasieServiceContract
         ];
     }
 
-    protected function create($company, $attributes, $additionalData)
+    public function create($company, $attributes, $additionalData)
     {
-        if (!(isset($additionalData['tokenData'][$company->code]) && $additionalData['tokenData'][$company->code])) {
+        if (!(isset($additionalData['tokenData']) && $additionalData['tokenData'])) {
             throw new \Exception('no token data');
         }
         $attributes['serviceData'] = [
-            'kbmId' => $additionalData['tokenData'][$company->code]['kbmId'],
-            'scoringId' => $additionalData['tokenData'][$company->code]['scoringId'],
+            'kbmId' => $additionalData['tokenData']['kbmId'],
+            'scoringId' => $additionalData['tokenData']['scoringId'],
         ];
         $serviceCreate = app(SoglasieCreateServiceContract::class);
         $dataCreate = $serviceCreate->run($company, $attributes, $additionalData);
