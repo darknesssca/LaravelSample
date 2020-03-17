@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Policy;
+use App\Models\Report;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Nowakowskir\JWT\Exceptions\EmptyTokenException;
@@ -19,15 +21,21 @@ class ReportController extends Controller
         try {
             $validation_result = $this->validate($request, $this->createReportValidationRules(), $this->createReportValidationMessages());
 
-            if ($this->getUserId($validation_result['creator_id'])){
-                echo 'Yes';
+            $user_id = $this->getUserId($validation_result['creator_id']);
+            $reward = $this->getReward($validation_result['policies']);
+
+            if ($user_id && $reward){
+                $report = Report::create([
+                    'name' => $validation_result['name'],
+                    'creator_id' => $user_id,
+                    'create_date' => Carbon::now(),
+                    'reward' => $reward
+                ]);
+
+                $report->policies()->sync([$validation_result['policies']]);
             }
 
-            if ($this->checkPolicies($validation_result['policies'])){
-                echo 'Yes';
-            }
-
-            return true;
+            return $this->success();
         } catch (Exception $exception) {
             return $this->error($exception->getMessage(), 500);
         }
@@ -54,15 +62,20 @@ class ReportController extends Controller
         ];
     }
 
-    private function checkPolicies(array $policies_ids)
+    private function getReward(array $policies_ids)
     {
+        $reward = 0;
         $policy_collection = Policy::whereIn('id', $policies_ids)->get();
 
-//        if (count($policy_collection) != count($policies_ids)){ //Найдены не все полисы
-//
-//        }
+        if (count($policy_collection) != count($policies_ids)){ //Найдены не все полисы
+           return $this->error('Найдены не все полисы');
+        }
 
-        return true;
+        foreach ($policy_collection as $policy){
+            $reward += 1;
+        }
+
+        return $reward;
     }
 
     private function getUserId($token){
@@ -73,6 +86,10 @@ class ReportController extends Controller
         }
         $payload = $tokenEncoded->decode()->getPayload();
 
-        return true;
+        if (empty($payload['user_id'])){
+            return $this->error('Пользователь не авторизован');
+        }
+
+        return $payload['user_id'];
     }
 }

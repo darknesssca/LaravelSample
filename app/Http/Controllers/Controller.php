@@ -26,4 +26,12 @@ class Controller extends BaseController
         ];
         return response()->json($message, $httpCode);
     }
+
+    protected function success($httpCode = 200){
+        $message = [
+            'error' => false,
+            'errors' => [],
+        ];
+        return response()->json($message, $httpCode);
+    }
 }

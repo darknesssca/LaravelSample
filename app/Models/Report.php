@@ -8,5 +8,15 @@ class Report extends Model
 {
     protected $guarded = [];
     protected $table = 'reports';
+    protected $fillable = [
+        'name',
+        'creator_id',
+        'create_date',
+        'reward'
+    ];
 
+    public function policies()
+    {
+        return $this->belongsToMany('App\Models\Policy');
+    }
 }

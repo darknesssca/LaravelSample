@@ -32,7 +32,6 @@ class CreateCarInsuranceDataTables extends Migration
         'Policies',
         'Drivers',
         'PolicyDriver',
-        'ReportTypes',
         'Reports',
         'ReportPolicy',
     ];
@@ -566,33 +565,15 @@ class CreateCarInsuranceDataTables extends Migration
     }
 
     // репорты
-    private function upReportTypes()
-    {
-        Schema::create('report_types', function (Blueprint $table) {
-            $table->integerIncrements('id');
-            $table->string('code');
-            $table->string('name');
-            $table->timestamps();
-        });
-    }
-
-    private function downReportTypes()
-    {
-        Schema::dropIfExists('report_types');
-    }
-
     private function upReports()
     {
         Schema::create('reports', function (Blueprint $table) {
             $table->integerIncrements('id');
             $table->string('name');
             $table->integer('creator_id');
-            $table->integer('report_type_id');
             $table->date('create_date');
-            $table->date('period_start');
-            $table->date('period_end');
             $table->integer('reward');
-            $table->boolean('is_payed');
+            $table->boolean('is_payed')->default(false);
             $table->timestamps();
 
             $table->foreign('report_type_id')->references('id')->on('report_types');
