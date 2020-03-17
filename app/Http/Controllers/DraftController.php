@@ -275,6 +275,8 @@ class DraftController extends Controller
                 $policyData['end_date'] = Carbon::createFromFormat('Y-m-d', $attributes['policy']['endDate']);
             }
             //subjects
+            $isNeedDeleteOwner = false;
+            $isNeedDeleteInsurer = false;
             if (
                 isset($attributes['subjects']) && $attributes['subjects'] &&
                 (
@@ -308,6 +310,14 @@ class DraftController extends Controller
                     if (isset($subject['fields']['birthdate']) && $subject['fields']['birthdate']) {
                         $subjectData['birth_date'] = Carbon::createFromFormat('Y-m-d', $subject['fields']['birthdate']);
                     }
+                    if ((!isset($attributes['policy']['ownerId']) || !$attributes['policy']['ownerId']) && $oldPolicy->client_id) {
+                        $isNeedDeleteOwner = true;
+                        $policyData['client_id'] = null;
+                    }
+                    if ((!isset($attributes['policy']['insurantId']) || !$attributes['policy']['insurantId']) && $oldPolicy->insurant_id) {
+                        $isNeedDeleteInsurer = true;
+                        $policyData['insurant_id'] = null;
+                    }
                     if (
                         isset($attributes['policy']['ownerId']) && $attributes['policy']['ownerId'] &&
                         isset($attributes['policy']['insurantId']) && $attributes['policy']['insurantId'] &&
@@ -316,8 +326,7 @@ class DraftController extends Controller
                     ) {
                         DraftClient::where('id', $oldPolicy->client_id)->update($subjectData);
                         if ($oldPolicy->client_id != $oldPolicy->insurant_id) {
-                            $oldInsurer = DraftClient::where('id', $oldPolicy->insurant_id)->first();
-                            $oldInsurer->delete();
+                            $isNeedDeleteInsurer = true;
                         }
                         $policyData['client_id'] = $oldPolicy->client_id;
                         $policyData['insurant_id'] = $oldPolicy->client_id;
@@ -330,7 +339,7 @@ class DraftController extends Controller
                             $policyData['client_id'] = $result->id;
                         }
                     } elseif (isset($attributes['policy']['insurantId']) && $attributes['policy']['insurantId'] && ($subject['id'] == $attributes['policy']['insurantId'])) {
-                        if ($oldPolicy->insurant_id) {
+                        if ($oldPolicy->insurant_id && ($oldPolicy->insurant_id != $oldPolicy->client_id)) {
                             DraftClient::where('id', $oldPolicy->insurant_id)->update($subjectData);
                             $policyData['insurant_id'] = $oldPolicy->insurant_id;
                         } else {
@@ -340,6 +349,39 @@ class DraftController extends Controller
                     } else {
                         continue;
                     }
+
+//                    if (
+//                        isset($attributes['policy']['ownerId']) && $attributes['policy']['ownerId'] &&
+//                        isset($attributes['policy']['insurantId']) && $attributes['policy']['insurantId'] &&
+//                        ($attributes['policy']['insurantId'] == $attributes['policy']['ownerId']) &&
+//                        ($subject['id'] == $attributes['policy']['ownerId'])
+//                    ) {
+//                        DraftClient::where('id', $oldPolicy->client_id)->update($subjectData);
+//                        if ($oldPolicy->client_id != $oldPolicy->insurant_id) {
+//                            $oldInsurer = DraftClient::where('id', $oldPolicy->insurant_id)->first();
+//                            $oldInsurer->delete();
+//                        }
+//                        $policyData['client_id'] = $oldPolicy->client_id;
+//                        $policyData['insurant_id'] = $oldPolicy->client_id;
+//                    } elseif (isset($attributes['policy']['ownerId']) && $attributes['policy']['ownerId'] && ($subject['id'] == $attributes['policy']['ownerId'])) { // если это овнер
+//                        if ($oldPolicy->client_id) {
+//                            DraftClient::where('id', $oldPolicy->client_id)->update($subjectData);
+//                            $policyData['client_id'] = $oldPolicy->client_id;
+//                        } else {
+//                            $result = DraftClient::create($subjectData);
+//                            $policyData['client_id'] = $result->id;
+//                        }
+//                    } elseif (isset($attributes['policy']['insurantId']) && $attributes['policy']['insurantId'] && ($subject['id'] == $attributes['policy']['insurantId'])) {
+//                        if ($oldPolicy->insurant_id && ($oldPolicy->insurant_id != $oldPolicy->client_id)) {
+//                            DraftClient::where('id', $oldPolicy->insurant_id)->update($subjectData);
+//                            $policyData['insurant_id'] = $oldPolicy->insurant_id;
+//                        } else {
+//                            $result = DraftClient::create($subjectData);
+//                            $policyData['insurant_id'] = $result->id;
+//                        }
+//                    } else {
+//                        continue;
+//                    }
                 }
             }
             //car
@@ -375,7 +417,7 @@ class DraftController extends Controller
                     ]);
                 }
             }
-            $policy = Policy::create($policyData);
+            $policy = Policy::where('id', $oldPolicy->id)->update($policyData);
             if (isset($attributes['drivers']) && $attributes['drivers']) {
                 $driverDataUpdate = [];
                 foreach ($attributes['drivers'] as $driver) {
@@ -407,6 +449,14 @@ class DraftController extends Controller
                         $policy->drivers()->create($driverDataUpdate[$i]);
                     }
                 }
+            }
+            if ($isNeedDeleteOwner) {
+                $oldOwner = DraftClient::where('id', $oldPolicy->owner_id)->first();
+                $oldOwner->delete();
+            }
+            if ($isNeedDeleteInsurer) {
+                $oldInsurer = DraftClient::where('id', $oldPolicy->insurant_id)->first();
+                $oldInsurer->delete();
             }
             return response()->json([], 200);
         }

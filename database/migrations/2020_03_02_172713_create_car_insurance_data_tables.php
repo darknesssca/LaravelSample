@@ -524,6 +524,8 @@ class CreateCarInsuranceDataTables extends Migration
             // car.inspection
             $table->string('vehicle_inspection_doc_series')->nullable();
             $table->string('vehicle_inspection_doc_number')->nullable();
+            $table->string('vehicle_inspection_issued_date')->nullable();
+            $table->string('vehicle_inspection_end_date')->nullable();
 
             $table->timestamps();
 
@@ -532,8 +534,8 @@ class CreateCarInsuranceDataTables extends Migration
             $table->foreign('vehicle_reg_doc_type_id')->references('id')->on('doc_types');
             $table->foreign('status_id')->references('id')->on('policy_statuses');
             $table->foreign('type_id')->references('id')->on('policy_types');
-            $table->foreign('client_id')->references('id')->on('draft_clients')->onDelete('cascade');
-            $table->foreign('insurant_id')->references('id')->on('draft_clients')->onDelete('cascade');
+            $table->foreign('client_id')->references('id')->on('draft_clients');
+            $table->foreign('insurant_id')->references('id')->on('draft_clients');
             $table->foreign('vehicle_reg_country')->references('id')->on('reg_countries');
             $table->foreign('vehicle_acquisition')->references('id')->on('source_acquisitions');
             $table->foreign('vehicle_usage_target')->references('id')->on('usage_targets');
@@ -575,7 +577,7 @@ class CreateCarInsuranceDataTables extends Migration
             $table->timestamps();
 
             $table->foreign('driver_id')->references('id')->on('drivers')->onDelete('cascade');
-            $table->foreign('policy_id')->references('id')->on('policies')->onDelete('cascade');
+            $table->foreign('policy_id')->references('id')->on('policies');
         });
     }
 

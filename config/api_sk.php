@@ -18,8 +18,9 @@ return [
     ],
     'soglasie' => [
         'kbmWsdlUrl' => env('SOGLASIE_API_KBM_WSDL_URL'),
-        'scoringWsdlUrl' => env('SOGLASIE_API_KBM_SCORING_URL'),
-        'calculateWsdlUrl' => env('SOGLASIE_API_KBM_CALCULATE_URL'),
+        'scoringWsdlUrl' => env('SOGLASIE_API_SCORING_URL'),
+        'calculateWsdlUrl' => env('SOGLASIE_API_CALCULATE_URL'),
+        'createUrl' => env('SOGLASIE_API_CREATE_URL'),
         'user' => env('SOGLASIE_API_USER'),
         'password' => env('SOGLASIE_API_PASSWORD'),
         'subUser' => env('SOGLASIE_API_SUB_USER'),

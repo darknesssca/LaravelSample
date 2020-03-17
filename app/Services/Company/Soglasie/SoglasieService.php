@@ -4,6 +4,7 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieCalculateServiceContract;
+use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieServiceContract;
@@ -64,6 +65,20 @@ class SoglasieService extends CompanyService implements SoglasieServiceContract
         return [
             'premium' => $dataCalculate['premium'],
         ];
+    }
+
+    protected function create($company, $attributes, $additionalData)
+    {
+        if (!(isset($additionalData['tokenData'][$company->code]) && $additionalData['tokenData'][$company->code])) {
+            throw new \Exception('no token data');
+        }
+        $attributes['serviceData'] = [
+            'kbmId' => $additionalData['tokenData'][$company->code]['kbmId'],
+            'scoringId' => $additionalData['tokenData'][$company->code]['scoringId'],
+        ];
+        $serviceCreate = app(SoglasieCreateServiceContract::class);
+        $dataCreate = $serviceCreate->run($company, $attributes, $additionalData);
+        return $dataCreate;
     }
 
     protected function getHeaders()
