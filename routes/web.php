@@ -28,7 +28,7 @@ $router->group(
                 $router->patch('/drafts/{policeId}', 'DraftController@update');
                 $router->delete('/drafts/{policeId}', 'DraftController@delete');
                 // policies
-                $router->post('policies/send', 'InsuranceController@store');
+                $router->post('/policies/send', 'InsuranceController@store');
                 $router->post('/policies/{code}/{method}', 'InsuranceController@index');
             }
         );
