@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use App\Contracts\Company\CompanyServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahCalculateServiceContract;
+use App\Contracts\Company\Ingosstrah\IngosstrahCheckCreateServiceContract;
+use App\Contracts\Company\Ingosstrah\IngosstrahCreateServiceContract;
+use App\Contracts\Company\Ingosstrah\IngosstrahEosagoServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahServiceContract;
 use App\Contracts\Company\Renessans\RenessansCheckCalculateServiceContract;
@@ -21,6 +24,9 @@ use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
 use App\Services\Company\CompanyService;
 use App\Services\Company\Ingosstrah\IngosstrahCalculateService;
+use App\Services\Company\Ingosstrah\IngosstrahCheckCreateService;
+use App\Services\Company\Ingosstrah\IngosstrahCreateService;
+use App\Services\Company\Ingosstrah\IngosstrahEosagoService;
 use App\Services\Company\Ingosstrah\IngosstrahLoginService;
 use App\Services\Company\Ingosstrah\IngosstrahService;
 use App\Services\Company\Renessans\RenessansCalculateService;
@@ -84,6 +90,15 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->singleton(IngosstrahCalculateServiceContract::class, function($app) {
             return new IngosstrahCalculateService();
+        });
+        $this->app->singleton(IngosstrahCreateServiceContract::class, function($app) {
+            return new IngosstrahCreateService();
+        });
+        $this->app->singleton(IngosstrahCheckCreateServiceContract::class, function($app) {
+            return new IngosstrahCheckCreateService();
+        });
+        $this->app->singleton(IngosstrahEosagoServiceContract::class, function($app) {
+            return new IngosstrahEosagoService();
         });
         //soglasie
         $this->app->singleton(SoglasieServiceContract::class, function($app) {

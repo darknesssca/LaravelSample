@@ -47,6 +47,7 @@ class SoapClientEx extends SoapClient
 
             }
         }
+        //dd($modRequest, $request);
         return parent::__doRequest($modRequest, $location, $action, $version, $one_way);
     }
 }

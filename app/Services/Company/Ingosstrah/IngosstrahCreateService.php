@@ -4,13 +4,13 @@
 namespace App\Services\Company\Ingosstrah;
 
 
-use App\Contracts\Company\Ingosstrah\IngosstrahCalculateServiceContract;
+use App\Contracts\Company\Ingosstrah\IngosstrahCreateServiceContract;
 use App\Http\Controllers\SoapController;
 use App\Models\InsuranceCompany;
 use App\Services\Company\Ingosstrah\IngosstrahService;
 use Spatie\ArrayToXml\ArrayToXml;
 
-class IngosstrahCalculateService extends IngosstrahService implements IngosstrahCalculateServiceContract
+class IngosstrahCreateService extends IngosstrahService implements IngosstrahCreateServiceContract
 {
 
     private $catalogPurpose = ["Личная", "Такси"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
@@ -19,13 +19,13 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
 
     public function run($company, $attributes, $additionalFields = []): array
     {
-        return $this->sendCalculate($company, $attributes);
+        return $this->sendCreate($company, $attributes, $additionalFields);
     }
 
-    private function sendCalculate($company, $attributes): array
+    private function sendCreate($company, $attributes, $additionalFields = []): array
     {
         $data = $this->prepareData($attributes);
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetTariff', $data);
+        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'CreateAgreement', $data);
         dd($response);
         if (!$response) {
             throw new \Exception('api not return answer');
@@ -33,11 +33,23 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
         if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
-        if (!isset($response->PremiumAmount)) {
-            throw new \Exception('api not return premium');
+        if (isset($response['response']->ResponseStatus->ErrorCode)) {
+            switch ($response['response']->ResponseStatus->ErrorCode) {
+                case -20852:
+                case -20841:
+                case -20812:
+                case -20808:
+                case -20807:
+                    return [
+                        'tokenError' => true,
+                    ];
+            }
+        }
+        if (!isset($response['response']->ResponseStatus->AgrID)) {
+            throw new \Exception('api not return AgrID');
         }
         $data = [
-            'premium' => $response->PremiumAmount,
+            'policyId' => $response['response']->AgrID,
         ];
         return $data;
     }
@@ -46,50 +58,48 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
     {
         $data = [
             'SessionToken' => $attributes['sessionToken'],
-            'TariffParameters' => [
-                'Agreement' => [
-                    "General" => [
-                        "Product" => '753518300', //todo из справочника, вероятно статика
-                        'DateBeg' => $this->formatDateTime($attributes['policy']['beginDate']),
-                        'DateEnd' => $attributes['policy']['endDate'],
+            'Agreement' => [
+                "General" => [
+                    "Product" => '753518300', //todo из справочника, вероятно статика
+                    'DateBeg' => $this->formatDateTime($attributes['policy']['beginDate']),
+                    'DateEnd' => $attributes['policy']['endDate'],
 //                        "PrevAgrID" => "", //todo пролонгация
 //                        "ParentISN" => "", //todo пролонгация
-                        "Individual" => $this->transformBoolean(false),
-                        "IsEOsago" => $this->transformBoolean(true),
+                    "Individual" => $this->transformBoolean(false),
+                    "IsEOsago" => $this->transformBoolean(true),
+                ],
+                "Insurer" => [
+                    "SbjRef" => $attributes['policy']['insurantId'],
+                ],
+                "Owner" => [
+                    'SbjRef' => $attributes['policy']['ownerId'],
+                ],
+                "SubjectList" => [
+                    "Subject" => [],
+                ],
+                "Vehicle" => [
+                    'Model' => $attributes['car']['model'], // TODO: справочник
+                    'VIN' => $attributes['car']['vin'],
+                    "Category" => "B", // TODO из справочника
+                    "Constructed" => $attributes['car']['year'],
+                    'EnginePowerHP' => $attributes['car']['enginePower'],
+                    "Document" => [],
+                    "DocInspection" => [
+                        "DocType" => $attributes['car']['inspection']['documentType'],
                     ],
-                    "Insurer" => [
-                        "SbjRef" => $attributes['policy']['insurantId'],
-                    ],
-                    "Owner" => [
-                        'SbjRef' => $attributes['policy']['ownerId'],
-                    ],
-                    "SubjectList" => [
-                        "Subject" => [],
-                    ],
-                    "Vehicle" => [
-                        'Model' => $attributes['car']['model'], // TODO: справочник
-                        'VIN' => $attributes['car']['vin'],
-                        "Category" => "B", // TODO из справочника
-                        "Constructed" => $attributes['car']['year'],
-                        'EnginePowerHP' => $attributes['car']['enginePower'],
-                        "Document" => [],
-                        "DocInspection" => [
-                            "DocType" => $attributes['car']['inspection']['documentType'],
+                ],
+                "Condition" => [
+                    "Liability" => [
+                        "RiskCtg" => "28966116", // TODO из справочника
+                        'UsageType' => $attributes['car']['usageType'],
+                        "UsageTarget" => [
+                            $attributes['car']['vehicleUsage'] => $this->transformBoolean(true), // TODO имя параметра из справочника
                         ],
-                    ],
-                    "Condition" => [
-                        "Liability" => [
-                            "RiskCtg" => "28966116", // TODO из справочника
-                            'UsageType' => $attributes['car']['usageType'],
-                            "UsageTarget" => [
-                                $attributes['car']['vehicleUsage'] => $this->transformBoolean(true), // TODO имя параметра из справочника
-                            ],
-                            "UseWithTrailer" => $this->transformBoolean($attributes['car']['isUsedWithTrailer']),
-                            "PeriodList" => [
-                                "Period" => [
-                                    "DateBeg" =>  $attributes['policy']['beginDate'],
-                                    "DateEnd" =>  $attributes['policy']['endDate'],
-                                ],
+                        "UseWithTrailer" => $this->transformBoolean($attributes['car']['isUsedWithTrailer']),
+                        "PeriodList" => [
+                            "Period" => [
+                                "DateBeg" =>  $attributes['policy']['beginDate'],
+                                "DateEnd" =>  $attributes['policy']['endDate'],
                             ],
                         ],
                     ],
@@ -97,9 +107,9 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
             ],
         ];
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
-        $this->setValue($data['TariffParameters']['Agreement']['Insurer'], 'MobilePhone', 'numberPhone', $insurer['phone']);
-        $this->setValue($data['TariffParameters']['Agreement']['Insurer'], 'Email', 'email', $insurer);
-        $this->setValuesByArray($data['TariffParameters']['Agreement']['Vehicle'], [
+        $this->setValue($data['Agreement']['Insurer'], 'MobilePhone', 'numberPhone', $insurer['phone']);
+        $this->setValue($data['Agreement']['Insurer'], 'Email', 'email', $insurer);
+        $this->setValuesByArray($data['Agreement']['Vehicle'], [
             'NetWeight' => 'minWeight',
             'GrossWeigh' => 'maxWeight',
             'Seats' => 'seats',
@@ -141,7 +151,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                 ], $document['document']);
                 $pSubject['IdentityDocument'][] = $pDocument;
             }
-            $data['TariffParameters']['Agreement']['SubjectList']['Subject'][] = $pSubject;
+            $data['Agreement']['SubjectList']['Subject'][] = $pSubject;
         }
         //Vehicle
         foreach ($attributes['car']['documents'] as $iDocument => $document) {
@@ -153,16 +163,16 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                 "Number" => 'documentNumber',
                 "DocDate" => 'documentIssued',
             ], $document['document']);
-            $data['TariffParameters']['Agreement']['Vehicle']['Document'][] = $pDocument;
+            $data['Agreement']['Vehicle']['Document'][] = $pDocument;
         }
-        $this->setValuesByArray($data['TariffParameters']['Agreement']['Vehicle']['DocInspection'], [
+        $this->setValuesByArray($data['Agreement']['Vehicle']['DocInspection'], [
             "Serial" => 'documentSeries',
             "Number" => 'documentNumber',
             "DateEnd" => 'documentDateEmd',
         ], $attributes['car']['inspection']);
         //DriverList
         if (!$attributes['policy']['isMultidrive']) {
-            $data['TariffParameters']['Agreement']['DriverList'] = [];
+            $data['Agreement']['DriverList'] = [];
             foreach ($attributes['drivers'] as $iDriver => $driver) {
                 $pDriver = [
                     'SbjRef' => $driver['driver']['driverId'],
@@ -179,13 +189,13 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                         "DocDate" => 'dateIssue',
                     ], $sDocument);
                 }
-                $data['TariffParameters']['Agreement']['DriverList'][] = $pDriver;
+                $data['Agreement']['DriverList'][] = $pDriver;
             }
         }
-        $xml = ArrayToXml::convert($data['TariffParameters'], 'TariffParameters');
+        $xml = ArrayToXml::convert($data['Agreement'], 'Agreement');
         $xml = str_replace('<?xml version="1.0"?>', '', $xml);
 
-        $data['TariffParameters'] = new \SoapVar($xml, XSD_ANYXML);
+        $data = new \SoapVar($xml, XSD_ANYXML);
         return $data;
     }
 
