@@ -34,7 +34,7 @@ class CarInfoService
         if ($log_type_id != -1) {
             $params["log_type_id"] = $log_type_id;
         }
-        $this->sendPostAsync("api/v1/log", $params, true);
+        $this->sendPostAsync(env("LOG_MICROSERVICE_URL"), $params, true);
     }
 
     /**отправка асинхронного POST запроса

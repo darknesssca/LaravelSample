@@ -14,16 +14,6 @@ class AutocodReportService extends AutocodService
         $this->token = $this->createToken();
     }
 
-    //отчет не готов
-    //"progress_ok": 0,
-    //"progress_wait": 2,
-    //"progress_error": 0,
-
-    //завершившийся отчет
-    //"progress_ok": 2,
-    //"progress_wait": 0,
-    //"progress_error": 1,
-
     /**запросить генерацию отчета для автозаполнения
      * @param string $vin
      * @param string $uid
@@ -31,10 +21,12 @@ class AutocodReportService extends AutocodService
      */
     public function getReport(string $vin, string $uid): array
     {
-        if(env('APP_DEBUG') && $uid == $this->uid_autocomplete)
-            return ['report_id'=>'benfin_autocomplete_plus_report_Z94CB41AAGR322020@benfin', 'suggest_get'=>'0'];
-        if(env('APP_DEBUG') && $uid == $this->uid_taxi)
-            return ['report_id'=>'benfin_active_taxi_license_report_Z94CB41AAGR422720@benfin', 'suggest_get'=>'0'];
+        if (env('APP_DEBUG') && $uid == $this->uid_autocomplete) {
+            return ['report_id' => 'benfin_autocomplete_plus_report_Z94CB41AAGR322020@benfin', 'suggest_get' => '0'];
+        }
+        if (env('APP_DEBUG') && $uid == $this->uid_taxi) {
+            return ['report_id' => 'benfin_active_taxi_license_report_Z94CB41AAGR422720@benfin', 'suggest_get' => '0'];
+        }
 
         $data = [
             "query_type" => "VIN",
@@ -46,7 +38,7 @@ class AutocodReportService extends AutocodService
             'Content-Type' => 'application/json',
         ];
         $res = $this->sendPost($this->baseurl . 'user/reports/' . $uid . '/_make', $data, $headers);
-        $this->sendLog("Запрошен отчет autocod: vin=$vin, uid=$uid",'car-insurance');
+        $this->sendLog("Запрошен отчет autocod: vin=$vin, uid=$uid", env("LOG_MICROSERVICE_CODE"));
         return ['report_id' => $res['data'][0]['uid'], 'suggest_get' => $res['data'][0]['suggest_get']];
     }
 
