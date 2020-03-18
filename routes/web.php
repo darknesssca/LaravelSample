@@ -11,6 +11,26 @@
 |
 */
 
-$router->get('/', function () use ($router) {
-    return $router->app->version();
-});
+$router->group(
+    [
+        'prefix' => 'v1',
+    ],
+    function () use ($router) {
+        $router->group(
+            [
+                'prefix' => 'insurance',
+            ],
+            function () use ($router) {
+                // drafts
+                $router->get('/drafts', 'DraftController@index');
+                $router->post('/drafts', 'DraftController@store');
+                $router->get('/drafts/{policeId}', 'DraftController@show');
+                $router->patch('/drafts/{policeId}', 'DraftController@update');
+                $router->delete('/drafts/{policeId}', 'DraftController@delete');
+                // policies
+                $router->post('/policies/send', 'InsuranceController@store');
+                $router->post('/policies/{code}/{method}', 'InsuranceController@index');
+            }
+        );
+    }
+);
