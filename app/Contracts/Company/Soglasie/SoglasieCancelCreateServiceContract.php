@@ -2,7 +2,7 @@
 
 namespace App\Contracts\Company\Soglasie;
 
-interface SoglasieCancelServiceContract
+interface SoglasieCancelCreateServiceContract
 {
 
 }

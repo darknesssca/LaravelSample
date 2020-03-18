@@ -11,6 +11,8 @@ use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieCalculateServiceContract;
+use App\Contracts\Company\Soglasie\SoglasieCancelCreateServiceContract;
+use App\Contracts\Company\Soglasie\SoglasieCheckCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
@@ -26,6 +28,8 @@ use App\Services\Company\Renessans\RenessansCheckCalculateService;
 use App\Services\Company\Renessans\RenessansCreateService;
 use App\Services\Company\Renessans\RenessansService;
 use App\Services\Company\Soglasie\SoglasieCalculateService;
+use App\Services\Company\Soglasie\SoglasieCancelCreateService;
+use App\Services\Company\Soglasie\SoglasieCheckCreateService;
 use App\Services\Company\Soglasie\SoglasieCreateService;
 use App\Services\Company\Soglasie\SoglasieKbmService;
 use App\Services\Company\Soglasie\SoglasieScoringService;
@@ -96,6 +100,12 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->singleton(SoglasieCreateServiceContract::class, function($app) {
             return new SoglasieCreateService();
+        });
+        $this->app->singleton(SoglasieCheckCreateServiceContract::class, function($app) {
+            return new SoglasieCheckCreateService();
+        });
+        $this->app->singleton(SoglasieCancelCreateServiceContract::class, function($app) {
+            return new SoglasieCancelCreateService();
         });
     }
 }

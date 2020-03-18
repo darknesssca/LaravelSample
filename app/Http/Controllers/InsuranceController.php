@@ -130,14 +130,14 @@ class InsuranceController extends Controller
     public function getCreateStatus()
     {
         $count = config('api_sk.renessans.maxRowsByCycle');
-        $process = RequestProcess::where('state', 99)->limit($count)->get();
+        $process = RequestProcess::where('state', 50)->limit($count)->get();
         if ($process) {
             foreach ($process as $processItem) {
                 $company = $this->checkCompany($processItem->company);
                 $token = $processItem->token;
                 $companyCode = ucfirst(strtolower($company->code));
                 $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
-                $response = $controller->createStatus($company, $processItem);
+                $response = $controller->checkCreate($company, $processItem);
             }
         } else {
             sleep(5);
