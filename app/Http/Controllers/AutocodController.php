@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\CarInfo\Autocode\AutocodeReportService;
+use App\Services\CarInfo\Autocod\AutocodReportService;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
-class AutocodeController extends Controller
+class AutocodController extends Controller
 {
     private $engine;
 
     public function __construct()
     {
-        $this->engine = new AutocodeReportService();
+        $this->engine = new AutocodReportService();
     }
 
     /**Получение отчета с ожиданием

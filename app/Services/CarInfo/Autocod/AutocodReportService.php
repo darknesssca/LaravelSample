@@ -1,10 +1,10 @@
 <?php
 
 
-namespace App\Services\CarInfo\Autocode;
+namespace App\Services\CarInfo\Autocod;
 
 
-class AutocodeReportService extends AutocodeService
+class AutocodReportService extends AutocodService
 {
     private $token;
 
@@ -25,11 +25,17 @@ class AutocodeReportService extends AutocodeService
     //"progress_error": 1,
 
     /**запросить генерацию отчета для автозаполнения
-     * @param $vin
+     * @param string $vin
+     * @param string $uid
      * @return array
      */
     public function getReport(string $vin, string $uid): array
     {
+        if(env('APP_DEBUG') && $uid == $this->uid_autocomplete)
+            return ['report_id'=>'benfin_autocomplete_plus_report_Z94CB41AAGR322020@benfin', 'suggest_get'=>'0'];
+        if(env('APP_DEBUG') && $uid == $this->uid_taxi)
+            return ['report_id'=>'benfin_active_taxi_license_report_Z94CB41AAGR422720@benfin', 'suggest_get'=>'0'];
+
         $data = [
             "query_type" => "VIN",
             "query" => $vin,
@@ -40,6 +46,7 @@ class AutocodeReportService extends AutocodeService
             'Content-Type' => 'application/json',
         ];
         $res = $this->sendPost($this->baseurl . 'user/reports/' . $uid . '/_make', $data, $headers);
+        $this->sendLog("Запрошен отчет autocod: vin=$vin, uid=$uid",'car-insurance');
         return ['report_id' => $res['data'][0]['uid'], 'suggest_get' => $res['data'][0]['suggest_get']];
     }
 
@@ -87,11 +94,11 @@ class AutocodeReportService extends AutocodeService
      * истина, если есть записи такси
      * @throws \Exception
      */
-    public function checkTaxi($vin): bool
+    public function checkTaxi($vin)
     {
         $result = $this->getReport($vin, $this->uid_taxi); //запрашиваем отчет
         $r2 = $this->readReport($result['report_id']);
-        $cnt = count($r2['content']['taxi']['history']['count']);
+        $cnt = intval($r2['data'][0]['content']['taxi']['history']['count']);
         return $cnt > 0;
     }
 }

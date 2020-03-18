@@ -1,12 +1,12 @@
 <?php
 
 
-namespace App\Services\CarInfo\Autocode;
+namespace App\Services\CarInfo\Autocod;
 
 use App\Services\CarInfo\CarInfoService;
 use Exception;
 
-class AutocodeService extends CarInfoService
+class AutocodService extends CarInfoService
 {
     protected $baseurl;
     private $user;
@@ -18,12 +18,12 @@ class AutocodeService extends CarInfoService
 
     protected function __construct()
     {
-        $this->baseurl = env("B2B_API_BASE_URI");
-        $this->user = env('B2B_API_AUTH_USERNAME');
-        $this->password = env('B2B_API_AUTH_PASSWORD');
-        $this->token_lifetime = env('B2B_API_TOKEN_LIFETIME');
-        $this->uid_autocomplete = env('B2B_API_REPORT_TYPE_UID_AUTOCOMPLETE');
-        $this->uid_taxi = env('B2B_API_REPORT_TYPE_UID_TAXI');
+        $this->baseurl = env("AC_API_BASE_URI");
+        $this->user = env('AC_API_AUTH_USERNAME');
+        $this->password = env('AC_API_AUTH_PASSWORD');
+        $this->token_lifetime = env('AC_API_TOKEN_LIFETIME');
+        $this->uid_autocomplete = env('AC_API_REPORT_TYPE_UID_AUTOCOMPLETE');
+        $this->uid_taxi = env('AC_API_REPORT_TYPE_UID_TAXI');
     }
 
     /**генерирует токен авторизации

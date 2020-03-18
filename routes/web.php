@@ -34,10 +34,10 @@ $router->group(
                 $router->post('policies/send', 'InsuranceController@store');
                 $router->post('/policies/{code}/{method}', 'InsuranceController@index');
 
-                //autocode
-                $router->get('/autocode/', 'AutocodeController@getReport'); //заказать отчет и сразу дождаться генерации
-                $router->get('/autocode/{report_id}/', 'AutocodeController@readReport'); //если отчет уже готов
-                $router->get('/autocode/check-taxi/', 'AutocodeController@checkTaxi'); //проверка на такси
+                //autocod
+                $router->get('autocod/check-taxi/', 'AutocodController@checkTaxi'); //проверка на такси
+                $router->get('autocod/{report_id}/', 'AutocodController@readReport'); //если отчет уже готов
+                $router->post('autocod', 'AutocodController@getReport'); //заказать отчет и сразу дождаться генерации
             }
         );
     }
