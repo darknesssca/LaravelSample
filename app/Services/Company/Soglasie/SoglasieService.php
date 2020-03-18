@@ -10,6 +10,7 @@ use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
+use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
 use App\Models\RequestProcess;
 use App\Services\Company\CompanyService;
@@ -29,6 +30,8 @@ class SoglasieService extends CompanyService implements SoglasieServiceContract
 
     public function __construct()
     {
+        $this->companyCode = "soglasie";
+        $this->companyId = InsuranceCompany::where('code',$this->companyCode)->take(1)->get()[0]['id'];
         $this->apiUser = config('api_sk.soglasie.user');
         $this->apiPassword = config('api_sk.soglasie.password');
         $this->apiSubUser = config('api_sk.soglasie.subUser');

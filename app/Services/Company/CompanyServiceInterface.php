@@ -17,4 +17,5 @@ interface CompanyServiceInterface
      */
     public function run(InsuranceCompany $company, array $attributes, array $additionalFields): array;
 
+
 }

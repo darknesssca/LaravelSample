@@ -2,6 +2,8 @@
 
 namespace App\Console;
 
+use App\Console\Commands\CheckRenessancCalculateCommand;
+use App\Console\Commands\RefreshModelsGuidesCommand;
 use Illuminate\Console\Scheduling\Schedule;
 use Laravel\Lumen\Console\Kernel as ConsoleKernel;
 
@@ -13,7 +15,8 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        //
+        CheckRenessancCalculateCommand::class,
+        RefreshModelsGuidesCommand::class
     ];
 
     /**

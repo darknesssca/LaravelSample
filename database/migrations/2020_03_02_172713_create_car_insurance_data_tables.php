@@ -188,7 +188,7 @@ class CreateCarInsuranceDataTables extends Migration
 
     private function upMarkInsurance()
     {
-        Schema::create('insurance_mark', function (Blueprint $table) {
+        Schema::create('insurance_marks', function (Blueprint $table) {
             $table->unsignedInteger('mark_id');
             $table->unsignedInteger('insurance_company_id');
             $table->string('reference_mark_code');
@@ -201,7 +201,7 @@ class CreateCarInsuranceDataTables extends Migration
 
     private function downMarkInsurance()
     {
-        Schema::dropIfExists('insurance_mark');
+        Schema::dropIfExists('insurance_marks');
     }
 
     // категория автомобиля
@@ -244,7 +244,7 @@ class CreateCarInsuranceDataTables extends Migration
 
     private function upModelInsurance()
     {
-        Schema::create('insurance_model', function (Blueprint $table) {
+        Schema::create('insurance_models', function (Blueprint $table) {
             $table->unsignedInteger('model_id');
             $table->unsignedInteger('insurance_company_id');
             $table->string('reference_model_code');
@@ -257,7 +257,7 @@ class CreateCarInsuranceDataTables extends Migration
 
     private function downModelInsurance()
     {
-        Schema::dropIfExists('insurance_model');
+        Schema::dropIfExists('insurance_models');
     }
 
     // страна регистрации

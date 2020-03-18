@@ -9,6 +9,8 @@ use Illuminate\Support\Carbon;
 
 class CompanyService implements CompanyServiceInterface
 {
+    public $companyCode;
+    public $companyId;
 
     public function run(InsuranceCompany $company, $attributes, $additionalData): array
     {

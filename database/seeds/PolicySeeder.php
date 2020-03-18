@@ -181,75 +181,6 @@ class PolicySeeder extends Seeder
         ],
     ];
 
-    protected static $carMarks = [
-        [
-            'code' => 'nissan',
-            'name' => 'Nissan',
-        ],
-    ];
-
-    protected static $insuranceMark = [
-        [
-            'mark_id' => 1,
-            'insurance_company_id' => 1,
-            'reference_mark_code' => 'Nissan',
-        ],
-        [
-            'mark_id' => 1,
-            'insurance_company_id' => 2,
-            'reference_mark_code' => 'Nissan',
-        ],
-        [
-            'mark_id' => 1,
-            'insurance_company_id' => 3,
-            'reference_mark_code' => '555',
-        ],
-        [
-            'mark_id' => 1,
-            'insurance_company_id' => 4,
-            'reference_mark_code' => '555',
-        ],
-    ];
-
-    protected static $carCategory = [
-        [
-            'code' => 'B',
-            'name' => 'B',
-        ],
-    ];
-
-    protected static $carModel = [
-        [
-            'mark_id' => 1,
-            'category_id' => 1,
-            'code' => 'pixo',
-            'name' => 'Pixo',
-        ],
-    ];
-
-    protected static $insuranceModel = [
-        [
-            'model_id' => 1,
-            'insurance_company_id' => 1,
-            'reference_model_code' => 'Pixo',
-        ],
-        [
-            'model_id' => 1,
-            'insurance_company_id' => 2,
-            'reference_model_code' => 'Pixo',
-        ],
-        [
-            'model_id' => 1,
-            'insurance_company_id' => 3,
-            'reference_model_code' => '36892',
-        ],
-        [
-            'model_id' => 1,
-            'insurance_company_id' => 4,
-            'reference_model_code' => '1360',
-        ],
-    ];
-
     protected static $regCountry = [
         [
             'code' => 'ru',
@@ -415,11 +346,6 @@ class PolicySeeder extends Seeder
         \App\Models\PolicyStatus::insert(self::$policyStatus);
         \App\Models\DocType::insert(self::$docTypes);
         \App\Models\DocTypeInsurance::insert(self::$docTypeInsurance);
-        \App\Models\CarMark::insert(self::$carMarks);
-        \App\Models\CarMarkInsurance::insert(self::$insuranceMark);
-        \App\Models\CarCategory::insert(self::$carCategory);
-        \App\Models\CarModel::insert(self::$carModel);
-        \App\Models\CarModelInsurance::insert(self::$insuranceModel);
         \App\Models\RegCountry::insert(self::$regCountry);
         \App\Models\RegCountryInsurance::insert(self::$insuranceCountry);
         \App\Models\SourceAcquisition::insert(self::$sourceAcquisition);

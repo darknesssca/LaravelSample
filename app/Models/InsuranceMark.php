@@ -4,13 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class CarModelInsurance extends Model
+class InsuranceMark extends Model
 {
     protected $fillable = [
-        'model_id',
+        'mark_id',
         'insurance_company_id',
-        'reference_model_code',
+        'reference_mark_code',
     ];
-    protected $table = 'insurance_model';
+    protected $primaryKey = 'mark_id';
 
 }

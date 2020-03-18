@@ -6,6 +6,7 @@ use App\Contracts\Company\CompanyServiceContract;
 use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
 use App\Models\RequestProcess;
+use App\Services\Company\Soglasie\SoglasieGuidesService;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -13,7 +14,6 @@ use Illuminate\Validation\ValidationException;
 
 class InsuranceController extends Controller
 {
-
     protected static $companies = [];
 
     public function index($code, $method, Request $request)
@@ -23,28 +23,20 @@ class InsuranceController extends Controller
             return $this->error('Компания не найдена', 404);
         }
         $method = strtolower((string)$method);
-        try
-        {
+        try {
             return response()->json($this->runService($company, $request, $method), 200);
-        }
-        catch (ValidationException $exception)
-        {
+        } catch (ValidationException $exception) {
             return $this->error($exception->errors(), 400);
-        }
-        catch (BindingResolutionException $exception)
-        {
-            return $this->error('Не найден обработчик компании: '.$exception->getMessage(), 404);
-        }
-        catch (\Exception $exception)
-        {
+        } catch (BindingResolutionException $exception) {
+            return $this->error('Не найден обработчик компании: ' . $exception->getMessage(), 404);
+        } catch (\Exception $exception) {
             return $this->error($exception->getMessage(), 500);
         }
     }
 
     public function store(Request $request)
     {
-        try
-        {
+        try {
             $controller = app(CompanyServiceContract::class);
             $attributes = $this->validate(
                 $request,
@@ -58,17 +50,11 @@ class InsuranceController extends Controller
             RestController::sendLog($attributes);
             $token = IntermediateData::createToken($data);
             return response()->json(['token' => $token], 200);
-        }
-        catch (ValidationException $exception)
-        {
+        } catch (ValidationException $exception) {
             return $this->error($exception->errors(), 400);
-        }
-        catch (BindingResolutionException $exception)
-        {
-            return $this->error('Не найден обработчик компании: '.$exception->getMessage(), 404);
-        }
-        catch (\Exception $exception)
-        {
+        } catch (BindingResolutionException $exception) {
+            return $this->error('Не найден обработчик компании: ' . $exception->getMessage(), 404);
+        } catch (\Exception $exception) {
             return $this->error($exception->getMessage(), 500);
         }
     }
@@ -88,7 +74,8 @@ class InsuranceController extends Controller
         $tokenData = IntermediateData::getData($validatedFields['token']);
         if (!$tokenData) {
             throw new \Exception('token not valid'); // todo вынести в отдельные эксепшены
-        }if (!isset($tokenData['form']) || !$tokenData['form']) {
+        }
+        if (!isset($tokenData['form']) || !$tokenData['form']) {
             throw new \Exception('token have no data'); // todo вынести в отдельные эксепшены
         }
         $additionalData['tokenData'] = isset($tokenData[$company->code]) ? $tokenData[$company->code] : false;
@@ -136,7 +123,7 @@ class InsuranceController extends Controller
                 $company = $this->checkCompany($processItem->company);
                 $token = $processItem->token;
                 $companyCode = ucfirst(strtolower($company->code));
-                $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
+                $controller = app('App\\Contracts\\Company\\' . $companyCode . '\\' . $companyCode . 'ServiceContract');
                 $response = $controller->createStatus($company, $processItem);
             }
         } else {
@@ -171,7 +158,27 @@ class InsuranceController extends Controller
     {
         $company = ucfirst(strtolower($company->code));
         //$method = ucfirst(strtolower($method));
-        $contract = 'App\\Contracts\\Company\\'.$company.'\\'.$company.'ServiceContract';
+        $contract = 'App\\Contracts\\Company\\' . $company . '\\' . $company . 'ServiceContract';
         return app($contract);
+    }
+
+    /**
+     * artisan команда обновления справочников
+     */
+    public function refreshCarModelGuides()
+    {
+        echo "----Начало обновления справочников----\n";
+
+        //список объектов, реализующих интерфейс GuidesSourceInterface
+        $companies = [
+            new SoglasieGuidesService(),
+        ];
+
+        foreach ($companies as $company) {
+            echo "Importing: ".$company->companyCode."\n";
+            $company->updateGuides();
+        }
+
+        echo "----Конец обновления справочников----\n";
     }
 }

@@ -5,21 +5,22 @@ namespace App\Console\Commands;
 use App\Http\Controllers\InsuranceController;
 use Illuminate\Console\Command;
 
-class CheckRenessancCalculateCommand extends Command
+class RefreshModelsGuidesCommand  extends Command
 {
+
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'renessans:calculate';
+    protected $signature = 'benfin:guides';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'get calculate response';
+    protected $description = 'refresh car models guides';
 
     /**
      * Create a new command instance.
@@ -31,6 +32,7 @@ class CheckRenessancCalculateCommand extends Command
         parent::__construct();
     }
 
+
     /**
      * Execute the console command.
      *
@@ -39,6 +41,6 @@ class CheckRenessancCalculateCommand extends Command
     public function handle()
     {
         $controller = new InsuranceController();
-        $controller->getCalculate();
+        $controller->refreshCarModelGuides();
     }
 }
