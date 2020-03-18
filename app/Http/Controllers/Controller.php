@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
 use Laravel\Lumen\Routing\Controller as BaseController;
 
@@ -70,7 +71,40 @@ class Controller extends BaseController
         if ($log_type_id != -1) {
             $params["log_type_id"] = $log_type_id;
         }
-        $this->sendPost("api/v1/log", $params, true);
+        $this->sendRequest("POST", "api/v1/log", $params, true);
     }
 
+    /**отправка запроса
+     * @param string $method
+     * метод запроса
+     * @param string $url
+     * адрес
+     * @param array $data
+     * данные
+     * @param bool $async
+     * если истина, то запрос выполняется асинхронно и без результата
+     * @return array|bool
+     * если запрос прошел успешно, то true
+     */
+    protected function sendRequest(string $method, string $url, array $data=[], bool $async = false)
+    {
+        $method = strtoupper($method);
+
+        $client = new Client([
+            'base_uri' => $url,
+            'timeout' => 1.0,
+        ]);
+        if (!$async) {
+            $response = $client->request($method, $url, ["form_params" => $data, "headers" => ["Content-Type" => "application/json"]]);
+            $code = $response->getStatusCode();
+            $content = $response->getBody();
+            return [
+                'success' => $code == 200,
+                'content' => $content
+            ];
+        } else {
+            $client->requestAsync($method, $url, ["form_params" => $data, "headers" => ["Content-Type" => "application/json"]]);
+            return true;
+        }
+    }
 }

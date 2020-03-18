@@ -185,6 +185,7 @@ class ReportController extends Controller
     /**
      * @param $user_id
      * @return array
+     * @throws Exception
      */
     private function getCreator($user_id)
     {
@@ -195,6 +196,20 @@ class ReportController extends Controller
             ];
             return $user;
         }
+
+        $url = 'api/v1/auth/users/' . $user_id;
+        $response = $this->sendRequest('GET', $url);
+
+        if (empty($response['content'])){
+            throw new Exception('Ошибка получения данных');
+        }
+
+        $user = json_decode($response['content'], true, 512,  JSON_OBJECT_AS_ARRAY);
+
+        return [
+            'id' => $user['id'],
+            'full_name' => $user['full_name']
+        ];
     }
 
     /**
