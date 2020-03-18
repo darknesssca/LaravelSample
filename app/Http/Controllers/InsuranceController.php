@@ -6,8 +6,11 @@ use App\Contracts\Company\CompanyServiceContract;
 use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
 use App\Models\RequestProcess;
+use App\Services\Company\Ingosstrah\IngosstrahGuidesService;
 use App\Services\Company\Renessans\RenessansGuidesService;
 use App\Services\Company\Soglasie\SoglasieGuidesService;
+use App\Services\Company\Tinkoff\TinkoffCalculateService;
+use App\Services\Company\Tinkoff\TinkoffGuidesService;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -174,7 +177,9 @@ class InsuranceController extends Controller
         //список объектов, реализующих интерфейс GuidesSourceInterface
         $companies = [
             // new SoglasieGuidesService(),
-            new RenessansGuidesService(),
+            //new RenessansGuidesService(),
+            new IngosstrahGuidesService(),
+            new TinkoffGuidesService(),
         ];
 
         foreach ($companies as $company) {
