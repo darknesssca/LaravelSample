@@ -3,8 +3,10 @@
 
 namespace App\Services\Company\Soglasie;
 
+use App\Contracts\Company\Soglasie\SoglasieBillLinkServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieCalculateServiceContract;
-use App\Contracts\Company\Soglasie\SoglasieCheckCreateStatusServiceContract;
+use App\Contracts\Company\Soglasie\SoglasieCancelCreateServiceContract;
+use App\Contracts\Company\Soglasie\SoglasieCheckCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
@@ -108,10 +110,33 @@ class SoglasieService extends CompanyService implements SoglasieServiceContract
         ];
     }
 
-    public function createStatus($company, $data)
+    public function processing($company, $data, $additionalData)
     {
-        $checkService = app(SoglasieCheckCreateStatusServiceContract::class);
-        $checkData = $checkService->run($company, $data, $additionalFields = []);
+        if (!(isset($additionalData['tokenData']) && $additionalData['tokenData'])) {
+            throw new \Exception('no token data');
+        }
+        if (!(isset($additionalData['tokenData']['status']) && $additionalData['tokenData']['status'])) {
+            throw new \Exception('no status in token data');
+        }
+        switch ($additionalData['tokenData']['status']) {
+            case 'processing':
+                return [
+                    'status' => 'processing',
+                ];
+            case 'done':
+                return [
+                    'status' => 'done',
+                    'billUrl' => $additionalData['tokenData']['billUrl'],
+                ];
+            default:
+                throw new \Exception('not valid status');
+        }
+    }
+
+    public function checkCreate($company, $data)
+    {
+        $checkService = app(SoglasieCheckCreateServiceContract::class);
+        $checkData = $checkService->run($company, $data);
         switch ($checkData['status']) {
             case 'ERROR':
                 RequestProcess::where('token', $data->token)->delete();
@@ -122,14 +147,18 @@ class SoglasieService extends CompanyService implements SoglasieServiceContract
                     case 'RSA_SIGN_FAIL':
                     case 'RSA_CHECK_FAIL':
                     case 'SK_CHECK_FAIL':
+                        $this->cancelCreate($company, $data);
                         RequestProcess::where('token', $data->token)->delete();
                         $this->dropCreate($company, $data->token, $checkData['policy']['statusName']);
                         break;
                     case 'SK_CHECK_OK':
                         RequestProcess::where('token', $data->token)->delete();
+                        $billLinkService = app(SoglasieBillLinkServiceContract::class);
+                        $billLinkResponse = $billLinkService->run($company, $data);
                         $tokenData = IntermediateData::getData($data->token); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
                         $tokenData[$company->code] = [
                             'status' => 'done',
+                            'billUrl' => $billLinkResponse['PayLink'],
                         ];
                         IntermediateData::where('token', $data->token)->update([
                             'data' => $tokenData,
@@ -138,6 +167,7 @@ class SoglasieService extends CompanyService implements SoglasieServiceContract
                     default:
                         $result = RequestProcess::updateCheckCount($data->token);
                         if ($result === false) {
+                            $this->cancelCreate($company, $data);
                             $this->dropCreate($company, $data->token, 'no result by max check count');
                         }
                         break;
@@ -146,10 +176,18 @@ class SoglasieService extends CompanyService implements SoglasieServiceContract
             default: // все остальные статусы рассматриваем как WORKING
                 $result = RequestProcess::updateCheckCount($data->token);
                 if ($result === false) {
+                    $this->cancelCreate($company, $data);
                     $this->dropCreate($company, $data->token, 'no result by max check count');
                 }
                 break;
         }
+    }
+
+    public function cancelCreate($company, $data)
+    {
+        $cancelService = app(SoglasieCancelCreateServiceContract::class);
+        $cancelData = $cancelService->run($company, $data);
+        return $cancelData;
     }
 
     protected function dropCreate($company, $token, $error)
