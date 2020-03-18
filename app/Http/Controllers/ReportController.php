@@ -28,7 +28,7 @@ class ReportController extends Controller
                 $this->createReportValidationMessages());
 
             $user_id = $this->getUserId($validation_result['creator_id']);
-            $reward = $this->getReward($validation_result['policies']);
+            $reward = $this->getReward($validation_result['policies'], $user_id);
 
             if ($reward > 0) {
                 $report = Report::create([
@@ -142,9 +142,9 @@ class ReportController extends Controller
      * @return int
      * @throws Exception
      */
-    private function getReward(array $policies_ids)
+    private function getReward(array $policies_ids, $user_id)
     {
-        $reward = 0;
+        $reward_sum = 0;
         $policy_collection = Policy::whereIn('id', $policies_ids)->get();
 
         if (count($policy_collection) != count($policies_ids)) { //Найдены не все полисы
@@ -155,12 +155,27 @@ class ReportController extends Controller
             return 1;
         }
 
+        $url = 'api/v1/commission-calculation/rewards';
+        $params = ['user_id' => $user_id];
+        $response = $this->sendRequest('GET', $url, $params);
 
-        foreach ($policy_collection as $policy) {
-            $reward += 1;
+        if (empty($response['content'])){
+            throw new Exception('Ошибка получения данных');
         }
 
-        return $reward;
+        $content = json_decode($response['content'], true, 512,  JSON_OBJECT_AS_ARRAY);
+
+        $rewards = $this->indexRewards($content);
+
+        foreach ($policy_collection as $policy) {
+            if ($policy->paid == false){
+                throw new Exception(sprintf('Полис %s не оплачен', $policy->number));
+            }
+
+            $reward_sum += floatval($rewards[$policy->id]['value']);
+        }
+
+        return $reward_sum;
     }
 
     /**
@@ -251,5 +266,18 @@ class ReportController extends Controller
             'is_payed' => $report->is_payed,
             'policies' => $this->getPolicies($report)
         ];
+    }
+
+    /**
+     * @param array $rewards
+     * @return mixed
+     */
+    private function indexRewards(array $rewards)
+    {
+        foreach ($rewards as $reward){
+            $new_rewards[$rewards['policy']['id']] = $reward;
+        }
+
+        return $new_rewards;
     }
 }
