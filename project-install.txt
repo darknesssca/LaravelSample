@@ -20,7 +20,7 @@
 8. установить composer
  sudo apt-get install composer
 9. установить недостающие расширения php
- sudo apt-get install  php-opcache php-pdo php-calendar php-ctype php-exif php-fileinfo php-ftp php-gettext php-iconv php-json php-phar php-posix php-readline php-shmop php-sockets php-sysvmsg php-sysvsem php-sysvshm php-tokenizer php-pgsql php-soap php-curl php-gd
+ sudo apt-get install  php-opcache php-pdo php-calendar php-ctype php-exif php-fileinfo php-ftp php-gettext php-iconv php-json php-phar php-posix php-readline php-shmop php-sockets php-sysvmsg php-sysvsem php-sysvshm php-tokenizer php-pgsql php-soap php-curl php-gd php-zip
 10. перейти в папку проекта
 11. установить зависимости composer:
  composer install
