@@ -37,7 +37,7 @@ $router->group(
                 //autocod
                 $router->get('autocod/check-taxi/', 'AutocodController@checkTaxi'); //проверка на такси
                 $router->get('autocod/{report_id}/', 'AutocodController@readReport'); //если отчет уже готов
-                $router->post('autocod', 'AutocodController@getReport'); //заказать отчет и сразу дождаться генерации
+                $router->post('autocod', 'AutocodController@requestReport'); //заказать отчет и сразу дождаться генерации
             }
         );
     }

@@ -91,6 +91,13 @@ class AutocodReportService extends AutocodService
         $result = $this->getReport($vin, $this->uid_taxi); //запрашиваем отчет
         $r2 = $this->readReport($result['report_id']);
         $cnt = intval($r2['data'][0]['content']['taxi']['history']['count']);
-        return $cnt > 0;
+        if ($cnt > 0) {
+            foreach ($r2['data'][0]['content']['taxi']['history']['items'] as $item) {
+                if ($item['license']['status'] == "ACTIVE") {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

@@ -20,7 +20,7 @@ class AutocodController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getReport(Request $request)
+    public function requestReport(Request $request)
     {
         try {
             $params = $this->validate($request, ['vin' => 'required'], ['vin.required' => 'не задано поле vin']); //todo добавить регулярку на вин
