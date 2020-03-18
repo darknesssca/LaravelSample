@@ -24,14 +24,19 @@ class SoglasieGuidesService extends SoglasieService implements GuidesSourceInter
     }
 
 
-    public function updateGuides(): void
+    public function updateGuides(): bool
     {
-        $headers = $this->generateHeaders();
-        $response = RestController::getRequest($this->baseUrl, [], $headers);
+        try {
+            $headers = $this->generateHeaders();
+            $response = RestController::getRequest($this->baseUrl, [], $headers);
 
-        foreach ($response as $mark) {
-            $cnt = $this->updateMark($mark);
-            echo "Добавлена марка: " . $mark['name'] . " ($cnt шт)\n";
+            foreach ($response as $mark) {
+                $cnt = $this->updateMark($mark);
+                echo "Добавлена марка: " . $mark['name'] . " ($cnt моделей)\n";
+            }
+            return true;
+        } catch (\Exception $ex) {
+            return false;
         }
     }
 

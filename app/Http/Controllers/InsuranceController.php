@@ -6,6 +6,7 @@ use App\Contracts\Company\CompanyServiceContract;
 use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
 use App\Models\RequestProcess;
+use App\Services\Company\Renessans\RenessansGuidesService;
 use App\Services\Company\Soglasie\SoglasieGuidesService;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Request;
@@ -171,12 +172,15 @@ class InsuranceController extends Controller
 
         //список объектов, реализующих интерфейс GuidesSourceInterface
         $companies = [
-            new SoglasieGuidesService(),
+            // new SoglasieGuidesService(),
+            new RenessansGuidesService(),
         ];
 
         foreach ($companies as $company) {
-            echo "Importing: ".$company->companyCode."\n";
-            $company->updateGuides();
+            echo "Importing: " . $company->companyCode . "\n";
+            if (!$company->updateGuides()) {
+                echo "!!!!!!!!!!!!!!!!!!!!!!!!ОШИБКА!!!!!!!!!!!!!!!!!!!!!!!!";
+            }
         }
 
         echo "----Конец обновления справочников----\n";
