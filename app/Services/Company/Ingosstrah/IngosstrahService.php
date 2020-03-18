@@ -30,6 +30,7 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
     {
         $serviceLogin = app(IngosstrahLoginServiceContract::class);
         $loginData = $serviceLogin->run($company, $attributes, $additionalData);
+        return $loginData;
         $attributes['sessionToken'] = $loginData['sessionToken'];
         $serviceCalculate = app(IngosstrahCalculateServiceContract::class);
         $data = $serviceCalculate->run($company, $attributes, $additionalData);
