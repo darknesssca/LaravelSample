@@ -9,14 +9,28 @@ class CreateRequestProcessTable extends Migration
     /**
      * Run the migrations.
      *
+     * state - числовой идентификатор текущего шага работы заявления
+     * 1 -
+     * 2 -
+     * 3 -
+     * 4 -
+     * 5 -
+     * 6 -
+     * 7 -
+     * 9 -
+     * 50 - получение данных о созданой заявке
+     * 100 - получение данных об оплате
+     *
+     *
      * @return void
      */
     public function up()
     {
         Schema::create('request_process', function (Blueprint $table) {
             $table->string('token')->primary()->unique();
-            $table->string('state')->default(1);
-            $table->string('checkCount')->default(0);
+            $table->string('company');
+            $table->unsignedInteger('state')->default(1);
+            $table->unsignedInteger('checkCount')->default(0);
             $table->json('data');
             $table->timestamps();
         });

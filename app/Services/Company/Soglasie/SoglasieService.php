@@ -4,18 +4,21 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieCalculateServiceContract;
+use App\Contracts\Company\Soglasie\SoglasieCheckCreateStatusServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Models\IntermediateData;
+use App\Models\RequestProcess;
 use App\Services\Company\CompanyService;
 use Illuminate\Support\Carbon;
 
 class SoglasieService extends CompanyService implements SoglasieServiceContract
 {
     protected $apiWsdlUrl;
+    protected $apiRestUrl;
     protected $apiUser;
     protected $apiPassword;
     protected $apiSubUser;
@@ -78,7 +81,95 @@ class SoglasieService extends CompanyService implements SoglasieServiceContract
         ];
         $serviceCreate = app(SoglasieCreateServiceContract::class);
         $dataCreate = $serviceCreate->run($company, $attributes, $additionalData);
-        return $dataCreate;
+        $tokenData = IntermediateData::getData($attributes['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
+        $tokenData[$company->code] = [
+            'policyId' => $dataCreate['policyId'],
+            'packageId' => $dataCreate['packageId'],
+            'status' => 'processing',
+        ];
+        IntermediateData::where('token', $attributes['token'])->update([
+            'data' => $tokenData,
+        ]);
+        RequestProcess::create([
+            'token' => $attributes['token'],
+            'state' => 99,
+            'data' => json_encode([
+                'policyId' => $dataCreate['policyId'],
+                'packageId' => $dataCreate['packageId'],
+                'status' => 'processing',
+                'company' => $company->code,
+            ]),
+        ]);
+        return [
+            'status' => 'processing',
+        ];
+    }
+
+    public function createStatus($company, $data)
+    {
+        $checkService = app(SoglasieCheckCreateStatusServiceContract::class);
+        $checkData = $checkService->run($company, $data, $additionalFields = []);
+        switch ($checkData['status']) {
+            case 'ERROR':
+                RequestProcess::where('token', $data->token)->delete();
+                $this->dropCreate($company, $data->token, $checkData['lastError']);
+                break;
+            case 'COMPLETE':
+                switch ($checkData['policy']['status']) {
+                    case 'RSA_SIGN_FAIL':
+                    case 'RSA_CHECK_FAIL':
+                    case 'SK_CHECK_FAIL':
+                        RequestProcess::where('token', $data->token)->delete();
+                        $this->dropCreate($company, $data->token, $checkData['policy']['statusName']);
+                        break;
+                    case 'SK_CHECK_OK':
+                        RequestProcess::where('token', $data->token)->delete();
+                        $tokenData = IntermediateData::getData($data->token); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
+                        $tokenData[$company->code] = [
+                            'status' => 'done',
+                        ];
+                        IntermediateData::where('token', $data->token)->update([
+                            'data' => $tokenData,
+                        ]);
+                        break;
+                    default:
+                        $result = RequestProcess::updateCheckCount($data->token);
+                        if ($result === false) {
+                            $this->dropCreate($company, $data->token, 'no result by max check count');
+                        }
+                        break;
+                }
+                break;
+            default: // все остальные статусы рассматриваем как WORKING
+                $result = RequestProcess::updateCheckCount($data->token);
+                if ($result === false) {
+                    $this->dropCreate($company, $data->token, 'no result by max check count');
+                }
+                break;
+        }
+    }
+
+    protected function dropCreate($company, $token, $error)
+    {
+        $tokenData = IntermediateData::getData($token); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
+        $tokenData[$company->code] = [
+            'status' => 'error',
+            'error' => $error,
+        ];
+        IntermediateData::where('token', $token)->update([
+            'data' => $tokenData,
+        ]);
+    }
+
+    protected function getUrl($data = [])
+    {
+        $url = $this->apiRestUrl;
+        if ($data) {
+            foreach ($data as $key => $value) {
+                $url = str_replace('{{'.$key.'}}', $value, $url);
+            }
+        }
+        return $url;
     }
 
     protected function getHeaders()

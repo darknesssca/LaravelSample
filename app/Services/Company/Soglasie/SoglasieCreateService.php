@@ -18,8 +18,8 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
 
     public function __construct()
     {
-        $this->apiWsdlUrl = config('api_sk.soglasie.createUrl');
-        if (!($this->apiWsdlUrl)) {
+        $this->apiRestUrl = config('api_sk.soglasie.createUrl');
+        if (!($this->apiRestUrl)) {
             throw new \Exception('soglasie api is not configured');
         }
         parent::__construct();
@@ -35,7 +35,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         $data = $this->prepareData($attributes);
         $headers = $this->getHeaders();
         return $data;
-        $response = RestController::postRequest($this->apiWsdlUrl, $data, $headers);
+        $response = RestController::postRequest($this->apiRestUrl, $data, $headers);
         return $response;
     }
 

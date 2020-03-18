@@ -21,6 +21,7 @@ return [
         'scoringWsdlUrl' => env('SOGLASIE_API_SCORING_URL'),
         'calculateWsdlUrl' => env('SOGLASIE_API_CALCULATE_URL'),
         'createUrl' => env('SOGLASIE_API_CREATE_URL'),
+        'checkCreateUrl' => env('SOGLASIE_API_CHECK_CREATE_URL'),
         'user' => env('SOGLASIE_API_USER'),
         'password' => env('SOGLASIE_API_PASSWORD'),
         'subUser' => env('SOGLASIE_API_SUB_USER'),
@@ -30,4 +31,6 @@ return [
     'authMicroserviceUrl' => env('AUTH_MICROSERVICE_URL'),
     'logMicroserviceUrl' => env('LOG_MICROSERVICE_URL'),
     'logMicroserviceCode' => env('LOG_MICROSERVICE_CODE'),
+    'maxCheckCount' => env('API_PROCESSING_MAX_CHECK_COUNT'),
+    'maxRowsByCycle' => env('API_PROCESSING_MAX_ROWS_BY_CYCLE'),
 ];
