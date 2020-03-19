@@ -136,6 +136,15 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
         ) {
             $this->createBill($company, $data);
         }
+        if ($isNeedUpdateToken) {
+            $tokenData = IntermediateData::getData($data->token); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
+            $tokenData[$company->code] = [
+                'sessionToken' => $sessionToken,
+            ];
+            IntermediateData::where('token', $data->token)->update([
+                'data' => $tokenData,
+            ]);
+        }
     }
 
     protected function createBill($company, $data)
@@ -163,10 +172,12 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
 
     public function checkCreate($company, $data)
     {
+        $data->data = json_decode($data->data, true);
         $sessionToken = $data->data['sessionToken'];
         $isNeedUpdateToken = false;
         $checkService = app(IngosstrahCheckCreateServiceContract::class);
         $checkData = $checkService->run($company, $data);
+        dd($checkData);
         if (isset($checkData['tokenError'])) {
             $serviceLogin = app(IngosstrahLoginServiceContract::class);
             $loginData = $serviceLogin->run($company, []);

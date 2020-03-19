@@ -18,9 +18,9 @@ class IngosstrahCheckCreateService extends IngosstrahService implements Ingosstr
         return $this->sendCheckCreate($company, $data);
     }
 
-    private function sendCheckCreate($company, $data): array
+    private function sendCheckCreate($company, $processData): array
     {
-        $data = $this->prepareData($data);
+        $data = $this->prepareData($processData);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetAgreement', $data);
         dd($response);
         if (!$response) {
@@ -44,19 +44,17 @@ class IngosstrahCheckCreateService extends IngosstrahService implements Ingosstr
         if (!isset($response['response']->Agreement->State)) {
             throw new \Exception('api not return status');
         }
-        $data = [
+        return [
             'response' => $response['response'],
         ];
-        return $data;
     }
 
     public function prepareData($data)
     {
-        $data = [
+        return [
             'SessionToken' => $data->data['sessionToken'],
             'PolicyNumber' => $data->data['policyId'],
         ];
-        return $data;
     }
 
 }
