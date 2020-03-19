@@ -12,6 +12,7 @@ use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
+use App\Http\Controllers\RestController;
 use App\Models\IntermediateData;
 use App\Models\RequestProcess;
 use App\Services\Company\CompanyService;
@@ -151,11 +152,16 @@ class SoglasieService extends CompanyService implements SoglasieServiceContract
                     case 'SK_CHECK_OK':
                         RequestProcess::where('token', $data->token)->delete();
                         $billLinkService = app(SoglasieBillLinkServiceContract::class);
-                        $billLinkResponse = $billLinkService->run($company, $data);
-                        $tokenData = IntermediateData::getData($data->token); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
+                        $billLinkData = $billLinkService->run($company, $data);
+                        //$tokenData = IntermediateData::getData($data->token); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
+                        $tokenFullData = IntermediateData::where('token', $data->token)->first();
+                        $tokenData = json_decode($tokenFullData['data'], true);
+                        $form = json_decode($tokenFullData['form']);
+                        $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
+                        RestController::sendBillUrl($insurer['email'], $billLinkData['PayURL']);
                         $tokenData[$company->code] = [
                             'status' => 'done',
-                            'billUrl' => $billLinkResponse['PayLink'],
+                            'billUrl' => $billLinkData['PayLink'],
                         ];
                         IntermediateData::where('token', $data->token)->update([
                             'data' => $tokenData,

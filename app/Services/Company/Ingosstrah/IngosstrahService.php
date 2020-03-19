@@ -11,6 +11,7 @@ use App\Contracts\Company\Ingosstrah\IngosstrahCreateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahEosagoServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahServiceContract;
+use App\Http\Controllers\RestController;
 use App\Models\IntermediateData;
 use App\Models\RequestProcess;
 use App\Services\Company\CompanyService;
@@ -66,7 +67,6 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
             $loginData = $serviceLogin->run($company, $attributes, $additionalData);
             $sessionToken = $loginData['sessionToken'];
             $attributes['sessionToken'] = $additionalData['tokenData']['sessionToken'];
-            $serviceCreate = app(IngosstrahCreateServiceContract::class);
             $dataCreate = $serviceCreate->run($company, $attributes, $additionalData);
         }
         $tokenData = IntermediateData::getData($attributes['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
@@ -116,6 +116,51 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
         }
     }
 
+    public function checkHold($company, $data)
+    {
+        $isNeedUpdateToken = false;
+        $checkService = app(IngosstrahCheckCreateServiceContract::class);
+        $checkData = $checkService->run($company, $data);
+        if (isset($checkData['tokenError'])) {
+            $serviceLogin = app(IngosstrahLoginServiceContract::class);
+            $loginData = $serviceLogin->run($company, []);
+            $sessionToken = $loginData['sessionToken'];
+            $isNeedUpdateToken = true;
+            $data->data['sessionToken'] = $sessionToken;
+            $checkData = $checkService->run($company, $data);
+        }
+        if (
+            isset($checkData['response']->Agreement->IsOsago->IsEOsago) && ($checkData['response']->Agreement->IsOsago->IsEOsago == 'Y') &&
+            isset($checkData['response']->Agreement->Policy->Serial) && $checkData['response']->Agreement->Policy->Serial &&
+            isset($checkData['response']->Agreement->Policy->No) && $checkData['response']->Agreement->Policy->No
+        ) {
+            $this->createBill($company, $data);
+        }
+    }
+
+    protected function createBill($company, $data)
+    {
+        RequestProcess::where('token', $data->token)->delete();
+        $billService = app(IngosstrahBillServiceContract::class);
+        $billData = $billService->run($company, $data);
+        $data->data['BillISN'] = $billData['response']->BillISN;
+        //$tokenData = IntermediateData::getData($data->token);
+        $tokenFullData = IntermediateData::where('token', $data->token)->first();
+        $tokenData = json_decode($tokenFullData['data'], true);
+        $form = json_decode($tokenFullData['form']);
+        $billLinkService = app(IngosstrahBillLinkServiceContract::class);
+        $billLinkData = $billLinkService->run($company, $data, $tokenData);
+        $tokenData[$company->code] = [
+            'status' => 'done',
+            'billUrl' => $billLinkData['PayURL'],
+        ];
+        $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
+        RestController::sendBillUrl($insurer['email'], $billLinkData['PayURL']);
+        IntermediateData::where('token', $data->token)->update([
+            'data' => $tokenData,
+        ]);
+    }
+
     public function checkCreate($company, $data)
     {
         $sessionToken = $data->data['sessionToken'];
@@ -128,7 +173,6 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
             $sessionToken = $loginData['sessionToken'];
             $isNeedUpdateToken = true;
             $data->data['sessionToken'] = $sessionToken;
-            $checkService = app(IngosstrahCheckCreateServiceContract::class);
             $checkData = $checkService->run($company, $data);
         }
         switch ($checkData['response']->Agreement->State) {
@@ -161,26 +205,11 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
                     ]);
                     return;
                 }
-                RequestProcess::where('token', $data->token)->delete();
-                $billService = app(IngosstrahBillServiceContract::class);
-                $billData = $billService->run($company, $data);
-                $data->data['BillISN'] = $billData['response']->BillISN;
-                $tokenData = IntermediateData::getData($data->token);
-                $billLinkService = app(IngosstrahBillLinkServiceContract::class);
-                $billLinkData = $billLinkService->run($company, $data, $tokenData);
-                $tokenData = IntermediateData::getData($data->token);
-                $tokenData[$company->code] = [
-                    'status' => 'done',
-                    'billUrl' => $billLinkData['PayURL'],
-                ];
-                IntermediateData::where('token', $data->token)->update([
-                    'data' => $tokenData,
-                ]);
+                $this->createBill($company, $data);
                 break;
             default: // все остальные статусы рассматриваем как WORKING
                 $result = RequestProcess::updateCheckCount($data->token);
                 if ($result === false) {
-                    $this->cancelCreate($company, $data);
                     $this->dropCreate($company, $data->token, 'no result by max check count');
                 } else {
                     if ($isNeedUpdateToken) {

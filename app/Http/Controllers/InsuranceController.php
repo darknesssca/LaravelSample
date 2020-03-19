@@ -127,6 +127,23 @@ class InsuranceController extends Controller
         }
     }
 
+    public function getHold()
+    {
+        $count = config('api_sk.renessans.maxRowsByCycle');
+        $process = RequestProcess::where('state', 75)->limit($count)->get();
+        if ($process) {
+            foreach ($process as $processItem) {
+                $company = $this->checkCompany($processItem->company);
+                $companyCode = ucfirst(strtolower($company->code));
+                $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
+                $response = $controller->checkHold($company, $processItem);
+            }
+        } else {
+            sleep(5);
+            return;
+        }
+    }
+
     public function getCreateStatus()
     {
         $count = config('api_sk.renessans.maxRowsByCycle');
@@ -134,7 +151,6 @@ class InsuranceController extends Controller
         if ($process) {
             foreach ($process as $processItem) {
                 $company = $this->checkCompany($processItem->company);
-                $token = $processItem->token;
                 $companyCode = ucfirst(strtolower($company->code));
                 $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
                 $response = $controller->checkCreate($company, $processItem);

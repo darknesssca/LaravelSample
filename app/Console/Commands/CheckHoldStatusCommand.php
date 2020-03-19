@@ -5,21 +5,21 @@ namespace App\Console\Commands;
 use App\Http\Controllers\InsuranceController;
 use Illuminate\Console\Command;
 
-class CheckCreateStatusCommand extends Command
+class CheckHoldStatusCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'check:processing';
+    protected $signature = 'check:hold';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'get create response';
+    protected $description = 'get hold response';
 
     /**
      * Create a new command instance.
@@ -39,6 +39,6 @@ class CheckCreateStatusCommand extends Command
     public function handle()
     {
         $controller = new InsuranceController();
-        $controller->getCreateStatus();
+        $controller->getHold();
     }
 }

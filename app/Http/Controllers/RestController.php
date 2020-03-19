@@ -18,14 +18,14 @@ class RestController
         self::postRequest(config('api_sk.logMicroserviceUrl'), $body);
     }
 
-    public static function sendBillUrl($auth_token, $email, $url)
+    public static function sendBillUrl($email, $billUrl)
     {
         $body = [
-            'subject' => 'отправка',
-            'message' => 'пользователь отправил форму со следующими полями: '.\GuzzleHttp\json_encode($data),
-            'code' => config('api_sk.logMicroserviceCode'),
+            'message' => $billUrl,
+            'receiver' => $email,
+            'code' => config('api_sk.notifyMicroserviceCode'),
         ];
-        self::postRequest(config('api_sk.logMicroserviceUrl'), $body);
+        self::postRequest(config('api_sk.notifyMicroserviceUrl'), $body);
     }
 
     public static function checkToken($data)
