@@ -12,9 +12,12 @@ use App\Models\CarModel;
 use App\Models\InsuranceMark;
 use App\Models\InsuranceModel;
 use App\Services\Company\GuidesSourceInterface;
+use App\Services\Company\GuidesSourceTrait;
 
 class SoglasieGuidesService extends SoglasieService implements GuidesSourceInterface
 {
+    use GuidesSourceTrait;
+
     private $baseUrl;
 
     public function __construct()
@@ -31,7 +34,8 @@ class SoglasieGuidesService extends SoglasieService implements GuidesSourceInter
             $response = RestController::getRequest($this->baseUrl, [], $headers);
 
             foreach ($response as $mark) {
-                $cnt = $this->updateMark($mark);
+                $val = $this->prepareMark($mark);
+                $cnt = $this->updateMark($val);
                 echo "Добавлена марка: " . $mark['name'] . " ($cnt моделей)\n";
             }
             return true;
@@ -40,56 +44,6 @@ class SoglasieGuidesService extends SoglasieService implements GuidesSourceInter
         }
     }
 
-    /**запрос моделей и добавление марки и моделей в таблицы
-     * @param array $mark
-     * @return int
-     * @throws \Exception
-     */
-    private function updateMark(array $mark): int
-    {
-        //МАРКИ
-        //добавление в общие таблицы
-        $mark_com = CarMark::firstOrCreate([
-            'name' => $mark['name'],
-            'code' => strtolower($mark['name']),
-        ]);
-        //добавление в таблицы СК
-        $mark_sk = InsuranceMark::updateOrCreate([
-            'mark_id' => $mark_com->id,
-            'insurance_company_id' => $this->companyId,
-        ],
-            ['reference_mark_code' => $mark['id'],]);
-
-
-        //МОДЕЛИ
-        $headers = $this->generateHeaders();
-        $response = RestController::getRequest($this->baseUrl . "/" . $mark['id'], [], $headers);
-
-        foreach ($response as $model) {
-            //общие таблицы
-            $cat_code = !empty($model['cat']) ? $model['cat'] : "D";
-            $cat = CarCategory::firstOrCreate([
-                'code' => $cat_code,
-                'name' => $cat_code,
-            ]);
-            $model_com = CarModel::firstOrCreate([
-                'name' => $model['name'],
-                'code' => strtolower($model['name']),
-                'mark_id' => $mark_com->id,
-                'category_id' => $cat->id,
-            ]);
-
-            //таблицы СК
-            $model_sk = InsuranceModel::updateOrCreate(
-                [
-                    "model_id" => $model_com->id,
-                    'insurance_company_id' => $this->companyId,
-                ],
-                ['reference_model_code' => $model['id']]
-            );
-        }
-        return count($response);
-    }
 
     /**генерация тегов авторизации
      * @return array
@@ -101,5 +55,32 @@ class SoglasieGuidesService extends SoglasieService implements GuidesSourceInter
         return [
             'Authorization' => "Basic $auth_key",
         ];
+    }
+
+    /**подготовка марки машины и моделей
+     * @param $mark
+     * @return array
+     * @throws \Exception
+     */
+    private function prepareMark($mark): array
+    {
+        $res = [
+            "NAME" => $mark["name"],
+            "REF_CODE" => $mark['id'],
+            "MODELS" => [],
+        ];
+        //МОДЕЛИ
+        $headers = $this->generateHeaders();
+        $response = RestController::getRequest($this->baseUrl . "/" . $mark['id'], [], $headers);
+
+        foreach ($response as $model) {
+            $model = [
+                "NAME" => $model['name'],
+                "CATEGORY_CODE" => !empty($model['cat']) ? $model['cat'] : "D",
+                "REF_CODE" => $model['id'],
+            ];
+            $res["MODELS"][] = $model;
+        }
+        return $res;
     }
 }

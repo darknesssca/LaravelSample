@@ -11,10 +11,12 @@ use App\Models\CarModel;
 use App\Models\InsuranceMark;
 use App\Models\InsuranceModel;
 use App\Services\Company\GuidesSourceInterface;
+use App\Services\Company\GuidesSourceTrait;
 use App\Services\Company\Soglasie\SoglasieService;
 
 class RenessansGuidesService extends RenessansService implements GuidesSourceInterface
 {
+    use GuidesSourceTrait;
     private $baseUrl;
 
     public function __construct()
@@ -34,7 +36,8 @@ class RenessansGuidesService extends RenessansService implements GuidesSourceInt
                 return false;
             }
             foreach ($response['data'] as $mark) {
-                $cnt = $this->updateMark($mark);
+                $val = $this->prepareMark($mark);
+                $cnt = $this->updateMark($val);
                 echo "Добавлена марка: " . $mark['make'] . " ($cnt моделей)\n";
             }
             return true;
@@ -46,47 +49,24 @@ class RenessansGuidesService extends RenessansService implements GuidesSourceInt
 
     /**запрос моделей и добавление марки и моделей в таблицы
      * @param $mark
-     * @return int
+     * @return array
      */
-    private function updateMark($mark): int
+    private function prepareMark($mark): array
     {
-        //МАРКИ
-        //добавление в общие таблицы
-        $mark_com = CarMark::firstOrCreate([
-            'name' => $mark['make'],
-            'code' => strtolower($mark['make']),
-        ]);
-        //добавление в таблицы СК
-        $mark_sk = InsuranceMark::updateOrCreate([
-            'mark_id' => $mark_com->id,
-            'insurance_company_id' => $this->companyId,
-        ],
-            ['reference_mark_code' => $mark['make'],]);
-
+        $res = [
+            "NAME" => $mark['make'],
+            "REF_CODE" => $mark['make'],
+            "MODELS" => [],
+        ];
         //МОДЕЛИ
         foreach ($mark["models"] as $model) {
-            //общие таблицы
-            $cat_code = $model["category"];
-            $cat = CarCategory::firstOrCreate([
-                'code' => $cat_code,
-                'name' => $cat_code,
-            ]);
-            $model_com = CarModel::firstOrCreate([
-                'name' => $model['model'],
-                'code' => strtolower($model['model']),
-                'mark_id' => $mark_com->id,
-                'category_id' => $cat->id,
-            ]);
-
-            //таблицы СК
-            $model_sk = InsuranceModel::updateOrCreate(
-                [
-                    "model_id" => $model_com->id,
-                    'insurance_company_id' => $this->companyId,
-                ],
-                ['reference_model_code' => $model['model']]
-            );
+            $model = [
+                "NAME" => $model['model'],
+                "CATEGORY_CODE" => $model["category"],
+                "REF_CODE" => $model['model'],
+            ];
+            $res["MODELS"][] = $model;
         }
-        return count($mark["models"]);
+        return $res;
     }
 }

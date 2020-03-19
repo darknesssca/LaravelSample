@@ -22,7 +22,7 @@ ENV XDEBUG_IDKEY=DEFKEY
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
     php7.3-cli php7.3-curl php7.3-fpm php7.3-gd \
     php7.3-intl php7.3-json php7.3-mbstring \
-    php7.3-pgsql php7.3-xml php7.3-zip php7.3-redis \
+    php7.3-pgsql php7.3-xml php7.3-zip php7.3-redis  \
     && bash -c "if [ "$BUILD_ENV" == "devel" ]; then apt-get -y install --no-install-recommends php7.3-xdebug; fi" \
     && rm -rf /var/lib/apt/lists/*
 

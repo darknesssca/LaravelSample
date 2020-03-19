@@ -176,10 +176,10 @@ class InsuranceController extends Controller
 
         //список объектов, реализующих интерфейс GuidesSourceInterface
         $companies = [
-            // new SoglasieGuidesService(),
-            //new RenessansGuidesService(),
+             new SoglasieGuidesService(),
+            new RenessansGuidesService(),
             new IngosstrahGuidesService(),
-            new TinkoffGuidesService(),
+            //new TinkoffGuidesService(),
         ];
 
         foreach ($companies as $company) {
