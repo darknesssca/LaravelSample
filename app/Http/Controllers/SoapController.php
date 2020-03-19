@@ -35,8 +35,8 @@ class SoapController
             $opts['stream_context'] = stream_context_create($stream_context);
             //$client = new SoapClient($url, $opts);
             $client = new SoapClientEx($url, $opts, $attributes);
-//            if ($method == "CalcProduct") {
-//                dd($method, 'ok', $client->$method($data), $client->__getLastRequest(), $client, $data);
+//            if ($method == "GetTariff") {
+//                dd($method, 'ok', $client->$method($data), 'request', $client->__getLastRequest(), 'response', $client->__getLastResponse(), $client, $data);
 //            }
             //dd($method, 'ok', $client->$method($data), 'request', $client->__getLastRequest(), 'response', $client->__getLastResponse(), $client, $data);
             return ['response' => $client->$method($data)];

@@ -430,7 +430,7 @@ class CreateCarInsuranceDataTables extends Migration
         Schema::dropIfExists('gender_insurance');
     }
 
-    // цель использования
+    // гражданство
     private function upCitizenship()
     {
         Schema::create('citizenship', function (Blueprint $table) {

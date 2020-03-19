@@ -75,6 +75,7 @@ class CompanyService implements CompanyServiceContract
             "car.vehicleUseRegion" => "required|string", // TODO: in справочник
             "car.isIrregularVIN" => "required|boolean",
             "car.vin" => "required|string",
+            "car.regNumber" => "string", // todo required_if если тип дока машины СТС
             "car.year" => "required|string|min:4|max:4",
             "car.documents" => "required|array",
             "car.documents.*.document" => "required",

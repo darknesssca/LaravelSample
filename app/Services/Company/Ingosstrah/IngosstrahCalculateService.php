@@ -8,6 +8,7 @@ use App\Contracts\Company\Ingosstrah\IngosstrahCalculateServiceContract;
 use App\Http\Controllers\SoapController;
 use App\Models\InsuranceCompany;
 use App\Services\Company\Ingosstrah\IngosstrahService;
+use Carbon\Carbon;
 use Spatie\ArrayToXml\ArrayToXml;
 
 class IngosstrahCalculateService extends IngosstrahService implements IngosstrahCalculateServiceContract
@@ -26,18 +27,17 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
     {
         $data = $this->prepareData($attributes);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetTariff', $data);
-        dd($response);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
         if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
-        if (!isset($response->PremiumAmount)) {
+        if (!isset($response['response']->ResponseData->Tariff->PremiumAmount)) {
             throw new \Exception('api not return premium');
         }
         $data = [
-            'premium' => $response->PremiumAmount,
+            'premium' => $response['response']->ResponseData->Tariff->PremiumAmount,
         ];
         return $data;
     }
@@ -55,7 +55,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
 //                        "PrevAgrID" => "", //todo пролонгация
 //                        "ParentISN" => "", //todo пролонгация
                         "Individual" => $this->transformBoolean(false),
-                        "IsEOsago" => $this->transformBoolean(true),
+//                        "IsEOsago" => $this->transformBoolean(true),
                     ],
                     "Insurer" => [
                         "SbjRef" => $attributes['policy']['insurantId'],
@@ -70,7 +70,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                         'Model' => $attributes['car']['model'], // TODO: справочник
                         'VIN' => $attributes['car']['vin'],
                         "Category" => "B", // TODO из справочника
-                        "Constructed" => $attributes['car']['year'],
+                        "Constructed" => Carbon::createFromFormat('Y', $attributes['car']['year'])->format('Y-m-d'),
                         'EnginePowerHP' => $attributes['car']['enginePower'],
                         "Document" => [],
                         "DocInspection" => [
@@ -108,7 +108,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
         foreach ($attributes['subjects'] as $iSubject => $subject) {
             $pSubject = [
                 '_attributes' => ['SbjKey' => $subject['id']],
-                "SbjType" => 0, // TODO: справочник
+                "SbjType" => 'Ф', // TODO: справочник
                 "SbjResident" => $this->transformBoolean($subject['fields']['isResident']),
                 'FullName' => $subject['fields']['lastName'] . ' ' . $subject['fields']['firstName'] .
                     (isset($subject['fields']['middleName']) ? ' ' . $subject['fields']['middleName'] : ''),
@@ -117,33 +117,43 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                 "CountryCode" => $subject['fields']['citizenship'], // TODO: справочник
             ];
             foreach ($subject['fields']['addresses'] as $iAddress => $address) {
+                if ($address['address']['addressType'] != 'Registered') {// TODO: справочник
+                    continue;
+                }
                 $pAddress = [
                     "CountryCode" => $subject['fields']['citizenship'], // TODO: справочник
-                    'CityCode' => $address['address']['cityKladr'],
-                    'StreetCode' => $address['address']['streetKladr'],
+//                    'CityCode' => $address['address']['cityKladr'],
+//                    'StreetCode' => $address['address']['streetKladr'],
                     'StreetName' => $address['address']['street'],
                     'House' => $address['address']['building'],
                 ];
                 $this->setValuesByArray($pAddress, [
-                    "flat" => 'flat',
+                    'StreetCode' => 'streetKladr',
+                    'CityCode' => 'cityKladr',
+                    "Flat" => 'flat',
                 ], $address['address']);
-                $pSubject['address'] = $pAddress;
+                $pSubject['Address'] = $pAddress;
             }
-            foreach ($subject['fields']['documents'] as $iDocument => $document) {
+            $sDocument = $this->searchDocumentByType($subject['fields'], '30363316'); // todo занчение из справочника
+            if ($sDocument) {
                 $pDocument = [
-                    'DocType' => $document['document']['documentType'],  // TODO: справочник
+                    'DocType' => $sDocument['documentType'],  // TODO: справочник
                 ];
                 $this->setValuesByArray($pDocument, [
                     "Serial" => 'series',
                     "Number" => 'number',
                     "DocIssuedBy" => 'issuedBy',
                     "DocDate" => 'dateIssue',
-                ], $document['document']);
-                $pSubject['IdentityDocument'][] = $pDocument;
+                ], $sDocument);
+                if (isset($pDocument['Serial'])) {
+                    $pDocument['Serial'] = substr($pDocument['Serial'], 0, 2) . ' ' . substr($pDocument['Serial'], 2);
+                }
+                $pSubject['IdentityDocument'] = $pDocument;
             }
             $data['TariffParameters']['Agreement']['SubjectList']['Subject'][] = $pSubject;
         }
         //Vehicle
+        $this->setValue($data['TariffParameters']['Agreement']['Vehicle'], 'RegNum', 'regNumber', $attributes['car']);
         foreach ($attributes['car']['documents'] as $iDocument => $document) {
             $pDocument = [
                 'DocType' => $document['document']['documentType'],  // TODO: справочник
@@ -162,13 +172,15 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
         ], $attributes['car']['inspection']);
         //DriverList
         if (!$attributes['policy']['isMultidrive']) {
-            $data['TariffParameters']['Agreement']['DriverList'] = [];
+            $data['TariffParameters']['Agreement']['DriverList'] = [
+                'Driver' => [],
+            ];
             foreach ($attributes['drivers'] as $iDriver => $driver) {
                 $pDriver = [
                     'SbjRef' => $driver['driver']['driverId'],
                     'DrvDateBeg' => $driver['driver']['drivingLicenseIssueDateOriginal'],
                 ];
-                $sDocument = $this->searchDocumentByTypeAndId($attributes, $driver['driver']['driverId'], 'driverLicense'); // todo занчение из справочника
+                $sDocument = $this->searchDocumentByTypeAndId($attributes, $driver['driver']['driverId'], '765912000'); // todo занчение из справочника
                 if ($sDocument) {
                     $pDriver['DriverLicense'] = [
                         'DocType' => $sDocument['documentType'],  // TODO: справочник
@@ -179,10 +191,11 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                         "DocDate" => 'dateIssue',
                     ], $sDocument);
                 }
-                $data['TariffParameters']['Agreement']['DriverList'][] = $pDriver;
+                $data['TariffParameters']['Agreement']['DriverList']['Driver'][] = $pDriver;
             }
         }
         $xml = ArrayToXml::convert($data['TariffParameters'], 'TariffParameters');
+        $xml = html_entity_decode($xml);
         $xml = str_replace('<?xml version="1.0"?>', '', $xml);
 
         $data['TariffParameters'] = new \SoapVar($xml, XSD_ANYXML);
