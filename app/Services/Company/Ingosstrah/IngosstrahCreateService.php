@@ -27,7 +27,6 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
     {
         $data = $this->prepareData($attributes);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'CreateAgreement', $data);
-        dd($response, $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }

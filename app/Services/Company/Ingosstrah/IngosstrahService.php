@@ -80,11 +80,11 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
         ]);
         RequestProcess::create([
             'token' => $attributes['token'],
+            'company' => $company->code,
             'state' => 50,
             'data' => json_encode([
                 'policyId' => $dataCreate['policyId'],
                 'status' => 'processing',
-                'company' => $company->code,
                 'sessionToken' => $sessionToken,
             ]),
         ]);

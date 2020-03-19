@@ -29,6 +29,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
     {
         $data = $this->prepareData($attributes);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'calcPartnerFQuote', $data);
+        dd($data, $response);
         if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }

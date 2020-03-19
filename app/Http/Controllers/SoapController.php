@@ -38,7 +38,7 @@ class SoapController
 //            if ($method == "GetTariff") {
 //                dd($method, 'ok', $client->$method($data), 'request', $client->__getLastRequest(), 'response', $client->__getLastResponse(), $client, $data);
 //            }
-            //dd($method, 'ok', $client->$method($data), 'request', $client->__getLastRequest(), 'response', $client->__getLastResponse(), $client, $data);
+//            dd($method, 'ok', $client->$method($data), 'request', $client->__getLastRequest(), 'response', $client->__getLastResponse(), $client, $data);
             return ['response' => $client->$method($data)];
         }catch(SoapFault $fault){
             dd($method, 'fault',$fault,$client->__getLastRequest(), $client, $data);

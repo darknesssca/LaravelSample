@@ -19,7 +19,7 @@ class CheckHoldStatusCommand extends Command
      *
      * @var string
      */
-    protected $description = 'get hold response';
+    protected $description = 'обработка полисов, по которым в связи с задержками СК был проставлен статус hold, т.е. владелец уведомлен о том, что полис создан но недоработан';
 
     /**
      * Create a new command instance.

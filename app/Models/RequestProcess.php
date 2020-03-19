@@ -12,7 +12,9 @@ class RequestProcess extends Model
     protected $fillable = [
         'token',
         'state',
-        'data'
+        'data',
+        'company',
+        'checkCount'
     ];
     protected $primaryKey = 'token';
     protected $keyType = 'string';
@@ -25,7 +27,7 @@ class RequestProcess extends Model
             self::where('token', $token)->delete();
             return false;
         }
-        self::where('token', $token)->update('checkCount', );
+        self::where('token', $token)->update('checkCount', $checkCount);
         return true;
     }
 
