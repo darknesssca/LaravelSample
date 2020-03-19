@@ -22,6 +22,7 @@ use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
+use App\Services\CarInfo\Autocod\AutocodReportService;
 use App\Services\Company\CompanyService;
 use App\Services\Company\Ingosstrah\IngosstrahCalculateService;
 use App\Services\Company\Ingosstrah\IngosstrahCheckCreateService;

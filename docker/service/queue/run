@@ -1,0 +1,5 @@
+#!/bin/bash
+exec 2>&1
+source /etc/envvars
+cd /var/www
+exec chpst -u www-data php artisan queue:work --daemon > /dev/stdout 2> /dev/stderr
