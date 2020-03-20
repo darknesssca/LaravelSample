@@ -32,7 +32,7 @@ class DraftController extends Controller
             if (!$userId) {
                 return $this->error('user not parsed', 400);
             }
-            $policy = Policy::getPolicies($userId);
+            $policy = Policy::getDrafts($userId);
             return response()->json($policy, 200);
         }
         catch (ValidationException $exception)
@@ -67,7 +67,7 @@ class DraftController extends Controller
             if (!$policeId) {
                 return $this->error('id not correct', 400);
             }
-            $policy = Policy::getPolicyById($userId, $policeId);
+            $policy = Policy::getDraftById($userId, $policeId);
             return response()->json($policy, 200);
         }
         catch (ValidationException $exception)
@@ -407,13 +407,18 @@ class DraftController extends Controller
                     }
                     $driverDataUpdate[] = $driverData;
                 }
-                for ($i = 0; $i < count($oldPolicy->drivers); $i++) {
-                    if (isset($oldPolicy->drivers[$i]) && isset($driverDataUpdate[$i])) {
-                        Driver::where('id', $oldPolicy->drivers[$i]->id)->update($driverDataUpdate[$i]);
-                    } elseif (isset($oldPolicy->drivers[$i]) && !isset($driverDataUpdate[$i])) {
-                        $policy->drivers()->delete($oldPolicy->drivers[$i]->id);
+                $iterator = 0;
+                foreach ($driverDataUpdate as $driverData) {
+                    if (isset($oldPolicy->drivers[$iterator])) {
+                        Driver::where('id', $oldPolicy->drivers[$iterator]->id)->update($driverDataUpdate[$iterator]);
                     } else {
-                        $policy->drivers()->create($driverDataUpdate[$i]);
+                        $oldPolicy->drivers()->create($driverDataUpdate[$iterator]);
+                    }
+                    $iterator++;
+                }
+                if ($iterator < count($oldPolicy->drivers)) {
+                    for ($i = $iterator; $i < count($oldPolicy->drivers); $i++) {
+                        Driver::where('id', $oldPolicy->drivers[$i]->id)->delete();
                     }
                 }
             }

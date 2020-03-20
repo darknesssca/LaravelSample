@@ -116,31 +116,9 @@ class Policy extends Model
         parent::delete();
     }
 
-    public static function scopeGetPolicies($query, $agentId)
+    public static function scopeGetDrafts($query, $agentId)
     {
-        return self::with([
-            'model',
-            'model.mark',
-            'model.category',
-            'doctype',
-            'status',
-            'type',
-            'owner',
-            'owner.gender',
-            'owner.citizenship',
-            'insurer',
-            'insurer.gender',
-            'insurer.citizenship',
-            'regcountry',
-            'acquisition',
-            'usagetype',
-            'usagetarget',
-            'drivers',
-        ])->where('agent_id', $agentId)->get();
-    }
-
-    public static function scopeGetPolicyById($query, $agentId, $id)
-    {
+        $draftStatusId = PolicyStatus::where('code', 'draft')->first()->id;
         return self::with([
             'model',
             'model.mark',
@@ -161,6 +139,34 @@ class Policy extends Model
             'drivers',
         ])
             ->where('agent_id', $agentId)
+            ->where('status_id', $draftStatusId)
+            ->get();
+    }
+
+    public static function scopeGetDraftById($query, $agentId, $id)
+    {
+        $draftStatusId = PolicyStatus::where('code', 'draft')->first()->id;
+        return self::with([
+            'model',
+            'model.mark',
+            'model.category',
+            'doctype',
+            'status',
+            'type',
+            'owner',
+            'owner.gender',
+            'owner.citizenship',
+            'insurer',
+            'insurer.gender',
+            'insurer.citizenship',
+            'regcountry',
+            'acquisition',
+            'usagetype',
+            'usagetarget',
+            'drivers',
+        ])
+            ->where('agent_id', $agentId)
+            ->where('status_id', $draftStatusId)
             ->where('id', $id)->get()
             ->first();
     }

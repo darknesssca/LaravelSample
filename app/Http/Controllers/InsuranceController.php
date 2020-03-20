@@ -112,13 +112,19 @@ class InsuranceController extends Controller
         if ($process) {
             $company = $this->checkCompany('renessans'); // в данном случае мы работаем только с 1 компанией
             foreach ($process as $processItem) {
-                $token = $processItem->token;
-                $tokenData = IntermediateData::getData($token);
-                $additionalData['tokenData'] = isset($tokenData[$company->code]) ? $tokenData[$company->code] : false;
-                $attributes = $tokenData['form'];
-                $attributes['token'] = $token;
-                $controller = app('App\\Contracts\\Company\\Renessans\\RenessansServiceContract');
-                $response = $controller->calculate($company, $attributes, $additionalData);
+                try {
+                    $token = $processItem->token;
+                    $tokenData = IntermediateData::getData($token);
+                    $additionalData['tokenData'] = isset($tokenData[$company->code]) ? $tokenData[$company->code] : false;
+                    $attributes = $tokenData['form'];
+                    $attributes['token'] = $token;
+                    $controller = app('App\\Contracts\\Company\\Renessans\\RenessansServiceContract');
+                    $response = $controller->calculate($company, $attributes, $additionalData);
+                } catch (\Exception $exception) {
+                    $processItem->update([
+                        'checkCount' => ++$processItem->checkCount,
+                    ]);
+                }
             }
         } else {
             sleep(5);
@@ -132,10 +138,16 @@ class InsuranceController extends Controller
         $process = RequestProcess::where('state', 75)->limit($count)->get();
         if ($process) {
             foreach ($process as $processItem) {
-                $company = $this->checkCompany($processItem->company);
-                $companyCode = ucfirst(strtolower($company->code));
-                $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
-                $response = $controller->checkHold($company, $processItem);
+                try {
+                    $company = $this->checkCompany($processItem->company);
+                    $companyCode = ucfirst(strtolower($company->code));
+                    $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
+                    $response = $controller->checkHold($company, $processItem);
+                } catch (\Exception $exception) {
+                    $processItem->update([
+                        'checkCount' => ++$processItem->checkCount,
+                    ]);
+                }
             }
         } else {
             sleep(5);
@@ -149,10 +161,16 @@ class InsuranceController extends Controller
         $process = RequestProcess::where('state', 50)->limit($count)->get();
         if ($process) {
             foreach ($process as $processItem) {
-                $company = $this->checkCompany($processItem->company);
-                $companyCode = ucfirst(strtolower($company->code));
-                $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
-                $response = $controller->checkCreate($company, $processItem);
+                try {
+                    $company = $this->checkCompany($processItem->company);
+                    $companyCode = ucfirst(strtolower($company->code));
+                    $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
+                    $response = $controller->checkCreate($company, $processItem);
+                } catch (\Exception $exception) {
+                    $processItem->update([
+                        'checkCount' => ++$processItem->checkCount,
+                    ]);
+                }
             }
         } else {
             sleep(5);

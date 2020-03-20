@@ -23,8 +23,8 @@ use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
+use App\Contracts\Company\Tinkoff\TinkoffCreateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
-use App\Services\CarInfo\Autocod\AutocodReportService;
 use App\Services\Company\CompanyService;
 use App\Services\Company\Ingosstrah\IngosstrahBillLinkService;
 use App\Services\Company\Ingosstrah\IngosstrahBillService;
@@ -46,6 +46,7 @@ use App\Services\Company\Soglasie\SoglasieKbmService;
 use App\Services\Company\Soglasie\SoglasieScoringService;
 use App\Services\Company\Soglasie\SoglasieService;
 use App\Services\Company\Tinkoff\TinkoffCalculateService;
+use App\Services\Company\Tinkoff\TinkoffCreateService;
 use App\Services\Company\Tinkoff\TinkoffService;
 use Illuminate\Support\ServiceProvider;
 
@@ -85,6 +86,9 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->singleton(TinkoffCalculateServiceContract::class, function($app) {
             return new TinkoffCalculateService();
+        });
+        $this->app->singleton(TinkoffCreateServiceContract::class, function($app) {
+            return new TinkoffCreateService();
         });
         //ingosstrah
         $this->app->singleton(IngosstrahServiceContract::class, function($app) {

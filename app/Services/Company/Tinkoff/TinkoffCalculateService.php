@@ -9,9 +9,6 @@ use App\Http\Controllers\SoapController;
 
 class TinkoffCalculateService extends TinkoffService implements TinkoffCalculateServiceContract
 {
-    protected $apiMethods = [
-        'sendCalculate' => 'calcPartnerFQuote',
-    ];
 
     private $catalogPurpose = ["Личная", "Такси"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
     private $catalogTypeOfDocument = []; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться

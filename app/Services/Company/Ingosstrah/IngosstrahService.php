@@ -135,6 +135,11 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
             isset($checkData['response']->Agreement->Policy->No) && $checkData['response']->Agreement->Policy->No
         ) {
             $this->createBill($company, $data);
+        } else {
+            $result = RequestProcess::updateCheckCount($data['token']);
+            if ($result === false) {
+                $this->dropCreate($company, $data['token'], 'no result by max check count');
+            }
         }
         if ($isNeedUpdateToken) {
             $tokenData = IntermediateData::getData($data['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
