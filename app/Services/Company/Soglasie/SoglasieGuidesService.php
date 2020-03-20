@@ -36,7 +36,6 @@ class SoglasieGuidesService extends SoglasieService implements GuidesSourceInter
             foreach ($response as $mark) {
                 $val = $this->prepareMark($mark);
                 $cnt = $this->updateMark($val);
-                echo "Добавлена марка: " . $mark['name'] . " ($cnt моделей)\n";
             }
             return true;
         } catch (\Exception $ex) {

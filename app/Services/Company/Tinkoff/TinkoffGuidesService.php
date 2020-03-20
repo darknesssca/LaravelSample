@@ -48,7 +48,6 @@ class TinkoffGuidesService extends TinkoffService implements GuidesSourceInterfa
                     continue;
                 }
                 $cnt = $this->updateMark($val);
-                echo "Добавлена марка: " . $mark['NAME'] . " ($cnt моделей)\n";
             }
         } catch (Exception $e) {
             return false;

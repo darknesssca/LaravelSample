@@ -6,6 +6,7 @@ use App\Contracts\Company\CompanyServiceContract;
 use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
 use App\Models\RequestProcess;
+use App\Services\Company\GuidesSourceTrait;
 use App\Services\Company\Ingosstrah\IngosstrahGuidesService;
 use App\Services\Company\Renessans\RenessansGuidesService;
 use App\Services\Company\Soglasie\SoglasieGuidesService;
@@ -128,7 +129,7 @@ class InsuranceController extends Controller
                 $token = $processItem->token;
                 $companyCode = ucfirst(strtolower($company->code));
 
-                $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
+                $controller = app('App\\Contracts\\Company\\' . $companyCode . '\\' . $companyCode . 'ServiceContract');
                 $response = $controller->checkCreate($company, $processItem);
             }
         } else {
@@ -176,10 +177,10 @@ class InsuranceController extends Controller
 
         //список объектов, реализующих интерфейс GuidesSourceInterface
         $companies = [
-             new SoglasieGuidesService(),
+            new SoglasieGuidesService(),
             new RenessansGuidesService(),
             new IngosstrahGuidesService(),
-           new TinkoffGuidesService(),
+            new TinkoffGuidesService(),
         ];
 
         foreach ($companies as $company) {
@@ -188,7 +189,9 @@ class InsuranceController extends Controller
                 echo "!!!!!!!!!!!!!!!!!!!!!!!!ОШИБКА!!!!!!!!!!!!!!!!!!!!!!!!";
             }
         }
-
+        echo "Удаление лишних марок...\n";
+        $cnt = GuidesSourceTrait::cleanDB();
+        echo "Удалено марок: $cnt\n";
         echo "----Конец обновления справочников----\n";
     }
 }

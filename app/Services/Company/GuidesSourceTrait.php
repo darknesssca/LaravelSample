@@ -7,8 +7,10 @@ namespace App\Services\Company;
 use App\Models\CarCategory;
 use App\Models\CarMark;
 use App\Models\CarModel;
+use App\Models\InsuranceCompany;
 use App\Models\InsuranceMark;
 use App\Models\InsuranceModel;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 trait GuidesSourceTrait
@@ -36,9 +38,10 @@ trait GuidesSourceTrait
         "мерседес" => "Mercedes-Benz",
         "minsk(минск)" => "Минск",
         "minsk" => "Минск",
-        "general motors"=>"GMC",
-        "МАН"=>"MAN",
-        "dongfeng"=>"DongFeng",
+        "general motors" => "GMC",
+        "МАН" => "MAN",
+        "dongfeng" => "DongFeng",
+        "ютонг" => "Yutong",
 
     ];
 
@@ -88,6 +91,9 @@ trait GuidesSourceTrait
         if (!$mark["NAME"] = $this->getMarkName($mark["NAME"])) {
             return 0;
         }
+
+        $cnt = count($mark["MODELS"]);
+        echo "Добавляется марка: " . $mark['NAME'] . " ($cnt моделей)\n";
 
         //МАРКИ
         //добавление в общие таблицы
@@ -222,10 +228,23 @@ trait GuidesSourceTrait
     }
 
     /**
-     * удаляет из БД марки машин, для которых нет кодов для всех СК
+     * удаляет из БД марки машин, для которых нет кодов во всех СК
      */
-    protected static function cleanDB()
+    public static function cleanDB(): int
     {
-                
+        $companies_count = InsuranceCompany::where('active', true)->count();
+        //выбор всех марок машин, к которым привязано меньше $companies_count компаний
+        $select = DB::select("SELECT car_marks.id, COUNT(*) AS CarCount
+                                 FROM car_marks
+                                 JOIN insurance_marks ON insurance_marks.mark_id=car_marks.id
+                                 GROUP BY car_marks.id
+                                 HAVING COUNT(*) <$companies_count; ");
+        $ids = [];
+        foreach ($select as $item) {
+            $ids[] = ((array)$item)['id'];
+        }
+        $list = implode(',', $ids);
+        $cnt = DB::delete("DELETE FROM car_marks WHERE id IN ($list)");
+        return $cnt;
     }
 }

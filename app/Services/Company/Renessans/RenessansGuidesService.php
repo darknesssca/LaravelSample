@@ -38,7 +38,6 @@ class RenessansGuidesService extends RenessansService implements GuidesSourceInt
             foreach ($response['data'] as $mark) {
                 $val = $this->prepareMark($mark);
                 $cnt = $this->updateMark($val);
-                echo "Добавлена марка: " . $mark['make'] . " ($cnt моделей)\n";
             }
             return true;
         } catch (\Exception $ex) {

@@ -53,7 +53,6 @@ class IngosstrahGuidesService extends IngosstrahService implements GuidesSourceI
                 continue;
             }
             $cnt = $this->updateMark($val);
-            echo "Добавлена марка: " . $mark['NAME'] . " ($cnt моделей)\n";
         }
         return true;
     }
