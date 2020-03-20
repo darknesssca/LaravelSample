@@ -46,7 +46,6 @@ class IngosstrahGuidesService extends IngosstrahService implements GuidesSourceI
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetDicti', $data, [], [], []);
         $arr_raw = $this->parseXML($response['response']->ResponseData->any);
 
-        $_SERVER["DOCUMENT_ROOT"] = "/home/vmett/PhpstormProjects/benfin/car-insurance-data/public/";
         $cars_arr = $this->filter_dict($arr_raw);
         foreach ($cars_arr as $mark) {
             $val = $this->prepareMark($mark);

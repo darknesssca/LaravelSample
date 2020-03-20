@@ -179,7 +179,7 @@ class InsuranceController extends Controller
              new SoglasieGuidesService(),
             new RenessansGuidesService(),
             new IngosstrahGuidesService(),
-            //new TinkoffGuidesService(),
+           new TinkoffGuidesService(),
         ];
 
         foreach ($companies as $company) {

@@ -13,6 +13,63 @@ use Illuminate\Support\Str;
 
 trait GuidesSourceTrait
 {
+    /**массив соответствия разных названий марок и нормальных
+     * @var array
+     */
+    private $mark_replace = [
+        "ваз/lada" => "ВАЗ",
+        "lada" => "ВАЗ",
+        "лада" => "ВАЗ",
+        "хундай" => "Hyundai",
+        "хенде" => "Hyundai",
+        "хендэ" => "Hyundai",
+        "хендай" => "Hyundai",
+        "хендэе" => "Hyundai",
+        "мицубиси" => "Mitsubishi",
+        "шкода" => "Skoda",
+        "ситроен" => "Citroen",
+        "фольксваген" => "Volkswagen",
+        "форд" => "Ford",
+        "субару" => "Subaru",
+        "бмв" => "BMW",
+        "mercedes" => "Mercedes-Benz",
+        "мерседес" => "Mercedes-Benz",
+        "minsk(минск)" => "Минск",
+        "minsk" => "Минск",
+        "general motors"=>"GMC",
+        "МАН"=>"MAN",
+        "dongfeng"=>"DongFeng",
+
+    ];
+
+    /**массив названий марок в нижнем регистре, которые не добавляем вообще
+     * @var array
+     */
+    private $mark_dismiss = [
+        ".(отеч.)",
+        "погрузчик",
+        "грейдер",
+        "автогрейдер",
+        "электромобиль",
+        "тушинский авиазавод",
+        "вездеход",
+
+    ];
+
+    /**массив соответствия моделей
+     * @var array
+     */
+    private $model_replace = [
+
+    ];
+
+    /**массив названий моделей в нижнем регистре, которые не добавляем вообще
+     * @var array
+     */
+    private $model_dismiss = [
+        ".(отеч.)",
+    ];
+
     /**обновление или добавление марки машины и её моделей
      *$mark = [NAME, REF_CODE, MODELS=[NAME,REF_CODE,CATEGORY_CODE]]
      * @param array $mark
@@ -26,6 +83,12 @@ trait GuidesSourceTrait
             count($mark['MODELS']) == 0) {
             return 0;
         }
+
+        //проверка имени марки
+        if (!$mark["NAME"] = $this->getMarkName($mark["NAME"])) {
+            return 0;
+        }
+
         //МАРКИ
         //добавление в общие таблицы
         $mark_com = CarMark::updateOrCreate([
@@ -43,8 +106,14 @@ trait GuidesSourceTrait
         //МОДЕЛИ
         foreach ($mark["MODELS"] as $model) {
             //общие таблицы
+            //проверка кода категории
             $cat_code = $this->getCatCode($model["CATEGORY_CODE"]);
             if (!$cat_code) {
+                continue;
+            }
+
+            //проверка имени модели
+            if (!$model["NAME"] = $this->getModelName($model["NAME"])) {
                 continue;
             }
 
@@ -88,11 +157,11 @@ trait GuidesSourceTrait
      */
     private function getCatCode(string $cat_raw)
     {
-        $cat_list = ['a', 'b', 'c', 'd', 'e', 'f', 'трактор', 'трамвай', 'троллейбус', 'вездеход', 'погрузчик', 'автокран', 'коммунальная', 'кран', 'трейлер'];
+        $cat_list = ['a', 'b', 'c', 'd', 'e', 'f', 'трактор', 'Tm', 'Tb', 'вездеход', 'погрузчик', 'автокран', 'коммунальная', 'кран', 'трейлер'];
         $acc = [
-            'трамвай' => 'tm',
-            'троллейбус' => 'tb',
-            'прицеп' => 'e',
+            'трамвай' => 'Tm',
+            'троллейбус' => 'Tb',
+            'прицеп' => 'E',
             'тракторспецтехника' => 'трактор',
             'экскаватор-погрузчик' => 'погрузчик',
             'автопогрузчик' => 'погрузчик',
@@ -106,5 +175,57 @@ trait GuidesSourceTrait
             return $acc[$ncat];
         }
         return false;
+    }
+
+    /**проверяет марку по словарям и возвращает правильное имя или false, если эту марку не добавляем
+     * @param string $name
+     * @return mixed
+     */
+    private function getMarkName(string $name)
+    {
+        //проверка надо ли добавлять марку
+        foreach ($this->mark_dismiss as $item) {
+            if (strpos(mb_strtolower($name), $item) === -1) {
+                return false;
+            }
+        }
+
+        //выбор имени марки по словарю
+        if (array_key_exists(mb_strtolower($name), $this->mark_replace)) {
+            return $this->mark_replace[mb_strtolower($name)];
+        }
+
+        //если марку надо добавить и не надо менять имя, то так и оставляем
+        return $name;
+    }
+
+    /**проверяет модель по словарям и возвращает правильное имя или false, если эту модель не добавляем
+     * @param string $name
+     * @return mixed
+     */
+    private function getModelName(string $name)
+    {
+        //проверка надо ли добавлять марку
+        foreach ($this->model_dismiss as $item) {
+            if (strpos(mb_strtolower($name), $item) === -1) {
+                return false;
+            }
+        }
+
+        //выбор имени марки по словарю
+        if (array_key_exists(mb_strtolower($name), $this->model_replace)) {
+            return $this->model_replace[mb_strtolower($name)];
+        }
+
+        //если марку надо добавить и не надо менять имя, то так и оставляем
+        return $name;
+    }
+
+    /**
+     * удаляет из БД марки машин, для которых нет кодов для всех СК
+     */
+    protected static function cleanDB()
+    {
+                
     }
 }
