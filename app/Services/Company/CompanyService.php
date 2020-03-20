@@ -3,11 +3,11 @@
 
 namespace App\Services\Company;
 
+use App\Contracts\Company\CompanyServiceContract;
 use App\Models\InsuranceCompany;
-use GuzzleHttp\Client;
 use Illuminate\Support\Carbon;
 
-class CompanyService implements CompanyServiceInterface
+class CompanyService implements CompanyServiceContract
 {
 
     public function run(InsuranceCompany $company, $attributes, $additionalData): array
@@ -19,6 +19,7 @@ class CompanyService implements CompanyServiceInterface
     {
         return [
             'auth_token' => "required",
+            'draftId' => "integer",
             'subjects' => "required|array",
             "subjects.*.id" => "required|integer",
             "subjects.*.fields.lastName" => "required|string",
@@ -73,6 +74,7 @@ class CompanyService implements CompanyServiceInterface
             "car.vehicleUseRegion" => "required|string", // TODO: in справочник
             "car.isIrregularVIN" => "required|boolean",
             "car.vin" => "required|string",
+            "car.regNumber" => "string", // todo required_if если тип дока машины СТС
             "car.year" => "required|string|min:4|max:4",
             "car.documents" => "required|array",
             "car.documents.*.document" => "required",
@@ -80,6 +82,11 @@ class CompanyService implements CompanyServiceInterface
             "car.documents.*.document.documentSeries" => "required|string", // TODO: in справочник
             "car.documents.*.document.documentNumber" => "required|string", // TODO: in справочник
             "car.documents.*.document.documentIssued" => "required|string", // TODO: in справочник
+            "car.inspection.documentType" => "required|integer", // TODO: in справочник
+            "car.inspection.documentSeries" => "required|string",
+            "car.inspection.documentNumber" => "required|string",
+            "car.inspection.documentIssuedDate" => "required|date|date_format:Y-m-d",
+            "car.inspection.documentDateEmd" => "required|date|date_format:Y-m-d",
             'policy' => "required",
             'policy.beginDate' => "required|date|date_format:Y-m-d",
             'policy.endDate' => "required|date|date_format:Y-m-d",

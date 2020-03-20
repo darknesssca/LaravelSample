@@ -12,9 +12,23 @@ class RequestProcess extends Model
     protected $fillable = [
         'token',
         'state',
-        'data'
+        'data',
+        'company',
+        'checkCount'
     ];
     protected $primaryKey = 'token';
     protected $keyType = 'string';
+
+    public static function updateCheckCount($token)
+    {
+        $data = self::where('token', $token)->first;
+        $checkCount = ++$data->checkCount;
+        if ($checkCount >= config('api_sk.maxCheckCount')) {
+            self::where('token', $token)->delete();
+            return false;
+        }
+        self::where('token', $token)->update('checkCount', $checkCount);
+        return true;
+    }
 
 }

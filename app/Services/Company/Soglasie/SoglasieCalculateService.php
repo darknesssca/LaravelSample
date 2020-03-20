@@ -5,9 +5,7 @@ namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieCalculateServiceContract;
 use App\Http\Controllers\SoapController;
-use App\Models\InsuranceCompany;
-use App\Models\IntermediateData;
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
 
 class SoglasieCalculateService extends SoglasieService implements SoglasieCalculateServiceContract
 {
@@ -39,11 +37,6 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
-//        if (!isset($response->response->error) || ($response->response->ErrorList->ErrorInfo->Code != 3)) { // согласно приведенному примеру 3 является кодом успешного ответа
-//            throw new \Exception('api not return error Code: '.
-//                isset($response->response->ErrorList->ErrorInfo->Code) ? $response->response->ErrorList->ErrorInfo->Code : 'no code | message: '.
-//                isset($response->response->ErrorList->ErrorInfo->Message) ? $response->response->ErrorList->ErrorInfo->Message : 'no message');
-//        }
         if (!isset($response['response']->data->contract->result) || !$response['response']->data->contract->result) {
             throw new \Exception('api not return premium');
         }
