@@ -77,6 +77,7 @@ trait GuidesSourceTrait
      *$mark = [NAME, REF_CODE, MODELS=[NAME,REF_CODE,CATEGORY_CODE]]
      * @param array $mark
      * @return int
+     * @throws \Exception
      */
     protected function updateMark(array $mark): int
     {
@@ -95,56 +96,67 @@ trait GuidesSourceTrait
         $cnt = count($mark["MODELS"]);
         echo "Добавляется марка: " . $mark['NAME'] . " ($cnt моделей)\n";
 
-        //МАРКИ
-        //добавление в общие таблицы
-        $mark_com = CarMark::updateOrCreate([
-            'code' => $this->getCode($mark['NAME']),
-        ], [
-            'name' => $mark['NAME'],
-        ]);
-        //добавление в таблицы СК
-        $mark_sk = InsuranceMark::updateOrCreate([
-            'mark_id' => $mark_com->id,
-            'insurance_company_id' => $this->companyId,
-        ],
-            ['reference_mark_code' => $mark['REF_CODE'],]);
+        DB::beginTransaction(); //начало транзакции
 
-        //МОДЕЛИ
-        foreach ($mark["MODELS"] as $model) {
-            //общие таблицы
-            //проверка кода категории
-            $cat_code = $this->getCatCode($model["CATEGORY_CODE"]);
-            if (!$cat_code) {
-                continue;
-            }
+        try {
 
-            //проверка имени модели
-            if (!$model["NAME"] = $this->getModelName($model["NAME"])) {
-                continue;
-            }
-
-            $cat = CarCategory::updateOrCreate([
-                'code' => $this->getCode($cat_code),
+            //МАРКИ
+            //добавление в общие таблицы
+            $mark_com = CarMark::updateOrCreate([
+                'code' => $this->getCode($mark['NAME']),
             ], [
-                'name' => $cat_code,
+                'name' => $mark['NAME'],
             ]);
-            $model_com = CarModel::updateOrCreate([
-                'code' => $this->getCode($model['NAME']),
+            //добавление в таблицы СК
+            $mark_sk = InsuranceMark::updateOrCreate([
                 'mark_id' => $mark_com->id,
-            ], [
-                'name' => $model['NAME'],
-                'category_id' => $cat->id,
-            ]);
+                'insurance_company_id' => $this->companyId,
+            ],
+                ['reference_mark_code' => $mark['REF_CODE'],]);
 
-            //таблицы СК
-            $model_sk = InsuranceModel::updateOrCreate(
-                [
-                    "model_id" => $model_com->id,
-                    'insurance_company_id' => $this->companyId,
-                ],
-                ['reference_model_code' => $model['REF_CODE']]
-            );
+            //МОДЕЛИ
+            foreach ($mark["MODELS"] as $model) {
+                //общие таблицы
+                //проверка кода категории
+                $cat_code = $this->getCatCode($model["CATEGORY_CODE"]);
+                if (!$cat_code) {
+                    continue;
+                }
+
+                //проверка имени модели
+                if (!$model["NAME"] = $this->getModelName($model["NAME"])) {
+                    continue;
+                }
+
+                $cat = CarCategory::updateOrCreate([
+                    'code' => $this->getCode($cat_code),
+                ], [
+                    'name' => $cat_code,
+                ]);
+                $model_com = CarModel::updateOrCreate([
+                    'code' => $this->getCode($model['NAME']),
+                    'mark_id' => $mark_com->id,
+                ], [
+                    'name' => $model['NAME'],
+                    'category_id' => $cat->id,
+                ]);
+
+                //таблицы СК
+                $model_sk = InsuranceModel::updateOrCreate(
+                    [
+                        "model_id" => $model_com->id,
+                        'insurance_company_id' => $this->companyId,
+                    ],
+                    ['reference_model_code' => $model['REF_CODE']]
+                );
+            }
+        } catch (\Exception $ex) {
+            DB::rollback(); //откат транзакции, если что-то случилось
+            throw $ex;
         }
+        // Если всё хорошо - фиксируем
+        DB::commit();
+
         return count($mark["MODELS"]);
     }
 
@@ -230,20 +242,40 @@ trait GuidesSourceTrait
     /**
      * удаляет из БД марки машин, для которых нет кодов во всех СК
      */
-    public static function cleanDB(): int
+    public static function cleanDB(): void
     {
-        $companies_count = InsuranceCompany::where('active', true)->count();
-        //выбор всех марок машин, к которым привязано меньше $companies_count компаний
-        $select = DB::select("SELECT car_marks.id, COUNT(*) AS CarCount
+        DB::transaction(function () {
+            $companies_count = InsuranceCompany::where('active', true)->count();
+
+            //МАРКИ
+            //выбор всех марок машин, к которым привязано меньше $companies_count компаний
+            $select = DB::select("SELECT car_marks.id, COUNT(*) AS CarCount
                                  FROM car_marks
                                  JOIN insurance_marks ON insurance_marks.mark_id=car_marks.id
                                  GROUP BY car_marks.id
-                                 HAVING COUNT(*) <$companies_count; ");
-        $ids = [];
-        foreach ($select as $item) {
-            $ids[] = ((array)$item)['id'];
-        }
-        $list = implode(',', $ids);
-        return DB::delete("DELETE FROM car_marks WHERE id IN ($list)");
+                                 HAVING COUNT(*) < $companies_count; ");
+            $ids = [];
+            foreach ($select as $item) {
+                $ids[] = ((array)$item)['id'];
+            }
+            $list = implode(',', $ids);
+            $marks_cnt = DB::delete("DELETE FROM car_marks WHERE id IN ($list)");
+            echo "Удалено $marks_cnt марок с моделями\n";
+
+            //МОДЕЛИ
+            //выбор всех марок машин, к которым привязано меньше $companies_count компаний
+            $select = DB::select("SELECT car_models.id, COUNT(*) AS CarCount
+                                 FROM car_models
+                                 JOIN insurance_models ON insurance_models.model_id=car_models.id
+                                 GROUP BY car_models.id
+                                 HAVING COUNT(*) < $companies_count; ");
+            $ids = [];
+            foreach ($select as $item) {
+                $ids[] = ((array)$item)['id'];
+            }
+            $list = implode(',', $ids);
+            $marks_cnt = DB::delete("DELETE FROM car_models WHERE id IN ($list)");
+            echo "Удалено $marks_cnt моделей\n";
+        });
     }
 }

@@ -190,8 +190,7 @@ class InsuranceController extends Controller
             }
         }
         echo "Удаление лишних марок...\n";
-        $cnt = GuidesSourceTrait::cleanDB();
-        echo "Удалено марок: $cnt\n";
+        GuidesSourceTrait::cleanDB();
         echo "----Конец обновления справочников----\n";
     }
 }
