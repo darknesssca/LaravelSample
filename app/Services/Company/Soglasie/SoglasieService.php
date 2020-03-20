@@ -11,12 +11,10 @@ use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieServiceContract;
-use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Http\Controllers\RestController;
 use App\Models\IntermediateData;
 use App\Models\RequestProcess;
 use App\Services\Company\CompanyService;
-use Illuminate\Support\Carbon;
 
 class SoglasieService extends CompanyService implements SoglasieServiceContract
 {

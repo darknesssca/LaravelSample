@@ -1,17 +1,12 @@
 <?php
 
-
 namespace App\Services\Company\Ingosstrah;
 
-
 use App\Contracts\Company\Ingosstrah\IngosstrahBillServiceContract;
-use App\Contracts\Company\Ingosstrah\IngosstrahCheckCreateServiceContract;
 use App\Http\Controllers\SoapController;
-use App\Models\InsuranceCompany;
 use App\Services\Company\Ingosstrah\IngosstrahService;
-use Spatie\ArrayToXml\ArrayToXml;
 
-class IngosstrahBillServiceService extends IngosstrahService implements IngosstrahBillServiceContract
+class IngosstrahBillService extends IngosstrahService implements IngosstrahBillServiceContract
 {
 
     public function run($company, $data, $additionalFields = []): array
@@ -23,7 +18,6 @@ class IngosstrahBillServiceService extends IngosstrahService implements Ingosstr
     {
         $data = $this->prepareData($data);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'CreateBill', $data);
-        dd($response);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
@@ -42,23 +36,22 @@ class IngosstrahBillServiceService extends IngosstrahService implements Ingosstr
                     ];
             }
         }
-        if (!isset($response['response']->BillISN)) {
+        if (!isset($response['response']->ResponseData->BillISN)) {
             throw new \Exception('api not return status');
         }
-        $data = [
-            'response' => $response['response'],
+        return[
+            'billIsn' => $response['response']->ResponseData->BillISN,
         ];
-        return $data;
     }
 
     public function prepareData($data)
     {
         $data = [
-            'SessionToken' => $data->data['sessionToken'],
+            'SessionToken' => $data['data']['sessionToken'],
             'PaymentType' => 114916,
             'Payer' => 'Customer',
             'AgreementList' => [
-                'AgrID' => $data->data['policyId'],
+                'AgrID' => $data['data']['policyId'],
             ],
         ];
         return $data;

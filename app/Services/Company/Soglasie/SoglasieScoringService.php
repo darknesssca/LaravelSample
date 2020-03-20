@@ -5,9 +5,6 @@ namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
 use App\Http\Controllers\SoapController;
-use App\Models\InsuranceCompany;
-use App\Models\IntermediateData;
-use SoapVar;
 
 class SoglasieScoringService extends SoglasieService implements SoglasieScoringServiceContract
 {
@@ -48,11 +45,6 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
         if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
-//        if (!isset($response->response->error) || ($response->response->ErrorList->ErrorInfo->Code != 3)) { // согласно приведенному примеру 3 является кодом успешного ответа
-//            throw new \Exception('api not return error Code: '.
-//                isset($response->response->ErrorList->ErrorInfo->Code) ? $response->response->ErrorList->ErrorInfo->Code : 'no code | message: '.
-//                isset($response->response->ErrorList->ErrorInfo->Message) ? $response->response->ErrorList->ErrorInfo->Message : 'no message');
-//        }
         if (!isset($response['response']->response->scoringid) || !$response['response']->response->scoringid) {
             throw new \Exception('api not return scoringid');
         }
@@ -79,18 +71,12 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
     {
         $data = [
             'request' => [
-//                "_" => [
-//                    'private' => [],
-//                ],
-//                'test' => $this->transformBoolean($this->apiIsTest),
-//                'partial' => $this->transformBoolean(false),
                 'private' => [],
             ],
         ];
         //private
         $owner = $this->searchSubjectById($attributes, $attributes['policy']['ownerId']);
         if ($owner) {
-            //$data['request']['_']['private'] = [
             $data['request']['private'] = [
                 "lastname" => $owner['lastName'],
                 "firstname" => $owner['firstName'],
@@ -116,8 +102,6 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
                     "docplace" => 'issuedBy',
                     "docdatebegin" => 'dateIssue',
                 ], $document['document']);
-//                $pSubject[$iDocument.':document'] = $pDocument;
-                //$data['request']['_']['private']['documents']['document'][] = $pDocument;
                 $data['request']['private']['documents']['document'][] = $pDocument;
             }
             foreach ($owner['addresses'] as $iAddress => $address) {
@@ -139,7 +123,6 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
                     "region" => 'region',
                     "zone" => 'district',
                 ], $address['address']);
-                //$data['request']['_']['private']['addresses']['address'][] = $pAddress;
                 $data['request']['private']['addresses']['address'][] = $pAddress;
             }
         }

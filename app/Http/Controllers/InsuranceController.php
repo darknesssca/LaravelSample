@@ -8,7 +8,6 @@ use App\Models\IntermediateData;
 use App\Models\RequestProcess;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class InsuranceController extends Controller
@@ -186,7 +185,6 @@ class InsuranceController extends Controller
     protected function getCompanyController($company)
     {
         $company = ucfirst(strtolower($company->code));
-        //$method = ucfirst(strtolower($method));
         $contract = 'App\\Contracts\\Company\\'.$company.'\\'.$company.'ServiceContract';
         return app($contract);
     }

@@ -349,39 +349,6 @@ class DraftController extends Controller
                     } else {
                         continue;
                     }
-
-//                    if (
-//                        isset($attributes['policy']['ownerId']) && $attributes['policy']['ownerId'] &&
-//                        isset($attributes['policy']['insurantId']) && $attributes['policy']['insurantId'] &&
-//                        ($attributes['policy']['insurantId'] == $attributes['policy']['ownerId']) &&
-//                        ($subject['id'] == $attributes['policy']['ownerId'])
-//                    ) {
-//                        DraftClient::where('id', $oldPolicy->client_id)->update($subjectData);
-//                        if ($oldPolicy->client_id != $oldPolicy->insurant_id) {
-//                            $oldInsurer = DraftClient::where('id', $oldPolicy->insurant_id)->first();
-//                            $oldInsurer->delete();
-//                        }
-//                        $policyData['client_id'] = $oldPolicy->client_id;
-//                        $policyData['insurant_id'] = $oldPolicy->client_id;
-//                    } elseif (isset($attributes['policy']['ownerId']) && $attributes['policy']['ownerId'] && ($subject['id'] == $attributes['policy']['ownerId'])) { // если это овнер
-//                        if ($oldPolicy->client_id) {
-//                            DraftClient::where('id', $oldPolicy->client_id)->update($subjectData);
-//                            $policyData['client_id'] = $oldPolicy->client_id;
-//                        } else {
-//                            $result = DraftClient::create($subjectData);
-//                            $policyData['client_id'] = $result->id;
-//                        }
-//                    } elseif (isset($attributes['policy']['insurantId']) && $attributes['policy']['insurantId'] && ($subject['id'] == $attributes['policy']['insurantId'])) {
-//                        if ($oldPolicy->insurant_id && ($oldPolicy->insurant_id != $oldPolicy->client_id)) {
-//                            DraftClient::where('id', $oldPolicy->insurant_id)->update($subjectData);
-//                            $policyData['insurant_id'] = $oldPolicy->insurant_id;
-//                        } else {
-//                            $result = DraftClient::create($subjectData);
-//                            $policyData['insurant_id'] = $result->id;
-//                        }
-//                    } else {
-//                        continue;
-//                    }
                 }
             }
             //car

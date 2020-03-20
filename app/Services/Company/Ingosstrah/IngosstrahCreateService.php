@@ -1,12 +1,9 @@
 <?php
 
-
 namespace App\Services\Company\Ingosstrah;
-
 
 use App\Contracts\Company\Ingosstrah\IngosstrahCreateServiceContract;
 use App\Http\Controllers\SoapController;
-use App\Models\InsuranceCompany;
 use App\Services\Company\Ingosstrah\IngosstrahService;
 use Carbon\Carbon;
 use Spatie\ArrayToXml\ArrayToXml;
@@ -132,11 +129,19 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
                 }
                 $pAddress = [
                     "CountryCode" => $subject['fields']['citizenship'], // TODO: справочник
-//                    'CityCode' => $address['address']['cityKladr'],
-//                    'StreetCode' => $address['address']['streetKladr'],
                     'StreetName' => $address['address']['street'],
                     'House' => $address['address']['building'],
                 ];
+                if (isset($address['address']['StreetCode']) && $address['address']['StreetCode']) {
+                    if (strlen($address['address']['StreetCode']) > 15) {
+                        $address['address']['StreetCode'] = substr($address['address']['StreetCode'], 0, -2);
+                    }
+                }
+                if (isset($address['address']['CityCode']) && $address['address']['CityCode']) {
+                    if (strlen($address['address']['CityCode']) > 11) {
+                        $address['address']['CityCode'] = substr($address['address']['CityCode'], 0, -2);
+                    }
+                }
                 $this->setValuesByArray($pAddress, [
                     'StreetCode' => 'streetKladr',
                     'CityCode' => 'cityKladr',

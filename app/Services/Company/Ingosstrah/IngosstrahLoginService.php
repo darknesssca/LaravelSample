@@ -1,14 +1,9 @@
 <?php
 
-
 namespace App\Services\Company\Ingosstrah;
 
-
-use App\Contracts\Company\Ingosstrah\IngosstrahCalculateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
 use App\Http\Controllers\SoapController;
-use App\Models\InsuranceCompany;
-use App\Models\IntermediateData;
 use App\Services\Company\Ingosstrah\IngosstrahService;
 
 class IngosstrahLoginService extends IngosstrahService implements IngosstrahLoginServiceContract

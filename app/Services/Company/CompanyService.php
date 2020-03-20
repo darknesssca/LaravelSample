@@ -5,7 +5,6 @@ namespace App\Services\Company;
 
 use App\Contracts\Company\CompanyServiceContract;
 use App\Models\InsuranceCompany;
-use GuzzleHttp\Client;
 use Illuminate\Support\Carbon;
 
 class CompanyService implements CompanyServiceContract
