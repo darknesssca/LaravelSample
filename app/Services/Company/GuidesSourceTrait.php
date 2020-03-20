@@ -244,7 +244,6 @@ trait GuidesSourceTrait
             $ids[] = ((array)$item)['id'];
         }
         $list = implode(',', $ids);
-        $cnt = DB::delete("DELETE FROM car_marks WHERE id IN ($list)");
-        return $cnt;
+        return DB::delete("DELETE FROM car_marks WHERE id IN ($list)");
     }
 }
