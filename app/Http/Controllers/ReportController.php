@@ -15,6 +15,8 @@ use Nowakowskir\JWT\TokenEncoded;
 
 class ReportController extends Controller
 {
+    private $httpErrorCode = 400;
+
     //Методы обработки маршрутов
 
     /**
@@ -23,6 +25,7 @@ class ReportController extends Controller
      */
     public function create(Request $request)
     {
+        //TODO Реализовать метод проверки физ лица после реализации получения полисов
         try {
             $validation_result = $this->validate($request, $this->createReportValidationRules(),
                 $this->createReportValidationMessages());
@@ -45,7 +48,7 @@ class ReportController extends Controller
                 throw new Exception('Отсутствует доступное вознаграждение');
             }
         } catch (Exception $exception) {
-            return $this->error($exception->getMessage(), 500);
+            return $this->error($exception->getMessage(), $this->httpErrorCode);
         }
 
     }
@@ -73,12 +76,13 @@ class ReportController extends Controller
                 }
                 return response()->json($reports, 200);
             } else {
+                $this->httpErrorCode = 404;
                 throw new Exception('Отчеты не найдены');
             }
 
 
         } catch (Exception $exception) {
-            return $this->error($exception->getMessage(), 500);
+            return $this->error($exception->getMessage(), $this->httpErrorCode);
         }
     }
 
@@ -92,6 +96,7 @@ class ReportController extends Controller
             $id = intval($id);
 
             if ($id <= 0){
+                $this->httpErrorCode = 404;
                 throw new Exception('Передан некорректный id');
             }
 
@@ -106,7 +111,7 @@ class ReportController extends Controller
 
             return response()->json($report_info, 200);
         } catch (Exception $exception) {
-            return $this->error($exception->getMessage(), 500);
+            return $this->error($exception->getMessage(), $this->httpErrorCode);
         }
     }
 
@@ -191,6 +196,7 @@ class ReportController extends Controller
         $user_id = intval($payload['user_id']);
 
         if (empty($user_id) || $user_id <= 0) {
+            $this->httpErrorCode = 401;
             throw new Exception('Пользователь не авторизован');
         }
 
