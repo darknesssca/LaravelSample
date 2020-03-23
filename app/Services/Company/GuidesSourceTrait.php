@@ -7,11 +7,15 @@ namespace App\Services\Company;
 use App\Models\CarCategory;
 use App\Models\CarMark;
 use App\Models\CarModel;
+use App\Models\Country;
+use App\Models\CountryInsurance;
 use App\Models\InsuranceCompany;
 use App\Models\InsuranceMark;
 use App\Models\InsuranceModel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Reader\Exception;
 
 trait GuidesSourceTrait
 {
@@ -56,14 +60,6 @@ trait GuidesSourceTrait
         "электромобиль",
         "тушинский авиазавод",
         "вездеход",
-
-    ];
-
-    /**массив соответствия моделей
-     * @var array
-     */
-    private $model_replace = [
-
     ];
 
     /**массив названий моделей в нижнем регистре, которые не добавляем вообще
@@ -223,20 +219,13 @@ trait GuidesSourceTrait
      */
     private function getModelName(string $name)
     {
-        //проверка надо ли добавлять марку
+        //проверка надо ли добавлять модель
         foreach ($this->model_dismiss as $item) {
             if (strpos(mb_strtolower($name), $item) === -1) {
                 return false;
             }
         }
-
-        //выбор имени марки по словарю
-        if (array_key_exists(mb_strtolower($name), $this->model_replace)) {
-            return $this->model_replace[mb_strtolower($name)];
-        }
-
-        //если марку надо добавить и не надо менять имя, то так и оставляем
-        return $name;
+        return $name; //для моделей преобразование имени не делаем
     }
 
     /**
@@ -258,24 +247,12 @@ trait GuidesSourceTrait
             foreach ($select as $item) {
                 $ids[] = ((array)$item)['id'];
             }
+            if (count($ids) == 0) {
+                return;
+            }
             $list = implode(',', $ids);
             $marks_cnt = DB::delete("DELETE FROM car_marks WHERE id IN ($list)");
             echo "Удалено $marks_cnt марок с моделями\n";
-
-            //МОДЕЛИ
-            //выбор всех марок машин, к которым привязано меньше $companies_count компаний
-            $select = DB::select("SELECT car_models.id, COUNT(*) AS CarCount
-                                 FROM car_models
-                                 JOIN insurance_models ON insurance_models.model_id=car_models.id
-                                 GROUP BY car_models.id
-                                 HAVING COUNT(*) < $companies_count; ");
-            $ids = [];
-            foreach ($select as $item) {
-                $ids[] = ((array)$item)['id'];
-            }
-            $list = implode(',', $ids);
-            $marks_cnt = DB::delete("DELETE FROM car_models WHERE id IN ($list)");
-            echo "Удалено $marks_cnt моделей\n";
         });
     }
 }

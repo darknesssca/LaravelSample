@@ -35,7 +35,7 @@ class TinkoffGuidesService extends TinkoffService implements GuidesSourceInterfa
     }
 
 
-    public function updateGuides(): bool
+    public function updateCarModelsGuides(): bool
     {
         $filename = Application::getInstance()->basePath() . "/storage/import/tinkoff_cars_import.xlsx"; //todo: сделать импорт из minio
         try {

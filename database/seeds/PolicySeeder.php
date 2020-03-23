@@ -13,53 +13,63 @@ class PolicySeeder extends Seeder
         ],
     ];
 
+    //страховые компании
     protected static $insuranceCompanies = [
         [
             'active' => true,
             'logo_id' => 1,
             'code' => 'renessans',
-            'name' => 'ренессанс',
+            'name' => 'Ренессанс',
         ],
         [
             'active' => true,
             'logo_id' => 1,
             'code' => 'ingosstrah',
-            'name' => 'ингосстрах',
+            'name' => 'Ингосстрах',
         ],
         [
             'active' => true,
             'logo_id' => 1,
             'code' => 'soglasie',
-            'name' => 'согласие',
+            'name' => 'Согласие',
         ],
         [
             'active' => true,
             'logo_id' => 1,
             'code' => 'tinkoff',
-            'name' => 'тинькофф',
+            'name' => 'Тинькофф',
         ],
     ];
 
+    //типы полисов
     protected static $policyTypes = [
         [
             'code' => 'osago',
-            'name' => 'osago',
+            'name' => 'ОСАГО',
         ],
     ];
 
+    //статус полиса
     protected static $policyStatus = [
         [
             'active' => true,
             'code' => 'draft',
-            'name' => 'draft',
+            'name' => 'Черновик',
+        ],
+        [
+            'active' => true,
+            'code' => 'issued',
+            'name' => 'Оформлен',
+        ],
+        [
+            'active' => true,
+            'code' => 'paid',
+            'name' => 'Оплачен',
         ],
     ];
 
+    //типы документов
     protected static $docTypes = [
-        [
-            'code' => 'passport',
-            'name' => 'пасспорт',
-        ],
         [
             'code' => 'pts',
             'name' => 'ПТС',
@@ -69,156 +79,179 @@ class PolicySeeder extends Seeder
             'name' => 'СТС',
         ],
         [
-            'code' => 'inspection',
-            'name' => 'талон ТО',
+            'code' => 'RussianPassport',
+            'name' => 'Паспорт',
         ],
         [
-            'code' => 'license',
-            'name' => 'права',
+            'code' => 'ForeignPassport',
+            'name' => 'Иностранный паспорт',
+        ],
+        [
+            'code' => 'DriverLicense',
+            'name' => 'ВУ',
+        ],
+        [
+            'code' => 'ForeignDriverLicense',
+            'name' => 'ВУ иностранного образца',
         ],
     ];
 
+    //реф коды СК для документов
     protected static $docTypeInsurance = [
+        //ПТС
         [
             'doctype_id' => 1,
             'insurance_company_id' => 1,
-            'reference_doctype_code' => 'RussianPassport',
-        ],
-        [
-            'doctype_id' => 2,
-            'insurance_company_id' => 1,
-            'reference_doctype_code' => 'PTS',
-        ],
-        [
-            'doctype_id' => 3,
-            'insurance_company_id' => 1,
-            'reference_doctype_code' => 'STS',
-        ],
-        [
-            'doctype_id' => 4,
-            'insurance_company_id' => 1,
-            'reference_doctype_code' => 'inspection',
-        ],
-        [
-            'doctype_id' => 5,
-            'insurance_company_id' => 1,
-            'reference_doctype_code' => 'DriverLicense',
+            'reference_doctype_code' => 30
         ],
         [
             'doctype_id' => 1,
             'insurance_company_id' => 2,
-            'reference_doctype_code' => 'passport',
-        ],
-        [
-            'doctype_id' => 2,
-            'insurance_company_id' => 2,
-            'reference_doctype_code' => 'PTS',
-        ],
-        [
-            'doctype_id' => 3,
-            'insurance_company_id' => 2,
-            'reference_doctype_code' => 'STS',
-        ],
-        [
-            'doctype_id' => 4,
-            'insurance_company_id' => 2,
-            'reference_doctype_code' => 'inspection',
-        ],
-        [
-            'doctype_id' => 5,
-            'insurance_company_id' => 2,
-            'reference_doctype_code' => 'driverLicense',
+            'reference_doctype_code' => 34709216
         ],
         [
             'doctype_id' => 1,
             'insurance_company_id' => 3,
-            'reference_doctype_code' => 'passport',
-        ],
-        [
-            'doctype_id' => 2,
-            'insurance_company_id' => 3,
-            'reference_doctype_code' => 'PTS',
-        ],
-        [
-            'doctype_id' => 3,
-            'insurance_company_id' => 3,
-            'reference_doctype_code' => 'STS',
-        ],
-        [
-            'doctype_id' => 4,
-            'insurance_company_id' => 3,
-            'reference_doctype_code' => 'inspection',
-        ],
-        [
-            'doctype_id' => 5,
-            'insurance_company_id' => 3,
-            'reference_doctype_code' => 'driverLicense',
+            'reference_doctype_code' => 30
         ],
         [
             'doctype_id' => 1,
             'insurance_company_id' => 4,
-            'reference_doctype_code' => 'passport_russian',
+            'reference_doctype_code' => "PTS"
+        ],
+        //СТС
+        [
+            'doctype_id' => 2,
+            'insurance_company_id' => 1,
+            'reference_doctype_code' => 31
+        ],
+        [
+            'doctype_id' => 2,
+            'insurance_company_id' => 2,
+            'reference_doctype_code' => 34709216
+        ],
+        [
+            'doctype_id' => 2,
+            'insurance_company_id' => 3,
+            'reference_doctype_code' => 31
         ],
         [
             'doctype_id' => 2,
             'insurance_company_id' => 4,
-            'reference_doctype_code' => 'PTS',
+            'reference_doctype_code' => "STS"
+        ],
+        //Паспорт
+        [
+            'doctype_id' => 3,
+            'insurance_company_id' => 1,
+            'reference_doctype_code' => "RussianPassport"
+        ],
+        [
+            'doctype_id' => 3,
+            'insurance_company_id' => 2,
+            'reference_doctype_code' => 30363316
+        ],
+        [
+            'doctype_id' => 3,
+            'insurance_company_id' => 3,
+            'reference_doctype_code' => 12
         ],
         [
             'doctype_id' => 3,
             'insurance_company_id' => 4,
-            'reference_doctype_code' => 'STS',
+            'reference_doctype_code' => "passport_russian"
+        ],
+        //ВУ
+        [
+            'doctype_id' => 5,
+            'insurance_company_id' => 1,
+            'reference_doctype_code' => "DriverLicense"
         ],
         [
-            'doctype_id' => 4,
-            'insurance_company_id' => 4,
-            'reference_doctype_code' => 'inspection',
+            'doctype_id' => 5,
+            'insurance_company_id' => 2,
+            'reference_doctype_code' => 765912000
+        ],
+        [
+            'doctype_id' => 5,
+            'insurance_company_id' => 3,
+            'reference_doctype_code' => 20
         ],
         [
             'doctype_id' => 5,
             'insurance_company_id' => 4,
-            'reference_doctype_code' => 'driver_license_russian_B',
+            'reference_doctype_code' => "driver_license"
         ],
-    ];
+        //Иностранное ВУ
+        [
+            'doctype_id' => 6,
+            'insurance_company_id' => 1,
+            'reference_doctype_code' => "DriverLicense"
+        ],
+        [
+            'doctype_id' => 6,
+            'insurance_company_id' => 2,
+            'reference_doctype_code' => 765912000 //в справочнике нет Иностранного ВУ
+        ],
+        [
+            'doctype_id' => 6,
+            'insurance_company_id' => 3,
+            'reference_doctype_code' => 22
+        ],
+        [
+            'doctype_id' => 6,
+            'insurance_company_id' => 4,
+            'reference_doctype_code' => "driver_license_international", //в справочнике: "Международное водительское удостоверение"
+        ],
 
-    protected static $regCountry = [
+        //Иностранный паспорт
         [
-            'code' => 'ru',
-            'name' => 'россия',
-        ],
-    ];
-
-    protected static $insuranceCountry = [
-        [
-            'country_id' => 1,
+            'doctype_id' => 4,
             'insurance_company_id' => 1,
-            'reference_country_code' => 'RU',
+            'reference_doctype_code' => "ForeignPassport"
         ],
         [
-            'country_id' => 1,
+            'doctype_id' => 4,
             'insurance_company_id' => 2,
-            'reference_country_code' => 'RU',
+            'reference_doctype_code' => 37713516
         ],
         [
-            'country_id' => 1,
+            'doctype_id' => 4,
             'insurance_company_id' => 3,
-            'reference_country_code' => 'RU',
+            'reference_doctype_code' => 7
         ],
         [
-            'country_id' => 1,
+            'doctype_id' => 4,
             'insurance_company_id' => 4,
-            'reference_country_code' => 'RU',
+            'reference_doctype_code' => "passport_foreign"
         ],
     ];
 
     protected static $sourceAcquisition = [
         [
-            'code' => 'person',
-            'name' => 'у человека',
+            'code' => 'PurchasedFromPerson',
+            'name' => 'Куплено у физ./ юр. лица',
+        ],
+        [
+            'code' => 'PurchasedInSalon',
+            'name' => 'Куплено в салоне',
+        ],
+        [
+            'code' => 'InSalon',
+            'name' => 'Находится в салоне у дилера',
+        ],
+        [
+            'code' => 'Pickup',
+            'name' => 'Самоввоз',
+        ],
+        [
+            'code' => 'other',
+            'name' => 'Другое',
         ],
     ];
 
     protected static $insuranceAcquisition = [
+        //остальные СК
         [
             'acquisition_id' => 1,
             'insurance_company_id' => 1,
@@ -234,41 +267,36 @@ class PolicySeeder extends Seeder
             'insurance_company_id' => 3,
             'reference_acquisition_code' => 'PURCHASED_FROM_PERSON',
         ],
+
+        //тинькофф
         [
             'acquisition_id' => 1,
             'insurance_company_id' => 4,
             'reference_acquisition_code' => 'PURCHASED_FROM_PERSON',
         ],
-    ];
 
-    protected static $usageType = [
         [
-            'code' => 'person',
-            'name' => 'лично',
-        ],
-    ];
-
-    protected static $insuranceUsageType = [
-        [
-            'type_id' => 1,
-            'insurance_company_id' => 1,
-            'reference_usage_type_code' => 'Личная',
-        ],
-        [
-            'type_id' => 1,
-            'insurance_company_id' => 2,
-            'reference_usage_type_code' => 'PURCHASED_FROM_PERSON',
-        ],
-        [
-            'type_id' => 1,
-            'insurance_company_id' => 3,
-            'reference_usage_type_code' => '1',
-        ],
-        [
-            'type_id' => 1,
+            'acquisition_id' => 2,
             'insurance_company_id' => 4,
-            'reference_usage_type_code' => 'personal',
+            'reference_acquisition_code' => 'PURCHASED_IN_SALON',
         ],
+
+        [
+            'acquisition_id' => 3,
+            'insurance_company_id' => 4,
+            'reference_acquisition_code' => 'IN_SALON',
+        ],
+        [
+            'acquisition_id' => 4,
+            'insurance_company_id' => 4,
+            'reference_acquisition_code' => 'PICKUP',
+        ],
+        [
+            'acquisition_id' => 5,
+            'insurance_company_id' => 4,
+            'reference_acquisition_code' => 'OTHER',
+        ],
+
     ];
 
     protected static $usageTarget = [
@@ -304,11 +332,16 @@ class PolicySeeder extends Seeder
     protected static $gender = [
         [
             'code' => 'male',
-            'name' => 'мужской',
+            'name' => 'Мужской',
+        ],
+        [
+            'code' => 'female',
+            'name' => 'Женский',
         ],
     ];
 
     protected static $insuranceGender = [
+        //М
         [
             'gender_id' => 1,
             'insurance_company_id' => 1,
@@ -317,7 +350,7 @@ class PolicySeeder extends Seeder
         [
             'gender_id' => 1,
             'insurance_company_id' => 2,
-            'reference_gender_code' => 'male',
+            'reference_gender_code' => 'М',
         ],
         [
             'gender_id' => 1,
@@ -329,14 +362,30 @@ class PolicySeeder extends Seeder
             'insurance_company_id' => 4,
             'reference_gender_code' => 'male',
         ],
-    ];
 
-    protected static $citizenship = [
+        //Ж
         [
-            'code' => 'RU',
-            'name' => 'россия',
+            'gender_id' => 1,
+            'insurance_company_id' => 1,
+            'reference_gender_code' => 'female',
+        ],
+        [
+            'gender_id' => 1,
+            'insurance_company_id' => 2,
+            'reference_gender_code' => 'Ж',
+        ],
+        [
+            'gender_id' => 1,
+            'insurance_company_id' => 3,
+            'reference_gender_code' => 'female',
+        ],
+        [
+            'gender_id' => 1,
+            'insurance_company_id' => 4,
+            'reference_gender_code' => 'female',
         ],
     ];
+
 
     public function run()
     {
@@ -346,16 +395,11 @@ class PolicySeeder extends Seeder
         \App\Models\PolicyStatus::insert(self::$policyStatus);
         \App\Models\DocType::insert(self::$docTypes);
         \App\Models\DocTypeInsurance::insert(self::$docTypeInsurance);
-        \App\Models\RegCountry::insert(self::$regCountry);
-        \App\Models\RegCountryInsurance::insert(self::$insuranceCountry);
         \App\Models\SourceAcquisition::insert(self::$sourceAcquisition);
         \App\Models\SourceAcquisitionInsurance::insert(self::$insuranceAcquisition);
-        \App\Models\UsageType::insert(self::$usageType);
-        \App\Models\UsageTypeInsurance::insert(self::$insuranceUsageType);
         \App\Models\UsageTarget::insert(self::$usageTarget);
         \App\Models\UsageTargetInsurance::insert(self::$insuranceUsageTarget);
         \App\Models\Gender::insert(self::$gender);
         \App\Models\GenderInsurance::insert(self::$insuranceGender);
-        \App\Models\Citizenship::insert(self::$citizenship);
     }
 }

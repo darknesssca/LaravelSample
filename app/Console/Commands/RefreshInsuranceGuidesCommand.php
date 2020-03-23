@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use App\Http\Controllers\InsuranceController;
 use Illuminate\Console\Command;
 
-class RefreshModelsGuidesCommand  extends Command
+class RefreshInsuranceGuidesCommand extends Command
 {
 
     /**
@@ -40,7 +40,11 @@ class RefreshModelsGuidesCommand  extends Command
      */
     public function handle()
     {
+        echo "----Начало обновления справочников----\n";
+        //модели и марки машин
         $controller = new InsuranceController();
-        $controller->refreshCarModelGuides();
+        $controller->refreshGuides();
+
+        echo "----Конец обновления справочников----\n";
     }
 }

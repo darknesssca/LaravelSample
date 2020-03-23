@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\Company\CompanyServiceContract;
+use App\Models\Country;
 use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
 use App\Models\RequestProcess;
@@ -14,8 +15,11 @@ use App\Services\Company\Tinkoff\TinkoffCalculateService;
 use App\Services\Company\Tinkoff\TinkoffGuidesService;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Laravel\Lumen\Application;
+use PhpOffice\PhpSpreadsheet\Reader\Exception;
 
 class InsuranceController extends Controller
 {
@@ -171,26 +175,50 @@ class InsuranceController extends Controller
     /**
      * artisan команда обновления справочников
      */
-    public function refreshCarModelGuides()
+    public function refreshGuides()
     {
-        echo "----Начало обновления справочников----\n";
-
         //список объектов, реализующих интерфейс GuidesSourceInterface
         $companies = [
-            new SoglasieGuidesService(),
-            new RenessansGuidesService(),
-            new IngosstrahGuidesService(),
-            new TinkoffGuidesService(),
+            //new IngosstrahGuidesService(),
+            //new RenessansGuidesService(),
+            //new SoglasieGuidesService(),
+            //new TinkoffGuidesService(),
         ];
 
+        $this->loadCountries();
+
         foreach ($companies as $company) {
-            echo "Importing: " . $company->companyCode . "\n";
-            if (!$company->updateGuides()) {
+            echo "Импорт марок и моделей: " . $company->companyCode . "\n";
+            if (!$company->updateCarModelsGuides()) {
                 echo "!!!!!!!!!!!!!!!!!!!!!!!!ОШИБКА!!!!!!!!!!!!!!!!!!!!!!!!";
             }
         }
+
         echo "Удаление лишних марок...\n";
         GuidesSourceTrait::cleanDB();
-        echo "----Конец обновления справочников----\n";
+    }
+
+    /**
+     * обновление общей таблицы стран
+     */
+    private function loadCountries()
+    {
+        DB::transaction(function () {
+            $filename = Application::getInstance()->basePath() . "/storage/import/countries.json"; //todo: сделать импорт из minio
+            $arr = (array)json_decode(file_get_contents($filename));
+            $models = [];
+            Country::truncate();
+            foreach ($arr as $item) {
+                $item = (array)$item;
+                $models[] = [
+                    "code" => $item["CODE"],
+                    "name" => array_key_exists("FULLNAME", $item) ? $item["FULLNAME"] : $item["SHORTNAME"],
+                    "short_name" => $item["SHORTNAME"],
+                    "alpha2" => $item["ALFA2"],
+                    "alpha3" => $item["ALFA3"],
+                ];
+            }
+            Country::insert($models);
+        });
     }
 }

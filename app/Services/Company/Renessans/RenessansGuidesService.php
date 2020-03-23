@@ -26,7 +26,7 @@ class RenessansGuidesService extends RenessansService implements GuidesSourceInt
     }
 
 
-    public function updateGuides(): bool
+    public function updateCarModelsGuides(): bool
     {
         try {
             $params = [];
@@ -41,7 +41,6 @@ class RenessansGuidesService extends RenessansService implements GuidesSourceInt
             }
             return true;
         } catch (\Exception $ex) {
-            dd($ex);
             return false;
         }
     }

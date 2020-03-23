@@ -6,5 +6,5 @@ namespace App\Services\Company;
 
 interface GuidesSourceInterface
 {
-    public function updateGuides(): bool ;
+    public function updateCarModelsGuides(): bool;
 }

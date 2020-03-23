@@ -11,23 +11,24 @@ use App\Services\Company\GuidesSourceInterface;
 use App\Services\Company\GuidesSourceTrait;
 use App\Services\Company\Soglasie\SoglasieService;
 use Illuminate\Support\Facades\File;
+use Laravel\Lumen\Application;
 
 class IngosstrahGuidesService extends IngosstrahService implements GuidesSourceInterface
 {
     use GuidesSourceTrait;
     private $baseUrl;
-    private $category_codes =[
-        8246=>"D",//АВТОБУСЫ
-        8245=>"C",//ГРУЗОВЫЕ
-        8244=>"B",//ЛЕГКОВЫЕ
-        8247=>"A",//МОТОЦИКЛЫ
-        2242017703=>"E",//ПРИЦЕП К МОТОЦИКЛУ
-        762039900=>"E",//ПРИЦЕП К ТРАКТОРАМ
-        3024616=>"E",//ПРИЦЕПЫ К ГРУЗОВЫМ
-        3024716=>"E",//ПРИЦЕПЫ К ЛЕГКОВЫМ
-        28995016=>"трактор",//ТРАКТОРЫ
-        762039800=>"трамвай",//ТРАМВАИ
-        762039700=>"троллейбус",//ТРОЛЛЕЙБУСЫ
+    private $category_codes = [
+        8246 => "D",//АВТОБУСЫ
+        8245 => "C",//ГРУЗОВЫЕ
+        8244 => "B",//ЛЕГКОВЫЕ
+        8247 => "A",//МОТОЦИКЛЫ
+        2242017703 => "E",//ПРИЦЕП К МОТОЦИКЛУ
+        762039900 => "E",//ПРИЦЕП К ТРАКТОРАМ
+        3024616 => "E",//ПРИЦЕПЫ К ГРУЗОВЫМ
+        3024716 => "E",//ПРИЦЕПЫ К ЛЕГКОВЫМ
+        28995016 => "трактор",//ТРАКТОРЫ
+        762039800 => "трамвай",//ТРАМВАИ
+        762039700 => "троллейбус",//ТРОЛЛЕЙБУСЫ
     ];
 
     public function __construct()
@@ -36,25 +37,29 @@ class IngosstrahGuidesService extends IngosstrahService implements GuidesSourceI
     }
 
 
-    public function updateGuides(): bool
+    public function updateCarModelsGuides(): bool
     {
-        $token = $this->getToken();
-        $data = [
-            'SessionToken' => $token,
-            "Product" => '753518300', //todo из справочника, вероятно статика
-        ];
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetDicti', $data, [], [], []);
-        $arr_raw = $this->parseXML($response['response']->ResponseData->any);
+        try {
+            $token = $this->getToken();
+            $data = [
+                'SessionToken' => $token,
+                "Product" => '753518300', //todo из справочника, вероятно статика
+            ];
+            $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetDicti', $data, [], [], []);
+            $arr_raw = $this->parseXML($response['response']->ResponseData->any);
 
-        $cars_arr = $this->filter_dict($arr_raw);
-        foreach ($cars_arr as $mark) {
-            $val = $this->prepareMark($mark);
-            if (count($val) == 0) {
-                continue;
+            $cars_arr = $this->filter_dict($arr_raw);
+            foreach ($cars_arr as $mark) {
+                $val = $this->prepareMark($mark);
+                if (count($val) == 0) {
+                    continue;
+                }
+                $cnt = $this->updateMark($val);
             }
-            $cnt = $this->updateMark($val);
+            return true;
+        } catch (\Exception $e) {
+            return false;
         }
-        return true;
     }
 
     /**получение токена
@@ -87,7 +92,7 @@ class IngosstrahGuidesService extends IngosstrahService implements GuidesSourceI
     {
         $res = [];
         $cur_mark_isn = "";
-        $cur_category="";
+        $cur_category = "";
         foreach ($arr_raw as $item) {
             $level = $item['level'];
             $open = $item['type'] == 'open';
@@ -104,7 +109,7 @@ class IngosstrahGuidesService extends IngosstrahService implements GuidesSourceI
                 continue;
             }
 
-            if($category) //если это категория
+            if ($category) //если это категория
             {
                 $cur_category = $this->category_codes[$item['attributes']["ISN"]];
             }
@@ -120,7 +125,7 @@ class IngosstrahGuidesService extends IngosstrahService implements GuidesSourceI
                 $res[$cur_mark_isn] = $mark_arr;
             }
 
-            if ($model && $cur_mark_isn != "" && $cur_category!="") { //если модель машины
+            if ($model && $cur_mark_isn != "" && $cur_category != "") { //если модель машины
                 $model_arr = [
                     "NAME" => $item['attributes']["NAME"],
                     "ISN" => $item['attributes']['ISN'],
@@ -131,7 +136,9 @@ class IngosstrahGuidesService extends IngosstrahService implements GuidesSourceI
             }
 
             if ($close)//если закончилась марка
+            {
                 unset($cur_mark_isn);
+            }
         }
         return $res;
     }

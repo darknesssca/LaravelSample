@@ -27,7 +27,7 @@ class SoglasieGuidesService extends SoglasieService implements GuidesSourceInter
     }
 
 
-    public function updateGuides(): bool
+    public function updateCarModelsGuides(): bool
     {
         try {
             $headers = $this->generateHeaders();
