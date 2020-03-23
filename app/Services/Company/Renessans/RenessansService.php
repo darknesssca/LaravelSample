@@ -5,6 +5,7 @@ namespace App\Services\Company\Renessans;
 
 use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCheckCalculateServiceContract;
+use App\Contracts\Company\Renessans\RenessansCheckCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansServiceContract;
 use App\Models\IntermediateData;
@@ -32,11 +33,11 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
         RequestProcess::create([
             'token' => $attributes['token'],
             'state' => 1,
+            'company' => $company->code,
             'data' => json_encode($dataCalculate),
         ]);
         $tokenData = IntermediateData::getData($attributes['token']);
         $tokenData[$company->code] = [
-            'calcIds' => $dataCalculate,
             'status' => 'calculating',
         ];
         IntermediateData::where('token', $attributes['token'])->update([
@@ -47,6 +48,7 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
     public function checkPreCalculate($company, $attributes, $process)
     {
         $dataProcess = $process->toArray();
+        $dataProcess['data'] = json_decode($dataProcess['data'], true);
         $attributes['CheckSegment'] = true;
         $calculatedCount = 0;
         $isNeedUpdate = false;
@@ -63,7 +65,7 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
                 $attributes['calcId'] = $calcItem['calcId'];
                 $serviceCreate = app(RenessansCreateServiceContract::class);
                 $dataSegment = $serviceCreate->run($company, $attributes, $process);
-                $dataProcess['data']['calculateValues']['segmentPolicyId'] = $dataSegment['policyId'];
+                $dataProcess['data']['calculateValues'][$key]['segmentPolicyId'] = $dataSegment['policyId'];
                 $calculatedCount++;
             }
         }
@@ -88,7 +90,10 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
         } else {
             $calculatedCount = 0;
             foreach ($dataProcess['data']['calculateValues'] as $key => $value) {
-                if ($value['segmentPolicyId'] && $value['premium']) {
+                if (
+                    isset($value['segmentPolicyId']) && $value['segmentPolicyId'] &&
+                    isset($value['premium']) && $value['premium']
+                ) {
                     $calculatedCount++;
                 } else {
                     unset($dataProcess['data']['calculateValues'][$key]);
@@ -114,23 +119,27 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
     public function checkSegment($company, $attributes, $process)
     {
         $dataProcess = $process->toArray();
-        $attributes['CheckSegment'] = true;
+        $dataProcess['data'] = json_decode($dataProcess['data'], true);
         $calculatedCount = 0;
         $isNeedUpdate = false;
         foreach ($dataProcess['data']['calculateValues'] as $key => $calcItem) {
-            if ($calcItem['premium'] !== false) {
+            if (isset($calcItem['segment']) && $calcItem['segment']) {
                 $calculatedCount++;
                 continue;
             }
-            $serviceCalculate = app(RenessansCheckCalculateServiceContract::class);
-            $dataCalculate = $serviceCalculate->run($company, $calcItem, $process);
+            $segmentAttributes = [
+                'policyId' => $calcItem['segmentPolicyId']
+            ];
+            $serviceCreate = app(RenessansCheckCreateServiceContract::class);
+            $dataCalculate = $serviceCreate->run($company, $segmentAttributes, $process);
             if ($dataCalculate['result']) {
                 $isNeedUpdate = true;
-                $dataProcess['data']['calculateValues'][$key]['premium'] = $dataCalculate['premium'];
-                $attributes['calcId'] = $calcItem['calcId'];
-                $serviceCreate = app(RenessansCreateServiceContract::class);
+                $dataProcess['data']['calculateValues'][$key]['segment'] = true;
+                $serviceCreate = app(RenessansCalculateServiceContract::class);
                 $dataSegment = $serviceCreate->run($company, $attributes, $process);
-                $dataProcess['data']['calculateValues']['segmentPolicyId'] = $dataSegment['policyId'];
+                // todo вот тут может вернуться несколько id снова
+                // понять как их отрабатывать при условии что у нас может быть 2 процесса
+                $dataProcess['data']['calculateValues'][$key]['segmentCalcId'] = $dataSegment['policyId'];
                 $calculatedCount++;
             }
         }
@@ -143,7 +152,7 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
         if ($dataProcess['checkCount'] < config('api_sk.maxCheckCount')) {
             if ($isNeedUpdate) {
                 $process->update([
-                    'state' => $isNeedChangeState ? 5 : 1,
+                    'state' => $isNeedChangeState ? 10 : 1,
                     'data' => json_encode($dataProcess['data']),
                     'checkCount' => $isNeedChangeState ? 0 : $dataProcess['checkCount'],
                 ]);
@@ -155,7 +164,10 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
         } else {
             $calculatedCount = 0;
             foreach ($dataProcess['data']['calculateValues'] as $key => $value) {
-                if ($value['segmentPolicyId'] && $value['premium']) {
+                if (
+                    isset($value['segmentPolicyId']) && $value['segmentPolicyId'] &&
+                    isset($value['premium']) && $value['premium']
+                ) {
                     $calculatedCount++;
                 } else {
                     unset($dataProcess['data']['calculateValues'][$key]);

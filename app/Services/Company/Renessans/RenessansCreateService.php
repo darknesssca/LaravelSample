@@ -24,9 +24,9 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
     {
         $this->setAdditionalFields($attributes);
         $this->setAuth($attributes);
-        $url = $this->getUrl(__FUNCTION__);
-        $this->prepareData($attributes);
-        $response = RestController::postRequest($url, $attributes);
+        $url = $this->getUrl();
+        $data = $this->prepareData($attributes);
+        $response = RestController::postRequest($url, $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
@@ -56,7 +56,7 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
             'isInsurerJuridical' => $this->transformBooleanToInteger(false),
             'car' => [
                 'year' => $attributes['car']['year'],
-                'isNew' => $attributes['car']['sourceAcquisition'] == 1 ? 1 : 0, //todo справочник
+                //'isNew' => $attributes['car']['sourceAcquisition'] == 1 ? 1 : 0, //todo справочник
                 'MarkAndModelString' => $attributes['car']['maker'] . ' ' . $attributes['car']['model'], //todo справочник
             ],
         ];

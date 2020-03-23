@@ -20,8 +20,8 @@ $router->group(
                 $router->patch('/drafts/{policeId}', 'DraftController@update');
                 $router->delete('/drafts/{policeId}', 'DraftController@delete');
                 // policies
-                $router->post('/policies', 'InsuranceController@store');
-                $router->post('/policies/{code}/{method}', 'InsuranceController@index');
+                $router->post('/registration', 'InsuranceController@store');
+                $router->post('/registration/{code}/{method}', 'InsuranceController@index');
 
                 //autocod
                 $router->get('autocod/check-taxi', 'AutocodController@checkTaxi'); //проверка на такси

@@ -107,7 +107,7 @@ class InsuranceController extends Controller
     public function getPreCalculate()
     {
         $count = config('api_sk.maxRowsByCycle');
-        $process = RequestProcess::where('state', 1)->limit($count);
+        $process = RequestProcess::where('state', 1)->limit($count)->get();
         if ($process) {
             foreach ($process as $processItem) {
                 try {
@@ -121,9 +121,14 @@ class InsuranceController extends Controller
                     $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
                     $response = $controller->checkPreCalculate($company, $attributes, $processItem);
                 } catch (\Exception $exception) {
-                    $processItem->update([
-                        'checkCount' => ++$processItem->checkCount,
-                    ]);
+                    $isUpdated = RequestProcess::updateCheckCount($processItem->token);
+                    if ($isUpdated === false) {
+                        $tokenData = IntermediateData::getData($processItem->token);
+                        $tokenData[$company->code]['status'] = 'error';
+                        IntermediateData::where('token', $processItem->token)->update([
+                            'data' => $tokenData,
+                        ]);
+                    }
                 }
             }
         } else {
@@ -135,7 +140,7 @@ class InsuranceController extends Controller
     public function getSegment()
     {
         $count = config('api_sk.maxRowsByCycle');
-        $process = RequestProcess::where('state', 5)->limit($count);
+        $process = RequestProcess::where('state', 5)->limit($count)->get();
         if ($process) {
             foreach ($process as $processItem) {
                 try {
@@ -149,9 +154,15 @@ class InsuranceController extends Controller
                     $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
                     $response = $controller->checkSegment($company, $attributes, $processItem);
                 } catch (\Exception $exception) {
-                    $processItem->update([
-                        'checkCount' => ++$processItem->checkCount,
-                    ]);
+                    dump($exception->getMessage());
+                    $isUpdated = RequestProcess::updateCheckCount($processItem->token);
+                    if ($isUpdated === false) {
+                        $tokenData = IntermediateData::getData($processItem->token);
+                        $tokenData[$company->code]['status'] = 'error';
+                        IntermediateData::where('token', $processItem->token)->update([
+                            'data' => $tokenData,
+                        ]);
+                    }
                 }
             }
         } else {
@@ -172,9 +183,14 @@ class InsuranceController extends Controller
                     $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
                     $response = $controller->checkHold($company, $processItem);
                 } catch (\Exception $exception) {
-                    $processItem->update([
-                        'checkCount' => ++$processItem->checkCount,
-                    ]);
+                    $isUpdated = RequestProcess::updateCheckCount($processItem->token);
+                    if ($isUpdated === false) {
+                        $tokenData = IntermediateData::getData($processItem->token);
+                        $tokenData[$company->code]['status'] = 'error';
+                        IntermediateData::where('token', $processItem->token)->update([
+                            'data' => $tokenData,
+                        ]);
+                    }
                 }
             }
         } else {
@@ -195,9 +211,14 @@ class InsuranceController extends Controller
                     $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
                     $response = $controller->checkCreate($company, $processItem);
                 } catch (\Exception $exception) {
-                    $processItem->update([
-                        'checkCount' => ++$processItem->checkCount,
-                    ]);
+                    $isUpdated = RequestProcess::updateCheckCount($processItem->token);
+                    if ($isUpdated === false) {
+                        $tokenData = IntermediateData::getData($processItem->token);
+                        $tokenData[$company->code]['status'] = 'error';
+                        IntermediateData::where('token', $processItem->token)->update([
+                            'data' => $tokenData,
+                        ]);
+                    }
                 }
             }
         } else {

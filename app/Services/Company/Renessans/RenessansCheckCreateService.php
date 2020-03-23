@@ -20,14 +20,16 @@ class RenessansCheckCreateService extends RenessansService implements RenessansC
         if (!$response) {
             throw new \Exception('api not return answer');
         }
-        if (!$response['result']) {
+        if (!$response['result'] && (!isset($response['data']['result']) || !$response['data']['result'])) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
-        if (!isset($response['data']['response']['Premium'])) {
-            return false;
+        if (!isset($response['data']['Status']) || ($response['data']['Status'] == 'ok')) {
+            return [
+                'status' => 'wait',
+            ];
         }
         return [
-            'premium' => $response['data']['response']['Premium'],
+            'result' => true,
         ];
     }
 
