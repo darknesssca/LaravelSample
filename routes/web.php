@@ -34,6 +34,12 @@ $router->group(
                 $router->patch('/drafts/{policeId}', 'DraftController@update');
                 $router->delete('/drafts/{policeId}', 'DraftController@delete');
                 // policies
+                $router->group(['prefix' => 'policies'] , function () use ($router) {
+                    $router->get('/', 'PoliciesController@list');
+                    $router->get('/{id}', 'PoliciesController@getById');
+                    $router->post('/', 'PoliciesController@create');
+                });
+                // insurance - TODO rename routes
                 $router->post('/policies/send', 'InsuranceController@store');
                 $router->post('/policies/{code}/{method}', 'InsuranceController@index');
 
