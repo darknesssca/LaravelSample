@@ -11,11 +11,6 @@ class IngosstrahEosagoService extends IngosstrahService implements IngosstrahEos
 
     public function run($company, $data, $additionalFields = []): array
     {
-        return $this->sendEosago($company, $data);
-    }
-
-    private function sendEosago($company, $data): array
-    {
         $data = $this->prepareData($data);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'MakeEOsago', $data);
         dump($response);

@@ -9,12 +9,7 @@ use App\Services\Company\Ingosstrah\IngosstrahService;
 class IngosstrahCheckCreateService extends IngosstrahService implements IngosstrahCheckCreateServiceContract
 {
 
-    public function run($company, $data, $additionalFields = []): array
-    {
-        return $this->sendCheckCreate($company, $data);
-    }
-
-    private function sendCheckCreate($company, $processData): array
+    public function run($company, $processData, $additionalFields = []): array
     {
         $data = $this->prepareData($processData);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetAgreement', $data);

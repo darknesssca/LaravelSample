@@ -3,8 +3,10 @@
 namespace App\Console;
 
 use App\Console\Commands\CheckCalculateStatusCommand;
+use App\Console\Commands\CheckPreCalculateStatusCommand;
 use App\Console\Commands\CheckCreateStatusCommand;
 use App\Console\Commands\CheckHoldStatusCommand;
+use App\Console\Commands\CheckSegmentStatusCommand;
 use Illuminate\Console\Scheduling\Schedule;
 use Laravel\Lumen\Console\Kernel as ConsoleKernel;
 
@@ -16,9 +18,11 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
+        CheckPreCalculateStatusCommand::class,
+        CheckSegmentStatusCommand::class,
+        CheckCalculateStatusCommand::class,
         CheckCreateStatusCommand::class,
         CheckHoldStatusCommand::class,
-        CheckCalculateStatusCommand::class,
     ];
 
     /**

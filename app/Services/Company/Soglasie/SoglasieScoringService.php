@@ -24,11 +24,6 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
 
     public function run($company, $attributes, $additionalFields = []): array
     {
-        return $this->sendScoring($company, $attributes);
-    }
-
-    private function sendScoring($company, $attributes): array
-    {
         $data = $this->prepareData($attributes);
         $headers = $this->getHeaders();
         $auth = $this->getAuth();

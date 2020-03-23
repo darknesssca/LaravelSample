@@ -9,11 +9,6 @@ class TinkoffBillLinkService extends TinkoffService implements TinkoffBillLinkSe
 {
     public function run($company, $attributes, $additionalFields = []): array
     {
-        return $this->sendBillLink($company, $attributes);
-    }
-
-    private function sendBillLink($company, $attributes): array
-    {
         $data = $this->prepareData($attributes);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'issueQuoteSetPartner', $data);
         dd($response);

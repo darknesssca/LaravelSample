@@ -25,11 +25,6 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
 
     public function run($company, $attributes, $additionalFields = []): array
     {
-        return $this->sendKbm($company, $attributes);
-    }
-
-    private function sendKbm($company, $attributes): array
-    {
         $data = $this->prepareData($attributes);
         $headers = $this->getHeaders();
         $auth = $this->getAuth();

@@ -25,11 +25,6 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
 
     public function run($company, $attributes, $additionalFields = []): array
     {
-        return $this->sendCreate($company, $attributes);
-    }
-
-    private function sendCreate($company, $attributes): array
-    {
         $data = $this->prepareData($attributes);
         $headers = $this->getHeaders();
         return RestController::postRequest($this->apiRestUrl, $data, $headers);

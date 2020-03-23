@@ -9,11 +9,6 @@ class TinkoffCreateService extends TinkoffService implements TinkoffCreateServic
 {
     public function run($company, $attributes, $additionalFields = []): array
     {
-        return $this->sendCreate($company, $attributes);
-    }
-
-    private function sendCreate($company, $attributes): array
-    {
         $data = $this->prepareData($attributes);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'issueQuoteSetPartner', $data);
         dd($response);

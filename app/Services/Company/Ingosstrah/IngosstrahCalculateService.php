@@ -18,11 +18,6 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
 
     public function run($company, $attributes, $additionalFields = []): array
     {
-        return $this->sendCalculate($company, $attributes);
-    }
-
-    private function sendCalculate($company, $attributes): array
-    {
         $data = $this->prepareData($attributes);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetTariff', $data);
         if (!$response) {
@@ -39,6 +34,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
         ];
         return $data;
     }
+    
 
     public function prepareData($attributes)
     {

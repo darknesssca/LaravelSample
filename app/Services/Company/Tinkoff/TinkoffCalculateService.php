@@ -16,11 +16,6 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
 
     public function run($company, $attributes, $additionalFields = []): array
     {
-        return $this->sendCalculate($company, $attributes);
-    }
-
-    private function sendCalculate($company, $attributes): array
-    {
         $data = $this->prepareData($attributes);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'calcPartnerFQuote', $data);
         if (isset($response['fault']) && $response['fault']) {

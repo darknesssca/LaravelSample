@@ -18,11 +18,6 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
 
     public function run(InsuranceCompany $company, $attributes, $additionalFields = []): array
     {
-        return $this->sendCalculate($attributes);
-    }
-
-    private function sendCalculate($attributes): array
-    {
         $this->setAuth($attributes);
         $url = $this->getUrl();
         $data = $this->prepareData($attributes);
