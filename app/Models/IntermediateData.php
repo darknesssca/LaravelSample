@@ -22,7 +22,7 @@ class IntermediateData extends Model
         try {
             self::create([
                 'token' => $token,
-                'data' => \GuzzleHttp\json_encode($data)
+                'data' => json_encode($data)
             ]);
             return $token;
         } catch (\Exception $exception) {
@@ -40,7 +40,7 @@ class IntermediateData extends Model
         if (!$data || !isset($data['data'])) {
             throw new \Exception('not found data by token');
         }
-        $array = \GuzzleHttp\json_decode($data['data'], true);
+        $array = json_decode($data['data'], true);
         return $array;
     }
 }

@@ -18,6 +18,16 @@ class RestController
         self::postRequest(config('api_sk.logMicroserviceUrl'), $body);
     }
 
+    public static function sendBillUrl($email, $billUrl)
+    {
+        $body = [
+            'message' => $billUrl,
+            'receiver' => $email,
+            'code' => config('api_sk.notifyMicroserviceCode'),
+        ];
+        self::postRequest(config('api_sk.notifyMicroserviceUrl'), $body);
+    }
+
     public static function checkToken($data)
     {
         return true; // fixme only for test

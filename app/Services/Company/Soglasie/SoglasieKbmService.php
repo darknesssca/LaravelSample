@@ -5,8 +5,6 @@ namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Http\Controllers\SoapController;
-use App\Models\InsuranceCompany;
-use App\Models\IntermediateData;
 
 class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceContract
 {

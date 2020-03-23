@@ -18,8 +18,12 @@ return [
     ],
     'soglasie' => [
         'kbmWsdlUrl' => env('SOGLASIE_API_KBM_WSDL_URL'),
-        'scoringWsdlUrl' => env('SOGLASIE_API_KBM_SCORING_URL'),
-        'calculateWsdlUrl' => env('SOGLASIE_API_KBM_CALCULATE_URL'),
+        'scoringWsdlUrl' => env('SOGLASIE_API_SCORING_URL'),
+        'calculateWsdlUrl' => env('SOGLASIE_API_CALCULATE_URL'),
+        'createUrl' => env('SOGLASIE_API_CREATE_URL'),
+        'checkCreateUrl' => env('SOGLASIE_API_CHECK_CREATE_URL'),
+        'cancelCreateUrl' => env('SOGLASIE_API_CANCEL_CREATE_URL'),
+        'billLinkUrl' => env('SOGLASIE_API_BILL_LINK_URL'),
         'user' => env('SOGLASIE_API_USER'),
         'password' => env('SOGLASIE_API_PASSWORD'),
         'subUser' => env('SOGLASIE_API_SUB_USER'),
@@ -29,4 +33,8 @@ return [
     'authMicroserviceUrl' => env('AUTH_MICROSERVICE_URL'),
     'logMicroserviceUrl' => env('LOG_MICROSERVICE_URL'),
     'logMicroserviceCode' => env('LOG_MICROSERVICE_CODE'),
+    'notifyMicroserviceUrl' => env('NOTIFY_MICROSERVICE_URL'),
+    'notifyMicroserviceCode' => env('NOTIFY_MICROSERVICE_CODE'),
+    'maxCheckCount' => env('API_PROCESSING_MAX_CHECK_COUNT'),
+    'maxRowsByCycle' => env('API_PROCESSING_MAX_ROWS_BY_CYCLE'),
 ];

@@ -8,11 +8,12 @@ use App\Models\IntermediateData;
 use App\Models\RequestProcess;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class InsuranceController extends Controller
 {
+
+    protected static $companies = [];
 
     public function index($code, $method, Request $request)
     {
@@ -98,7 +99,10 @@ class InsuranceController extends Controller
 
     public function checkCompany($code)
     {
-        return InsuranceCompany::getCompany($code);
+        if (!isset(self::$companies[$code])) {
+            self::$companies[$code] = InsuranceCompany::getCompany($code);
+        }
+        return self::$companies[$code];
     }
 
     public function getCalculate()
@@ -106,7 +110,7 @@ class InsuranceController extends Controller
         $count = config('api_sk.renessans.apiCheckCountByCommand');
         $process = RequestProcess::where('state', 1)->limit($count);
         if ($process) {
-            $company = $this->checkCompany('renessans');
+            $company = $this->checkCompany('renessans'); // в данном случае мы работаем только с 1 компанией
             foreach ($process as $processItem) {
                 $token = $processItem->token;
                 $tokenData = IntermediateData::getData($token);
@@ -115,6 +119,40 @@ class InsuranceController extends Controller
                 $attributes['token'] = $token;
                 $controller = app('App\\Contracts\\Company\\Renessans\\RenessansServiceContract');
                 $response = $controller->calculate($company, $attributes, $additionalData);
+            }
+        } else {
+            sleep(5);
+            return;
+        }
+    }
+
+    public function getHold()
+    {
+        $count = config('api_sk.renessans.maxRowsByCycle');
+        $process = RequestProcess::where('state', 75)->limit($count)->get();
+        if ($process) {
+            foreach ($process as $processItem) {
+                $company = $this->checkCompany($processItem->company);
+                $companyCode = ucfirst(strtolower($company->code));
+                $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
+                $response = $controller->checkHold($company, $processItem);
+            }
+        } else {
+            sleep(5);
+            return;
+        }
+    }
+
+    public function getCreateStatus()
+    {
+        $count = config('api_sk.renessans.maxRowsByCycle');
+        $process = RequestProcess::where('state', 50)->limit($count)->get();
+        if ($process) {
+            foreach ($process as $processItem) {
+                $company = $this->checkCompany($processItem->company);
+                $companyCode = ucfirst(strtolower($company->code));
+                $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
+                $response = $controller->checkCreate($company, $processItem);
             }
         } else {
             sleep(5);
@@ -147,7 +185,6 @@ class InsuranceController extends Controller
     protected function getCompanyController($company)
     {
         $company = ucfirst(strtolower($company->code));
-        //$method = ucfirst(strtolower($method));
         $contract = 'App\\Contracts\\Company\\'.$company.'\\'.$company.'ServiceContract';
         return app($contract);
     }

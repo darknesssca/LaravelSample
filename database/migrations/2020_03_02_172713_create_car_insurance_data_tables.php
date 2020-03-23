@@ -430,7 +430,7 @@ class CreateCarInsuranceDataTables extends Migration
         Schema::dropIfExists('gender_insurance');
     }
 
-    // цель использования
+    // гражданство
     private function upCitizenship()
     {
         Schema::create('citizenship', function (Blueprint $table) {
@@ -524,6 +524,8 @@ class CreateCarInsuranceDataTables extends Migration
             // car.inspection
             $table->string('vehicle_inspection_doc_series')->nullable();
             $table->string('vehicle_inspection_doc_number')->nullable();
+            $table->string('vehicle_inspection_issued_date')->nullable();
+            $table->string('vehicle_inspection_end_date')->nullable();
 
             $table->timestamps();
 
@@ -575,7 +577,7 @@ class CreateCarInsuranceDataTables extends Migration
             $table->timestamps();
 
             $table->foreign('driver_id')->references('id')->on('drivers')->onDelete('cascade');
-            $table->foreign('policy_id')->references('id')->on('policies')->onDelete('cascade');
+            $table->foreign('policy_id')->references('id')->on('policies');
         });
     }
 

@@ -1,14 +1,9 @@
 <?php
 
-
 namespace App\Services\Company\Ingosstrah;
 
-
-use App\Contracts\Company\Ingosstrah\IngosstrahCalculateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
 use App\Http\Controllers\SoapController;
-use App\Models\InsuranceCompany;
-use App\Models\IntermediateData;
 use App\Services\Company\Ingosstrah\IngosstrahService;
 
 class IngosstrahLoginService extends IngosstrahService implements IngosstrahLoginServiceContract
@@ -27,18 +22,17 @@ class IngosstrahLoginService extends IngosstrahService implements IngosstrahLogi
     {
         $data = $this->prepareData();
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'Login', $data);
-        dd($response);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
         if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
-        if (!isset($response->SessionToken)) {
+        if (!isset($response['response']->ResponseData->SessionToken)) {
             throw new \Exception('api not return SessionToken');
         }
         return [
-            'sessionToken' => $response->SessionToken,
+            'sessionToken' => $response['response']->ResponseData->SessionToken,
         ];
     }
 
@@ -48,6 +42,7 @@ class IngosstrahLoginService extends IngosstrahService implements IngosstrahLogi
             'User' => $this->apiUser,
             'Password' => $this->apiPassword,
         ];
+        return $data;
     }
 
 }

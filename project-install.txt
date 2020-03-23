@@ -1,0 +1,30 @@
+1. выгрузить проект git
+2. установить докер:
+ sudo apt-get update & sudo apt upgrade
+ sudo apt-get install apt-transport-https ca-certificates curl software-properties-common
+ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+ sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+ sudo apt-get update & apt-cache policy docker-ce
+ sudo apt-get install -y docker-ce
+3. Добавить пользователя в группу докера
+ sudo usermod -aG docker $(whoami)
+4. Установить docker compose
+ sudo curl -L "https://github.com/docker/compose/releases/download/1.25.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+ sudo chmod +x /usr/local/bin/docker-compose
+ проверяем версию: docker-compose --version
+5. Перелогиниться в системе!
+6. Проверяем, что докер работает:
+ docker run hello-world
+7. установить php:
+ sudo apt-get install php
+8. установить composer
+ sudo apt-get install composer
+9. установить недостающие расширения php
+ sudo apt-get install  php-opcache php-pdo php-calendar php-ctype php-exif php-fileinfo php-ftp php-gettext php-iconv php-json php-phar php-posix php-readline php-shmop php-sockets php-sysvmsg php-sysvsem php-sysvshm php-tokenizer php-pgsql php-soap php-curl php-gd php-zip
+10. перейти в папку проекта
+11. установить зависимости composer:
+ composer install
+12. Создать .env в корне проекта на основе .env_example
+11. Собрать и запустить образ докера (из папки проекта):
+ make run
+13. Проверить, что все работает: в браузере должно открываться localhost:8000
