@@ -179,10 +179,10 @@ class InsuranceController extends Controller
     {
         //список объектов, реализующих интерфейс GuidesSourceInterface
         $companies = [
-            //new IngosstrahGuidesService(),
-            //new RenessansGuidesService(),
-            //new SoglasieGuidesService(),
-            //new TinkoffGuidesService(),
+            new IngosstrahGuidesService(),
+            new RenessansGuidesService(),
+            new SoglasieGuidesService(),
+            new TinkoffGuidesService(),
         ];
 
         $this->loadCountries();
