@@ -14,6 +14,9 @@
 |
 */
 
+use Illuminate\Support\Facades\Route;
+
+/**@var Route $router */
 $router->group(
     [
         'prefix' => 'v1',
@@ -38,6 +41,18 @@ $router->group(
                 $router->get('autocod/check-taxi/', 'AutocodController@checkTaxi'); //проверка на такси
                 $router->get('autocod/{report_id}/', 'AutocodController@readReport'); //если отчет уже готов
                 $router->post('autocod', 'AutocodController@requestReport'); //заказать отчет и сразу дождаться генерации
+            }
+        );
+
+
+        $router->group(
+            [
+                'prefix' => 'policies'
+            ],
+            function () use ($router) {
+                $router->post('/reports', 'ReportController@create');
+                $router->get('/reports', 'ReportController@index');
+                $router->get('/reports/{id}', 'ReportController@show');
             }
         );
     }
