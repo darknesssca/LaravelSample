@@ -28,10 +28,13 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
         if (!$response['result']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
-        $result = [];
+        $result = [
+            'calcIds' => [],
+        ];
         foreach ($response['data'] as $responseData) {
-            $result[] = [
+            $result['calculateValues'][] = [
                 'calcId' => $responseData['id'],
+                'premium' => false,
             ];
         }
         return $result;

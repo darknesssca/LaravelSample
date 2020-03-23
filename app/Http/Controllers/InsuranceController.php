@@ -24,7 +24,7 @@ class InsuranceController extends Controller
         $method = strtolower((string)$method);
         try
         {
-            return response()->json($this->runService($company, $request, $method), 200);
+            return $this->success($this->runService($company, $request, $method), 200);
         }
         catch (ValidationException $exception)
         {
@@ -56,7 +56,7 @@ class InsuranceController extends Controller
             RestController::checkToken($attributes);
             RestController::sendLog($attributes);
             $token = IntermediateData::createToken($data);
-            return response()->json(['token' => $token], 200);
+            return $this->success(['token' => $token], 200);
         }
         catch (ValidationException $exception)
         {
@@ -93,8 +93,7 @@ class InsuranceController extends Controller
         $additionalData['tokenData'] = isset($tokenData[$company->code]) ? $tokenData[$company->code] : false;
         $attributes = $tokenData['form'];
         $attributes['token'] = $validatedFields['token'];
-        $response = $controller->$serviceMethod($company, $attributes, $additionalData);
-        return $response;
+        return $controller->$serviceMethod($company, $attributes, $additionalData);
     }
 
     public function checkCompany($code)
@@ -105,21 +104,50 @@ class InsuranceController extends Controller
         return self::$companies[$code];
     }
 
-    public function getCalculate()
+    public function getPreCalculate()
     {
-        $count = config('api_sk.renessans.apiCheckCountByCommand');
+        $count = config('api_sk.maxRowsByCycle');
         $process = RequestProcess::where('state', 1)->limit($count);
         if ($process) {
-            $company = $this->checkCompany('renessans'); // в данном случае мы работаем только с 1 компанией
             foreach ($process as $processItem) {
                 try {
+                    $company = $this->checkCompany($processItem->company);
                     $token = $processItem->token;
                     $tokenData = IntermediateData::getData($token);
                     $additionalData['tokenData'] = isset($tokenData[$company->code]) ? $tokenData[$company->code] : false;
                     $attributes = $tokenData['form'];
                     $attributes['token'] = $token;
-                    $controller = app('App\\Contracts\\Company\\Renessans\\RenessansServiceContract');
-                    $response = $controller->calculate($company, $attributes, $additionalData);
+                    $companyCode = ucfirst(strtolower($company->code));
+                    $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
+                    $response = $controller->checkPreCalculate($company, $attributes, $processItem);
+                } catch (\Exception $exception) {
+                    $processItem->update([
+                        'checkCount' => ++$processItem->checkCount,
+                    ]);
+                }
+            }
+        } else {
+            sleep(5);
+            return;
+        }
+    }
+
+    public function getSegment()
+    {
+        $count = config('api_sk.maxRowsByCycle');
+        $process = RequestProcess::where('state', 5)->limit($count);
+        if ($process) {
+            foreach ($process as $processItem) {
+                try {
+                    $company = $this->checkCompany($processItem->company);
+                    $token = $processItem->token;
+                    $tokenData = IntermediateData::getData($token);
+                    $additionalData['tokenData'] = isset($tokenData[$company->code]) ? $tokenData[$company->code] : false;
+                    $attributes = $tokenData['form'];
+                    $attributes['token'] = $token;
+                    $companyCode = ucfirst(strtolower($company->code));
+                    $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
+                    $response = $controller->checkSegment($company, $attributes, $processItem);
                 } catch (\Exception $exception) {
                     $processItem->update([
                         'checkCount' => ++$processItem->checkCount,
@@ -176,6 +204,14 @@ class InsuranceController extends Controller
             sleep(5);
             return;
         }
+    }
+
+    protected function success($data, $httpCode = 200) {
+        $message = [
+            'error' => false,
+            'data' => $data,
+        ];
+        return response()->json($message, $httpCode);
     }
 
     protected function error($messages, $httpCode = 500)

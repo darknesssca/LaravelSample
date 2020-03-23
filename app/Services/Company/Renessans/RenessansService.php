@@ -5,6 +5,7 @@ namespace App\Services\Company\Renessans;
 
 use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCheckCalculateServiceContract;
+use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansServiceContract;
 use App\Models\IntermediateData;
 use App\Models\RequestProcess;
@@ -24,100 +25,158 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
         }
     }
 
-    public function calculate($company, $attributes, $additionalData = [])
+    public function calculate($company, $attributes, $additionalData)
     {
-        /*
-         * $state текущий этап
-         * 0 - вычисления не выполнялись
-         * 1 - вызван метод calculate
-         * 2 - получен результат рассчета
-         * 3 - отправлена заявка checkSegment
-         * 4 - получен ответ checkSegment
-         * 5 - отправлена сегментировання заявка в calculate
-         * 6 - получен ответ calculate
-         * */
-
-        // calculate
-        $state = 0;
-        if ($additionalData['tokenData']) {
-            $state = $additionalData['tokenData']['state'];
-        }
-        //$test = false; // fixme test
-        $dataCalculate = [];
-        if ($state == 0) {
-            $serviceCalculate = app(RenessansCalculateServiceContract::class);
-            $dataCalculate = $serviceCalculate->run($company, $attributes, $additionalData);
-            $state = 1;
-            //$test = true;// fixme test
-        } else {
-            $dataCalculate = $additionalData['tokenData']['calcIds'];
-        }
-        // get process
-        $process = RequestProcess::where('token', $attributes['token'])->where('state', '<>', 99)->first();
-        // check calculate
-        if ($state == 1) {
-            if ($process && $process['state'] == 1) {
-                $dataCalculate = $process['data'];
-            }
-            $isNotChecked = false;
-            $dataCheckCalculate = [];
-            $serviceCheckCalculate = app(RenessansCheckCalculateServiceContract::class);
-            foreach ($dataCalculate as $dataCalculateItem) {
-                if (isset($dataCalculateItem['premium']) && ($dataCalculateItem['premium'] !== false)) {
-                    $dataCheckCalculate[] = $dataCalculateItem;
-                    continue;
-                }
-//                if ($test) { // fixme test
-//                    $responseCheckCalculate = false;// fixme test
-//                } else {// fixme test
-//                    $responseCheckCalculate = $serviceCheckCalculate->run($company, $dataCalculateItem, $additionalData);// fixme test
-//                }// fixme test
-                $responseCheckCalculate = $serviceCheckCalculate->run($company, $dataCalculateItem, $additionalData);// fixme test
-                if ($responseCheckCalculate === false) {
-                    $isNotChecked = true;
-                    $dataCheckCalculate[] = [
-                        'premium' => false,
-                        'state' => 1,
-                        'calcId' => $dataCalculateItem['calcId'],
-                    ];
-                } else {
-                    $dataCheckCalculate[] = $responseCheckCalculate;
-                }
-            }
-            if ($isNotChecked) {
-                if ($process) {
-                    if ($process->checkCount == 5) {
-                        RequestProcess::where('token', $attributes['token'])->delete();
-                    } else {
-                        RequestProcess::where('token', $attributes['token'])->update([
-                            'checkCount' => ++$process->checkCount,
-                            'data' => \GuzzleHttp\json_encode($dataCheckCalculate),
-                        ]);
-                    }
-                } else {
-                    RequestProcess::create([
-                        'token' => $attributes['token'],
-                        'state' => $state,
-                        'data' => \GuzzleHttp\json_encode($dataCheckCalculate),
-                    ]);
-                }
-                return $dataCheckCalculate;
-            } else {
-                $state = 2;
-            }
-        }
-        $tokenData = IntermediateData::getData($attributes['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
+        $serviceCalculate = app(RenessansCalculateServiceContract::class);
+        $dataCalculate = $serviceCalculate->run($company, $attributes, $additionalData);
+        RequestProcess::create([
+            'token' => $attributes['token'],
+            'state' => 1,
+            'data' => json_encode($dataCalculate),
+        ]);
+        $tokenData = IntermediateData::getData($attributes['token']);
         $tokenData[$company->code] = [
             'calcIds' => $dataCalculate,
-            'state' => $state,
+            'status' => 'calculating',
         ];
         IntermediateData::where('token', $attributes['token'])->update([
             'data' => $tokenData,
         ]);
-        //todo тут идет проверка сегментации
-        return isset($dataCheckCalculate) ? $dataCheckCalculate : [false]; // todo temp crutch
     }
 
+    public function checkPreCalculate($company, $attributes, $process)
+    {
+        $dataProcess = $process->toArray();
+        $attributes['CheckSegment'] = true;
+        $calculatedCount = 0;
+        $isNeedUpdate = false;
+        foreach ($dataProcess['data']['calculateValues'] as $key => $calcItem) {
+            if ($calcItem['premium'] !== false) {
+                $calculatedCount++;
+                continue;
+            }
+            $serviceCalculate = app(RenessansCheckCalculateServiceContract::class);
+            $dataCalculate = $serviceCalculate->run($company, $calcItem, $process);
+            if ($dataCalculate['result']) {
+                $isNeedUpdate = true;
+                $dataProcess['data']['calculateValues'][$key]['premium'] = $dataCalculate['premium'];
+                $attributes['calcId'] = $calcItem['calcId'];
+                $serviceCreate = app(RenessansCreateServiceContract::class);
+                $dataSegment = $serviceCreate->run($company, $attributes, $process);
+                $dataProcess['data']['calculateValues']['segmentPolicyId'] = $dataSegment['policyId'];
+                $calculatedCount++;
+            }
+        }
+        $isNeedChangeState = false;
+        if ($calculatedCount == count($dataProcess['data']['calculateValues'])) {
+            $isNeedChangeState = true;
+            $isNeedUpdate = true;
+        }
+        $dataProcess['checkCount']++;
+        if ($dataProcess['checkCount'] < config('api_sk.maxCheckCount')) {
+            if ($isNeedUpdate) {
+                $process->update([
+                    'state' => $isNeedChangeState ? 5 : 1,
+                    'data' => json_encode($dataProcess['data']),
+                    'checkCount' => $isNeedChangeState ? 0 : $dataProcess['checkCount'],
+                ]);
+            } else {
+                $process->update([
+                    'checkCount' => $dataProcess['checkCount'],
+                ]);
+            }
+        } else {
+            $calculatedCount = 0;
+            foreach ($dataProcess['data']['calculateValues'] as $key => $value) {
+                if ($value['segmentPolicyId'] && $value['premium']) {
+                    $calculatedCount++;
+                } else {
+                    unset($dataProcess['data']['calculateValues'][$key]);
+                }
+            }
+            if (!$calculatedCount) {
+                $process->delete();
+                $tokenData = IntermediateData::getData($attributes['token']);
+                $tokenData[$company->code]['status'] = 'error';
+                IntermediateData::where('token', $attributes['token'])->update([
+                    'data' => $tokenData,
+                ]);
+            } else {
+                $process->update([
+                    'state' => 5,
+                    'data' => json_encode($dataProcess['data']),
+                    'checkCount' => 0,
+                ]);
+            }
+        }
+    }
+
+    public function checkSegment($company, $attributes, $process)
+    {
+        $dataProcess = $process->toArray();
+        $attributes['CheckSegment'] = true;
+        $calculatedCount = 0;
+        $isNeedUpdate = false;
+        foreach ($dataProcess['data']['calculateValues'] as $key => $calcItem) {
+            if ($calcItem['premium'] !== false) {
+                $calculatedCount++;
+                continue;
+            }
+            $serviceCalculate = app(RenessansCheckCalculateServiceContract::class);
+            $dataCalculate = $serviceCalculate->run($company, $calcItem, $process);
+            if ($dataCalculate['result']) {
+                $isNeedUpdate = true;
+                $dataProcess['data']['calculateValues'][$key]['premium'] = $dataCalculate['premium'];
+                $attributes['calcId'] = $calcItem['calcId'];
+                $serviceCreate = app(RenessansCreateServiceContract::class);
+                $dataSegment = $serviceCreate->run($company, $attributes, $process);
+                $dataProcess['data']['calculateValues']['segmentPolicyId'] = $dataSegment['policyId'];
+                $calculatedCount++;
+            }
+        }
+        $isNeedChangeState = false;
+        if ($calculatedCount == count($dataProcess['data']['calculateValues'])) {
+            $isNeedChangeState = true;
+            $isNeedUpdate = true;
+        }
+        $dataProcess['checkCount']++;
+        if ($dataProcess['checkCount'] < config('api_sk.maxCheckCount')) {
+            if ($isNeedUpdate) {
+                $process->update([
+                    'state' => $isNeedChangeState ? 5 : 1,
+                    'data' => json_encode($dataProcess['data']),
+                    'checkCount' => $isNeedChangeState ? 0 : $dataProcess['checkCount'],
+                ]);
+            } else {
+                $process->update([
+                    'checkCount' => $dataProcess['checkCount'],
+                ]);
+            }
+        } else {
+            $calculatedCount = 0;
+            foreach ($dataProcess['data']['calculateValues'] as $key => $value) {
+                if ($value['segmentPolicyId'] && $value['premium']) {
+                    $calculatedCount++;
+                } else {
+                    unset($dataProcess['data']['calculateValues'][$key]);
+                }
+            }
+            if (!$calculatedCount) {
+                $process->delete();
+                $tokenData = IntermediateData::getData($attributes['token']);
+                $tokenData[$company->code]['status'] = 'error';
+                IntermediateData::where('token', $attributes['token'])->update([
+                    'data' => $tokenData,
+                ]);
+            } else {
+                $process->update([
+                    'state' => 5,
+                    'data' => json_encode($dataProcess['data']),
+                    'checkCount' => 0,
+                ]);
+            }
+        }
+    }
 
     protected function setAuth(&$attributes)
     {

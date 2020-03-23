@@ -24,9 +24,12 @@ class RenessansCheckCalculateService extends RenessansService implements Renessa
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
         if (!isset($response['data']['response']['Premium'])) {
-            return false;
+            return [
+                'result' => false,
+            ];
         }
         return [
+            'result' => true,
             'premium' => $response['data']['response']['Premium'],
         ];
     }

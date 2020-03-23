@@ -16,29 +16,14 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
     private $catalogTypeOfDocument = [31, 32, 30]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
     private $catalogStsDocType = []; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
 
-    private function setAdditionalFields(&$attributes, $additionalFields) {
-        $attributes['CheckSegment'] = intval(isset($additionalFields['isCheckSegment']) && $additionalFields['isCheckSegment']);
-    }
-
-    private function setCalculationId(&$attributes, $calculationId) {
-        $attributes['calculationId'] = $calculationId;
+    private function setAdditionalFields(&$attributes) {
+        $attributes['CheckSegment'] = intval(isset($attributes['CheckSegment']) && $attributes['CheckSegment']);
     }
 
     public function run(InsuranceCompany $company, $attributes, $additionalFields = []): array
     {
-        $this->setAdditionalFields($attributes, $additionalFields);
-        $result = [];
-        foreach ($additionalFields['calculationId'] as $calculationId) {
-            $result[$calculationId] = $this->sendCreate($attributes, $calculationId);
-        }
-        return $result;
-    }
-
-    private function sendCreate($attributes, $calculationId)
-    {
-        $this->setCalculationId($attributes, $calculationId);
+        $this->setAdditionalFields($attributes);
         $this->setAuth($attributes);
-        $this->setCheckSegment($attributes);
         $url = $this->getUrl(__FUNCTION__);
         $this->prepareData($attributes);
         $response = RestController::postRequest($url, $attributes);
@@ -48,7 +33,12 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
         if (!$response['result']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
-        return $response['data'];
+        if (!isset($response['data']['policyId']) || !$response['data']['policyId']) {
+            throw new \Exception('api not return policyId');
+        }
+        return [
+            'policyId' => $response['data']['policyId'],
+        ];
     }
 
     protected function prepareData($attributes): array
@@ -58,7 +48,7 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
         $data = [
             'key' => $attributes['key'],
             'CheckSegment' => $this->transformBooleanToInteger($attributes['CheckSegment']),
-            'calculationId' => $attributes['calculationId'],
+            'calculationId' => $attributes['calcId'],
             'purpose' => $attributes['car']['vehicleUsage'],
             'cabinet' => [
                 'email' => $insurer['email'],
@@ -94,13 +84,6 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
         $data['insurer'] = $this->getSubjectData($insurer);
         $data['owner'] = $this->getSubjectData($owner);
         return $data;
-    }
-
-    protected function setCheckSegment(&$attributes)
-    {
-        if (!isset($attributes['CheckSegment'])) {
-            $attributes['CheckSegment'] = 0;
-        }
     }
 
     protected function getSubjectData($subject)
