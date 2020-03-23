@@ -3,13 +3,13 @@
 
 namespace App\Services\Company\Renessans;
 
-use App\Contracts\Company\Renessans\RenessansCheckCalculateServiceContract;
+use App\Contracts\Company\Renessans\RenessansCheckCreateServiceContract;
 use App\Http\Controllers\RestController;
 use App\Models\InsuranceCompany;
 
-class RenessansCheckCalculateService extends RenessansService implements RenessansCheckCalculateServiceContract
+class RenessansCheckCreateService extends RenessansService implements RenessansCheckCreateServiceContract
 {
-    protected $apiPath = '/calculate/{{calcId}}/';
+    protected $apiPath = '/policy/{{policyId}}/status/';
 
     public function run(InsuranceCompany $company, $attributes, $additionalFields = []): array
     {

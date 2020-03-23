@@ -159,21 +159,18 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
         }
         //Vehicle
         $this->setValue($data['TariffParameters']['Agreement']['Vehicle'], 'RegNum', 'regNumber', $attributes['car']);
-        foreach ($attributes['car']['documents'] as $iDocument => $document) {
-            $pDocument = [
-                'DocType' => $document['document']['documentType'],  // TODO: справочник
-            ];
-            $this->setValuesByArray($pDocument, [
-                "Serial" => 'documentSeries',
-                "Number" => 'documentNumber',
-                "DocDate" => 'documentIssued',
-            ], $document['document']);
-            $data['TariffParameters']['Agreement']['Vehicle']['Document'][] = $pDocument;
-        }
+        $data['TariffParameters']['Agreement']['Vehicle']['Document'] = [
+            'DocType' => $attributes['car']['document']['documentType'],  // TODO: справочник
+        ];
+        $this->setValuesByArray($data['TariffParameters']['Agreement']['Vehicle']['Document'], [
+            "Serial" => 'series',
+            "Number" => 'number',
+            "DocDate" => 'dateIssue',
+        ], $attributes['car']['document']);
         $this->setValuesByArray($data['TariffParameters']['Agreement']['Vehicle']['DocInspection'], [
-            "Serial" => 'documentSeries',
-            "Number" => 'documentNumber',
-            "DateEnd" => 'documentDateEmd',
+            "Serial" => 'series',
+            "Number" => 'number',
+            "DateEnd" => 'dateEnd',
         ], $attributes['car']['inspection']);
         //DriverList
         if (!$attributes['policy']['isMultidrive']) {

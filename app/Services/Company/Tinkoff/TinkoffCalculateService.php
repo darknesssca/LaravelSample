@@ -52,6 +52,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     "email" => $subject['fields']['email'],
                     "gender" => $subject['fields']['gender'], // TODO: справочник
                     "citizenship" => $subject['fields']['citizenship'], // TODO: справочник
+                    'document' => [],
                 ],
             ];
             $this->setValue($pSubject['subjectDetails'], 'middleName', 'middleName', $subject['fields']['middleName']);
@@ -78,23 +79,20 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 ], $address['address']);
                 $pSubject['subjectDetails']['address'][] = $pAddress;
             }
-            foreach ($subject['fields']['documents'] as $iDocument => $document) {
-                $pDocument = [
-                    'documentType' => $document['document']['documentType'],  // TODO: справочник
-                ];
-                $this->setValuesByArray($pDocument, [
+            $document = $this->searchDocumentByType($subject['fields']['documents'], 'passport'); //todo справочник
+            if ($document) {
+                $this->setValuesByArray($document, [
+                    "documentType" => 'documentType',
                     "series" => 'series',
                     "number" => 'number',
                     "issuedBy" => 'issuedBy',
                     "dateIssue" => 'dateIssue',
-                    "validTo" => 'validTo',
-                ], $document['document']);
-                $pSubject['subjectDetails']['document'][] = $pDocument;
+                ], $pSubject['subjectDetails']['document']);
             }
             $pSubject['subjectDetails']['phone'] = [
                 "isPrimary" => true,
-                "typePhone" => 'mobile',//$subject['fields']['phone']['typePhone'], // TODO: справочник
-                "numberPhone" => $subject['fields']['phone']['numberPhone'],
+                "typePhone" => 'mobile',
+                "numberPhone" => $subject['fields']['phone'],
             ];
             $data['subjectInfo'][] = $pSubject;
         }
@@ -121,7 +119,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     'isKuzovMissing' => true,
                 ],
                 'mileage' => $attributes['car']['mileage'],
-                'numberOfOwners' => 1, // TODO: понять будет ли поле или заглушка
+                'numberOfOwners' => 1,
                 'registrationNumber' => [
                     'isNoRegistrationNumber' => true,
                 ],
@@ -141,15 +139,12 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 ],
             ],
         ];
-        foreach ($attributes['car']['documents'] as $iDocument => $document) {
-            $pDocument = [
-                "documentType" => $document['document']['documentType'], // TODO: справочник
-                "documentSeries" => $document['document']['documentSeries'],
-                "documentNumber" => $document['document']['documentNumber'],
-                "documentIssued" => $document['document']['documentIssued'],
-            ];
-            $data['vehicleInfo']['vehicleDetails']['vehicleDocument'][] = $pDocument;
-        }
+        $this->setValuesByArray($data['vehicleInfo']['vehicleDetails']['vehicleDocument'], [
+            'documentType' => 'documentType',
+            'documentSeries' => 'documentSeries',
+            'documentNumber' => 'documentNumber',
+            'documentIssued' => 'documentIssued',
+        ], $attributes['car']['documents']);
         //OSAGOFQ
         $data['OSAGOFQ'] = [
             'effectiveDate' => $this->formatDateTimeZone($attributes['policy']['beginDate']),

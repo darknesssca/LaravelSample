@@ -45,7 +45,7 @@ class IngosstrahCheckCreateService extends IngosstrahService implements Ingosstr
         }
         return [
             'state' => mb_strtolower($response['parsedResponse']['@attributes']['State']),
-            'isn' => $response['parsedResponse']['General']['ISN'],
+            'isn' => isset($response['parsedResponse']['General']['ISN']) ? $response['parsedResponse']['General']['ISN'] : false,
         ];
     }
 

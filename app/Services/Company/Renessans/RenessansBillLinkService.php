@@ -3,18 +3,19 @@
 
 namespace App\Services\Company\Renessans;
 
-use App\Contracts\Company\Renessans\RenessansCheckCalculateServiceContract;
+use App\Contracts\Company\Renessans\RenessansBillLinkServiceContract;
 use App\Http\Controllers\RestController;
 use App\Models\InsuranceCompany;
 
-class RenessansCheckCalculateService extends RenessansService implements RenessansCheckCalculateServiceContract
+class RenessansBillLinkService extends RenessansService implements RenessansBillLinkServiceContract
 {
-    protected $apiPath = '/calculate/{{calcId}}/';
+    protected $apiPath = '/policy/{{id}}/acquiring/{{code}}/';
 
     public function run(InsuranceCompany $company, $attributes, $additionalFields = []): array
     {
         $data = [];
         $this->setAuth($data);
+        $this->setBillCode($data);
         $url = $this->getUrl($attributes);
         $response = RestController::getRequest($url, $data);
         if (!$response) {
@@ -29,6 +30,11 @@ class RenessansCheckCalculateService extends RenessansService implements Renessa
         return [
             'premium' => $response['data']['response']['Premium'],
         ];
+    }
+
+    protected function setBillCode(&$data)
+    {
+        $data['code'] = 'renins'; // на данный момент задается статикой
     }
 
 }

@@ -82,7 +82,7 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
                     'EnginePowerHP' => $attributes['car']['enginePower'],
                     "Document" => [],
                     "DocInspection" => [
-                        "DocType" => $attributes['car']['inspection']['documentType'],
+                        "DocType" => 34, // TODO из справочника
                     ],
                 ],
                 "Condition" => [
@@ -169,21 +169,18 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
         }
         //Vehicle
         $this->setValue($data['Agreement']['Vehicle'], 'RegNum', 'regNumber', $attributes['car']);
-        foreach ($attributes['car']['documents'] as $iDocument => $document) {
-            $pDocument = [
-                'DocType' => $document['document']['documentType'],  // TODO: справочник
-            ];
-            $this->setValuesByArray($pDocument, [
-                "Serial" => 'documentSeries',
-                "Number" => 'documentNumber',
-                "DocDate" => 'documentIssued',
-            ], $document['document']);
-            $data['Agreement']['Vehicle']['Document'][] = $pDocument;
-        }
+        $data['Agreement']['Vehicle']['Document'] = [
+            'DocType' => $attributes['car']['document']['documentType'],  // TODO: справочник
+        ];
+        $this->setValuesByArray($data['Agreement']['Vehicle']['Document'], [
+            "Serial" => 'series',
+            "Number" => 'number',
+            "DocDate" => 'dateIssue',
+        ], $attributes['car']['document']);
         $this->setValuesByArray($data['Agreement']['Vehicle']['DocInspection'], [
-            "Serial" => 'documentSeries',
-            "Number" => 'documentNumber',
-            "DateEnd" => 'documentDateEmd',
+            "Serial" => 'series',
+            "Number" => 'number',
+            "DateEnd" => 'dateEnd',
         ], $attributes['car']['inspection']);
         //DriverList
         if (!$attributes['policy']['isMultidrive']) {
