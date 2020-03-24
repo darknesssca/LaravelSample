@@ -20,7 +20,7 @@ $router->group(
                 $router->patch('/drafts/{policeId}', 'DraftController@update');
                 $router->delete('/drafts/{policeId}', 'DraftController@delete');
                 // policies
-                $router->post('/registration', 'InsuranceController@store');
+                $router->post('/registration/send', 'InsuranceController@store');
                 $router->post('/registration/{code}/{method}', 'InsuranceController@index');
 
                 //autocod

@@ -104,6 +104,10 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
                 return [
                     'status' => 'processing',
                 ];
+            case 'hold':
+                return [
+                    'status' => 'hold',
+                ];
             case 'done':
                 return [
                     'status' => 'done',
@@ -251,7 +255,12 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
         $tokenData = IntermediateData::getData($token); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
         $tokenData[$company->code] = [
             'status' => 'error',
-            'error' => $error,
+            'error' => true,
+            'errors' => [
+                [
+                    'message' => $error
+                ],
+            ],
         ];
         IntermediateData::where('token', $token)->update([
             'data' => $tokenData,

@@ -225,6 +225,7 @@ class InsuranceController extends Controller
                     if ($isUpdated === false) {
                         $tokenData = IntermediateData::getData($processItem->token);
                         $tokenData[$company->code]['status'] = 'error';
+                        $tokenData[$company->code]['errorMessage'] = 'произошла ошибка, попробуйте позднее';
                         IntermediateData::where('token', $processItem->token)->update([
                             'data' => $tokenData,
                         ]);
@@ -253,6 +254,7 @@ class InsuranceController extends Controller
                     if ($isUpdated === false) {
                         $tokenData = IntermediateData::getData($processItem->token);
                         $tokenData[$company->code]['status'] = 'error';
+                        $tokenData[$company->code]['errorMessage'] = 'произошла ошибка, попробуйте позднее';
                         IntermediateData::where('token', $processItem->token)->update([
                             'data' => $tokenData,
                         ]);
