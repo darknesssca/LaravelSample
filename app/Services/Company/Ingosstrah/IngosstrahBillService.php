@@ -13,7 +13,6 @@ class IngosstrahBillService extends IngosstrahService implements IngosstrahBillS
     {
         $data = $this->prepareData($data);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'CreateBill', $data);
-        dump($response);
         if (!$response) {
             throw new \Exception('api not return answer');
         }

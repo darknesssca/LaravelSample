@@ -134,9 +134,9 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
             $checkData = $checkService->run($company, $data);
         }
         if (
-            isset($checkData['response']->Agreement->IsOsago->IsEOsago) && ($checkData['response']->Agreement->IsOsago->IsEOsago == 'Y') &&
-            isset($checkData['response']->Agreement->Policy->Serial) && $checkData['response']->Agreement->Policy->Serial &&
-            isset($checkData['response']->Agreement->Policy->No) && $checkData['response']->Agreement->Policy->No
+            isset($checkData['policySerial']) && $checkData['policySerial'] &&
+            isset($checkData['policyNumber']) && $checkData['policyNumber'] &&
+            isset($checkData['isEosago']) && $checkData['isEosago']
         ) {
             $this->createBill($company, $data);
         } else {
@@ -169,10 +169,10 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
         $billLinkData = $billLinkService->run($company, $data, $form);
         $tokenData[$company->code] = [
             'status' => 'done',
-            'billUrl' => $billLinkData['PayURL'],
+            'billUrl' => $billLinkData['PayUrl'],
         ];
         $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
-        RestController::sendBillUrl($insurer['email'], $billLinkData['PayURL']);
+        RestController::sendBillUrl($insurer['email'], $billLinkData['PayUrl']);
         IntermediateData::where('token', $data['token'])->update([
             'data' => $tokenData,
         ]);

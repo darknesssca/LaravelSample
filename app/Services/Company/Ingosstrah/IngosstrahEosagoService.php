@@ -13,7 +13,6 @@ class IngosstrahEosagoService extends IngosstrahService implements IngosstrahEos
     {
         $data = $this->prepareData($data);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'MakeEOsago', $data);
-        dump($response);
         if (!$response) {
             throw new \Exception('api not return answer');
         }

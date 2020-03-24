@@ -41,6 +41,9 @@ class IngosstrahCheckCreateService extends IngosstrahService implements Ingosstr
         return [
             'state' => mb_strtolower($response['parsedResponse']['@attributes']['State']),
             'isn' => isset($response['parsedResponse']['General']['ISN']) ? $response['parsedResponse']['General']['ISN'] : false,
+            'policySerial' => isset($response['parsedResponse']['General']['Policy']['Serial']) ? $response['parsedResponse']['General']['Policy']['Serial'] : false,
+            'policyNumber' => isset($response['parsedResponse']['General']['Policy']['No']) ? $response['parsedResponse']['General']['Policy']['No'] : false,
+            'isEosago' => isset($response['parsedResponse']['General']['IsEOsago']) ? $response['parsedResponse']['General']['IsEOsago'] == 'Y' : false,
         ];
     }
 
