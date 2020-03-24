@@ -21,7 +21,7 @@ $app = new Laravel\Lumen\Application(
     dirname(__DIR__)
 );
 
-// $app->withFacades();
+$app->withFacades();
 
 $app->withEloquent();
 
@@ -59,6 +59,7 @@ $app->singleton(
 
 $app->configure('app');
 $app->configure('api_sk');
+$app->configure('filesystems');
 
 /*
 |--------------------------------------------------------------------------
@@ -91,6 +92,7 @@ $app->configure('api_sk');
 */
 
 $app->register(App\Providers\AppServiceProvider::class);
+$app->register(App\Providers\MinIOStorageServiceProvider::class);
 //$app->register(Avtocod\B2BApi\Laravel\ServiceProvider::class);
 // $app->register(App\Providers\AuthServiceProvider::class);
 // $app->register(App\Providers\EventServiceProvider::class);

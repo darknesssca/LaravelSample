@@ -4,12 +4,14 @@
 namespace App\Http\Controllers;
 
 
+use App\Models\File;
 use App\Models\Policy;
 use App\Models\Report;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Nowakowskir\JWT\Exceptions\EmptyTokenException;
 use Nowakowskir\JWT\TokenEncoded;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -150,6 +152,7 @@ class ReportController extends Controller
 
     /**
      * @param array $policies_ids
+     * @param $user_id
      * @return int
      * @throws Exception
      */
@@ -324,6 +327,7 @@ class ReportController extends Controller
      * @param array $policies
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
+     * @throws Exception
      */
     private function createXls($report_id, $policies)
     {
@@ -378,8 +382,35 @@ class ReportController extends Controller
             $sheet->setCellValue('M'. $n_str, $policy['prodavec_email']);
         }
 
+
+        $file_name = sprintf('report_%s.xls', $report_id);
+        $file_path = '/tmp/' . $file_name;
+
         $writer = new Xls($spreadsheet);
-        $writer->save(sprintf('/tmp/report_%s.xls', $report_id));
+        $writer->save($file_path);
+
+        $result = Storage::disk('minio')->put('reports/' . $file_name, file_get_contents($file_path));
+        $size = filesize($file_path);
+        $content_type = mime_content_type($file_path);
+        $cloud_file_path = Storage::disk('minio')->url('reports/' . $file_name);
+        unlink($file_path);
+
+        if ($result != '1'){
+            throw new Exception('Не удалось сохранить файл');
+        } else {
+            $file = new File([
+                'name' => $file_name,
+                'dir' => $cloud_file_path,
+                'content_type' => $content_type,
+                'size' => $size,
+            ]);
+
+            // TODO Нужно привязать файл к созданному отчету
+
+
+        }
+
+
     }
 
     /**
@@ -405,6 +436,7 @@ class ReportController extends Controller
      */
     private function indexRewards(array $rewards)
     {
+        $new_rewards = [];
         foreach ($rewards as $reward){
             $new_rewards[$rewards['policy']['id']] = $reward;
         }

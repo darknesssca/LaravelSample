@@ -10,13 +10,14 @@
     "type": "project",
     "require": {
         "php": "^7.2",
+        "ext-json": "*",
+        "ext-xml": "*",
         "artisaninweb/laravel-soap": "0.3.0.9",
+        "coraxster/flysystem-aws-s3-v3-minio": "^1.0",
         "guzzlehttp/guzzle": "^6.5",
         "laravel/lumen-framework": "^6.0",
         "nowakowskir/php-jwt": "^1.1",
         "phpoffice/phpspreadsheet": "^1.11",
-        "ext-xml": "*",
-        "ext-json": "*",
         "spatie/array-to-xml": "^2.11"
     },
     "require-dev": {
