@@ -10,11 +10,8 @@ use App\Contracts\Company\Ingosstrah\IngosstrahCreateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahEosagoServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahServiceContract;
-<<<<<<< HEAD
 use App\Models\InsuranceCompany;
-=======
 use App\Http\Controllers\RestController;
->>>>>>> 7907da1850504ee519cf63b96bad7fd07f98b32c
 use App\Models\IntermediateData;
 use App\Models\RequestProcess;
 use App\Services\Company\CompanyService;
