@@ -71,7 +71,6 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
         $data['owner'] = [
             "lastname" => $owner['lastName'],
             "name" => $owner['firstName'],
-            //"middlename" => $owner['middleName'],
             "birthday" => $owner['birthdate'],
             'document' => [],
         ];
@@ -104,7 +103,7 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             foreach ($drivers as $iDriver => $driver) {
                 $pDriver = [
                     'name' => $owner['firstName'],
-                    'lastname' => $owner['firstName'],
+                    'lastname' => $owner['lastName'],
                     'birthday' => $owner['birthdate'],
                 ];
                 foreach ($attributes['drivers'] as $tDriver) {

@@ -25,6 +25,7 @@ class RestController
 
     public static function sendBillUrl($email, $billUrl)
     {
+        return true;
         $body = [
             'message' => $billUrl,
             'receiver' => $email,

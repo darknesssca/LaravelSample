@@ -20,14 +20,21 @@ class RenessansGetStatusService extends RenessansService implements RenessansGet
         if (!$response) {
             throw new \Exception('api not return answer');
         }
-        if (!$response['result']) {
-            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
+        if (!$response['result'] || !isset($response['data']['return']['Status'])) {
+            return [
+                'result' => false,
+                'message' => isset($response['message']) ? $response['message'] : '',
+            ];
         }
-        if (!isset($response['data']['response']['Premium'])) {
-            return false;
+        if ((mb_strtolower($response['data']['return']['Status']) == 'согласован') && isset($response['data']['return']['Number']) && $response['data']['return']['Number']) {
+            return [
+                'billId' => $response['data']['return']['Number'],
+                'result' => true,
+            ];
         }
         return [
-            'premium' => $response['data']['response']['Premium'],
+            'result' => false,
+            'message' => isset($response['message']) ? $response['message'] : '',
         ];
     }
 
