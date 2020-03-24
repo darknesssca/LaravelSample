@@ -41,7 +41,7 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
             'status' => 'calculating',
         ];
         IntermediateData::where('token', $attributes['token'])->update([
-            'data' => $tokenData,
+            'data' => json_encode($tokenData),
         ]);
     }
 
@@ -97,7 +97,7 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
                 $tokenData = IntermediateData::getData($attributes['token']);
                 $tokenData[$company->code]['status'] = 'error';
                 IntermediateData::where('token', $attributes['token'])->update([
-                    'data' => $tokenData,
+                    'data' => json_encode($tokenData),
                 ]);
             }
         }
@@ -135,7 +135,7 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
                 $tokenData = IntermediateData::getData($attributes['token']);
                 $tokenData[$company->code]['status'] = 'error';
                 IntermediateData::where('token', $attributes['token'])->update([
-                    'data' => $tokenData,
+                    'data' => json_encode($tokenData),
                 ]);
             }
         }
@@ -156,7 +156,7 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
             $tokenData[$company->code]['status'] = 'calculated';
             $tokenData[$company->code]['finalPremium'] = $dataCalculate['premium'];
             IntermediateData::where('token', $attributes['token'])->update([
-                'data' => $tokenData,
+                'data' => json_encode($tokenData),
             ]);
         } else {
             $dataProcess['checkCount']++;
@@ -169,7 +169,7 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
                 $tokenData = IntermediateData::getData($attributes['token']);
                 $tokenData[$company->code]['status'] = 'error';
                 IntermediateData::where('token', $attributes['token'])->update([
-                    'data' => $tokenData,
+                    'data' => json_encode($tokenData),
                 ]);
             }
         }

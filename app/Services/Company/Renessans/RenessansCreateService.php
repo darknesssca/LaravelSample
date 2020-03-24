@@ -56,7 +56,6 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
             'isInsurerJuridical' => $this->transformBooleanToInteger(false),
             'car' => [
                 'year' => $attributes['car']['year'],
-                //'isNew' => $attributes['car']['sourceAcquisition'] == 1 ? 1 : 0, //todo справочник
                 'MarkAndModelString' => $attributes['car']['maker'] . ' ' . $attributes['car']['model'], //todo справочник
             ],
         ];
@@ -91,19 +90,17 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
         $subjectData = [
             'email' => $subject['email'],
             'phone' => $subject['phone'],
+            'name' => $subject['firstName'],
+            'lastname' => $subject['lastName'],
+            'birthday' => $subject['birthdate'],
         ];
-        $regAddress = $this->searchAddressByType($subject, 'registration'); //todo справочник
-        if ($regAddress) {
-            $subjectData['addressJuridical'] = $this->getAddressData($regAddress);
-        }
-        $factAddress = $this->searchAddressByType($subject, 'Home'); //todo справочник
-        if ($factAddress) {
-            $subjectData['addressFact'] = $this->getAddressData($factAddress);
-        }
-        $document = $this->searchDocumentByType($subject, 'passport');
+        $this->setValuesByArray($subjectData, [
+            'middlename' => 'middleName',
+        ], $subject);
+        $document = $this->searchDocumentByType($subject, 'RussianPassport'); //todo справочник
         if ($document) {
             $subjectData['document'] = [];
-            $this->setValuesByArray($subjectData, [
+            $this->setValuesByArray($subjectData['document'], [
                 'typeofdocument' => 'documentType',
                 'series' => 'series',
                 'number' => 'number',
@@ -112,6 +109,15 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
                 'codeDivision' => 'subdivisionCode',
             ], $document);
         }
+        $regAddress = $this->searchAddressByType($subject, 'registration'); //todo справочник
+        if ($regAddress) {
+            $subjectData['addressJuridical'] = $this->getAddressData($regAddress);
+        }
+        $factAddress = $this->searchAddressByType($subject, 'home'); //todo справочник
+        if ($factAddress) {
+            $subjectData['addressFact'] = $this->getAddressData($factAddress);
+        }
+        return $subjectData;
     }
 
     protected function getAddressData($address)
@@ -130,6 +136,7 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
             'region' => 'region',
             'kladr' => 'streetKladr',
         ], $address);
+        return $addressData;
     }
 
 }

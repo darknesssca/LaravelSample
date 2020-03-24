@@ -45,14 +45,14 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             'dateStart' => $attributes['policy']['beginDate'],
             'period' => 12,
             'purpose' => $attributes['car']['vehicleUsage'], // todo справочник
-            'limitDrivers' => $this->transformBooleanToInteger($attributes['policy']['isMultidrive']),
+            'limitDrivers' => $this->transformBooleanToInteger(!$attributes['policy']['isMultidrive']),
             'trailer' => $this->transformBooleanToInteger($attributes['car']['isUsedWithTrailer']),
             'isJuridical' => 0,
             'owner' => [],
             'car' => [
                 'make' => $attributes['car']['maker'], // TODO: справочник,
                 'model' => $attributes['car']['model'], // TODO: справочник,
-                //'MarkAndModelString' => [], //todo после реализации справочников, при отсутствии модели или марки в справочнике указывать строку
+                'MarkAndModelString' => $attributes['car']['maker'] . ' ' . $attributes['car']['model'], //todo справочник
                 'category' => 'B', // TODO: справочник,
                 'power' => $attributes['car']['enginePower'],
                 'documents' => [
@@ -94,6 +94,9 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             "ResolutionMaxWeight" => 'maxWeight',
             "NumberOfSeats" => 'seats',
         ], $attributes['car']);
+        $this->setValuesByArray($data['car']['documents'], [
+            "registrationNumber" => 'regNumber',
+        ], $attributes['car']);
         //drivers
         if (!$attributes['policy']['isMultidrive']) {
             $data['drivers'] = [];
@@ -104,7 +107,7 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
                     'lastname' => $owner['firstName'],
                     'birthday' => $owner['birthdate'],
                 ];
-                foreach ($data['drivers'] as $tDriver) {
+                foreach ($attributes['drivers'] as $tDriver) {
                     if ($iDriver == $tDriver['driver']['driverId']) {
                         $pDriver['license'] = [
                             "dateBeginDrive" => $tDriver['driver']['drivingLicenseIssueDateOriginal'],

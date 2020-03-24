@@ -25,12 +25,13 @@ class RenessansCheckCreateService extends RenessansService implements RenessansC
         }
         if (!isset($response['data']['Status']) || ($response['data']['Status'] != 'ok')) {
             return [
-                'result' => true,
+                'result' => false,
                 'status' => 'wait',
             ];
         }
         return [
             'result' => true,
+            'status' => 'ok',
         ];
     }
 

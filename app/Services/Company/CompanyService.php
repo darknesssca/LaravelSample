@@ -56,8 +56,7 @@ class CompanyService implements CompanyServiceContract
             "subjects.*.fields.document.*.dateIssue" => "required|date|date_format:Y-m-d",
             "subjects.*.fields.document.*.validTo" => "date|date_format:Y-m-d",
             "subjects.*.fields.document.*.subdivisionCode" => "string",
-            "subjects.*.fields.phone" => "required",
-            "subjects.*.fields.phone.numberPhone" => "required|string",
+            "subjects.*.fields.phone" => "required|string",
             'car' => "required",
             "car.model" => "required|string", // TODO: in справочник
             "car.maker" => "required|string", // TODO: in справочник

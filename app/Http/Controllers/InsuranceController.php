@@ -121,7 +121,6 @@ class InsuranceController extends Controller
                     $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
                     $response = $controller->checkPreCalculate($company, $attributes, $processItem);
                 } catch (\Exception $exception) {
-                    dump($exception->getMessage());
                     $isUpdated = RequestProcess::updateCheckCount($processItem->token);
                     if ($isUpdated === false) {
                         $tokenData = IntermediateData::getData($processItem->token);
@@ -155,7 +154,6 @@ class InsuranceController extends Controller
                     $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
                     $response = $controller->checkSegment($company, $attributes, $processItem);
                 } catch (\Exception $exception) {
-                    dump($exception->getMessage());
                     $isUpdated = RequestProcess::updateCheckCount($processItem->token);
                     if ($isUpdated === false) {
                         $tokenData = IntermediateData::getData($processItem->token);
@@ -175,7 +173,7 @@ class InsuranceController extends Controller
     public function getCalculate()
     {
         $count = config('api_sk.maxRowsByCycle');
-        $process = RequestProcess::where('state', 1)->limit($count)->get();
+        $process = RequestProcess::where('state', 10)->limit($count)->get();
         if ($process) {
             foreach ($process as $processItem) {
                 try {
@@ -189,7 +187,6 @@ class InsuranceController extends Controller
                     $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
                     $response = $controller->checkCalculate($company, $attributes, $processItem);
                 } catch (\Exception $exception) {
-                    dump($exception->getMessage());
                     $isUpdated = RequestProcess::updateCheckCount($processItem->token);
                     if ($isUpdated === false) {
                         $tokenData = IntermediateData::getData($processItem->token);
