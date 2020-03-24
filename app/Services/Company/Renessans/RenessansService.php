@@ -63,6 +63,15 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
                     'status' => 'done',
                     'premium' => $additionalData['tokenData']['finalPremium'],
                 ];
+            case 'error':
+                return [
+                    'error' => true,
+                    'errors' => [
+                        [
+                            'message' => $additionalData['tokenData']['errorMessage'],
+                        ],
+                    ],
+                ];
             default:
                 throw new \Exception('not valid status');
         }
@@ -96,6 +105,7 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
                 $process->delete();
                 $tokenData = IntermediateData::getData($attributes['token']);
                 $tokenData[$company->code]['status'] = 'error';
+                $tokenData[$company->code]['errorMessage'] = 'Произошла ошибка, попробуйте позднее. Статус последней ошибки: '.$dataCalculate['message'];
                 IntermediateData::where('token', $attributes['token'])->update([
                     'data' => json_encode($tokenData),
                 ]);
@@ -134,6 +144,7 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
                 $process->delete();
                 $tokenData = IntermediateData::getData($attributes['token']);
                 $tokenData[$company->code]['status'] = 'error';
+                $tokenData[$company->code]['errorMessage'] = 'Произошла ошибка, попробуйте позднее. Статус последней ошибки: '.$dataCreate['message'];
                 IntermediateData::where('token', $attributes['token'])->update([
                     'data' => json_encode($tokenData),
                 ]);
@@ -168,6 +179,7 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
                 $process->delete();
                 $tokenData = IntermediateData::getData($attributes['token']);
                 $tokenData[$company->code]['status'] = 'error';
+                $tokenData[$company->code]['errorMessage'] = 'Произошла ошибка, попробуйте позднее. Статус последней ошибки: '.$dataCalculate['message'];
                 IntermediateData::where('token', $attributes['token'])->update([
                     'data' => json_encode($tokenData),
                 ]);

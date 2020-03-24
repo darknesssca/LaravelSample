@@ -23,6 +23,7 @@ class RenessansCheckCalculateService extends RenessansService implements Renessa
         if (!$response['result'] || !isset($response['data']['response']['Premium'])) {
             return [
                 'result' => false,
+                'message' => isset($response['message']) ? $response['message'] : '',
             ];
         }
         return [

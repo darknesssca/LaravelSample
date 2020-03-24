@@ -24,7 +24,12 @@ class InsuranceController extends Controller
         $method = strtolower((string)$method);
         try
         {
-            return $this->success($this->runService($company, $request, $method), 200);
+            $response = $this->runService($company, $request, $method);
+            if (isset($response['error']) && $response['error']) {
+                return response()->json($response, 500);
+            } else {
+                return $this->success($response, 200);
+            }
         }
         catch (ValidationException $exception)
         {
@@ -191,6 +196,7 @@ class InsuranceController extends Controller
                     if ($isUpdated === false) {
                         $tokenData = IntermediateData::getData($processItem->token);
                         $tokenData[$company->code]['status'] = 'error';
+                        $tokenData[$company->code]['errorMessage'] = 'произошла ошибка, попробуйте позднее';
                         IntermediateData::where('token', $processItem->token)->update([
                             'data' => $tokenData,
                         ]);

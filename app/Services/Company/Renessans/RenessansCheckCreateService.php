@@ -27,6 +27,7 @@ class RenessansCheckCreateService extends RenessansService implements RenessansC
             return [
                 'result' => false,
                 'status' => 'wait',
+                'message' => isset($response['message']) ? $response['message'] : '',
             ];
         }
         return [
