@@ -22,7 +22,7 @@ class Report extends Model
 
     public function file()
     {
-        return $this->hasOne('App\Models\File');
+        return $this->belongsTo('App\Models\File');
     }
 
 }

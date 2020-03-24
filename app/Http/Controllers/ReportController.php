@@ -398,16 +398,14 @@ class ReportController extends Controller
         if ($result != '1'){
             throw new Exception('Не удалось сохранить файл');
         } else {
-            $file = new File([
+            $file = File::create([
                 'name' => $file_name,
                 'dir' => $cloud_file_path,
                 'content_type' => $content_type,
                 'size' => $size,
             ]);
 
-            // TODO Нужно привязать файл к созданному отчету
-
-
+            Report::find($report_id)->file()->associate($file->id)->save();
         }
 
 
