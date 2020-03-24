@@ -5,8 +5,6 @@ namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
 use App\Http\Controllers\RestController;
-use App\Models\InsuranceCompany;
-use App\Models\IntermediateData;
 use Illuminate\Support\Carbon;
 
 class SoglasieCreateService extends SoglasieService implements SoglasieCreateServiceContract
@@ -34,9 +32,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
     {
         $data = $this->prepareData($attributes);
         $headers = $this->getHeaders();
-        return $data;
-        $response = RestController::postRequest($this->apiRestUrl, $data, $headers);
-        return $response;
+        return RestController::postRequest($this->apiRestUrl, $data, $headers);
     }
 
     protected function getHeaders()

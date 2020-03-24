@@ -147,7 +147,7 @@ trait GuidesSourceTrait
                 );
             }
         } catch (\Exception $ex) {
-            DB::rollback(); //откат транзакции, если что-то случилось
+            DB::rollBack(); //откат транзакции, если что-то случилось
             throw $ex;
         }
         // Если всё хорошо - фиксируем

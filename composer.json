@@ -16,7 +16,8 @@
         "nowakowskir/php-jwt": "^1.1",
         "phpoffice/phpspreadsheet": "^1.11",
         "ext-xml": "*",
-        "ext-json": "*"
+        "ext-json": "*",
+        "spatie/array-to-xml": "^2.11"
     },
     "require-dev": {
         "fzaninotto/faker": "^1.9.1",

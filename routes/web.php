@@ -1,4 +1,7 @@
 <?php
+/**
+ * @var \Laravel\Lumen\Routing\Router $router
+ */
 
 /*
 |--------------------------------------------------------------------------
@@ -11,6 +14,9 @@
 |
 */
 
+use Illuminate\Support\Facades\Route;
+
+/**@var Route $router */
 $router->group(
     [
         'prefix' => 'v1',
@@ -18,7 +24,7 @@ $router->group(
     function () use ($router) {
         $router->group(
             [
-                'prefix' => 'insurance',
+                'prefix' => 'car-insurance',
             ],
             function () use ($router) {
                 // drafts
@@ -30,6 +36,23 @@ $router->group(
                 // policies
                 $router->post('/policies/send', 'InsuranceController@store');
                 $router->post('/policies/{code}/{method}', 'InsuranceController@index');
+
+                //autocod
+                $router->get('autocod/check-taxi/', 'AutocodController@checkTaxi'); //проверка на такси
+                $router->get('autocod/{report_id}/', 'AutocodController@readReport'); //если отчет уже готов
+                $router->post('autocod', 'AutocodController@requestReport'); //заказать отчет и сразу дождаться генерации
+            }
+        );
+
+
+        $router->group(
+            [
+                'prefix' => 'policies'
+            ],
+            function () use ($router) {
+                $router->post('/reports', 'ReportController@create');
+                $router->get('/reports', 'ReportController@index');
+                $router->get('/reports/{id}', 'ReportController@show');
             }
         );
     }

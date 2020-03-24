@@ -8,7 +8,6 @@ use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
 use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
 use App\Services\Company\CompanyService;
-use Illuminate\Support\Carbon;
 
 class TinkoffService extends CompanyService implements TinkoffServiceContract
 {
