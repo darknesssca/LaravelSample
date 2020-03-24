@@ -10,8 +10,8 @@ class TinkoffBillLinkService extends TinkoffService implements TinkoffBillLinkSe
     public function run($company, $attributes, $additionalFields = []): array
     {
         $data = $this->prepareData($attributes);
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'issueQuoteSetPartner', $data);
-        dd($response);
+        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'getPaymentReferencePartner', $data);
+        dump($response);
         if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }

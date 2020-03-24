@@ -24,6 +24,9 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
         if (!isset($response['response']->OSAGOFQ->totalPremium)) {
             throw new \Exception('api not return premium');
         }
+        if (isset($response['response']->OSAGOFQ->isTerminalG) && $response['response']->OSAGOFQ->isTerminalG) {
+            throw new \Exception('Выдача полиса запрещена страховой компанией');
+        }
         $data = [
             'setNumber' => $response['response']->setNumber,
             'premium' => $response['response']->OSAGOFQ->totalPremium,
@@ -74,15 +77,16 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 ], $address['address']);
                 $pSubject['subjectDetails']['address'][] = $pAddress;
             }
-            $document = $this->searchDocumentByType($subject['fields']['documents'], 'passport'); //todo справочник
-            if ($document) {
-                $this->setValuesByArray($document, [
+            foreach ($subject['fields']['documents'] as $document) {
+                $pDocument = [];
+                $this->setValuesByArray($pDocument, [
                     "documentType" => 'documentType',
                     "series" => 'series',
                     "number" => 'number',
                     "issuedBy" => 'issuedBy',
                     "dateIssue" => 'dateIssue',
-                ], $pSubject['subjectDetails']['document']);
+                ], $document['document']);
+                $pSubject['subjectDetails']['document'][] = $pDocument;
             }
             $pSubject['subjectDetails']['phone'] = [
                 "isPrimary" => true,
@@ -136,10 +140,10 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
         ];
         $this->setValuesByArray($data['vehicleInfo']['vehicleDetails']['vehicleDocument'], [
             'documentType' => 'documentType',
-            'documentSeries' => 'documentSeries',
-            'documentNumber' => 'documentNumber',
-            'documentIssued' => 'documentIssued',
-        ], $attributes['car']['documents']);
+            'documentSeries' => 'series',
+            'documentNumber' => 'number',
+            'documentIssued' => 'dateIssue',
+        ], $attributes['car']['document']);
         //OSAGOFQ
         $data['OSAGOFQ'] = [
             'effectiveDate' => $this->formatDateTimeZone($attributes['policy']['beginDate']),

@@ -34,7 +34,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
         ];
         return $data;
     }
-    
+
 
     public function prepareData($attributes)
     {
@@ -73,7 +73,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                     "Condition" => [
                         "Liability" => [
                             "RiskCtg" => "28966116", // TODO из справочника
-                            'UsageType' => $attributes['car']['usageType'],
+                            'UsageType' => '1381850903', // TODO из справочника
                             "UsageTarget" => [
                                 $attributes['car']['vehicleUsage'] => $this->transformBoolean(true), // TODO имя параметра из справочника
                             ],
