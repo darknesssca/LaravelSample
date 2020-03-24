@@ -6,6 +6,7 @@ namespace App\Services\Company\Renessans;
 use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCheckCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansServiceContract;
+use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
 use App\Models\RequestProcess;
 use App\Services\Company\CompanyService;
@@ -17,6 +18,8 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
 
     public function __construct()
     {
+        $this->companyCode = "renessans";
+        $this->companyId = InsuranceCompany::where('code',$this->companyCode)->take(1)->get()[0]['id'];
         $this->apiUrl = config('api_sk.renessans.apiUrl');
         $this->secretKey = config('api_sk.renessans.apiKey');
         if (!($this->apiUrl && $this->secretKey)) {

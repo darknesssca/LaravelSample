@@ -4,7 +4,6 @@ namespace App\Services\Company\Ingosstrah;
 
 use App\Contracts\Company\Ingosstrah\IngosstrahBillServiceContract;
 use App\Http\Controllers\SoapController;
-use App\Services\Company\Ingosstrah\IngosstrahService;
 
 class IngosstrahBillService extends IngosstrahService implements IngosstrahBillServiceContract
 {

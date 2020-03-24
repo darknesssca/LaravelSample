@@ -2,7 +2,8 @@
 
 namespace App\Console;
 
-use App\Console\Commands\CheckCalculateStatusCommand;
+use App\Console\Commands\CheckRenessancCalculateCommand;
+use App\Console\Commands\RefreshInsuranceGuidesCommand;
 use App\Console\Commands\CheckCreateStatusCommand;
 use App\Console\Commands\CheckHoldStatusCommand;
 use Illuminate\Console\Scheduling\Schedule;
@@ -18,7 +19,8 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         CheckCreateStatusCommand::class,
         CheckHoldStatusCommand::class,
-        CheckCalculateStatusCommand::class,
+        CheckRenessancCalculateCommand::class,
+        RefreshInsuranceGuidesCommand::class,
     ];
 
     /**
