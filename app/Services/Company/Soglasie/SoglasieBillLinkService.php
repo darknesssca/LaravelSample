@@ -5,9 +5,6 @@ namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieBillLinkServiceContract;
 use App\Http\Controllers\RestController;
-use App\Models\InsuranceCompany;
-use App\Models\IntermediateData;
-use Illuminate\Support\Carbon;
 
 class SoglasieBillLinkService extends SoglasieService implements SoglasieBillLinkServiceContract
 {

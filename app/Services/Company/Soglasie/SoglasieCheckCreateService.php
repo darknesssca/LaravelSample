@@ -5,9 +5,6 @@ namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieCheckCreateServiceContract;
 use App\Http\Controllers\RestController;
-use App\Models\InsuranceCompany;
-use App\Models\IntermediateData;
-use Illuminate\Support\Carbon;
 
 class SoglasieCheckCreateService extends SoglasieService implements SoglasieCheckCreateServiceContract
 {

@@ -5,21 +5,22 @@ namespace App\Console\Commands;
 use App\Http\Controllers\InsuranceController;
 use Illuminate\Console\Command;
 
-class CheckCalculateStatusCommand extends Command
+class RefreshInsuranceGuidesCommand extends Command
 {
+
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'check:calculate';
+    protected $signature = 'benfin:guides';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'get calculate response';
+    protected $description = 'refresh car models guides';
 
     /**
      * Create a new command instance.
@@ -31,6 +32,7 @@ class CheckCalculateStatusCommand extends Command
         parent::__construct();
     }
 
+
     /**
      * Execute the console command.
      *
@@ -38,7 +40,11 @@ class CheckCalculateStatusCommand extends Command
      */
     public function handle()
     {
+        echo "----Начало обновления справочников----\n";
+        //модели и марки машин
         $controller = new InsuranceController();
-        $controller->getCalculate();
+        $controller->refreshGuides();
+
+        echo "----Конец обновления справочников----\n";
     }
 }

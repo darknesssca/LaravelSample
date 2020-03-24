@@ -5,9 +5,9 @@ namespace App\Services\Company\Tinkoff;
 
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
+use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
 use App\Services\Company\CompanyService;
-use Illuminate\Support\Carbon;
 
 class TinkoffService extends CompanyService implements TinkoffServiceContract
 {
@@ -18,6 +18,8 @@ class TinkoffService extends CompanyService implements TinkoffServiceContract
 
     public function __construct()
     {
+        $this->companyCode = "tinkoff";
+        $this->companyId = InsuranceCompany::where('code',$this->companyCode)->take(1)->get()[0]['id'];
         $this->apiWsdlUrl = config('api_sk.tinkoff.wsdlUrl');
         $this->apiUser = config('api_sk.tinkoff.user');
         $this->apiPassword = config('api_sk.tinkoff.password');

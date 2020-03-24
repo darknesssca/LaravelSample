@@ -6,9 +6,6 @@ namespace App\Services\Company\Tinkoff;
 
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Http\Controllers\SoapController;
-use App\Models\InsuranceCompany;
-use App\Models\IntermediateData;
-use SoapClient;
 
 class TinkoffCalculateService extends TinkoffService implements TinkoffCalculateServiceContract
 {
@@ -32,14 +29,6 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
         if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
-        //тут странная ситуация, валидация на рег номер срабатывает даже если передан параметр рег номера, поэтому проверку валидации пришлось выпилить
-//        if (isset($response->validInfo->status) && $response->validInfo->status == "ERROR") {
-//            throw new \Exception('api return validation error code: '.
-//                (isset($response->validInfo->code) ? $response->validInfo->code : 'nocode').
-//                ' | message: '.
-//                (isset($response->validInfo->description) ? $response->validInfo->description : 'nocode')
-//            );
-//        }
         if (!isset($response['response']->OSAGOFQ->totalPremium)) {
             throw new \Exception('api not return premium');
         }
@@ -90,7 +79,6 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     "KLADR6" => 'buildingKladr',
                     "flat" => 'flat',
                 ], $address['address']);
-//                $pSubject[$iAddress.':address'] = $pAddress;
                 $pSubject['subjectDetails']['address'][] = $pAddress;
             }
             foreach ($subject['fields']['documents'] as $iDocument => $document) {
@@ -104,7 +92,6 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     "dateIssue" => 'dateIssue',
                     "validTo" => 'validTo',
                 ], $document['document']);
-//                $pSubject[$iDocument.':document'] = $pDocument;
                 $pSubject['subjectDetails']['document'][] = $pDocument;
             }
             $pSubject['subjectDetails']['phone'] = [
@@ -112,7 +99,6 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 "typePhone" => 'mobile',//$subject['fields']['phone']['typePhone'], // TODO: справочник
                 "numberPhone" => $subject['fields']['phone']['numberPhone'],
             ];
-            //$data[$iSubject.':subjectInfo'] = $pSubject;
             $data['subjectInfo'][] = $pSubject;
         }
         //vehicleInfo
@@ -165,7 +151,6 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 "documentNumber" => $document['document']['documentNumber'],
                 "documentIssued" => $document['document']['documentIssued'],
             ];
-//            $data['vehicleInfo']['vehicleDetails'][$iDocument.':vehicleDocument'] = $pDocument;
             $data['vehicleInfo']['vehicleDetails']['vehicleDocument'][] = $pDocument;
         }
         //OSAGOFQ
@@ -185,7 +170,6 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
         if (!$attributes['policy']['isMultidrive']) {
             $data['OSAGOFQ']['driversList']['namedList'] = [];
             foreach ($attributes['drivers'] as $iDriver => $driver) {
-//                $data['OSAGOFQ']['driversList']['namedList'][$iDriver.':driver'] = [
                 $data['OSAGOFQ']['driversList']['namedList']['driver'][] = [
                     'subjectNumber' => $driver['driver']['driverId'],
                     'drivingLicenseIssueDateOriginal' => $driver['driver']['drivingLicenseIssueDateOriginal'],

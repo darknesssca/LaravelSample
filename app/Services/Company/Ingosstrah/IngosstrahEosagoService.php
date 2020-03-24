@@ -1,15 +1,10 @@
 <?php
 
-
 namespace App\Services\Company\Ingosstrah;
 
-
-use App\Contracts\Company\Ingosstrah\IngosstrahCheckCreateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahEosagoServiceContract;
 use App\Http\Controllers\SoapController;
-use App\Models\InsuranceCompany;
 use App\Services\Company\Ingosstrah\IngosstrahService;
-use Spatie\ArrayToXml\ArrayToXml;
 
 class IngosstrahEosagoService extends IngosstrahService implements IngosstrahEosagoServiceContract
 {
@@ -23,27 +18,35 @@ class IngosstrahEosagoService extends IngosstrahService implements IngosstrahEos
     {
         $data = $this->prepareData($data);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'MakeEOsago', $data);
-        dd($response);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
         if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
-        if (!isset($response['response']->Agreement->State)) {
+        if (
+            isset($response['response']->ResponseStatus->ErrorMessage) &&
+            ($response['response']->ResponseStatus->ErrorMessage == 'Превышен период ожидания обработки очереди.') // это тупо, но коллеги из ингосстраха не предоставили ErrorCode, который относится к этой проблеме
+        ) {
+            return [
+                'hold' => true,
+                'isEosago' => false,
+            ];
+        }
+        if (!isset($response['response']->ResponseData->Bso->Serial) || !isset($response['response']->ResponseData->Bso->Number)) {
             throw new \Exception('api not return status');
         }
-        $data = [
-            'response' => $response['response'],
+        return [
+            'hold' => false,
+            'isEosago' => true,
         ];
-        return $data;
     }
 
     public function prepareData($data)
     {
         $data = [
-            'SessionToken' => $data->data['sessionToken'],
-            'AgrISN' => $data->data['AgrISN'],
+            'SessionToken' => $data['data']['sessionToken'],
+            'AgrISN' => $data['data']['policyIsn'],
         ];
         return $data;
     }

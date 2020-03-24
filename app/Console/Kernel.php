@@ -2,6 +2,10 @@
 
 namespace App\Console;
 
+use App\Console\Commands\CheckRenessancCalculateCommand;
+use App\Console\Commands\RefreshInsuranceGuidesCommand;
+use App\Console\Commands\CheckCreateStatusCommand;
+use App\Console\Commands\CheckHoldStatusCommand;
 use Illuminate\Console\Scheduling\Schedule;
 use Laravel\Lumen\Console\Kernel as ConsoleKernel;
 
@@ -13,7 +17,10 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        //
+        CheckCreateStatusCommand::class,
+        CheckHoldStatusCommand::class,
+        CheckRenessancCalculateCommand::class,
+        RefreshInsuranceGuidesCommand::class,
     ];
 
     /**

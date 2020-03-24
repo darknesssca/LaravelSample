@@ -1,14 +1,10 @@
 <?php
 
-
 namespace App\Services\Company\Ingosstrah;
-
 
 use App\Contracts\Company\Ingosstrah\IngosstrahCheckCreateServiceContract;
 use App\Http\Controllers\SoapController;
-use App\Models\InsuranceCompany;
 use App\Services\Company\Ingosstrah\IngosstrahService;
-use Spatie\ArrayToXml\ArrayToXml;
 
 class IngosstrahCheckCreateService extends IngosstrahService implements IngosstrahCheckCreateServiceContract
 {
@@ -18,11 +14,10 @@ class IngosstrahCheckCreateService extends IngosstrahService implements Ingosstr
         return $this->sendCheckCreate($company, $data);
     }
 
-    private function sendCheckCreate($company, $data): array
+    private function sendCheckCreate($company, $processData): array
     {
-        $data = $this->prepareData($data);
+        $data = $this->prepareData($processData);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetAgreement', $data);
-        dd($response);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
@@ -41,22 +36,25 @@ class IngosstrahCheckCreateService extends IngosstrahService implements Ingosstr
                     ];
             }
         }
-        if (!isset($response['response']->Agreement->State)) {
+        if (!isset($response['response']->ResponseData->any)) {
+            throw new \Exception('api not return xml');
+        }
+        $response['parsedResponse'] = json_decode(json_encode(simplexml_load_string($response['response']->ResponseData->any, "SimpleXMLElement", LIBXML_NOCDATA)), true);
+        if (!isset($response['parsedResponse']['@attributes']['State'])) {
             throw new \Exception('api not return status');
         }
-        $data = [
-            'response' => $response['response'],
+        return [
+            'state' => mb_strtolower($response['parsedResponse']['@attributes']['State']),
+            'isn' => $response['parsedResponse']['General']['ISN'],
         ];
-        return $data;
     }
 
     public function prepareData($data)
     {
-        $data = [
-            'SessionToken' => $data->data['sessionToken'],
-            'PolicyNumber' => $data->data['policyId'],
+        return [
+            'SessionToken' => $data['data']['sessionToken'],
+            'PolicyNumber' => $data['data']['policyId'],
         ];
-        return $data;
     }
 
 }

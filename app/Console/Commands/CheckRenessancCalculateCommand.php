@@ -5,21 +5,21 @@ namespace App\Console\Commands;
 use App\Http\Controllers\InsuranceController;
 use Illuminate\Console\Command;
 
-class CheckHoldStatusCommand extends Command
+class CheckRenessancCalculateCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'check:hold';
+    protected $signature = 'renessans:calculate';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'обработка полисов, по которым в связи с задержками СК был проставлен статус hold, т.е. владелец уведомлен о том, что полис создан но недоработан';
+    protected $description = 'get calculate response';
 
     /**
      * Create a new command instance.
@@ -31,6 +31,7 @@ class CheckHoldStatusCommand extends Command
         parent::__construct();
     }
 
+
     /**
      * Execute the console command.
      *
@@ -39,6 +40,6 @@ class CheckHoldStatusCommand extends Command
     public function handle()
     {
         $controller = new InsuranceController();
-        $controller->getHold();
+        $controller->getCalculate();
     }
 }

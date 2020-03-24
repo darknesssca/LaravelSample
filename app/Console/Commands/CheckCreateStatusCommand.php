@@ -19,7 +19,7 @@ class CheckCreateStatusCommand extends Command
      *
      * @var string
      */
-    protected $description = 'get create response';
+    protected $description = 'обработка созданных но не обсчитанных СК полисов (статус полисов processing)';
 
     /**
      * Create a new command instance.

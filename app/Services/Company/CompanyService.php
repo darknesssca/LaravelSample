@@ -5,11 +5,12 @@ namespace App\Services\Company;
 
 use App\Contracts\Company\CompanyServiceContract;
 use App\Models\InsuranceCompany;
-use GuzzleHttp\Client;
 use Illuminate\Support\Carbon;
 
 class CompanyService implements CompanyServiceContract
 {
+    public $companyCode;
+    public $companyId;
 
     public function run(InsuranceCompany $company, $attributes, $additionalData): array
     {
@@ -75,6 +76,7 @@ class CompanyService implements CompanyServiceContract
             "car.vehicleUseRegion" => "required|string", // TODO: in справочник
             "car.isIrregularVIN" => "required|boolean",
             "car.vin" => "required|string",
+            "car.regNumber" => "string", // todo required_if если тип дока машины СТС
             "car.year" => "required|string|min:4|max:4",
             "car.documents" => "required|array",
             "car.documents.*.document" => "required",

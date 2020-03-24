@@ -17,6 +17,8 @@ use PhpOffice\PhpSpreadsheet\Writer\Xls;
 
 class ReportController extends Controller
 {
+    private $httpErrorCode = 400;
+
     //Методы обработки маршрутов
 
     /**
@@ -25,12 +27,13 @@ class ReportController extends Controller
      */
     public function create(Request $request)
     {
+        //TODO Реализовать метод проверки физ лица после реализации получения полисов
         try {
             $validation_result = $this->validate($request, $this->createReportValidationRules(),
                 $this->createReportValidationMessages());
 
             $user_id = $this->getUserId($validation_result['creator_id']);
-            $reward = $this->getReward($validation_result['policies']);
+            $reward = $this->getReward($validation_result['policies'], $user_id);
 
             if ($reward > 0) {
                 $report = Report::create([
@@ -51,7 +54,7 @@ class ReportController extends Controller
                 throw new Exception('Отсутствует доступное вознаграждение');
             }
         } catch (Exception $exception) {
-            return $this->error($exception->getMessage(), 500);
+            return $this->error($exception->getMessage(), $this->httpErrorCode);
         }
 
     }
@@ -79,12 +82,13 @@ class ReportController extends Controller
                 }
                 return response()->json($reports, 200);
             } else {
+                $this->httpErrorCode = 404;
                 throw new Exception('Отчеты не найдены');
             }
 
 
         } catch (Exception $exception) {
-            return $this->error($exception->getMessage(), 500);
+            return $this->error($exception->getMessage(), $this->httpErrorCode);
         }
     }
 
@@ -98,6 +102,7 @@ class ReportController extends Controller
             $id = intval($id);
 
             if ($id <= 0) {
+                $this->httpErrorCode = 404;
                 throw new Exception('Передан некорректный id');
             }
 
@@ -112,7 +117,7 @@ class ReportController extends Controller
 
             return response()->json($report_info, 200);
         } catch (Exception $exception) {
-            return $this->error($exception->getMessage(), 500);
+            return $this->error($exception->getMessage(), $this->httpErrorCode);
         }
     }
 
@@ -148,9 +153,9 @@ class ReportController extends Controller
      * @return int
      * @throws Exception
      */
-    private function getReward(array $policies_ids)
+    private function getReward(array $policies_ids, $user_id)
     {
-        $reward = 0;
+        $reward_sum = 0;
         $policy_collection = Policy::whereIn('id', $policies_ids)->get();
 
         if (count($policy_collection) != count($policies_ids)) { //Найдены не все полисы
@@ -161,12 +166,27 @@ class ReportController extends Controller
             return 1;
         }
 
+        $url = 'api/v1/commission-calculation/rewards';
+        $params = ['user_id' => $user_id];
+        $response = $this->sendRequest('GET', $url, $params);
 
-        foreach ($policy_collection as $policy) {
-            $reward += 1;
+        if (empty($response['content'])){
+            throw new Exception('Ошибка получения данных');
         }
 
-        return $reward;
+        $content = json_decode($response['content'], true, 512,  JSON_OBJECT_AS_ARRAY);
+
+        $rewards = $this->indexRewards($content);
+
+        foreach ($policy_collection as $policy) {
+            if ($policy->paid == false){
+                throw new Exception(sprintf('Полис %s не оплачен', $policy->number));
+            }
+
+            $reward_sum += floatval($rewards[$policy->id]['value']);
+        }
+
+        return $reward_sum;
     }
 
     /**
@@ -182,6 +202,7 @@ class ReportController extends Controller
         $user_id = intval($payload['user_id']);
 
         if (empty($user_id) || $user_id <= 0) {
+            $this->httpErrorCode = 401;
             throw new Exception('Пользователь не авторизован');
         }
 
@@ -376,5 +397,18 @@ class ReportController extends Controller
             'is_payed' => $report->is_payed,
             'policies' => $this->getPolicies($report)
         ];
+    }
+
+    /**
+     * @param array $rewards
+     * @return mixed
+     */
+    private function indexRewards(array $rewards)
+    {
+        foreach ($rewards as $reward){
+            $new_rewards[$rewards['policy']['id']] = $reward;
+        }
+
+        return $new_rewards;
     }
 }
