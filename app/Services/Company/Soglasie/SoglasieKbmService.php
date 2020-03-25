@@ -24,11 +24,6 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
 
     public function run($company, $attributes, $additionalFields = []): array
     {
-        return $this->sendKbm($company, $attributes);
-    }
-
-    private function sendKbm($company, $attributes): array
-    {
         $data = $this->prepareData($attributes);
         $headers = $this->getHeaders();
         $auth = $this->getAuth();
@@ -41,8 +36,8 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
         }
         if (!isset($response['response']->response->ErrorList->ErrorInfo->Code) || ($response['response']->response->ErrorList->ErrorInfo->Code != 3)) { // согласно приведенному примеру 3 является кодом успешного ответа
             throw new \Exception('api not return error Code: '.
-                isset($response['response']->response->ErrorList->ErrorInfo->Code) ? $response['response']->response->ErrorList->ErrorInfo->Code : 'no code | message: '.
-                isset($response['response']->response->ErrorList->ErrorInfo->Message) ? $response['response']->response->ErrorList->ErrorInfo->Message : 'no message');
+            isset($response['response']->response->ErrorList->ErrorInfo->Code) ? $response['response']->response->ErrorList->ErrorInfo->Code : 'no code | message: '.
+            isset($response['response']->response->ErrorList->ErrorInfo->Message) ? $response['response']->response->ErrorList->ErrorInfo->Message : 'no message');
         }
         if (!isset($response['response']->response->CalcResponseValue->IdRequestCalc) || !$response['response']->response->CalcResponseValue->IdRequestCalc) {
             throw new \Exception('api not return IdRequestCalc');

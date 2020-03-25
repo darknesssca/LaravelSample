@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use GuzzleHttp\Client;
+use Nowakowskir\JWT\TokenEncoded;
 
 class RestController
 {
@@ -10,8 +11,12 @@ class RestController
 
     public static function sendLog($data)
     {
+        $tokenEncoded = new TokenEncoded($data['auth_token']);
+        $payload = $tokenEncoded->decode()->getPayload();
+        $userId = $payload['user_id'];
         $body = [
             'auth_token' => $data['auth_token'],
+            'user_id' => $userId,
             'message' => 'пользователь отправил форму со следующими полями: '.\GuzzleHttp\json_encode($data),
             'code' => config('api_sk.logMicroserviceCode'),
         ];
@@ -20,6 +25,7 @@ class RestController
 
     public static function sendBillUrl($email, $billUrl)
     {
+        return true;
         $body = [
             'message' => $billUrl,
             'receiver' => $email,

@@ -18,19 +18,13 @@ class SoglasieCancelCreateService extends SoglasieService implements SoglasieCan
         parent::__construct();
     }
 
-    public function run($company, $attributes, $additionalFields = []): array
-    {
-        return $this->sendCancelCreate($company, $attributes);
-    }
-
-    private function sendCancelCreate($company, $data): array
+    public function run($company, $data, $additionalFields = []): array
     {
         $url = $this->getUrl([
             'policyId' => $data->data['policyId'],
         ]);
         $headers = $this->getHeaders();
-        $response = RestController::getRequest($url, [], $headers);
-        return $response;
+        return RestController::getRequest($url, [], $headers);
     }
 
     protected function getHeaders()

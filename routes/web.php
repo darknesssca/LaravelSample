@@ -34,12 +34,12 @@ $router->group(
                 $router->patch('/drafts/{policeId}', 'DraftController@update');
                 $router->delete('/drafts/{policeId}', 'DraftController@delete');
                 // policies
-                $router->post('/policies/send', 'InsuranceController@store');
-                $router->post('/policies/{code}/{method}', 'InsuranceController@index');
+                $router->post('/registration/send', 'InsuranceController@store');
+                $router->post('/registration/{code}/{method}', 'InsuranceController@index');
 
                 //autocod
-                $router->get('autocod/check-taxi/', 'AutocodController@checkTaxi'); //проверка на такси
-                $router->get('autocod/{report_id}/', 'AutocodController@readReport'); //если отчет уже готов
+                $router->get('autocod/check-taxi', 'AutocodController@checkTaxi'); //проверка на такси
+                $router->get('autocod/{report_id}', 'AutocodController@readReport'); //если отчет уже готов
                 $router->post('autocod', 'AutocodController@requestReport'); //заказать отчет и сразу дождаться генерации
 
                 //reports

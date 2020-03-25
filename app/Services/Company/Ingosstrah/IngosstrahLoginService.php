@@ -9,16 +9,7 @@ use App\Services\Company\Ingosstrah\IngosstrahService;
 class IngosstrahLoginService extends IngosstrahService implements IngosstrahLoginServiceContract
 {
 
-    private $catalogPurpose = ["Личная", "Такси"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-    private $catalogTypeOfDocument = []; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-    private $catalogCatCategory = ["A", "B"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-
     public function run($company, $attributes, $additionalFields = []): array
-    {
-        return $this->sendLogin($company, $attributes);
-    }
-
-    private function sendLogin($company, $attributes): array
     {
         $data = $this->prepareData();
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'Login', $data);

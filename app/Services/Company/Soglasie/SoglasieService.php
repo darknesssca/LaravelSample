@@ -96,7 +96,7 @@ class SoglasieService extends CompanyService implements SoglasieServiceContract
         ]);
         RequestProcess::create([
             'token' => $attributes['token'],
-            'state' => 99,
+            'state' => 50,
             'data' => json_encode([
                 'policyId' => $dataCreate['policyId'],
                 'packageId' => $dataCreate['packageId'],

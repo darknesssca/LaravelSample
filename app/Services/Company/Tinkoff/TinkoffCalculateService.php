@@ -9,9 +9,6 @@ use App\Http\Controllers\SoapController;
 
 class TinkoffCalculateService extends TinkoffService implements TinkoffCalculateServiceContract
 {
-    protected $apiMethods = [
-        'sendCalculate' => 'calcPartnerFQuote',
-    ];
 
     private $catalogPurpose = ["Личная", "Такси"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
     private $catalogTypeOfDocument = []; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
@@ -19,18 +16,16 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
 
     public function run($company, $attributes, $additionalFields = []): array
     {
-        return $this->sendCalculate($company, $attributes);
-    }
-
-    private function sendCalculate($company, $attributes): array
-    {
         $data = $this->prepareData($attributes);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'calcPartnerFQuote', $data);
         if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
         if (!isset($response['response']->OSAGOFQ->totalPremium)) {
-            throw new \Exception('api not return premium');
+            throw new \Exception('api not return premium' . isset($response['response']->Header->resultInfo->errorInfo->descr) ? ' | ' . $response['response']->Header->resultInfo->errorInfo->descr : '');
+        }
+        if (isset($response['response']->OSAGOFQ->isTerminalG) && $response['response']->OSAGOFQ->isTerminalG) {
+            throw new \Exception('Выдача полиса запрещена страховой компанией');
         }
         $data = [
             'setNumber' => $response['response']->setNumber,
@@ -55,6 +50,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     "email" => $subject['fields']['email'],
                     "gender" => $subject['fields']['gender'], // TODO: справочник
                     "citizenship" => $subject['fields']['citizenship'], // TODO: справочник
+                    'document' => [],
                 ],
             ];
             $this->setValue($pSubject['subjectDetails'], 'middleName', 'middleName', $subject['fields']['middleName']);
@@ -81,23 +77,21 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 ], $address['address']);
                 $pSubject['subjectDetails']['address'][] = $pAddress;
             }
-            foreach ($subject['fields']['documents'] as $iDocument => $document) {
-                $pDocument = [
-                    'documentType' => $document['document']['documentType'],  // TODO: справочник
-                ];
+            foreach ($subject['fields']['documents'] as $document) {
+                $pDocument = [];
                 $this->setValuesByArray($pDocument, [
+                    "documentType" => 'documentType',
                     "series" => 'series',
                     "number" => 'number',
                     "issuedBy" => 'issuedBy',
                     "dateIssue" => 'dateIssue',
-                    "validTo" => 'validTo',
                 ], $document['document']);
                 $pSubject['subjectDetails']['document'][] = $pDocument;
             }
             $pSubject['subjectDetails']['phone'] = [
                 "isPrimary" => true,
-                "typePhone" => 'mobile',//$subject['fields']['phone']['typePhone'], // TODO: справочник
-                "numberPhone" => $subject['fields']['phone']['numberPhone'],
+                "typePhone" => 'mobile',
+                "numberPhone" => $subject['fields']['phone'],
             ];
             $data['subjectInfo'][] = $pSubject;
         }
@@ -124,7 +118,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     'isKuzovMissing' => true,
                 ],
                 'mileage' => $attributes['car']['mileage'],
-                'numberOfOwners' => 1, // TODO: понять будет ли поле или заглушка
+                'numberOfOwners' => 1,
                 'registrationNumber' => [
                     'isNoRegistrationNumber' => true,
                 ],
@@ -144,15 +138,12 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 ],
             ],
         ];
-        foreach ($attributes['car']['documents'] as $iDocument => $document) {
-            $pDocument = [
-                "documentType" => $document['document']['documentType'], // TODO: справочник
-                "documentSeries" => $document['document']['documentSeries'],
-                "documentNumber" => $document['document']['documentNumber'],
-                "documentIssued" => $document['document']['documentIssued'],
-            ];
-            $data['vehicleInfo']['vehicleDetails']['vehicleDocument'][] = $pDocument;
-        }
+        $this->setValuesByArray($data['vehicleInfo']['vehicleDetails']['vehicleDocument'], [
+            'documentType' => 'documentType',
+            'documentSeries' => 'series',
+            'documentNumber' => 'number',
+            'documentIssued' => 'dateIssue',
+        ], $attributes['car']['document']);
         //OSAGOFQ
         $data['OSAGOFQ'] = [
             'effectiveDate' => $this->formatDateTimeZone($attributes['policy']['beginDate']),
