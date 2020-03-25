@@ -18,20 +18,17 @@ class CreateCarInsuranceDataTables extends Migration
         'CarCategories',
         'CarModels',
         'ModelInsurance',
-        'RegCountry',
-        'RegCountryInsurance',
+        'Country',
         'SourceAcquisition',
         'AcquisitionInsurance',
         'UsageTargets',
         'UsageTargetInsurance',
         'Gender',
         'GenderInsurance',
-        'Citizenship',
         'DraftClient',
         'Policies',
         'Drivers',
         'PolicyDriver',
-        'ReportTypes',
         'Reports',
         'ReportPolicy',
     ];
@@ -56,6 +53,7 @@ class CreateCarInsuranceDataTables extends Migration
      */
     public function down()
     {
+        $this->tables = array_reverse($this->tables);
         foreach ($this->tables as $tableName) {
             if (method_exists($this, $method = "down{$tableName}")) {
                 $this->{$method}();
@@ -186,7 +184,7 @@ class CreateCarInsuranceDataTables extends Migration
 
     private function upMarkInsurance()
     {
-        Schema::create('insurance_mark', function (Blueprint $table) {
+        Schema::create('insurance_marks', function (Blueprint $table) {
             $table->unsignedInteger('mark_id');
             $table->unsignedInteger('insurance_company_id');
             $table->string('reference_mark_code');
@@ -199,7 +197,7 @@ class CreateCarInsuranceDataTables extends Migration
 
     private function downMarkInsurance()
     {
-        Schema::dropIfExists('insurance_mark');
+        Schema::dropIfExists('insurance_marks');
     }
 
     // категория автомобиля
@@ -230,8 +228,8 @@ class CreateCarInsuranceDataTables extends Migration
             $table->string('name');
             $table->timestamps();
 
-            $table->foreign('mark_id')->references('id')->on('car_marks');
-            $table->foreign('category_id')->references('id')->on('car_categories');
+            $table->foreign('mark_id')->references('id')->on('car_marks')->onDelete('cascade');
+            $table->foreign('category_id')->references('id')->on('car_categories')->onDelete('cascade');
         });
     }
 
@@ -242,7 +240,7 @@ class CreateCarInsuranceDataTables extends Migration
 
     private function upModelInsurance()
     {
-        Schema::create('insurance_model', function (Blueprint $table) {
+        Schema::create('insurance_models', function (Blueprint $table) {
             $table->unsignedInteger('model_id');
             $table->unsignedInteger('insurance_company_id');
             $table->string('reference_model_code');
@@ -255,41 +253,26 @@ class CreateCarInsuranceDataTables extends Migration
 
     private function downModelInsurance()
     {
-        Schema::dropIfExists('insurance_model');
+        Schema::dropIfExists('insurance_models');
     }
 
     // страна регистрации
-    private function upRegCountry()
+    private function upCountry()
     {
-        Schema::create('reg_countries', function (Blueprint $table) {
+        Schema::create('countries', function (Blueprint $table) {
             $table->integerIncrements('id');
-            $table->string('code');
+            $table->integer('code');
             $table->string('name');
+            $table->string('short_name');
+            $table->string('alpha2');
+            $table->string('alpha3');
             $table->timestamps();
         });
     }
 
-    private function downRegCountry()
+    private function downCountry()
     {
-        Schema::dropIfExists('reg_countries');
-    }
-
-    private function upRegCountryInsurance()
-    {
-        Schema::create('insurance_country', function (Blueprint $table) {
-            $table->unsignedInteger('country_id');
-            $table->unsignedInteger('insurance_company_id');
-            $table->string('reference_country_code');
-            $table->timestamps();
-
-            $table->foreign('country_id')->references('id')->on('reg_countries')->onDelete('cascade');
-            $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');
-        });
-    }
-
-    private function downRegCountryInsurance()
-    {
-        Schema::dropIfExists('insurance_country');
+        Schema::dropIfExists('countries');
     }
 
     // способ приобретения автомобиля
@@ -384,7 +367,7 @@ class CreateCarInsuranceDataTables extends Migration
             $table->string('reference_gender_code');
             $table->timestamps();
 
-            $table->foreign('gender_id')->references('id')->on('genders')->onDelete('cascade');
+            $table->foreign('gender_id')->references('id')->on('genders');
             $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');
         });
     }
@@ -394,21 +377,6 @@ class CreateCarInsuranceDataTables extends Migration
         Schema::dropIfExists('gender_insurance');
     }
 
-    // гражданство
-    private function upCitizenship()
-    {
-        Schema::create('citizenship', function (Blueprint $table) {
-            $table->integerIncrements('id');
-            $table->string('code');
-            $table->string('name');
-            $table->timestamps();
-        });
-    }
-
-    private function downCitizenship()
-    {
-        Schema::dropIfExists('citizenship');
-    }
 
     // полисы
     private function upDraftClient()
@@ -434,7 +402,7 @@ class CreateCarInsuranceDataTables extends Migration
             $table->timestamps();
 
             $table->foreign('gender_id')->references('id')->on('genders');
-            $table->foreign('citizenship_id')->references('id')->on('citizenship');
+            $table->foreign('citizenship_id')->references('id')->on('countries');
         });
     }
 
@@ -500,7 +468,7 @@ class CreateCarInsuranceDataTables extends Migration
             $table->foreign('type_id')->references('id')->on('policy_types');
             $table->foreign('client_id')->references('id')->on('draft_clients');
             $table->foreign('insurant_id')->references('id')->on('draft_clients');
-            $table->foreign('vehicle_reg_country')->references('id')->on('reg_countries');
+            $table->foreign('vehicle_reg_country')->references('id')->on('countries');
             $table->foreign('vehicle_acquisition')->references('id')->on('source_acquisitions');
             $table->foreign('vehicle_usage_target')->references('id')->on('usage_targets');
         });
@@ -550,36 +518,16 @@ class CreateCarInsuranceDataTables extends Migration
     }
 
     // репорты
-    private function upReportTypes()
-    {
-        Schema::create('report_types', function (Blueprint $table) {
-            $table->integerIncrements('id');
-            $table->string('code');
-            $table->string('name');
-            $table->timestamps();
-        });
-    }
-
-    private function downReportTypes()
-    {
-        Schema::dropIfExists('report_types');
-    }
-
     private function upReports()
     {
         Schema::create('reports', function (Blueprint $table) {
             $table->integerIncrements('id');
             $table->string('name');
             $table->integer('creator_id');
-            $table->integer('report_type_id');
             $table->date('create_date');
-            $table->date('period_start');
-            $table->date('period_end');
             $table->integer('reward');
-            $table->boolean('is_payed');
+            $table->boolean('is_payed')->default(false);
             $table->timestamps();
-
-            $table->foreign('report_type_id')->references('id')->on('report_types');
         });
     }
 

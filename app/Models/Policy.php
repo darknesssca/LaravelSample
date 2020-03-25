@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Policy extends Model
@@ -102,6 +101,11 @@ class Policy extends Model
     public function drivers()
     {
         return $this->belongsToMany('App\Models\Driver');
+    }
+
+    public function reports()
+    {
+        return $this->belongsToMany('App\Models\Report', 'report_policy');
     }
 
     public function delete() {

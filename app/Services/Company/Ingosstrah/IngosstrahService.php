@@ -10,6 +10,7 @@ use App\Contracts\Company\Ingosstrah\IngosstrahCreateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahEosagoServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahServiceContract;
+use App\Models\InsuranceCompany;
 use App\Http\Controllers\RestController;
 use App\Models\IntermediateData;
 use App\Models\RequestProcess;
@@ -23,6 +24,8 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
 
     public function __construct()
     {
+        $this->companyCode = "ingosstrah";
+        $this->companyId = InsuranceCompany::where('code',$this->companyCode)->take(1)->get()[0]['id'];
         $this->apiWsdlUrl = config('api_sk.ingosstrah.wsdlUrl');
         $this->apiUser = config('api_sk.ingosstrah.user');
         $this->apiPassword = config('api_sk.ingosstrah.password');

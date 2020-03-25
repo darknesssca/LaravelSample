@@ -22,6 +22,8 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
 
     public function __construct()
     {
+        $this->companyCode = "renessans";
+        $this->companyId = InsuranceCompany::where('code',$this->companyCode)->take(1)->get()[0]['id'];
         $this->apiUrl = config('api_sk.renessans.apiUrl');
         $this->secretKey = config('api_sk.renessans.apiKey');
         if (!($this->apiUrl && $this->secretKey)) {
