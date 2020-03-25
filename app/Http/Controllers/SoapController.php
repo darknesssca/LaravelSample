@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Soap\SoapClientEx;
-//use SoapClient;
 use SoapFault;
-use SoapHeader;
 
 class SoapController
 {

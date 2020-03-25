@@ -35,14 +35,18 @@ class Controller extends BaseController
     }
 
     /**
+     * @param array $data
      * @param int $httpCode
      * @return JsonResponse
      */
-    protected function success($httpCode = 200){
+    protected function success($data = [], $httpCode = 200){
         $message = [
             'error' => false,
-            'errors' => [],
+            'data' => $data,
         ];
+        if ($data) {
+            $message['data'] = $data;
+        }
         return response()->json($message, $httpCode);
     }
 

@@ -309,7 +309,6 @@ class CreateCarInsuranceDataTables extends Migration
         Schema::dropIfExists('acquisition_insurance');
     }
 
-
     // цель использования
     private function upUsageTargets()
     {
@@ -438,6 +437,7 @@ class CreateCarInsuranceDataTables extends Migration
             $table->unsignedInteger('vehicle_model_id')->nullable();
             $table->unsignedInteger('vehicle_engine_power')->nullable();
             $table->string('vehicle_vin')->nullable();
+            $table->string('vehicle_reg_number')->nullable();
             $table->unsignedInteger('vehicle_reg_country')->nullable();
             $table->unsignedInteger('vehicle_made_year')->nullable();
             $table->unsignedInteger('vehicle_unladen_mass')->nullable();
@@ -452,12 +452,12 @@ class CreateCarInsuranceDataTables extends Migration
             $table->unsignedInteger('vehicle_reg_doc_type_id')->nullable();
             $table->string('vehicle_doc_series')->nullable();
             $table->string('vehicle_doc_number')->nullable();
-            $table->string('vehicle_doc_issued')->nullable();
+            $table->date('vehicle_doc_issued')->nullable();
             // car.inspection
             $table->string('vehicle_inspection_doc_series')->nullable();
             $table->string('vehicle_inspection_doc_number')->nullable();
-            $table->string('vehicle_inspection_issued_date')->nullable();
-            $table->string('vehicle_inspection_end_date')->nullable();
+            $table->date('vehicle_inspection_issued_date')->nullable();
+            $table->date('vehicle_inspection_end_date')->nullable();
 
             $table->timestamps();
 

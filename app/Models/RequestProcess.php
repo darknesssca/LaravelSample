@@ -21,13 +21,16 @@ class RequestProcess extends Model
 
     public static function updateCheckCount($token)
     {
-        $data = self::where('token', $token)->first;
+        $data = self::where('token', $token)->first();
+        if (!$data) {
+            return true;
+        }
         $checkCount = ++$data->checkCount;
         if ($checkCount >= config('api_sk.maxCheckCount')) {
             self::where('token', $token)->delete();
             return false;
         }
-        self::where('token', $token)->update('checkCount', $checkCount);
+        self::where('token', $token)->update(['checkCount' => $checkCount]);
         return true;
     }
 

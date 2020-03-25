@@ -11,14 +11,8 @@ class IngosstrahBillLinkService extends IngosstrahService implements IngosstrahB
 
     public function run($company, $data, $additionalFields = []): array
     {
-        return $this->sendBillLink($company, $data, $additionalFields);
-    }
-
-    private function sendBillLink($company, $data, $additionalFields): array
-    {
         $data = $this->prepareData($data, $additionalFields);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'CreateOnlineBill', $data);
-        dd($data, $response);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
@@ -37,13 +31,12 @@ class IngosstrahBillLinkService extends IngosstrahService implements IngosstrahB
                     ];
             }
         }
-        if (!isset($response['response']->PayURL)) {
+        if (!isset($response['response']->ResponseData->PayURL)) {
             throw new \Exception('api not return status');
         }
-        $data = [
-            'response' => $response['response'],
+        return [
+            'PayUrl' => $response['response']->ResponseData->PayURL,
         ];
-        return $data;
     }
 
     public function prepareData($data, $form)

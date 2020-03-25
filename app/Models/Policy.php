@@ -93,14 +93,9 @@ class Policy extends Model
         return $this->belongsTo('App\Models\PolicyType', 'vehicle_acquisition', 'id');
     }
 
-    public function usagetype()
-    {
-        return $this->belongsTo('App\Models\UsageType', 'vehicle_usage_target', 'id');
-    }
-
     public function usagetarget()
     {
-        return $this->belongsTo('App\Models\UsageTarget', 'vehicle_usage_type', 'id');
+        return $this->belongsTo('App\Models\UsageTarget', 'vehicle_usage_target', 'id');
     }
 
     public function drivers()
@@ -114,14 +109,14 @@ class Policy extends Model
     }
 
     public function delete() {
-//        $this->drivers()->delete();
+        parent::delete();
         $this->owner()->delete();
         $this->insurer()->delete();
-        parent::delete();
     }
 
-    public static function scopeGetPolicies($query, $agentId)
+    public static function scopeGetDrafts($query, $agentId)
     {
+        $draftStatusId = PolicyStatus::where('code', 'draft')->first()->id;
         return self::with([
             'model',
             'model.mark',
@@ -137,34 +132,37 @@ class Policy extends Model
             'insurer.citizenship',
             'regcountry',
             'acquisition',
-            'usagetype',
-            'usagetarget',
-            'drivers',
-        ])->where('agent_id', $agentId)->get();
-    }
-
-    public static function scopeGetPolicyById($query, $agentId, $id)
-    {
-        return self::with([
-            'model',
-            'model.mark',
-            'model.category',
-            'doctype',
-            'status',
-            'type',
-            'owner',
-            'owner.gender',
-            'owner.citizenship',
-            'insurer',
-            'insurer.gender',
-            'insurer.citizenship',
-            'regcountry',
-            'acquisition',
-            'usagetype',
             'usagetarget',
             'drivers',
         ])
             ->where('agent_id', $agentId)
+            ->where('status_id', $draftStatusId)
+            ->get();
+    }
+
+    public static function scopeGetDraftById($query, $agentId, $id)
+    {
+        $draftStatusId = PolicyStatus::where('code', 'draft')->first()->id;
+        return self::with([
+            'model',
+            'model.mark',
+            'model.category',
+            'doctype',
+            'status',
+            'type',
+            'owner',
+            'owner.gender',
+            'owner.citizenship',
+            'insurer',
+            'insurer.gender',
+            'insurer.citizenship',
+            'regcountry',
+            'acquisition',
+            'usagetarget',
+            'drivers',
+        ])
+            ->where('agent_id', $agentId)
+            ->where('status_id', $draftStatusId)
             ->where('id', $id)->get()
             ->first();
     }

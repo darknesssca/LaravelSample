@@ -18,11 +18,6 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
 
     public function run($company, $attributes, $additionalFields = []): array
     {
-        return $this->sendCalculate($company, $attributes);
-    }
-
-    private function sendCalculate($company, $attributes): array
-    {
         $data = $this->prepareData($attributes);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetTariff', $data);
         if (!$response) {
@@ -39,6 +34,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
         ];
         return $data;
     }
+
 
     public function prepareData($attributes)
     {
@@ -77,7 +73,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                     "Condition" => [
                         "Liability" => [
                             "RiskCtg" => "28966116", // TODO из справочника
-                            'UsageType' => $attributes['car']['usageType'],
+                            'UsageType' => '1381850903', // TODO из справочника
                             "UsageTarget" => [
                                 $attributes['car']['vehicleUsage'] => $this->transformBoolean(true), // TODO имя параметра из справочника
                             ],
@@ -159,21 +155,18 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
         }
         //Vehicle
         $this->setValue($data['TariffParameters']['Agreement']['Vehicle'], 'RegNum', 'regNumber', $attributes['car']);
-        foreach ($attributes['car']['documents'] as $iDocument => $document) {
-            $pDocument = [
-                'DocType' => $document['document']['documentType'],  // TODO: справочник
-            ];
-            $this->setValuesByArray($pDocument, [
-                "Serial" => 'documentSeries',
-                "Number" => 'documentNumber',
-                "DocDate" => 'documentIssued',
-            ], $document['document']);
-            $data['TariffParameters']['Agreement']['Vehicle']['Document'][] = $pDocument;
-        }
+        $data['TariffParameters']['Agreement']['Vehicle']['Document'] = [
+            'DocType' => $attributes['car']['document']['documentType'],  // TODO: справочник
+        ];
+        $this->setValuesByArray($data['TariffParameters']['Agreement']['Vehicle']['Document'], [
+            "Serial" => 'series',
+            "Number" => 'number',
+            "DocDate" => 'dateIssue',
+        ], $attributes['car']['document']);
         $this->setValuesByArray($data['TariffParameters']['Agreement']['Vehicle']['DocInspection'], [
-            "Serial" => 'documentSeries',
-            "Number" => 'documentNumber',
-            "DateEnd" => 'documentDateEmd',
+            "Serial" => 'series',
+            "Number" => 'number',
+            "DateEnd" => 'dateEnd',
         ], $attributes['car']['inspection']);
         //DriverList
         if (!$attributes['policy']['isMultidrive']) {

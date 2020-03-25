@@ -107,6 +107,10 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
                 return [
                     'status' => 'processing',
                 ];
+            case 'hold':
+                return [
+                    'status' => 'hold',
+                ];
             case 'done':
                 return [
                     'status' => 'done',
@@ -133,11 +137,16 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
             $checkData = $checkService->run($company, $data);
         }
         if (
-            isset($checkData['response']->Agreement->IsOsago->IsEOsago) && ($checkData['response']->Agreement->IsOsago->IsEOsago == 'Y') &&
-            isset($checkData['response']->Agreement->Policy->Serial) && $checkData['response']->Agreement->Policy->Serial &&
-            isset($checkData['response']->Agreement->Policy->No) && $checkData['response']->Agreement->Policy->No
+            isset($checkData['policySerial']) && $checkData['policySerial'] &&
+            isset($checkData['policyNumber']) && $checkData['policyNumber'] &&
+            isset($checkData['isEosago']) && $checkData['isEosago']
         ) {
             $this->createBill($company, $data);
+        } else {
+            $result = RequestProcess::updateCheckCount($data['token']);
+            if ($result === false) {
+                $this->dropCreate($company, $data['token'], 'no result by max check count');
+            }
         }
         if ($isNeedUpdateToken) {
             $tokenData = IntermediateData::getData($data['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
@@ -163,10 +172,10 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
         $billLinkData = $billLinkService->run($company, $data, $form);
         $tokenData[$company->code] = [
             'status' => 'done',
-            'billUrl' => $billLinkData['PayURL'],
+            'billUrl' => $billLinkData['PayUrl'],
         ];
         $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
-        RestController::sendBillUrl($insurer['email'], $billLinkData['PayURL']);
+        RestController::sendBillUrl($insurer['email'], $billLinkData['PayUrl']);
         IntermediateData::where('token', $data['token'])->update([
             'data' => $tokenData,
         ]);
@@ -249,7 +258,12 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
         $tokenData = IntermediateData::getData($token); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
         $tokenData[$company->code] = [
             'status' => 'error',
-            'error' => $error,
+            'error' => true,
+            'errors' => [
+                [
+                    'message' => $error
+                ],
+            ],
         ];
         IntermediateData::where('token', $token)->update([
             'data' => $tokenData,
