@@ -2,17 +2,17 @@
 
 namespace App\Services\Company\Ingosstrah;
 
-use App\Contracts\Company\Ingosstrah\IngosstrahBillLinkServiceContract;
+use App\Contracts\Company\Ingosstrah\IngosstrahBillStatusServiceContract;
 use App\Http\Controllers\SoapController;
 use App\Services\Company\Ingosstrah\IngosstrahService;
 
-class IngosstrahBillLinkService extends IngosstrahService implements IngosstrahBillLinkServiceContract
+class IngosstrahBillStatusService extends IngosstrahService implements IngosstrahBillStatusServiceContract
 {
 
-    public function run($company, $data, $additionalFields = []): array
+    public function run($company, $attributes, $additionalFields = []): array
     {
-        $data = $this->prepareData($data, $additionalFields);
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'CreateOnlineBill', $data);
+        $data = $this->prepareData($attributes, $additionalFields);
+        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetBill', $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
@@ -28,30 +28,23 @@ class IngosstrahBillLinkService extends IngosstrahService implements IngosstrahB
                 case -20807:
                     return [
                         'tokenError' => true,
+                        'paid' => false,
                     ];
             }
         }
-        if (!isset($response['response']->ResponseData->PayURL)) {
+        if (!isset($response['response']->ResponseData->Bill->Paid)) {
             throw new \Exception('страховая компания вернула некорректный результат' . (isset($response['response']->ResponseStatus->ErrorMessage) ? ' | ' . $response['response']->ResponseStatus->ErrorMessage : ''));
         }
         return [
-            'PayUrl' => $response['response']->ResponseData->PayURL,
+            'paid' => $response['response']->ResponseData->Bill->Paid == 2,
         ];
     }
 
-    public function prepareData($data, $form)
+    public function prepareData($attributes, $form)
     {
-        $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
         return [
-            'SessionToken' => $data['data']['sessionToken'],
-            'Bill' => [
-                'BillISN' => $data['data']['billIsn'],
-                'Client' => [
-                    'Email' => $insurer['email'],
-                    'SendByEmail' => $this->transformBoolean(true),
-                    'DigitalPolicyEmail' => $insurer['email'],
-                ],
-            ],
+            'SessionToken' => $attributes['SessionToken'],
+            'BillISN' => $attributes['BillISN'],
         ];
     }
 

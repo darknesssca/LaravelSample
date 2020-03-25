@@ -27,7 +27,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
         if (!isset($response['response']->ResponseData->Tariff->PremiumAmount)) {
-            throw new \Exception('api not return premium');
+            throw new \Exception('страховая компания вернула некорректный результат' . (isset($response['response']->ResponseStatus->ErrorMessage) ? ' | ' . $response['response']->ResponseStatus->ErrorMessage : ''));
         }
         $data = [
             'premium' => $response['response']->ResponseData->Tariff->PremiumAmount,

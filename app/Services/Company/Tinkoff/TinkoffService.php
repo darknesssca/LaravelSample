@@ -74,6 +74,11 @@ class TinkoffService extends CompanyService implements TinkoffServiceContract
         ];
     }
 
+    public function checkPaid($company, $process)
+    {
+        // данный метод необходим для совместимости, но получение статусов происходит другим способом
+    }
+
     protected function setHeader(&$data)
     {
         $data['Header'] = [

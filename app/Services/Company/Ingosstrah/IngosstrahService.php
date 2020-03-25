@@ -4,6 +4,7 @@ namespace App\Services\Company\Ingosstrah;
 
 use App\Contracts\Company\Ingosstrah\IngosstrahBillServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahBillLinkServiceContract;
+use App\Contracts\Company\Ingosstrah\IngosstrahBillStatusServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahCalculateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahCheckCreateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahCreateServiceContract;
@@ -13,6 +14,7 @@ use App\Contracts\Company\Ingosstrah\IngosstrahServiceContract;
 use App\Models\InsuranceCompany;
 use App\Http\Controllers\RestController;
 use App\Models\IntermediateData;
+use App\Models\PolicyStatus;
 use App\Models\RequestProcess;
 use App\Services\Company\CompanyService;
 
@@ -121,6 +123,26 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
         }
     }
 
+    public function checkPaid($company, $process)
+    {
+        $dataProcess = $process->toArray();
+        $serviceLogin = app(IngosstrahLoginServiceContract::class);
+        $loginData = $serviceLogin->run($company, []);
+        $attributes = [
+            'BillISN' => $dataProcess['bill']['bill_id'],
+            'SessionToken' => $loginData['sessionToken'],
+        ];
+        $serviceStatus = app(IngosstrahBillStatusServiceContract::class);
+        $dataStatus = $serviceStatus->run($company, $attributes, $process);
+        if (isset($dataStatus['paid']) && $dataStatus['paid']) {
+            $process->update([
+                'paid' => true,
+                'status_id' => PolicyStatus::where('code', 'paid')->first()->id, // todo справочник
+            ]);
+            $process->bill()->delete();
+        }
+    }
+
     public function checkHold($company, $data)
     {
         $data = $data->toArray();
@@ -170,10 +192,9 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
         $form = $tokenData['form'];
         $billLinkService = app(IngosstrahBillLinkServiceContract::class);
         $billLinkData = $billLinkService->run($company, $data, $form);
-        $tokenData[$company->code] = [
-            'status' => 'done',
-            'billUrl' => $billLinkData['PayUrl'],
-        ];
+        $tokenData[$company->code]['status'] = 'done';
+        $tokenData[$company->code]['billIsn'] = $billData['billIsn'];
+        $tokenData[$company->code]['billUrl'] = $billLinkData['PayUrl'];
         $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
         RestController::sendBillUrl($insurer['email'], $billLinkData['PayUrl']);
         IntermediateData::where('token', $data['token'])->update([

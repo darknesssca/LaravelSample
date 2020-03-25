@@ -83,7 +83,6 @@ class CompanyService implements CompanyServiceContract
             "car.document.number" => "required|string", // TODO: in справочник
             "car.document.dateIssue" => "required|string", // TODO: in справочник
             "car.inspection" => "required",
-            "car.inspection.documentType" => "required|integer", // TODO: in справочник
             "car.inspection.series" => "required|string",
             "car.inspection.number" => "required|string",
             "car.inspection.dateIssue" => "required|date|date_format:Y-m-d",

@@ -32,7 +32,7 @@ class IngosstrahBillService extends IngosstrahService implements IngosstrahBillS
             }
         }
         if (!isset($response['response']->ResponseData->BillISN)) {
-            throw new \Exception('api not return status');
+            throw new \Exception('страховая компания вернула некорректный результат' . (isset($response['response']->ResponseStatus->ErrorMessage) ? ' | ' . $response['response']->ResponseStatus->ErrorMessage : ''));
         }
         return[
             'billIsn' => $response['response']->ResponseData->BillISN,

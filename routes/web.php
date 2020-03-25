@@ -33,8 +33,9 @@ $router->group(
                 $router->get('/drafts/{policeId}', 'DraftController@show');
                 $router->patch('/drafts/{policeId}', 'DraftController@update');
                 $router->delete('/drafts/{policeId}', 'DraftController@delete');
-                // policies
+                // запросы в страховые компании
                 $router->post('/registration/send', 'InsuranceController@store');
+                $router->post('/registration/payment', 'InsuranceController@payment');
                 $router->post('/registration/{code}/{method}', 'InsuranceController@index');
 
                 //autocod

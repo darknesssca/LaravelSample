@@ -36,7 +36,7 @@ class IngosstrahCheckCreateService extends IngosstrahService implements Ingosstr
         }
         $response['parsedResponse'] = json_decode(json_encode(simplexml_load_string($response['response']->ResponseData->any, "SimpleXMLElement", LIBXML_NOCDATA)), true);
         if (!isset($response['parsedResponse']['@attributes']['State'])) {
-            throw new \Exception('api not return status');
+            throw new \Exception('страховая компания вернула некорректный результат' . (isset($response['response']->ResponseStatus->ErrorMessage) ? ' | ' . $response['response']->ResponseStatus->ErrorMessage : ''));
         }
         return [
             'state' => mb_strtolower($response['parsedResponse']['@attributes']['State']),

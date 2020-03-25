@@ -27,6 +27,7 @@ class CreateCarInsuranceDataTables extends Migration
         'GenderInsurance',
         'DraftClient',
         'Policies',
+        'BillPolicy',
         'Drivers',
         'PolicyDriver',
         'Reports',
@@ -477,6 +478,22 @@ class CreateCarInsuranceDataTables extends Migration
     private function downPolicies()
     {
         Schema::dropIfExists('policies');
+    }
+
+    private function upBillPolicy()
+    {
+        Schema::create('bill_policy', function (Blueprint $table) {
+            $table->unsignedInteger('policy_id');
+            $table->string('bill_id');
+            $table->timestamps();
+
+            $table->foreign('policy_id')->references('id')->on('policies');
+        });
+    }
+
+    private function downBillPolicy()
+    {
+        Schema::dropIfExists('bill_policy');
     }
 
     private function upDrivers()

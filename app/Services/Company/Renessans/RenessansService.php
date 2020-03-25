@@ -13,6 +13,7 @@ use App\Contracts\Company\Renessans\RenessansServiceContract;
 use App\Http\Controllers\RestController;
 use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
+use App\Models\PolicyStatus;
 use App\Models\RequestProcess;
 use App\Services\Company\CompanyService;
 
@@ -147,6 +148,23 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
         }
     }
 
+    public function checkPaid($company, $process)
+    {
+        $dataProcess = $process->toArray();
+        $attributes = [
+            'policyId' => (int)$dataProcess['number']
+        ];
+        $serviceStatus = app(RenessansGetStatusServiceContract::class);
+        $dataStatus = $serviceStatus->run($company, $attributes, $process);
+        if ($dataStatus['result'] && $dataStatus['payStatus']) {
+            $process->update([
+                'paid' => true,
+                'status_id' => PolicyStatus::where('code', 'paid')->first()->id, // todo справочник
+                'number' => $dataStatus['policyNumber'],
+            ]);
+        }
+    }
+
     public function checkHold($company, $process)
     {
         $dataProcess = $process->toArray();
@@ -156,7 +174,7 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
         ];
         $serviceStatus = app(RenessansGetStatusServiceContract::class);
         $dataStatus = $serviceStatus->run($company, $attributes, $process);
-        if ($dataStatus['result']) {
+        if ($dataStatus['result'] && $dataStatus['createStatus']) {
             $tokenFullData = IntermediateData::where('token', $dataProcess['token'])->first()->toArray();
             $tokenData = json_decode($tokenFullData['data'], true);
             $form = $tokenData['form'];
@@ -200,7 +218,7 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
         if ($dataCreate['result']) {
             $serviceStatus = app(RenessansGetStatusServiceContract::class);
             $dataStatus = $serviceStatus->run($company, $attributes, $process);
-            if ($dataStatus['result']) {
+            if ($dataStatus['result'] && $dataStatus['createStatus']) {
                 $tokenFullData = IntermediateData::where('token', $dataProcess['token'])->first()->toArray();
                 $tokenData = json_decode($tokenFullData['data'], true);
                 $form = $tokenData['form'];
