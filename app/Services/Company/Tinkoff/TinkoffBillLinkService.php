@@ -11,12 +11,11 @@ class TinkoffBillLinkService extends TinkoffService implements TinkoffBillLinkSe
     {
         $data = $this->prepareData($attributes);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'getPaymentReferencePartner', $data);
-        dump($response);
         if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
         if (!isset($response['response']->paymentURL)) {
-            throw new \Exception('api not return paymentURL');
+            throw new \Exception('api not return paymentURL' . isset($response['response']->Header->resultInfo->errorInfo->descr) ? ' | ' . $response['response']->Header->resultInfo->errorInfo->descr : '');
         }
         return [
             'billUrl' => $response['response']->paymentURL,

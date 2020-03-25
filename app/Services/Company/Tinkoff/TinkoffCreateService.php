@@ -11,12 +11,11 @@ class TinkoffCreateService extends TinkoffService implements TinkoffCreateServic
     {
         $data = $this->prepareData($attributes);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'issueQuoteSetPartner', $data);
-        dump($response);
         if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
         if (!isset($response['response']->Header->resultInfo->status)) {
-            throw new \Exception('При попытке создать полис был не был возвращен статус');
+            throw new \Exception('При попытке создать полис был не был возвращен статус' . isset($response['response']->Header->resultInfo->errorInfo->descr) ? ' | ' . $response['response']->Header->resultInfo->errorInfo->descr : '');
         }
         if (strtolower($response['response']->Header->resultInfo->status) != 'ok') {
             throw new \Exception('При попытке создать полис был возвращен некорректный статус: ' . $response['response']->Header->resultInfo->status .

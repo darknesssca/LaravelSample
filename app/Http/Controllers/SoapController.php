@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Soap\SoapClientEx;
-//use SoapClient;
 use SoapFault;
-use SoapHeader;
 
 class SoapController
 {
@@ -34,18 +32,13 @@ class SoapController
             }
             $opts['stream_context'] = stream_context_create($stream_context);
             $client = new SoapClientEx($url, $opts, $attributes);
-//            if ($method == 'GetTariff') {
-//                dump($method, 'ok', $client->$method($data), 'request', $client->__getLastRequest(), 'response', $client->__getLastResponse(), $client, $data);
-//            }
             return ['response' => $client->$method($data)];
         }catch(SoapFault $fault){
-            dd($method, 'fault',$fault,$client->__getLastRequest(), $client, $data);
             return [
                 'fault' => true,
                 'message' => $fault->getMessage(),
             ];
         } catch (\Exception $exception) {
-            dd($method, 'exception',$exception, $client->__getLastRequest(), $client, $data);
             return [
                 'fault' => true,
                 'message' => $exception->getMessage(),

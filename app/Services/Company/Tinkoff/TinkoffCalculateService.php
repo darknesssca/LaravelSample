@@ -22,7 +22,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
         if (!isset($response['response']->OSAGOFQ->totalPremium)) {
-            throw new \Exception('api not return premium');
+            throw new \Exception('api not return premium' . isset($response['response']->Header->resultInfo->errorInfo->descr) ? ' | ' . $response['response']->Header->resultInfo->errorInfo->descr : '');
         }
         if (isset($response['response']->OSAGOFQ->isTerminalG) && $response['response']->OSAGOFQ->isTerminalG) {
             throw new \Exception('Выдача полиса запрещена страховой компанией');

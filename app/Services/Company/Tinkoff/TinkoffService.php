@@ -3,6 +3,7 @@
 
 namespace App\Services\Company\Tinkoff;
 
+use App\Contracts\Company\Tinkoff\TinkoffBillLinkServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCreateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
@@ -32,7 +33,7 @@ class TinkoffService extends CompanyService implements TinkoffServiceContract
     {
         $service = app(TinkoffCalculateServiceContract::class);
         $data = $service->run($company, $attributes, $additionalData);
-        $tokenData = IntermediateData::getData($attributes['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
+        $tokenData = IntermediateData::getData($attributes['token']);
         $tokenData[$company->code] = [
             'setNumber' => $data['setNumber'],
         ];
@@ -52,11 +53,11 @@ class TinkoffService extends CompanyService implements TinkoffServiceContract
         $attributes['setNumber'] = $additionalData['tokenData']['setNumber'];
         $createService = app(TinkoffCreateServiceContract::class);
         $createData = $createService->run($company, $attributes, $additionalData);
-        $billLinkService = app(TinkoffCreateServiceContract::class);
+        $billLinkService = app(TinkoffBillLinkServiceContract::class);
         $billLinkData = $billLinkService->run($company, $attributes, $additionalData);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
-        RestController::sendBillUrl($insurer['email'], $billLinkData['PayURL']);
-        $tokenData = IntermediateData::getData($attributes['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
+        RestController::sendBillUrl($insurer['email'], $billLinkData['billUrl']);
+        $tokenData = IntermediateData::getData($attributes['token']);
         $tokenData[$company->code] = [
             'status' => $createData['status'],
             'billUrl' => $billLinkData['billUrl'],
@@ -65,7 +66,7 @@ class TinkoffService extends CompanyService implements TinkoffServiceContract
             'data' => $tokenData,
         ]);
         return [
-            'premium' => $createData['status'],
+            'status' => $createData['status'],
             'billUrl' => $billLinkData['billUrl'],
         ];
     }

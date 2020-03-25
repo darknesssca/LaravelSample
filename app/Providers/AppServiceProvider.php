@@ -25,6 +25,7 @@ use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieServiceContract;
+use App\Contracts\Company\Tinkoff\TinkoffBillLinkServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCreateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
@@ -51,6 +52,7 @@ use App\Services\Company\Soglasie\SoglasieCreateService;
 use App\Services\Company\Soglasie\SoglasieKbmService;
 use App\Services\Company\Soglasie\SoglasieScoringService;
 use App\Services\Company\Soglasie\SoglasieService;
+use App\Services\Company\Tinkoff\TinkoffBillLinkService;
 use App\Services\Company\Tinkoff\TinkoffCalculateService;
 use App\Services\Company\Tinkoff\TinkoffCreateService;
 use App\Services\Company\Tinkoff\TinkoffService;
@@ -104,6 +106,9 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->singleton(TinkoffCreateServiceContract::class, function($app) {
             return new TinkoffCreateService();
+        });
+        $this->app->singleton(TinkoffBillLinkServiceContract::class, function($app) {
+            return new TinkoffBillLinkService();
         });
         //ingosstrah
         $this->app->singleton(IngosstrahServiceContract::class, function($app) {
