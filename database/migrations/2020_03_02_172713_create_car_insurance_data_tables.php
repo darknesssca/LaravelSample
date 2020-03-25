@@ -22,8 +22,6 @@ class CreateCarInsuranceDataTables extends Migration
         'RegCountryInsurance',
         'SourceAcquisition',
         'AcquisitionInsurance',
-        'UsageTypes',
-        'UsageTypeInsurance',
         'UsageTargets',
         'UsageTargetInsurance',
         'Gender',
@@ -328,40 +326,6 @@ class CreateCarInsuranceDataTables extends Migration
         Schema::dropIfExists('acquisition_insurance');
     }
 
-    // способ использования
-    private function upUsageTypes()
-    {
-        Schema::create('usage_types', function (Blueprint $table) {
-            $table->integerIncrements('id');
-            $table->string('code');
-            $table->string('name');
-            $table->timestamps();
-        });
-    }
-
-    private function downUsageTypes()
-    {
-        Schema::dropIfExists('usage_types');
-    }
-
-    private function upUsageTypeInsurance()
-    {
-        Schema::create('usage_type_insurance', function (Blueprint $table) {
-            $table->unsignedInteger('type_id');
-            $table->unsignedInteger('insurance_company_id');
-            $table->string('reference_usage_type_code');
-            $table->timestamps();
-
-            $table->foreign('type_id')->references('id')->on('usage_types')->onDelete('cascade');
-            $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');
-        });
-    }
-
-    private function downUsageTypeInsurance()
-    {
-        Schema::dropIfExists('usage_type_insurance');
-    }
-
     // цель использования
     private function upUsageTargets()
     {
@@ -505,6 +469,7 @@ class CreateCarInsuranceDataTables extends Migration
             $table->unsignedInteger('vehicle_model_id')->nullable();
             $table->unsignedInteger('vehicle_engine_power')->nullable();
             $table->string('vehicle_vin')->nullable();
+            $table->string('vehicle_reg_number')->nullable();
             $table->unsignedInteger('vehicle_reg_country')->nullable();
             $table->unsignedInteger('vehicle_made_year')->nullable();
             $table->unsignedInteger('vehicle_unladen_mass')->nullable();
@@ -514,18 +479,17 @@ class CreateCarInsuranceDataTables extends Migration
             $table->unsignedInteger('vehicle_cost')->nullable();
             $table->unsignedInteger('vehicle_acquisition')->nullable();
             $table->unsignedInteger('vehicle_usage_target')->nullable();
-            $table->unsignedInteger('vehicle_usage_type')->nullable();
             $table->boolean('vehicle_with_trailer')->default(false);
             // car.document
             $table->unsignedInteger('vehicle_reg_doc_type_id')->nullable();
             $table->string('vehicle_doc_series')->nullable();
             $table->string('vehicle_doc_number')->nullable();
-            $table->string('vehicle_doc_issued')->nullable();
+            $table->date('vehicle_doc_issued')->nullable();
             // car.inspection
             $table->string('vehicle_inspection_doc_series')->nullable();
             $table->string('vehicle_inspection_doc_number')->nullable();
-            $table->string('vehicle_inspection_issued_date')->nullable();
-            $table->string('vehicle_inspection_end_date')->nullable();
+            $table->date('vehicle_inspection_issued_date')->nullable();
+            $table->date('vehicle_inspection_end_date')->nullable();
 
             $table->timestamps();
 
@@ -539,7 +503,6 @@ class CreateCarInsuranceDataTables extends Migration
             $table->foreign('vehicle_reg_country')->references('id')->on('reg_countries');
             $table->foreign('vehicle_acquisition')->references('id')->on('source_acquisitions');
             $table->foreign('vehicle_usage_target')->references('id')->on('usage_targets');
-            $table->foreign('vehicle_usage_type')->references('id')->on('usage_types');
         });
     }
 

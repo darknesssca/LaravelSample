@@ -310,36 +310,6 @@ class PolicySeeder extends Seeder
         ],
     ];
 
-    protected static $usageType = [
-        [
-            'code' => 'person',
-            'name' => 'лично',
-        ],
-    ];
-
-    protected static $insuranceUsageType = [
-        [
-            'type_id' => 1,
-            'insurance_company_id' => 1,
-            'reference_usage_type_code' => 'Личная',
-        ],
-        [
-            'type_id' => 1,
-            'insurance_company_id' => 2,
-            'reference_usage_type_code' => 'PURCHASED_FROM_PERSON',
-        ],
-        [
-            'type_id' => 1,
-            'insurance_company_id' => 3,
-            'reference_usage_type_code' => '1',
-        ],
-        [
-            'type_id' => 1,
-            'insurance_company_id' => 4,
-            'reference_usage_type_code' => 'personal',
-        ],
-    ];
-
     protected static $usageTarget = [
         [
             'code' => 'person',
@@ -424,8 +394,6 @@ class PolicySeeder extends Seeder
         \App\Models\RegCountryInsurance::insert(self::$insuranceCountry);
         \App\Models\SourceAcquisition::insert(self::$sourceAcquisition);
         \App\Models\SourceAcquisitionInsurance::insert(self::$insuranceAcquisition);
-        \App\Models\UsageType::insert(self::$usageType);
-        \App\Models\UsageTypeInsurance::insert(self::$insuranceUsageType);
         \App\Models\UsageTarget::insert(self::$usageTarget);
         \App\Models\UsageTargetInsurance::insert(self::$insuranceUsageTarget);
         \App\Models\Gender::insert(self::$gender);

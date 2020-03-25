@@ -94,14 +94,9 @@ class Policy extends Model
         return $this->belongsTo('App\Models\PolicyType', 'vehicle_acquisition', 'id');
     }
 
-    public function usagetype()
-    {
-        return $this->belongsTo('App\Models\UsageType', 'vehicle_usage_target', 'id');
-    }
-
     public function usagetarget()
     {
-        return $this->belongsTo('App\Models\UsageTarget', 'vehicle_usage_type', 'id');
+        return $this->belongsTo('App\Models\UsageTarget', 'vehicle_usage_target', 'id');
     }
 
     public function drivers()
@@ -110,10 +105,9 @@ class Policy extends Model
     }
 
     public function delete() {
-//        $this->drivers()->delete();
+        parent::delete();
         $this->owner()->delete();
         $this->insurer()->delete();
-        parent::delete();
     }
 
     public static function scopeGetDrafts($query, $agentId)
@@ -134,7 +128,6 @@ class Policy extends Model
             'insurer.citizenship',
             'regcountry',
             'acquisition',
-            'usagetype',
             'usagetarget',
             'drivers',
         ])
@@ -161,7 +154,6 @@ class Policy extends Model
             'insurer.citizenship',
             'regcountry',
             'acquisition',
-            'usagetype',
             'usagetarget',
             'drivers',
         ])

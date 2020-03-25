@@ -172,6 +172,7 @@ class DraftController extends Controller
                     'vehicle_model_id' => 'model',
                     'vehicle_engine_power' => 'enginePower',
                     'vehicle_vin' => 'vin',
+                    'vehicle_reg_number' => 'regNumber',
                     'vehicle_reg_country' => 'countryOfRegistration',
                     'vehicle_made_year' => 'year',
                     'vehicle_unladen_mass' => 'minWeight',
@@ -181,21 +182,22 @@ class DraftController extends Controller
                     'vehicle_cost' => 'vehicleCost',
                     'vehicle_acquisition' => 'sourceAcquisition',
                     'vehicle_usage_target' => 'vehicleUsage',
-                    'vehicle_usage_type' => 'usageType',
                     'vehicle_with_trailer' => 'isUsedWithTrailer',
                 ]);
                 if (isset($attributes['car']['document']) && $attributes['car']['document']) {
                     $this->pushData($policyData, $attributes['car']['document'], [
                         'vehicle_reg_doc_type_id' => 'documentType',
-                        'vehicle_doc_series' => 'documentSeries',
-                        'vehicle_doc_number' => 'documentNumber',
-                        'vehicle_doc_issued' => 'documentIssued',
+                        'vehicle_doc_series' => 'series',
+                        'vehicle_doc_number' => 'number',
+                        'vehicle_doc_issued' => 'dateIssue',
                     ]);
                 }
-                if (isset($attributes['car']['docInspection']) && $attributes['car']['docInspection']) {
-                    $this->pushData($policyData, $attributes['car']['docInspection'], [
-                        'vehicle_inspection_doc_series' => 'documentSeries',
-                        'vehicle_inspection_doc_number' => 'documentNumber',
+                if (isset($attributes['car']['inspection']) && $attributes['car']['inspection']) {
+                    $this->pushData($policyData, $attributes['car']['inspection'], [
+                        'vehicle_inspection_doc_series' => 'series',
+                        'vehicle_inspection_doc_number' => 'number',
+                        'vehicle_inspection_issued_date' => 'dateIssue',
+                        'vehicle_inspection_end_date' => 'dateEnd',
                     ]);
                 }
             }
@@ -357,6 +359,7 @@ class DraftController extends Controller
                     'vehicle_model_id' => 'model',
                     'vehicle_engine_power' => 'enginePower',
                     'vehicle_vin' => 'vin',
+                    'vehicle_reg_number' => 'regNumber',
                     'vehicle_reg_country' => 'countryOfRegistration',
                     'vehicle_made_year' => 'year',
                     'vehicle_unladen_mass' => 'minWeight',
@@ -366,21 +369,22 @@ class DraftController extends Controller
                     'vehicle_cost' => 'vehicleCost',
                     'vehicle_acquisition' => 'sourceAcquisition',
                     'vehicle_usage_target' => 'vehicleUsage',
-                    'vehicle_usage_type' => 'usageType',
                     'vehicle_with_trailer' => 'isUsedWithTrailer',
                 ]);
                 if (isset($attributes['car']['document']) && $attributes['car']['document']) {
                     $this->pushData($policyData, $attributes['car']['document'], [
                         'vehicle_reg_doc_type_id' => 'documentType',
-                        'vehicle_doc_series' => 'documentSeries',
-                        'vehicle_doc_number' => 'documentNumber',
-                        'vehicle_doc_issued' => 'documentIssued',
+                        'vehicle_doc_series' => 'series',
+                        'vehicle_doc_number' => 'number',
+                        'vehicle_doc_issued' => 'dateIssue',
                     ]);
                 }
-                if (isset($attributes['car']['docInspection']) && $attributes['car']['docInspection']) {
-                    $this->pushData($policyData, $attributes['car']['docInspection'], [
-                        'vehicle_inspection_doc_series' => 'documentSeries',
-                        'vehicle_inspection_doc_number' => 'documentNumber',
+                if (isset($attributes['car']['inspection']) && $attributes['car']['inspection']) {
+                    $this->pushData($policyData, $attributes['car']['inspection'], [
+                        'vehicle_inspection_doc_series' => 'series',
+                        'vehicle_inspection_doc_number' => 'number',
+                        'vehicle_inspection_issued_date' => 'dateIssue',
+                        'vehicle_inspection_end_date' => 'dateEnd',
                     ]);
                 }
             }
@@ -502,7 +506,7 @@ class DraftController extends Controller
             "subjects.*.fields.birthPlace" => "string",
             "subjects.*.fields.email" => "email",
             "subjects.*.fields.gender" => "integer", // TODO: in справочник
-            "subjects.*.fields.citizenship_id" => "string", // TODO: in справочник
+            "subjects.*.fields.citizenship_id" => "integer", // TODO: in справочник
             "subjects.*.fields.isResident" => "boolean", // TODO: in справочник
             "subjects.*.fields.address" => "string",
             "subjects.*.fields.passport.series" => "string",
@@ -523,13 +527,16 @@ class DraftController extends Controller
             "car.vehicleCost" => "integer",
             "car.vehicleUsage" => "integer", // TODO: in справочник
             "car.vin" => "string",
+            "car.regNumber" => "string",
             "car.year" => "string|min:4|max:4",
             "car.document.documentType" => "integer", // TODO: in справочник
-            "car.document.documentSeries" => "string", // TODO: in справочник
-            "car.document.documentNumber" => "string", // TODO: in справочник
-            "car.document.documentIssued" => "string", // TODO: in справочник
-            "car.docInspection.vehicle_inspection_doc_series" => "string", // TODO: in справочник
-            "car.docInspection.vehicle_inspection_doc_number" => "string", // TODO: in справочник
+            "car.document.series" => "string",
+            "car.document.number" => "string",
+            "car.document.dateIssue" => "date|date_format:Y-m-d",
+            "car.inspection.series" => "string",
+            "car.inspection.number" => "string",
+            "car.inspection.dateIssue" => "date|date_format:Y-m-d",
+            "car.inspection.dateEnd" => "date|date_format:Y-m-d",
             'policy.beginDate' => "date|date_format:Y-m-d",
             'policy.endDate' => "date|date_format:Y-m-d",
             'policy.insurantId' => "integer",
