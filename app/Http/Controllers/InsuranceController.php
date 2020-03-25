@@ -79,6 +79,41 @@ class InsuranceController extends Controller
         }
     }
 
+    public function payment($company, Request $request)
+    {
+        $company = $this->checkCompany($company);
+        if (!$company->count()) {
+            return $this->error('Компания не найдена', 404);
+        }
+        $serviceMethod = 'payment';
+        try
+        {
+            $controller = $this->getCompanyController($company);
+            if (!method_exists($controller, $serviceMethod)) {
+                return $this->error('Метод не найден', 404); // todo вынести в отдельные эксепшены
+            }
+            $this->validate(
+                $request,
+                $controller->validationRulesProcess(),
+                $controller->validationMessagesProcess()
+            );
+            $response = $this->runService($company, $request->toArray(), $serviceMethod);
+            if (isset($response['error']) && $response['error']) {
+                return response()->json($response, 500);
+            } else {
+                return $this->success($response, 200);
+            }
+        }
+        catch (ValidationException $exception)
+        {
+            return $this->error($exception->errors(), 400);
+        } catch (BindingResolutionException $exception) {
+            return $this->error('Не найден обработчик компании: ' . $exception->getMessage(), 404);
+        } catch (\Exception $exception) {
+            return $this->error($exception->getMessage(), 500);
+        }
+    }
+
     private function runService($company, $request, $serviceMethod, $additionalData = [])
     {
         $controller = $this->getCompanyController($company);

@@ -79,6 +79,11 @@ class TinkoffService extends CompanyService implements TinkoffServiceContract
         // данный метод необходим для совместимости, но получение статусов происходит другим способом
     }
 
+    public function payment($company, $attributes)
+    {
+
+    }
+
     protected function setHeader(&$data)
     {
         $data['Header'] = [

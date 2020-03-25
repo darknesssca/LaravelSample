@@ -35,7 +35,7 @@ $router->group(
                 $router->delete('/drafts/{policeId}', 'DraftController@delete');
                 // запросы в страховые компании
                 $router->post('/registration/send', 'InsuranceController@store');
-                $router->post('/registration/payment', 'InsuranceController@payment');
+                $router->post('/registration/{code}/payment', 'InsuranceController@payment');
                 $router->post('/registration/{code}/{method}', 'InsuranceController@index');
 
                 //autocod
