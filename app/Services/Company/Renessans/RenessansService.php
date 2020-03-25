@@ -11,6 +11,7 @@ use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansGetStatusServiceContract;
 use App\Contracts\Company\Renessans\RenessansServiceContract;
 use App\Http\Controllers\RestController;
+use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
 use App\Models\RequestProcess;
 use App\Services\Company\CompanyService;

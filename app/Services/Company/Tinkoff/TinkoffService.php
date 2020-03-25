@@ -8,6 +8,7 @@ use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCreateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
 use App\Http\Controllers\RestController;
+use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
 use App\Services\Company\CompanyService;
 
