@@ -91,7 +91,8 @@ $app->configure('api_sk');
 */
 
 $app->register(App\Providers\AppServiceProvider::class);
-//$app->register(Avtocod\B2BApi\Laravel\ServiceProvider::class);
+$app->register(\Benfin\Api\BenfinMicroserviceProvider::class);
+$app->routeMiddleware([ 'auth' => Benfin\Auth\Http\Middleware\Authenticate::class, ]);
 // $app->register(App\Providers\AuthServiceProvider::class);
 // $app->register(App\Providers\EventServiceProvider::class);
 
