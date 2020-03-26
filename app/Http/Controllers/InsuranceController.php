@@ -74,7 +74,7 @@ class InsuranceController extends Controller
              * @var LogMicroservice $notify
              */
             $notify =  app(LogMicroserviceContract::class);
-            $notify->sendLog($message,config('api_sk.logMicroserviceCode'),$data['auth_token'],$request->user["user_id"]);
+            $notify->sendLog($message, config('api_sk.logMicroserviceCode'), $data['auth_token'], $request->user["user_id"]);
 
             $token = IntermediateData::createToken($data);
             return $this->success(['token' => $token], 200);
@@ -96,26 +96,18 @@ class InsuranceController extends Controller
             return $this->error('Компания не найдена', 404);
         }
         $serviceMethod = 'payment';
-        try
-        {
+        try {
             $controller = $this->getCompanyController($company);
             if (!method_exists($controller, $serviceMethod)) {
                 return $this->error('Метод не найден', 404); // todo вынести в отдельные эксепшены
             }
-            $this->validate(
-                $request,
-                $controller->validationRulesProcess(),
-                $controller->validationMessagesProcess()
-            );
             $response = $this->runService($company, $request->toArray(), $serviceMethod);
             if (isset($response['error']) && $response['error']) {
                 return response()->json($response, 500);
             } else {
                 return $this->success($response, 200);
             }
-        }
-        catch (ValidationException $exception)
-        {
+        } catch (ValidationException $exception) {
             return $this->error($exception->errors(), 400);
         } catch (BindingResolutionException $exception) {
             return $this->error('Не найден обработчик компании: ' . $exception->getMessage(), 404);
