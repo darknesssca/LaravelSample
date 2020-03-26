@@ -181,7 +181,7 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
             $serviceBill = app(RenessansBillLinkServiceContract::class);
             $dataBill = $serviceBill->run($company, $attributes, $process);
             $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
-            RestController::sendBillUrl($insurer['email'], $dataBill['billUrl']);
+            $this->sendBillUrl($insurer['email'], $dataBill['billUrl']);
             $tokenData[$company->code]['status'] = 'done';
             $tokenData[$company->code]['billUrl'] = $dataBill['billUrl'];
             IntermediateData::where('token', $dataProcess['token'])->update([
@@ -225,7 +225,7 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
                 $serviceBill = app(RenessansBillLinkServiceContract::class);
                 $dataBill = $serviceBill->run($company, $attributes, $process);
                 $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
-                RestController::sendBillUrl($insurer['email'], $dataBill['billUrl']);
+                $this->sendBillUrl($insurer['email'], $dataBill['billUrl']);
                 $tokenData[$company->code]['status'] = 'done';
                 $tokenData[$company->code]['billUrl'] = $dataBill['billUrl'];
                 IntermediateData::where('token', $dataProcess['token'])->update([

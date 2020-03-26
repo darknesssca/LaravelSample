@@ -18,7 +18,7 @@ class RenessansBillLinkService extends RenessansService implements RenessansBill
         $this->setUrlLinks($data);
         $this->setBillCode($attributes);
         $url = $this->getUrl($attributes);
-        $response = RestController::getRequest($url, $data);
+        $response = $this->getRequest($url, $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }

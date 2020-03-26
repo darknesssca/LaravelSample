@@ -13,6 +13,8 @@ use App\Services\Company\Ingosstrah\IngosstrahGuidesService;
 use App\Services\Company\Renessans\RenessansGuidesService;
 use App\Services\Company\Soglasie\SoglasieGuidesService;
 use App\Services\Company\Tinkoff\TinkoffGuidesService;
+use Benfin\Api\Contracts\LogMicroserviceContract;
+use Benfin\Api\Services\LogMicroservice;
 use Carbon\Carbon;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Request;
@@ -64,8 +66,16 @@ class InsuranceController extends Controller
             $data = [
                 'form' => $attributes,
             ];
-            RestController::checkToken($attributes);
-            RestController::sendLog($attributes);
+            $this->checkToken($attributes);
+
+            //отправка лога
+            $message= 'пользователь отправил форму со следующими полями: '.\GuzzleHttp\json_encode($data);
+            /**
+             * @var LogMicroservice $notify
+             */
+            $notify =  app(LogMicroserviceContract::class);
+            $notify->sendLog($message,config('api_sk.logMicroserviceCode'),$data['auth_token'],$request->user["user_id"]);
+
             $token = IntermediateData::createToken($data);
             return $this->success(['token' => $token], 200);
         }

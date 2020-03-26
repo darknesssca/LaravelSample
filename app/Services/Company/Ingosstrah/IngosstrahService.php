@@ -196,7 +196,7 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
         $tokenData[$company->code]['billIsn'] = $billData['billIsn'];
         $tokenData[$company->code]['billUrl'] = $billLinkData['PayUrl'];
         $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
-        RestController::sendBillUrl($insurer['email'], $billLinkData['PayUrl']);
+        $this->sendBillUrl($insurer['email'], $billLinkData['PayUrl']);
         IntermediateData::where('token', $data['token'])->update([
             'data' => $tokenData,
         ]);

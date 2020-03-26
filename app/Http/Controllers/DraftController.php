@@ -18,21 +18,9 @@ class DraftController extends Controller
     {
         try
         {
-            $attributes = $this->validate(
-                $request,
-                [
-                    'auth_token' => 'required|string',
-                ],
-                []
-            );
-            RestController::checkToken($attributes);
-            $tokenEncoded = new TokenEncoded($attributes['auth_token']);
-            $payload = $tokenEncoded->decode()->getPayload();
-            $userId = $payload['user_id'];
-            if (!$userId) {
-                return $this->error('user not parsed', 400);
-            }
-            $policy = Policy::getDrafts($userId);
+            $attributes = $this->validate( $request,[] );
+            $this->checkToken($attributes);
+            $policy = Policy::getDrafts($request->user["user_id"]);
             return response()->json($policy, 200);
         }
         catch (ValidationException $exception)
@@ -49,25 +37,9 @@ class DraftController extends Controller
     {
         try
         {
-            $attributes = $this->validate(
-                $request,
-                [
-                    'auth_token' => 'required|string'
-                ],
-                []
-            );
-            RestController::checkToken($attributes);
-            $tokenEncoded = new TokenEncoded($attributes['auth_token']);
-            $payload = $tokenEncoded->decode()->getPayload();
-            $userId = $payload['user_id'];
-            $policeId = (int)$policeId;
-            if (!$userId) {
-                return $this->error('user not parsed', 400);
-            }
-            if (!$policeId) {
-                return $this->error('id not correct', 400);
-            }
-            $policy = Policy::getDraftById($userId, $policeId);
+            $attributes = $this->validate( $request,[] );
+            $this->checkToken($attributes);
+            $policy = Policy::getDraftById($request->user["user_id"], $policeId);
             return response()->json($policy, 200);
         }
         catch (ValidationException $exception)
@@ -89,16 +61,10 @@ class DraftController extends Controller
                 $this->validationRulesForm(),
                 []
             );
-            RestController::checkToken($attributes);
-            $tokenEncoded = new TokenEncoded($attributes['auth_token']);
-            $payload = $tokenEncoded->decode()->getPayload();
-            $userId = $payload['user_id'];
-            if (!$userId) {
-                return $this->error('user not parsed', 400);
-            }
+            $this->checkToken($attributes);
             //policy
             $policyData = [
-                'agent_id' => $userId,
+                'agent_id' => $request->user["user_id"],
                 'status_id' => PolicyStatus::where('code', 'draft')->get()->first()->id,
                 'type_id' => PolicyType::where('code', 'osago')->get()->first()->id,
             ];
@@ -247,22 +213,16 @@ class DraftController extends Controller
                 $this->validationRulesForm(),
                 []
             );
-            RestController::checkToken($attributes);
-            $tokenEncoded = new TokenEncoded($attributes['auth_token']);
-            $payload = $tokenEncoded->decode()->getPayload();
-            $userId = $payload['user_id'];
-            if (!$userId) {
-                return $this->error('user not parsed', 400);
-            }
+            $this->checkToken($attributes);
             $policeId = (int)$policeId;
             if (!$policeId) {
                 return $this->error('id not correct', 400);
             }
             //old data
-            $oldPolicy = Policy::where('id', $policeId)->where('agent_id', $userId)->first();
+            $oldPolicy = Policy::where('id', $policeId)->where('agent_id', $request->user["user_id"])->first();
             //policy
             $policyData = [
-                'agent_id' => $userId,
+                'agent_id' => $request->user["user_id"],
                 'status_id' => PolicyStatus::where('code', 'draft')->get()->first()->id,
                 'type_id' => PolicyType::where('code', 'osago')->get()->first()->id,
             ];
@@ -450,25 +410,13 @@ class DraftController extends Controller
     {
         try
         {
-            $attributes = $this->validate(
-                $request,
-                [
-                    'auth_token' => 'required|string'
-                ],
-                []
-            );
-            RestController::checkToken($attributes);
-            $tokenEncoded = new TokenEncoded($attributes['auth_token']);
-            $payload = $tokenEncoded->decode()->getPayload();
-            $userId = $payload['user_id'];
-            if (!$userId) {
-                return $this->error('user not parsed', 400);
-            }
+            $attributes = $this->validate( $request,[] );
+            $this->checkToken($attributes);
             $policeId = (int)$policeId;
             if (!$policeId) {
                 return $this->error('id not correct', 400);
             }
-            $policy = Policy::where('id', $policeId)->where('agent_id', $userId)->first();
+            $policy = Policy::where('id', $policeId)->where('agent_id', $request->user["user_id"])->first();
             $policy->drivers()->delete();
             $policy->delete();
 
@@ -496,7 +444,6 @@ class DraftController extends Controller
     public function validationRulesForm(): array
     {
         return [
-            'auth_token' => "required",
             'subjects' => "array",
             "subjects.*.id" => "integer",
             "subjects.*.fields.lastName" => "string",

@@ -27,7 +27,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
     {
         $data = $this->prepareData($attributes);
         $headers = $this->getHeaders();
-        return RestController::postRequest($this->apiRestUrl, $data, $headers);
+        $this->postRequest($this->apiRestUrl, $data, $headers);
     }
 
     protected function getHeaders()

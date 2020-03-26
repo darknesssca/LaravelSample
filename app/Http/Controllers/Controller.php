@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Benfin\Api\Contracts\AuthMicroserviceContract;
+use Benfin\Api\Services\AuthMicroservice;
 use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
 use Laravel\Lumen\Routing\Controller as BaseController;
@@ -110,5 +112,35 @@ class Controller extends BaseController
             $client->requestAsync($method, $url, ["form_params" => $data, "headers" => ["Content-Type" => "application/json"]]);
             return true;
         }
+    }
+
+    /**Провекрка валидности токена
+     * @param string|array $data
+     * если массив, то токен в ключе "access_token"
+     * @return bool
+     * @throws \Exception
+     */
+    public  function checkToken($data):bool
+    {
+        return true; // fixme only for test
+
+        if(is_array($data))
+            $token = $data["access_token"];
+        else
+            $token = $data;
+
+        /** @var AuthMicroservice $auth */
+        $auth = app(AuthMicroserviceContract::class);
+        $response= $auth->checkToken($token);
+        if ($response['error']) {
+            $message = '';
+            if (isset($response['errors'])) {
+                foreach ($response['errors'] as $error) {
+                    $message .= $error['message'].' | ';
+                }
+            }
+            throw new \Exception('auth service return error: '.$message);
+        }
+        return true;
     }
 }

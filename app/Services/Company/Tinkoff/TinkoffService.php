@@ -59,7 +59,7 @@ class TinkoffService extends CompanyService implements TinkoffServiceContract
         $billLinkService = app(TinkoffBillLinkServiceContract::class);
         $billLinkData = $billLinkService->run($company, $attributes, $additionalData);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
-        RestController::sendBillUrl($insurer['email'], $billLinkData['billUrl']);
+        $this->sendBillUrl($insurer['email'], $billLinkData['billUrl']);
         $tokenData = IntermediateData::getData($attributes['token']);
         $tokenData[$company->code] = [
             'status' => $createData['status'],

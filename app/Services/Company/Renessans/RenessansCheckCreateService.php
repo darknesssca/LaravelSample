@@ -16,7 +16,7 @@ class RenessansCheckCreateService extends RenessansService implements RenessansC
         $data = [];
         $this->setAuth($data);
         $url = $this->getUrl($attributes);
-        $response = RestController::getRequest($url, $data);
+        $response = $this->getRequest($url, $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
