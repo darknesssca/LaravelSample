@@ -10,6 +10,8 @@ use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
 use App\Http\Controllers\RestController;
 use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
+use App\Models\Policy;
+use App\Models\PolicyStatus;
 use App\Services\Company\CompanyService;
 
 class TinkoffService extends CompanyService implements TinkoffServiceContract
@@ -81,7 +83,25 @@ class TinkoffService extends CompanyService implements TinkoffServiceContract
 
     public function payment($company, $attributes)
     {
-
+        if (
+            isset($attributes['Body']['sendPaymentNotificationPartnerRequest']['paymentStatus']) &&
+            $attributes['Body']['sendPaymentNotificationPartnerRequest']['paymentStatus'] &&
+            (strtolower($attributes['Body']['sendPaymentNotificationPartnerRequest']['paymentStatus']) == 'confirm') &&
+            isset($attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber']) &&
+            $attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber']
+        ) {
+            $policy = Policy::where('numner', $attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber'])->first();
+            if ($policy) {
+                $policy->update([
+                    'paid' => true,
+                    'status_id' => PolicyStatus::where('code', 'paid')->first()->id, // todo справочник
+                ]);
+            } else {
+                throw new \Exception('Нет полиса с таким номером');
+            }
+        } else {
+            throw new \Exception('Не указан номер полиса или статус оплаты не соответсвует статусу CONFIRM');
+        }
     }
 
     protected function setHeader(&$data)
