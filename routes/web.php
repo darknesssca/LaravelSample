@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Route;
 $router->group(
     [
         'prefix' => 'v1',
+        'middleware' => 'auth',
     ],
     function () use ($router) {
         $router->group(

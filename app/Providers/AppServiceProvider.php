@@ -29,6 +29,8 @@ use App\Contracts\Company\Tinkoff\TinkoffBillLinkServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCreateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
+use App\Models\Policy;
 use App\Services\Company\CompanyService;
 use App\Services\Company\Ingosstrah\IngosstrahBillLinkService;
 use App\Services\Company\Ingosstrah\IngosstrahBillService;
@@ -56,6 +58,7 @@ use App\Services\Company\Tinkoff\TinkoffBillLinkService;
 use App\Services\Company\Tinkoff\TinkoffCalculateService;
 use App\Services\Company\Tinkoff\TinkoffCreateService;
 use App\Services\Company\Tinkoff\TinkoffService;
+use App\Services\PolicyService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -156,6 +159,9 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->singleton(SoglasieCancelCreateServiceContract::class, function($app) {
             return new SoglasieCancelCreateService();
+        });
+        $this->app->singleton(PolicyServiceContract::class, function () {
+            return new PolicyService();
         });
     }
 }

@@ -2,20 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\Services\PolicyServiceContract;
+use Illuminate\Http\Request;
+
 class PoliciesController extends Controller
 {
-    public function list()
+    public function list(Request $request)
     {
-        // TODO implement list method
+        return response()->json(app(PolicyServiceContract::class)->getList());
     }
 
     public function getById($id)
     {
-        // TODO implement
+        return response()->json(app(PolicyServiceContract::class)->getById($id));
     }
 
     public function create()
     {
-        // TODO implement
+        app(PolicyServiceContract::class)->create();
     }
 }
