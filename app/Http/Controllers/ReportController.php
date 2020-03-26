@@ -389,10 +389,10 @@ class ReportController extends Controller
         $writer = new Xls($spreadsheet);
         $writer->save($file_path);
 
-        $result = Storage::disk('minio')->put('reports/' . $file_name, file_get_contents($file_path));
+        $result = Storage::cloud()->put('reports/' . $file_name, file_get_contents($file_path));
         $size = filesize($file_path);
         $content_type = mime_content_type($file_path);
-        $cloud_file_path = Storage::disk('minio')->url('reports/' . $file_name);
+        $cloud_file_path = Storage::cloud()->url('reports/' . $file_name);
         unlink($file_path);
 
         if ($result != '1'){
