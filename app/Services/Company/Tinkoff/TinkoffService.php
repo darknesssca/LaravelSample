@@ -3,8 +3,12 @@
 
 namespace App\Services\Company\Tinkoff;
 
+use App\Contracts\Company\Tinkoff\TinkoffBillLinkServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
+use App\Contracts\Company\Tinkoff\TinkoffCreateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
+use App\Http\Controllers\RestController;
+use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
 use App\Services\Company\CompanyService;
 
@@ -17,6 +21,8 @@ class TinkoffService extends CompanyService implements TinkoffServiceContract
 
     public function __construct()
     {
+        $this->companyCode = "tinkoff";
+        $this->companyId = InsuranceCompany::where('code',$this->companyCode)->take(1)->get()[0]['id'];
         $this->apiWsdlUrl = config('api_sk.tinkoff.wsdlUrl');
         $this->apiUser = config('api_sk.tinkoff.user');
         $this->apiPassword = config('api_sk.tinkoff.password');
@@ -30,7 +36,7 @@ class TinkoffService extends CompanyService implements TinkoffServiceContract
     {
         $service = app(TinkoffCalculateServiceContract::class);
         $data = $service->run($company, $attributes, $additionalData);
-        $tokenData = IntermediateData::getData($attributes['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
+        $tokenData = IntermediateData::getData($attributes['token']);
         $tokenData[$company->code] = [
             'setNumber' => $data['setNumber'],
         ];
@@ -39,6 +45,32 @@ class TinkoffService extends CompanyService implements TinkoffServiceContract
         ]);
         return [
             'premium' => $data['premium'],
+        ];
+    }
+
+    public function create($company, $attributes, $additionalData = [])
+    {
+        if (!(isset($additionalData['tokenData']) && $additionalData['tokenData'])) {
+            throw new \Exception('no token data');
+        }
+        $attributes['setNumber'] = $additionalData['tokenData']['setNumber'];
+        $createService = app(TinkoffCreateServiceContract::class);
+        $createData = $createService->run($company, $attributes, $additionalData);
+        $billLinkService = app(TinkoffBillLinkServiceContract::class);
+        $billLinkData = $billLinkService->run($company, $attributes, $additionalData);
+        $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
+        RestController::sendBillUrl($insurer['email'], $billLinkData['billUrl']);
+        $tokenData = IntermediateData::getData($attributes['token']);
+        $tokenData[$company->code] = [
+            'status' => $createData['status'],
+            'billUrl' => $billLinkData['billUrl'],
+        ];
+        IntermediateData::where('token', $attributes['token'])->update([
+            'data' => $tokenData,
+        ]);
+        return [
+            'status' => $createData['status'],
+            'billUrl' => $billLinkData['billUrl'],
         ];
     }
 

@@ -3,7 +3,6 @@ return [
     'renessans' => [
         'apiUrl' => env('RENESSANS_API_URL'),
         'apiKey' => env('RENESSANS_API_KEY'),
-        'apiCheckCountByCommand' => env('RENESSANS_API_CHECK_COUNT_BY_COMMAND'),
     ],
     'tinkoff' => [
         'wsdlUrl' => env('TINKOFF_API_WSDL_URL'),
@@ -37,4 +36,6 @@ return [
     'notifyMicroserviceCode' => env('NOTIFY_MICROSERVICE_CODE'),
     'maxCheckCount' => env('API_PROCESSING_MAX_CHECK_COUNT'),
     'maxRowsByCycle' => env('API_PROCESSING_MAX_ROWS_BY_CYCLE'),
+    'billSuccessUrl' => env('API_BILL_SUCCESS_URL'),
+    'billFailUrl' => env('API_BILL_FAIL_URL'),
 ];

@@ -11,6 +11,7 @@ use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieServiceContract;
+use App\Models\InsuranceCompany;
 use App\Http\Controllers\RestController;
 use App\Models\IntermediateData;
 use App\Models\RequestProcess;
@@ -30,6 +31,8 @@ class SoglasieService extends CompanyService implements SoglasieServiceContract
 
     public function __construct()
     {
+        $this->companyCode = "soglasie";
+        $this->companyId = InsuranceCompany::where('code',$this->companyCode)->take(1)->get()[0]['id'];
         $this->apiUser = config('api_sk.soglasie.user');
         $this->apiPassword = config('api_sk.soglasie.password');
         $this->apiSubUser = config('api_sk.soglasie.subUser');
@@ -93,7 +96,7 @@ class SoglasieService extends CompanyService implements SoglasieServiceContract
         ]);
         RequestProcess::create([
             'token' => $attributes['token'],
-            'state' => 99,
+            'state' => 50,
             'data' => json_encode([
                 'policyId' => $dataCreate['policyId'],
                 'packageId' => $dataCreate['packageId'],

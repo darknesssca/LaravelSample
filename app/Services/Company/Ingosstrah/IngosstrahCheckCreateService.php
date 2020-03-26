@@ -9,12 +9,7 @@ use App\Services\Company\Ingosstrah\IngosstrahService;
 class IngosstrahCheckCreateService extends IngosstrahService implements IngosstrahCheckCreateServiceContract
 {
 
-    public function run($company, $data, $additionalFields = []): array
-    {
-        return $this->sendCheckCreate($company, $data);
-    }
-
-    private function sendCheckCreate($company, $processData): array
+    public function run($company, $processData, $additionalFields = []): array
     {
         $data = $this->prepareData($processData);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetAgreement', $data);
@@ -45,7 +40,10 @@ class IngosstrahCheckCreateService extends IngosstrahService implements Ingosstr
         }
         return [
             'state' => mb_strtolower($response['parsedResponse']['@attributes']['State']),
-            'isn' => $response['parsedResponse']['General']['ISN'],
+            'isn' => isset($response['parsedResponse']['General']['ISN']) ? $response['parsedResponse']['General']['ISN'] : false,
+            'policySerial' => isset($response['parsedResponse']['General']['Policy']['Serial']) ? $response['parsedResponse']['General']['Policy']['Serial'] : false,
+            'policyNumber' => isset($response['parsedResponse']['General']['Policy']['No']) ? $response['parsedResponse']['General']['Policy']['No'] : false,
+            'isEosago' => isset($response['parsedResponse']['General']['IsEOsago']) ? $response['parsedResponse']['General']['IsEOsago'] == 'Y' : false,
         ];
     }
 

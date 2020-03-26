@@ -25,11 +25,6 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
 
     public function run($company, $attributes, $additionalFields = []): array
     {
-        return $this->sendCreate($company, $attributes);
-    }
-
-    private function sendCreate($company, $attributes): array
-    {
         $data = $this->prepareData($attributes);
         $headers = $this->getHeaders();
         return RestController::postRequest($this->apiRestUrl, $data, $headers);
@@ -69,12 +64,12 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
                 'DocumentCar' => [],
                 'TicketCar' => [
                     'TypeRSA' => $attributes['car']['inspection']['documentType'],
-                    'Number' => $attributes['car']['inspection']['documentNumber'],
-                    'Date' => $attributes['car']['inspection']['documentIssuedDate'],
+                    'Number' => $attributes['car']['inspection']['number'],
+                    'Date' => $attributes['car']['inspection']['dateIssue'],
                 ],
-                'TicketCarYear' => Carbon::createFromFormat('Y-m-d', $attributes['car']['inspection']['documentDateEmd'])->format('Y'),
-                'TicketCarMonth' => Carbon::createFromFormat('Y-m-d', $attributes['car']['inspection']['documentDateEmd'])->format('m'),
-                'TicketDiagnosticDate' => $attributes['car']['inspection']['documentIssuedDate'],
+                'TicketCarYear' => Carbon::createFromFormat('Y-m-d', $attributes['car']['inspection']['dateEnd'])->format('Y'),
+                'TicketCarMonth' => Carbon::createFromFormat('Y-m-d', $attributes['car']['inspection']['dateEnd'])->format('m'),
+                'TicketDiagnosticDate' => $attributes['car']['inspection']['dateIssue'],
                 'EngCap' => $attributes['car']['enginePower'],
                 'GoalUse' => "Personal", //$attributes['car']['vehicleUsage'], // todo справочник
                 'Rented' => false, // todo зависит от предыдущего справочника
@@ -126,22 +121,15 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
             "Serial" => 'documentSeries',
         ], $attributes['car']['inspection']);
         //car.documents
-        $carDocument = $this->searchDocumentByType($attributes['car'], 'PTS'); // todo справочник
-        if (!$carDocument) {
-            $carDocument = $this->searchDocumentByType($attributes['car'], '31'); // todo справочник
-            if (!$carDocument) {
-                throw new \Exception('no pts and sts');
-            }
-        }
         $data['CarInfo']['DocumentCar'] = [
-            'TypeRSA' => $carDocument['documentType'],
-            'Number' => $carDocument['documentNumber'],
-            'Date' => $carDocument['documentIssued'],
+            'TypeRSA' => $attributes['car']['document']['documentType'],
             'IsPrimary' => true,
         ];
         $this->setValuesByArray($data['CarInfo']['DocumentCar'], [
-            "Serial" => 'documentSeries',
-        ], $carDocument);
+            "Serial" => 'series',
+            "Number" => 'number',
+            "Date" => 'dateIssue',
+        ], $attributes['car']['document']);
         //owner
         $this->setValuesByArray($data['CarOwner']['Phisical'], [
             "Patronymic" => 'middleName',

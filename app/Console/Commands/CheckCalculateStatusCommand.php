@@ -19,7 +19,7 @@ class CheckCalculateStatusCommand extends Command
      *
      * @var string
      */
-    protected $description = 'get calculate response';
+    protected $description = 'получение результатов вторичного рассчета цены (ренессанс)';
 
     /**
      * Create a new command instance.

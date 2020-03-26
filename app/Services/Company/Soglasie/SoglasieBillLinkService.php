@@ -18,12 +18,7 @@ class SoglasieBillLinkService extends SoglasieService implements SoglasieBillLin
         parent::__construct();
     }
 
-    public function run($company, $attributes, $additionalFields = []): array
-    {
-        return $this->sendBillLink($company, $attributes);
-    }
-
-    private function sendBillLink($company, $data): array
+    public function run($company, $data, $additionalFields = []): array
     {
         $url = $this->getUrl([
             'policyId' => $data->data['policyId'],

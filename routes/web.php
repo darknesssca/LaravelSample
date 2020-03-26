@@ -33,19 +33,20 @@ $router->group(
                 $router->get('/drafts/{policeId}', 'DraftController@show');
                 $router->patch('/drafts/{policeId}', 'DraftController@update');
                 $router->delete('/drafts/{policeId}', 'DraftController@delete');
-                // policies
+                // insurance
+                $router->post('/registration/send', 'InsuranceController@store');
+                $router->post('/registration/{code}/{method}', 'InsuranceController@index');
+
+                //policies
                 $router->group(['prefix' => 'policies'] , function () use ($router) {
                     $router->get('/', 'PoliciesController@list');
                     $router->get('/{id}', 'PoliciesController@getById');
                     $router->post('/', 'PoliciesController@create');
                 });
-                // insurance - TODO rename routes
-                $router->post('/policies/send', 'InsuranceController@store');
-                $router->post('/policies/{code}/{method}', 'InsuranceController@index');
 
                 //autocod
-                $router->get('autocod/check-taxi/', 'AutocodController@checkTaxi'); //проверка на такси
-                $router->get('autocod/{report_id}/', 'AutocodController@readReport'); //если отчет уже готов
+                $router->get('autocod/check-taxi', 'AutocodController@checkTaxi'); //проверка на такси
+                $router->get('autocod/{report_id}', 'AutocodController@readReport'); //если отчет уже готов
                 $router->post('autocod', 'AutocodController@requestReport'); //заказать отчет и сразу дождаться генерации
             }
         );

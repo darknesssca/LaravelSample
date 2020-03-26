@@ -18,11 +18,6 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
 
     public function run(InsuranceCompany $company, $attributes, $additionalFields = []): array
     {
-        return $this->sendCalculate($attributes);
-    }
-
-    private function sendCalculate($attributes): array
-    {
         $this->setAuth($attributes);
         $url = $this->getUrl();
         $data = $this->prepareData($attributes);
@@ -33,13 +28,14 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
         if (!$response['result']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
-        $result = [];
-        foreach ($response['data'] as $responseData) {
-            $result[] = [
-                'calcId' => $responseData['id'],
-            ];
+        if (!isset($response['data']) || !$response['data'] || !count($response['data'])) {
+            throw new \Exception('api not return data');
         }
-        return $result;
+        $calcData = array_shift($response['data']);
+        return [
+            'calcId' => $calcData['id'],
+            'premium' => false,
+        ];
     }
 
     public function prepareData($attributes)
@@ -49,14 +45,14 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             'dateStart' => $attributes['policy']['beginDate'],
             'period' => 12,
             'purpose' => $attributes['car']['vehicleUsage'], // todo справочник
-            'limitDrivers' => $this->transformBooleanToInteger($attributes['policy']['isMultidrive']),
+            'limitDrivers' => $this->transformBooleanToInteger(!$attributes['policy']['isMultidrive']),
             'trailer' => $this->transformBooleanToInteger($attributes['car']['isUsedWithTrailer']),
             'isJuridical' => 0,
             'owner' => [],
             'car' => [
                 'make' => $attributes['car']['maker'], // TODO: справочник,
                 'model' => $attributes['car']['model'], // TODO: справочник,
-                //'MarkAndModelString' => [], //todo после реализации справочников, при отсутствии модели или марки в справочнике указывать строку
+                'MarkAndModelString' => $attributes['car']['maker'] . ' ' . $attributes['car']['model'], //todo справочник
                 'category' => 'B', // TODO: справочник,
                 'power' => $attributes['car']['enginePower'],
                 'documents' => [
@@ -75,7 +71,6 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
         $data['owner'] = [
             "lastname" => $owner['lastName'],
             "name" => $owner['firstName'],
-            //"middlename" => $owner['middleName'],
             "birthday" => $owner['birthdate'],
             'document' => [],
         ];
@@ -98,6 +93,9 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             "ResolutionMaxWeight" => 'maxWeight',
             "NumberOfSeats" => 'seats',
         ], $attributes['car']);
+        $this->setValuesByArray($data['car']['documents'], [
+            "registrationNumber" => 'regNumber',
+        ], $attributes['car']);
         //drivers
         if (!$attributes['policy']['isMultidrive']) {
             $data['drivers'] = [];
@@ -105,10 +103,10 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             foreach ($drivers as $iDriver => $driver) {
                 $pDriver = [
                     'name' => $owner['firstName'],
-                    'lastname' => $owner['firstName'],
+                    'lastname' => $owner['lastName'],
                     'birthday' => $owner['birthdate'],
                 ];
-                foreach ($data['drivers'] as $tDriver) {
+                foreach ($attributes['drivers'] as $tDriver) {
                     if ($iDriver == $tDriver['driver']['driverId']) {
                         $pDriver['license'] = [
                             "dateBeginDrive" => $tDriver['driver']['drivingLicenseIssueDateOriginal'],

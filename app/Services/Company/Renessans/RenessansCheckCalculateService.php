@@ -13,11 +13,6 @@ class RenessansCheckCalculateService extends RenessansService implements Renessa
 
     public function run(InsuranceCompany $company, $attributes, $additionalFields = []): array
     {
-        return $this->getCalculate($attributes);
-    }
-
-    private function getCalculate($attributes): array
-    {
         $data = [];
         $this->setAuth($data);
         $url = $this->getUrl($attributes);
@@ -25,32 +20,16 @@ class RenessansCheckCalculateService extends RenessansService implements Renessa
         if (!$response) {
             throw new \Exception('api not return answer');
         }
-        if (!$response['result']) {
-            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
+        if (!$response['result'] || !isset($response['data']['response']['Premium'])) {
+            return [
+                'result' => false,
+                'message' => isset($response['message']) ? $response['message'] : '',
+            ];
         }
-        if (!isset($response['data']['response']['Premium'])) {
-            //throw new \Exception('api not return premium');
-            return false;
-        }
-        $result = [
+        return [
+            'result' => true,
             'premium' => $response['data']['response']['Premium'],
         ];
-        return $result;
-    }
-
-    private function receiveCalculate($attributes)
-    {
-        $data = [];
-        $this->setAuth($data);
-        $url = $this->getUrl(__FUNCTION__, $attributes);
-        $response = $this->getRequest($url, $data);
-        if (!$response) {
-            throw new \Exception('api not return answer');
-        }
-        if (!$response['result']) {
-            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
-        }
-        return $response['data'];
     }
 
 }

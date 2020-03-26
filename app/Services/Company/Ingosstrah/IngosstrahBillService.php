@@ -11,11 +11,6 @@ class IngosstrahBillService extends IngosstrahService implements IngosstrahBillS
 
     public function run($company, $data, $additionalFields = []): array
     {
-        return $this->sendCheckCreate($company, $data);
-    }
-
-    private function sendCheckCreate($company, $data): array
-    {
         $data = $this->prepareData($data);
         $response = SoapController::requestBySoap($this->apiWsdlUrl, 'CreateBill', $data);
         if (!$response) {
