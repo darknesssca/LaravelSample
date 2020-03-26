@@ -18,6 +18,7 @@ class AutocodService extends CarInfoService
 
     protected function __construct()
     {
+        parent::__construct();
         $this->baseurl = env("AC_API_BASE_URI");
         $this->user = env('AC_API_AUTH_USERNAME');
         $this->password = env('AC_API_AUTH_PASSWORD');
@@ -31,10 +32,9 @@ class AutocodService extends CarInfoService
      */
     protected function createToken(): string
     {
-            $stamp = time();
-            $passHash = base64_encode(md5($this->password, true));
-            $saltedHash = base64_encode(md5($stamp . ':' . $this->token_lifetime . ':' . $passHash, true));
-            $token = base64_encode(implode(':', [$this->user, $stamp, $this->token_lifetime, $saltedHash]));
-            return $token;
+        $stamp = time();
+        $passHash = base64_encode(md5($this->password, true));
+        $saltedHash = base64_encode(md5($stamp . ':' . $this->token_lifetime . ':' . $passHash, true));
+        return base64_encode(implode(':', [$this->user, $stamp, $this->token_lifetime, $saltedHash]));
     }
 }

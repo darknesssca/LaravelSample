@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use Benfin\Api\Contracts\AuthMicroserviceContract;
 use Benfin\Api\Services\AuthMicroservice;
+use Benfin\Api\Traits\HttpRequest;
 use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
 use Laravel\Lumen\Routing\Controller as BaseController;
 
 class Controller extends BaseController
 {
+    use HttpRequest;
     /**
      * @param $messages
      * @param int $httpCode
@@ -52,34 +54,6 @@ class Controller extends BaseController
         return response()->json($message, $httpCode);
     }
 
-    /**отправка лога
-     * @param $data
-     * данные для отправки
-     * @param string $code
-     * код события
-     * @param int $user_id
-     * id пользователя
-     * @param int $log_type_id
-     * id типа лога
-     */
-    protected function sendLog($data, string $code, int $user_id = -1, int $log_type_id = -1)
-    {
-        if (is_array($data)) {
-            $data = json_encode($data);
-        }
-        $params = [
-            "message" => $data,
-            "code" => $code
-        ];
-        if ($user_id != -1) {
-            $params["user_id"] = $user_id;
-        }
-        if ($log_type_id != -1) {
-            $params["log_type_id"] = $log_type_id;
-        }
-        $this->sendRequest("POST", "api/v1/log", $params, true);
-    }
-
     /**отправка запроса
      * @param string $method
      * метод запроса
@@ -114,33 +88,4 @@ class Controller extends BaseController
         }
     }
 
-    /**Провекрка валидности токена
-     * @param string|array $data
-     * если массив, то токен в ключе "access_token"
-     * @return bool
-     * @throws \Exception
-     */
-    public  function checkToken($data):bool
-    {
-        return true; // fixme only for test
-
-        if(is_array($data))
-            $token = $data["access_token"];
-        else
-            $token = $data;
-
-        /** @var AuthMicroservice $auth */
-        $auth = app(AuthMicroserviceContract::class);
-        $response= $auth->checkToken($token);
-        if ($response['error']) {
-            $message = '';
-            if (isset($response['errors'])) {
-                foreach ($response['errors'] as $error) {
-                    $message .= $error['message'].' | ';
-                }
-            }
-            throw new \Exception('auth service return error: '.$message);
-        }
-        return true;
-    }
 }

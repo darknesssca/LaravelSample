@@ -6,6 +6,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Policy;
 use App\Models\Report;
+use Benfin\Api\Contracts\LogMicroserviceContract;
+use Benfin\Api\Services\LogMicroservice;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -42,7 +44,10 @@ class ReportController extends Controller
                 ]);
 
                 $report->policies()->sync($validation_result['policies']);
-                $this->sendLog('Создан отчет', 'create_report', $user_id);
+
+                /** @var LogMicroservice $logger */
+                $logger = app(LogMicroserviceContract::class);
+                $logger->sendLog('Создан отчет', 'create_report', $user_id);
                 return $this->success();
             } else {
                 throw new Exception('Отсутствует доступное вознаграждение');
