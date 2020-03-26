@@ -90,7 +90,7 @@ class TinkoffService extends CompanyService implements TinkoffServiceContract
             isset($attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber']) &&
             $attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber']
         ) {
-            $policy = Policy::where('numner', $attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber'])->first();
+            $policy = Policy::where('number', $attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber'])->first();
             if ($policy) {
                 $policy->update([
                     'paid' => true,

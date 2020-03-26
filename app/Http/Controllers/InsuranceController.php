@@ -89,9 +89,9 @@ class InsuranceController extends Controller
         }
     }
 
-    public function payment($company, Request $request)
+    public function payment($code, Request $request)
     {
-        $company = $this->checkCompany($company);
+        $company = $this->checkCompany($code);
         if (!$company->count()) {
             return $this->error('Компания не найдена', 404);
         }
@@ -101,7 +101,8 @@ class InsuranceController extends Controller
             if (!method_exists($controller, $serviceMethod)) {
                 return $this->error('Метод не найден', 404); // todo вынести в отдельные эксепшены
             }
-            $response = $this->runService($company, $request->toArray(), $serviceMethod);
+            $controller = $this->getCompanyController($company);
+            $response =  $controller->$serviceMethod($company, $request->toArray(), $serviceMethod);
             if (isset($response['error']) && $response['error']) {
                 return response()->json($response, 500);
             } else {
@@ -127,7 +128,6 @@ class InsuranceController extends Controller
             $controller->validationRulesProcess(),
             $controller->validationMessagesProcess()
         );
-        RestController::checkToken($validatedFields);
         $tokenData = IntermediateData::getData($validatedFields['token']);
         if (!$tokenData) {
             throw new \Exception('token not valid'); // todo вынести в отдельные эксепшены
