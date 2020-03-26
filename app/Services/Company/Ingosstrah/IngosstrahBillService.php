@@ -12,7 +12,7 @@ class IngosstrahBillService extends IngosstrahService implements IngosstrahBillS
     public function run($company, $data, $additionalFields = []): array
     {
         $data = $this->prepareData($data);
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'CreateBill', $data);
+        $response = $this->requestBySoap($this->apiWsdlUrl, 'CreateBill', $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }

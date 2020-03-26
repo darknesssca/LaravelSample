@@ -18,7 +18,7 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
     public function run($company, $attributes, $additionalFields = []): array
     {
         $data = $this->prepareData($attributes);
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'CreateAgreement', $data);
+        $response = $this->requestBySoap($this->apiWsdlUrl, 'CreateAgreement', $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }

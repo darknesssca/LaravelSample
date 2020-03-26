@@ -12,7 +12,7 @@ class IngosstrahBillStatusService extends IngosstrahService implements Ingosstra
     public function run($company, $attributes, $additionalFields = []): array
     {
         $data = $this->prepareData($attributes, $additionalFields);
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetBill', $data);
+        $response = $this->requestBySoap($this->apiWsdlUrl, 'GetBill', $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }

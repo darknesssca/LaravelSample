@@ -12,7 +12,7 @@ class IngosstrahLoginService extends IngosstrahService implements IngosstrahLogi
     public function run($company, $attributes, $additionalFields = []): array
     {
         $data = $this->prepareData();
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'Login', $data);
+        $response = $this->requestBySoap($this->apiWsdlUrl, 'Login', $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }

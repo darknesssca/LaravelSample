@@ -19,7 +19,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
     public function run($company, $attributes, $additionalFields = []): array
     {
         $data = $this->prepareData($attributes);
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetTariff', $data);
+        $response = $this->requestBySoap($this->apiWsdlUrl, 'GetTariff', $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }

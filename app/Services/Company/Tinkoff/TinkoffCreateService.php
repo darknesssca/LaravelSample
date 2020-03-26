@@ -10,7 +10,7 @@ class TinkoffCreateService extends TinkoffService implements TinkoffCreateServic
     public function run($company, $attributes, $additionalFields = []): array
     {
         $data = $this->prepareData($attributes);
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'issueQuoteSetPartner', $data);
+        $response = $this->requestBySoap($this->apiWsdlUrl, 'issueQuoteSetPartner', $data);
         if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }

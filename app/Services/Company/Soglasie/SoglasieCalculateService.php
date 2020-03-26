@@ -28,7 +28,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         $data = $this->prepareData($attributes);
         $headers = $this->getHeaders();
         $auth = $this->getAuth();
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'CalcProduct', $data, $auth, $headers);
+        $response = $this->requestBySoap($this->apiWsdlUrl, 'CalcProduct', $data, $auth, $headers);
         if (isset($response['fault']) && $response['fault']) {
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }

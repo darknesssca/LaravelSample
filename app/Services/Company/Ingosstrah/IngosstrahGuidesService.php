@@ -45,7 +45,7 @@ class IngosstrahGuidesService extends IngosstrahService implements GuidesSourceI
                 'SessionToken' => $token,
                 "Product" => '753518300', //todo из справочника, вероятно статика
             ];
-            $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetDicti', $data, [], [], []);
+            $response = $this->requestBySoap($this->apiWsdlUrl, 'GetDicti', $data, [], [], []);
             $arr_raw = $this->parseXML($response['response']->ResponseData->any);
 
             $cars_arr = $this->filter_dict($arr_raw);

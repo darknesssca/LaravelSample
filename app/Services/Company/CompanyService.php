@@ -12,12 +12,13 @@ use Benfin\Api\Services\AuthMicroservice;
 use Benfin\Api\Services\LogMicroservice;
 use Benfin\Api\Services\NotifyMicroservice;
 use Benfin\Api\Traits\HttpRequest;
+use Benfin\Api\Traits\SoapRequest;
 use Illuminate\Support\Carbon;
 use Nowakowskir\JWT\TokenEncoded;
 
 class CompanyService implements CompanyServiceContract
 {
-    use HttpRequest;
+    use HttpRequest, SoapRequest;
 
     public $companyCode;
     public $companyId;

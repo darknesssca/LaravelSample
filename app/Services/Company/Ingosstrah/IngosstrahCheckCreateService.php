@@ -12,7 +12,7 @@ class IngosstrahCheckCreateService extends IngosstrahService implements Ingosstr
     public function run($company, $processData, $additionalFields = []): array
     {
         $data = $this->prepareData($processData);
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetAgreement', $data);
+        $response = $this->requestBySoap($this->apiWsdlUrl, 'GetAgreement', $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
