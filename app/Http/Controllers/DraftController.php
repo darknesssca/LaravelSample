@@ -7,6 +7,7 @@ use App\Models\Driver;
 use App\Models\Policy;
 use App\Models\PolicyStatus;
 use App\Models\PolicyType;
+use Benfin\Api\GlobalStorage;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -19,8 +20,7 @@ class DraftController extends Controller
         try
         {
             $attributes = $this->validate( $request,[] );
-            $this->checkToken($attributes);
-            $policy = Policy::getDrafts($request->user["user_id"]);
+            $policy = Policy::getDrafts(GlobalStorage::getUserId());
             return response()->json($policy, 200);
         }
         catch (ValidationException $exception)
@@ -37,9 +37,7 @@ class DraftController extends Controller
     {
         try
         {
-            $attributes = $this->validate( $request,[] );
-            $this->checkToken($attributes);
-            $policy = Policy::getDraftById($request->user["user_id"], $policeId);
+            $policy = Policy::getDraftById(GlobalStorage::getUserId(), $policeId);
             return response()->json($policy, 200);
         }
         catch (ValidationException $exception)
@@ -61,10 +59,9 @@ class DraftController extends Controller
                 $this->validationRulesForm(),
                 []
             );
-            $this->checkToken($attributes);
             //policy
             $policyData = [
-                'agent_id' => $request->user["user_id"],
+                'agent_id' => GlobalStorage::getUserId(),
                 'status_id' => PolicyStatus::where('code', 'draft')->get()->first()->id,
                 'type_id' => PolicyType::where('code', 'osago')->get()->first()->id,
             ];
@@ -213,16 +210,15 @@ class DraftController extends Controller
                 $this->validationRulesForm(),
                 []
             );
-            $this->checkToken($attributes);
             $policeId = (int)$policeId;
             if (!$policeId) {
                 return $this->error('id not correct', 400);
             }
             //old data
-            $oldPolicy = Policy::where('id', $policeId)->where('agent_id', $request->user["user_id"])->first();
+            $oldPolicy = Policy::where('id', $policeId)->where('agent_id', GlobalStorage::getUserId())->first();
             //policy
             $policyData = [
-                'agent_id' => $request->user["user_id"],
+                'agent_id' => GlobalStorage::getUserId(),
                 'status_id' => PolicyStatus::where('code', 'draft')->get()->first()->id,
                 'type_id' => PolicyType::where('code', 'osago')->get()->first()->id,
             ];
@@ -410,13 +406,11 @@ class DraftController extends Controller
     {
         try
         {
-            $attributes = $this->validate( $request,[] );
-            $this->checkToken($attributes);
             $policeId = (int)$policeId;
             if (!$policeId) {
                 return $this->error('id not correct', 400);
             }
-            $policy = Policy::where('id', $policeId)->where('agent_id', $request->user["user_id"])->first();
+            $policy = Policy::where('id', $policeId)->where('agent_id', GlobalStorage::getUserId())->first();
             $policy->drivers()->delete();
             $policy->delete();
 

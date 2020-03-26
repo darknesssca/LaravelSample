@@ -14,6 +14,7 @@ use App\Services\Company\Renessans\RenessansGuidesService;
 use App\Services\Company\Soglasie\SoglasieGuidesService;
 use App\Services\Company\Tinkoff\TinkoffGuidesService;
 use Benfin\Api\Contracts\LogMicroserviceContract;
+use Benfin\Api\GlobalStorage;
 use Benfin\Api\Services\LogMicroservice;
 use Carbon\Carbon;
 use Illuminate\Contracts\Container\BindingResolutionException;
@@ -66,15 +67,16 @@ class InsuranceController extends Controller
             $data = [
                 'form' => $attributes,
             ];
-            $this->checkToken($attributes);
 
             //отправка лога
             $message= 'пользователь отправил форму со следующими полями: '.\GuzzleHttp\json_encode($data);
             /**
-             * @var LogMicroservice $notify
+             * @var LogMicroservice $logger
              */
-            $notify =  app(LogMicroserviceContract::class);
-            $notify->sendLog($message, config('api_sk.logMicroserviceCode'), $data['auth_token'], $request->user["user_id"]);
+
+            $logger =  app(LogMicroserviceContract::class);
+            $logger->sendLog($message,config('api_sk.logMicroserviceCode'),GlobalStorage::getUserId());
+
 
             $token = IntermediateData::createToken($data);
             return $this->success(['token' => $token], 200);
