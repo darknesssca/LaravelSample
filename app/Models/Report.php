@@ -19,4 +19,10 @@ class Report extends Model
     {
         return $this->belongsToMany('App\Models\Policy', 'report_policy');
     }
+
+    public function file()
+    {
+        return $this->belongsTo('App\Models\File');
+    }
+
 }
