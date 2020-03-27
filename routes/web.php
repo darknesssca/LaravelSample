@@ -51,11 +51,11 @@ $router->group(
 
                 //guides
                 $router->get('/guides/marks', 'GuidesController@marks');
-                $router->get('/guides/models/{mark_id}', 'GuidesController@models');
+                $router->get('/guides/models/{mark_id:\d+}', 'GuidesController@models');
                 $router->get('/guides/models/', 'GuidesController@modelsAll');
                 $router->get('/guides/categories/', 'GuidesController@categories');
                 $router->get('/guides/countries/', 'GuidesController@countriesAll');
-                $router->get('/guides/countries/{country_id}', 'GuidesController@countries');
+                $router->get('/guides/countries/{country_id:\d+}', 'GuidesController@countries');
                 $router->get('/guides/genders', 'GuidesController@genders');
                 $router->get('/guides/doc-types', 'GuidesController@docTypes');
                 $router->get('/guides/usage-targets', 'GuidesController@usageTargets');
