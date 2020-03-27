@@ -10,7 +10,10 @@ use App\Models\CarModel;
 use App\Models\Country;
 use App\Models\DocType;
 use App\Models\Gender;
+use App\Models\InsuranceCompany;
+use App\Models\SourceAcquisition;
 use App\Models\UsageTarget;
+use phpDocumentor\Reflection\DocBlock\Tags\Source;
 use PhpOffice\PhpSpreadsheet\Calculation\Category;
 
 class GuidesController extends Controller
@@ -57,7 +60,6 @@ class GuidesController extends Controller
         return response()->json(["error"=>false,"content"=>$data],200);
     }
 
-
     public function docTypes()
     {
         $data = DocType::select(["id","code","name"])->get()->jsonSerialize();
@@ -71,5 +73,16 @@ class GuidesController extends Controller
         return response()->json(["error"=>false,"content"=>$data],200);
     }
 
+    public function insuranceCompanies()
+    {
+        $data = InsuranceCompany::select(["id","code","name"])->where("active",true)->get()->jsonSerialize();
+        return response()->json(["error"=>false,"content"=>$data],200);
+    }
+
+    public function sourceAcquisitions()
+    {
+        $data = SourceAcquisition::select(["id","code","name"])->get()->jsonSerialize();
+        return response()->json(["error"=>false,"content"=>$data],200);
+    }
 
 }

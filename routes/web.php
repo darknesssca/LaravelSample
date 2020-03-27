@@ -59,6 +59,8 @@ $router->group(
                 $router->get('/guides/genders', 'GuidesController@genders');
                 $router->get('/guides/doc-types', 'GuidesController@docTypes');
                 $router->get('/guides/usage-targets', 'GuidesController@usageTargets');
+                $router->get('/guides/insurance-companies', 'GuidesController@insuranceCompanies');
+                $router->get('/guides/source-acquisitions', 'GuidesController@sourceAcquisitions');
             }
         );
     }
