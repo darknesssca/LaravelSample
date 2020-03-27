@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\Repositories\DraftRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Models\Policy;
@@ -60,15 +61,10 @@ class PolicyService implements PolicyServiceContract
     public function create(array $fields, int $draftId = null)
     {
         $policy = new Policy();
-        try {
-            $policy->fill([
-                'agent_id' => 1,
-                'status_id' => self::STATUS_ISSUED,
-            ])->saveOrFail();
+        $policy->fill([
+            'agent_id' => 1,
+        ])->saveOrFail();
 
-            $policy->drivers()->create([]);
-        } catch (\Throwable $e) {
-            dd($e->getMessage());
-        }
+        $policy->drivers()->create([]);
     }
 }

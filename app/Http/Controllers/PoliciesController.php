@@ -20,8 +20,6 @@ class PoliciesController extends Controller
 
     public function create(Request $request)
     {
-//        dd('asds');
-        dd($request->all());
-        app(PolicyServiceContract::class)->create();
+        app(PolicyServiceContract::class)->create([]);
     }
 }
