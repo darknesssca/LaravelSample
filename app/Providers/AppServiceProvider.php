@@ -29,6 +29,7 @@ use App\Contracts\Company\Tinkoff\TinkoffBillLinkServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCreateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
+use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Models\Policy;
 use App\Services\Company\CompanyService;
@@ -75,93 +76,93 @@ class AppServiceProvider extends ServiceProvider
 
     public function registerServices()
     {
-        $this->app->singleton(CompanyServiceContract::class, function($app) {
+        $this->app->singleton(CompanyServiceContract::class, function() {
             return new CompanyService();
         });
         //renessans
-        $this->app->singleton(RenessansServiceContract::class, function($app) {
+        $this->app->singleton(RenessansServiceContract::class, function() {
             return new RenessansService();
         });
-        $this->app->singleton(RenessansCalculateServiceContract::class, function($app) {
+        $this->app->singleton(RenessansCalculateServiceContract::class, function() {
             return new RenessansCalculateService();
         });
-        $this->app->singleton(RenessansCheckCalculateServiceContract::class, function($app) {
+        $this->app->singleton(RenessansCheckCalculateServiceContract::class, function() {
             return new RenessansCheckCalculateService();
         });
-        $this->app->singleton(RenessansCreateServiceContract::class, function($app) {
+        $this->app->singleton(RenessansCreateServiceContract::class, function() {
             return new RenessansCreateService();
         });
-        $this->app->singleton(RenessansCheckCreateServiceContract::class, function($app) {
+        $this->app->singleton(RenessansCheckCreateServiceContract::class, function() {
             return new RenessansCheckCreateService();
         });
-        $this->app->singleton(RenessansGetStatusServiceContract::class, function($app) {
+        $this->app->singleton(RenessansGetStatusServiceContract::class, function() {
             return new RenessansGetStatusService();
         });
-        $this->app->singleton(RenessansBillLinkServiceContract::class, function($app) {
+        $this->app->singleton(RenessansBillLinkServiceContract::class, function() {
             return new RenessansBillLinkService();
         });
         //tinkoff
-        $this->app->singleton(TinkoffServiceContract::class, function($app) {
+        $this->app->singleton(TinkoffServiceContract::class, function() {
             return new TinkoffService();
         });
-        $this->app->singleton(TinkoffCalculateServiceContract::class, function($app) {
+        $this->app->singleton(TinkoffCalculateServiceContract::class, function() {
             return new TinkoffCalculateService();
         });
-        $this->app->singleton(TinkoffCreateServiceContract::class, function($app) {
+        $this->app->singleton(TinkoffCreateServiceContract::class, function() {
             return new TinkoffCreateService();
         });
-        $this->app->singleton(TinkoffBillLinkServiceContract::class, function($app) {
+        $this->app->singleton(TinkoffBillLinkServiceContract::class, function() {
             return new TinkoffBillLinkService();
         });
         //ingosstrah
-        $this->app->singleton(IngosstrahServiceContract::class, function($app) {
+        $this->app->singleton(IngosstrahServiceContract::class, function() {
             return new IngosstrahService();
         });
-        $this->app->singleton(IngosstrahLoginServiceContract::class, function($app) {
+        $this->app->singleton(IngosstrahLoginServiceContract::class, function() {
             return new IngosstrahLoginService();
         });
-        $this->app->singleton(IngosstrahCalculateServiceContract::class, function($app) {
+        $this->app->singleton(IngosstrahCalculateServiceContract::class, function() {
             return new IngosstrahCalculateService();
         });
-        $this->app->singleton(IngosstrahCreateServiceContract::class, function($app) {
+        $this->app->singleton(IngosstrahCreateServiceContract::class, function() {
             return new IngosstrahCreateService();
         });
-        $this->app->singleton(IngosstrahCheckCreateServiceContract::class, function($app) {
+        $this->app->singleton(IngosstrahCheckCreateServiceContract::class, function() {
             return new IngosstrahCheckCreateService();
         });
-        $this->app->singleton(IngosstrahEosagoServiceContract::class, function($app) {
+        $this->app->singleton(IngosstrahEosagoServiceContract::class, function() {
             return new IngosstrahEosagoService();
         });
-        $this->app->singleton(IngosstrahBillServiceContract::class, function($app) {
+        $this->app->singleton(IngosstrahBillServiceContract::class, function() {
             return new IngosstrahBillService();
         });
-        $this->app->singleton(IngosstrahBillLinkServiceContract::class, function($app) {
+        $this->app->singleton(IngosstrahBillLinkServiceContract::class, function() {
             return new IngosstrahBillLinkService();
         });
         //soglasie
-        $this->app->singleton(SoglasieServiceContract::class, function($app) {
+        $this->app->singleton(SoglasieServiceContract::class, function() {
             return new SoglasieService();
         });
-        $this->app->singleton(SoglasieKbmServiceContract::class, function($app) {
+        $this->app->singleton(SoglasieKbmServiceContract::class, function() {
             return new SoglasieKbmService();
         });
-        $this->app->singleton(SoglasieScoringServiceContract::class, function($app) {
+        $this->app->singleton(SoglasieScoringServiceContract::class, function() {
             return new SoglasieScoringService();
         });
-        $this->app->singleton(SoglasieCalculateServiceContract::class, function($app) {
+        $this->app->singleton(SoglasieCalculateServiceContract::class, function() {
             return new SoglasieCalculateService();
         });
-        $this->app->singleton(SoglasieCreateServiceContract::class, function($app) {
+        $this->app->singleton(SoglasieCreateServiceContract::class, function() {
             return new SoglasieCreateService();
         });
-        $this->app->singleton(SoglasieCheckCreateServiceContract::class, function($app) {
+        $this->app->singleton(SoglasieCheckCreateServiceContract::class, function() {
             return new SoglasieCheckCreateService();
         });
-        $this->app->singleton(SoglasieCancelCreateServiceContract::class, function($app) {
+        $this->app->singleton(SoglasieCancelCreateServiceContract::class, function() {
             return new SoglasieCancelCreateService();
         });
-        $this->app->singleton(PolicyServiceContract::class, function () {
-            return new PolicyService();
+        $this->app->singleton(PolicyServiceContract::class, function ($app) {
+            return new PolicyService($app->make(PolicyRepositoryContract::class));
         });
     }
 }

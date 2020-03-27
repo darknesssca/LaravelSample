@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Models\Policy;
 use Carbon\Carbon;
@@ -9,7 +10,12 @@ use Illuminate\Database\Eloquent\Builder;
 
 class PolicyService implements PolicyServiceContract
 {
-    private const STATUS_ISSUED = 2;
+    private $policyRepository;
+
+    public function __construct(PolicyRepositoryContract $policyRepository)
+    {
+        $this->policyRepository = $policyRepository;
+    }
 
     public function getList(array $filter = [])
     {
@@ -48,7 +54,7 @@ class PolicyService implements PolicyServiceContract
 
     public function getById($id)
     {
-        return Policy::findOrFail($id);
+        return $this->policyRepository->getById($id);
     }
 
     public function create(array $fields, int $draftId = null)

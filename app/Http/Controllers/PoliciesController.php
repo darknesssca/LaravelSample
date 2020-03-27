@@ -18,8 +18,10 @@ class PoliciesController extends Controller
         return response()->json(app(PolicyServiceContract::class)->getById($id));
     }
 
-    public function create()
+    public function create(Request $request)
     {
+//        dd('asds');
+        dd($request->all());
         app(PolicyServiceContract::class)->create();
     }
 }
