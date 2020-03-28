@@ -3,6 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\Company\CompanyServiceContract;
+use App\Contracts\Repositories\InsuranceCompanyContract;
+use App\Contracts\Repositories\IntermediateDataRepositoryContract;
+use App\Contracts\Repositories\RequestProcessRepositoryContract;
+use App\Exceptions\CompanyException;
+use App\Exceptions\MethodBoundException;
+use App\Http\Requests\FormSendRequest;
+use App\Http\Requests\ProcessRequest;
 use App\Models\Country;
 use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
@@ -13,12 +20,14 @@ use App\Services\Company\Ingosstrah\IngosstrahGuidesService;
 use App\Services\Company\Renessans\RenessansGuidesService;
 use App\Services\Company\Soglasie\SoglasieGuidesService;
 use App\Services\Company\Tinkoff\TinkoffGuidesService;
+use App\Traits\Token;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 use Benfin\Api\Services\LogMicroservice;
 use Carbon\Carbon;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -27,69 +36,73 @@ use PhpOffice\PhpSpreadsheet\Reader\Exception;
 
 class InsuranceController extends Controller
 {
-    protected static $companies = [];
+    use Token;
 
-    public function index($code, $method, Request $request)
+    protected $intermediateDataRepository;
+    protected $requestProcessRepository;
+    protected $insuranceCompanyRepository;
+
+    public function __construct(
+        IntermediateDataRepositoryContract $intermediateDataRepository,
+        RequestProcessRepositoryContract $requestProcessRepository,
+        InsuranceCompanyContract $insuranceCompanyRepository
+    )
     {
-        $company = $this->checkCompany($code);
-        if (!$company->count()) {
-            return $this->error('Компания не найдена', 404);
-        }
+        $this->intermediateDataRepository = $intermediateDataRepository;
+        $this->requestProcessRepository = $requestProcessRepository;
+        $this->insuranceCompanyRepository = $insuranceCompanyRepository;
+    }
+
+    public function index($code, $method, ProcessRequest $request)
+    {
+        $company = $this->getCompany($code);
         $method = strtolower((string)$method);
-        try
-        {
-            $response = $this->runService($company, $request, $method);
-            if (isset($response['error']) && $response['error']) {
-                return response()->json($response, 500);
-            } else {
-                return $this->success($response, 200);
-            }
-        }
-        catch (ValidationException $exception)
-        {
-            return $this->error($exception->errors(), 400);
-        } catch (BindingResolutionException $exception) {
-            return $this->error('Не найден обработчик компании: ' . $exception->getMessage(), 404);
-        } catch (\Exception $exception) {
-            return $this->error($exception->getMessage(), 500);
-        }
+        return Response::success($this->runService($company, $request->validated(), $method));
     }
 
-    public function store(Request $request)
+    public function store(FormSendRequest $request)
     {
-        try {
-            $controller = app(CompanyServiceContract::class);
-            $attributes = $this->validate(
-                $request,
-                $controller->validationRulesForm(),
-                $controller->validationMessagesForm()
-            );
-            $data = [
-                'form' => $attributes,
-            ];
-
-            //отправка лога
-            $message= 'пользователь отправил форму со следующими полями: '.\GuzzleHttp\json_encode($data);
-            /**
-             * @var LogMicroservice $logger
-             */
-
-            $logger =  app(LogMicroserviceContract::class);
-            $logger->sendLog($message,config('api_sk.logMicroserviceCode'),GlobalStorage::getUserId());
-
-
-            $token = IntermediateData::createToken($data);
-            return $this->success(['token' => $token], 200);
-        }
-        catch (ValidationException $exception)
-        {
-            return $this->error($exception->errors(), 400);
-        } catch (BindingResolutionException $exception) {
-            return $this->error('Не найден обработчик компании: ' . $exception->getMessage(), 404);
-        } catch (\Exception $exception) {
-            return $this->error($exception->getMessage(), 500);
-        }
+        $data = [
+            'form' => $request->validated(),
+        ];
+        $token = $this->createToken($data);
+        $logger = app(LogMicroserviceContract::class);
+        $logger->sendLog(
+            'пользователь отправил форму со следующими полями: ' . json_encode($data['form']),
+            config('api_sk.logMicroserviceCode'),
+            GlobalStorage::getUserId()
+        );
+        return $this->success(['token' => $token]);
     }
+
+    public function getCompany($code)
+    {
+        $company = $this->insuranceCompanyRepository->getCompany($code);
+        if (!$company) {
+            throw new CompanyException('Компания ' . $code . ' не найдена или не доступна');
+        }
+        return $company;
+    }
+
+    private function runService($company, $attributes, $serviceMethod)
+    {
+        $controller = $this->getCompanyController($company);
+        if (!method_exists($controller, $serviceMethod)) {
+            throw new MethodBoundException('Метод не найден');
+        }
+        return $controller->$serviceMethod($company, $attributes);
+    }
+
+    protected function getCompanyController($company)
+    {
+        $company = ucfirst(strtolower($company->code));
+        $contract = 'App\\Contracts\\Company\\' . $company . '\\' . $company . 'MasterServiceContract';
+        return app($contract);
+    }
+
+
+    // FIXME требуется рефакторинг
+
 
     public function payment($code, Request $request)
     {
@@ -119,37 +132,7 @@ class InsuranceController extends Controller
         }
     }
 
-    private function runService($company, $request, $serviceMethod, $additionalData = [])
-    {
-        $controller = $this->getCompanyController($company);
-        if (!method_exists($controller, $serviceMethod)) {
-            return $this->error('Метод не найден', 404); // todo вынести в отдельные эксепшены
-        }
-        $validatedFields = $this->validate(
-            $request,
-            $controller->validationRulesProcess(),
-            $controller->validationMessagesProcess()
-        );
-        $tokenData = IntermediateData::getData($validatedFields['token']);
-        if (!$tokenData) {
-            throw new \Exception('token not valid'); // todo вынести в отдельные эксепшены
-        }
-        if (!isset($tokenData['form']) || !$tokenData['form']) {
-            throw new \Exception('token have no data'); // todo вынести в отдельные эксепшены
-        }
-        $additionalData['tokenData'] = isset($tokenData[$company->code]) ? $tokenData[$company->code] : false;
-        $attributes = $tokenData['form'];
-        $attributes['token'] = $validatedFields['token'];
-        return $controller->$serviceMethod($company, $attributes, $additionalData);
-    }
 
-    public function checkCompany($code)
-    {
-        if (!isset(self::$companies[$code])) {
-            self::$companies[$code] = InsuranceCompany::getCompany($code);
-        }
-        return self::$companies[$code];
-    }
 
     public function getPreCalculate()
     {
@@ -339,34 +322,9 @@ class InsuranceController extends Controller
         }
     }
 
-    protected function error($messages, $httpCode = 500)
-    {
-        $errors = [];
-        if (gettype($messages) == 'array') {
-            foreach ($messages as $message) {
-                $errors[] = [
-                    'message' => $message,
-                ];
-            }
-        } else {
-            $errors[] = [
-                'message' => (string)$messages,
-            ];
-        }
-        $message = [
-            'error' => true,
-            'errors' => $errors,
-        ];
-        return response()->json($message, $httpCode);
-    }
 
 
-    protected function getCompanyController($company)
-    {
-        $company = ucfirst(strtolower($company->code));
-        $contract = 'App\\Contracts\\Company\\' . $company . '\\' . $company . 'ServiceContract';
-        return app($contract);
-    }
+
 
     /**
      * artisan команда обновления справочников

@@ -1,6 +1,8 @@
 <?php
 
-require_once __DIR__.'/../vendor/autoload.php';
+use Benfin\Api\BenfinMicroserviceProvider;
+
+require_once __DIR__ . '/../vendor/autoload.php';
 
 (new Laravel\Lumen\Bootstrap\LoadEnvironmentVariables(
     dirname(__DIR__)
@@ -91,8 +93,8 @@ $app->configure('api_sk');
 */
 
 $app->register(App\Providers\AppServiceProvider::class);
-$app->register(\Benfin\Api\BenfinMicroserviceProvider::class);
-$app->routeMiddleware([ 'auth' => Benfin\Auth\Http\Middleware\Authenticate::class, ]);
+$app->register(BenfinMicroserviceProvider::class);
+$app->routeMiddleware(['auth' => Benfin\Auth\Http\Middleware\Authenticate::class,]);
 $app->register(App\Providers\MinIOStorageServiceProvider::class);
 //$app->register(Avtocod\B2BApi\Laravel\ServiceProvider::class);
 // $app->register(App\Providers\AuthServiceProvider::class);
@@ -111,9 +113,12 @@ $app->register(App\Providers\MinIOStorageServiceProvider::class);
 
 $app->router->group([
     'prefix' => 'api',
+    "middleware" => "auth",
+    "uses" => 'UserController@show',
     'namespace' => 'App\Http\Controllers',
-], function ($router) {
-    require __DIR__.'/../routes/web.php';
+], function ($router)
+{
+    require __DIR__ . '/../routes/web.php';
 });
 
 return $app;

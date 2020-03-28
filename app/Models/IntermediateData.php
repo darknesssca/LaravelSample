@@ -15,32 +15,4 @@ class IntermediateData extends Model
     ];
     protected $primaryKey = 'token';
     protected $keyType = 'string';
-
-    public static function createToken($data, $try = 0)
-    {
-        $token = Str::random(32);
-        try {
-            self::create([
-                'token' => $token,
-                'data' => json_encode($data)
-            ]);
-            return $token;
-        } catch (\Exception $exception) {
-            $try += 1;
-            if ($try > 5) {
-                throw new \Exception('fail create token: '.$exception->getMessage());
-            }
-            return self::createToken($data, $try);
-        }
-    }
-
-    public static function getData($token)
-    {
-        $data = self::find($token);
-        if (!$data || !isset($data['data'])) {
-            throw new \Exception('not found data by token');
-        }
-        $array = json_decode($data['data'], true);
-        return $array;
-    }
 }

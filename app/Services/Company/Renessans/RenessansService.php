@@ -10,142 +10,28 @@ use App\Contracts\Company\Renessans\RenessansCheckCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansGetStatusServiceContract;
 use App\Contracts\Company\Renessans\RenessansServiceContract;
-use App\Http\Controllers\RestController;
-use App\Models\InsuranceCompany;
+use App\Exceptions\ConmfigurationException;
 use App\Models\IntermediateData;
 use App\Models\PolicyStatus;
-use App\Models\RequestProcess;
+use App\Repositories\IntermediateDataRepository;
+use App\Repositories\RequestProcessRepository;
 use App\Services\Company\CompanyService;
 
-class RenessansService extends CompanyService implements RenessansServiceContract
+abstract class RenessansService extends CompanyService implements RenessansServiceContract
 {
-    private $apiUrl;
-    private $secretKey;
+    const companyCode = 'renessans';
 
-    public function __construct()
+    protected $apiUrl;
+    protected $secretKey;
+
+    public function __construct(IntermediateDataRepository $intermediateDataRepository, RequestProcessRepository $requestProcessRepository)
     {
-        $this->companyCode = "renessans";
-        $this->companyId = InsuranceCompany::where('code',$this->companyCode)->take(1)->get()[0]['id'];
         $this->apiUrl = config('api_sk.renessans.apiUrl');
         $this->secretKey = config('api_sk.renessans.apiKey');
         if (!($this->apiUrl && $this->secretKey)) {
-            throw new \Exception('renessans api is not configured');
+            throw new ConmfigurationException('Ошибка конфигурации API');
         }
-    }
-
-    public function calculate($company, $attributes, $additionalData)
-    {
-        $serviceCalculate = app(RenessansCalculateServiceContract::class);
-        $dataCalculate = $serviceCalculate->run($company, $attributes, $additionalData);
-        RequestProcess::create([
-            'token' => $attributes['token'],
-            'state' => 1,
-            'company' => $company->code,
-            'data' => json_encode($dataCalculate),
-        ]);
-        $tokenData = IntermediateData::getData($attributes['token']);
-        $tokenData[$company->code] = [
-            'status' => 'calculating',
-        ];
-        IntermediateData::where('token', $attributes['token'])->update([
-            'data' => json_encode($tokenData),
-        ]);
-    }
-
-    public function calculating($company, $data, $additionalData)
-    {
-        if (!(isset($additionalData['tokenData']) && $additionalData['tokenData'])) {
-            throw new \Exception('no token data');
-        }
-        if (!(isset($additionalData['tokenData']['status']) && $additionalData['tokenData']['status'])) {
-            throw new \Exception('no status in token data');
-        }
-        switch ($additionalData['tokenData']['status']) {
-            case 'calculating':
-                return [
-                    'status' => 'calculating',
-                ];
-            case 'calculated':
-                return [
-                    'status' => 'done',
-                    'premium' => $additionalData['tokenData']['finalPremium'],
-                ];
-            case 'error':
-                return [
-                    'error' => true,
-                    'errors' => [
-                        [
-                            'message' => $additionalData['tokenData']['errorMessage'],
-                        ],
-                    ],
-                ];
-            default:
-                throw new \Exception('not valid status');
-        }
-    }
-
-    public function create($company, $attributes, $additionalData)
-    {
-        if (!(isset($additionalData['tokenData']) && $additionalData['tokenData'])) {
-            throw new \Exception('no token data');
-        }
-        $attributes['calcId'] = $additionalData['tokenData']['calcId'];
-        $serviceCreate = app(RenessansCreateServiceContract::class);
-        $dataCreate = $serviceCreate->run($company, $attributes, $additionalData);
-        $tokenData = IntermediateData::getData($attributes['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
-        $tokenData[$company->code]['policyId'] = $dataCreate['policyId'];
-        $tokenData[$company->code]['status'] = 'processing';
-        IntermediateData::where('token', $attributes['token'])->update([
-            'data' => $tokenData,
-        ]);
-        RequestProcess::create([
-            'token' => $attributes['token'],
-            'state' => 50,
-            'company' => $company->code,
-            'data' => json_encode([
-                'policyId' => $dataCreate['policyId'],
-                'status' => 'processing',
-            ]),
-        ]);
-        return [
-            'status' => 'processing',
-        ];
-    }
-
-    public function processing($company, $data, $additionalData)
-    {
-        if (!(isset($additionalData['tokenData']) && $additionalData['tokenData'])) {
-            throw new \Exception('no token data');
-        }
-        if (!(isset($additionalData['tokenData']['status']) && $additionalData['tokenData']['status'])) {
-            throw new \Exception('no status in token data');
-        }
-        switch ($additionalData['tokenData']['status']) {
-            case 'processing':
-                return [
-                    'status' => 'processing',
-                ];
-            case 'done':
-                return [
-                    'status' => 'done',
-                    'billUrl' => $additionalData['tokenData']['billUrl'],
-                ];
-            case 'hold':
-                return [
-                    'status' => 'hold',
-                ];
-            case 'error':
-                return [
-                    'error' => true,
-                    'errors' => [
-                        [
-                            'message' => $additionalData['tokenData']['errorMessage'],
-                        ],
-                    ],
-                ];
-            default:
-                throw new \Exception('not valid status');
-        }
+        parent::__construct($intermediateDataRepository, $requestProcessRepository);
     }
 
     public function checkPaid($company, $process)
@@ -406,15 +292,5 @@ class RenessansService extends CompanyService implements RenessansServiceContrac
             }
         }
         return $url;
-    }
-
-    protected function transformBoolean($boolean)
-    {
-        return (bool)$boolean;
-    }
-
-    protected function transformBooleanToInteger($boolean)
-    {
-        return (int)$boolean;
     }
 }
