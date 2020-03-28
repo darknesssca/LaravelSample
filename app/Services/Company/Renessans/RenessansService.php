@@ -34,6 +34,25 @@ abstract class RenessansService extends CompanyService implements RenessansServi
         parent::__construct($intermediateDataRepository, $requestProcessRepository);
     }
 
+    protected function setAuth(&$attributes)
+    {
+        $attributes['key'] = $this->secretKey;
+    }
+
+    protected function getUrl($data = [])
+    {
+        $url = (substr($this->apiUrl, -1) == '/' ? substr($this->apiUrl, 0, -1) : $this->apiUrl) .
+            $this->apiPath;
+        if ($data) {
+            foreach ($data as $key => $value) {
+                $url = str_replace('{{'.$key.'}}', $value, $url);
+            }
+        }
+        return $url;
+    }
+
+    // FIXME требуется рефакторинг
+
     public function checkPaid($company, $process)
     {
         $dataProcess = $process->toArray();
@@ -275,22 +294,5 @@ abstract class RenessansService extends CompanyService implements RenessansServi
                 ]);
             }
         }
-    }
-
-    protected function setAuth(&$attributes)
-    {
-        $attributes['key'] = $this->secretKey;
-    }
-
-    protected function getUrl($data = [])
-    {
-        $url = (substr($this->apiUrl, -1) == '/' ? substr($this->apiUrl, 0, -1) : $this->apiUrl) .
-            $this->apiPath;
-        if ($data) {
-            foreach ($data as $key => $value) {
-                $url = str_replace('{{'.$key.'}}', $value, $url);
-            }
-        }
-        return $url;
     }
 }

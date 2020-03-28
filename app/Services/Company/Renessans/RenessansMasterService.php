@@ -6,12 +6,15 @@ namespace App\Services\Company\Renessans;
 
 use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
+use App\Contracts\Company\Renessans\RenessansMasterServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\TokenException;
+use Benfin\Api\Contracts\LogMicroserviceContract;
+use Benfin\Api\GlobalStorage;
 
-class RenessansMasterService extends RenessansService
+class RenessansMasterService extends RenessansService implements RenessansMasterServiceContract
 {
-    public function calculate($company, $attributes, $additionalData)
+    public function calculate($company, $attributes)
     {
         $this->pushForm($attributes);
         $serviceCalculate = app(RenessansCalculateServiceContract::class);
@@ -53,6 +56,12 @@ class RenessansMasterService extends RenessansService
                 'status' => 'processing',
             ])
         ]);
+        $logger = app(LogMicroserviceContract::class);
+        $logger->sendLog(
+            'пользователь отправил запрос на создание заявки в компанию ' . $company->name,
+            config('api_sk.logMicroserviceCode'),
+            GlobalStorage::getUserId()
+        );
         return [
             'status' => 'processing',
         ];
@@ -81,8 +90,6 @@ class RenessansMasterService extends RenessansService
         }
     }
 
-
-
     public function processing($company, $attributes)
     {
         $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);
@@ -109,5 +116,4 @@ class RenessansMasterService extends RenessansService
                 throw new TokenException('Статус рассчета не валиден');
         }
     }
-
 }
