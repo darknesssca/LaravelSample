@@ -46,6 +46,13 @@ $router->group(
                 $router->post('/reports', 'ReportController@create');
                 $router->get('/reports', 'ReportController@index');
                 $router->get('/reports/{id}', 'ReportController@show');
+
+                //options
+                $router->post('/options', 'OptionController@create');
+                $router->get('/options', 'OptionController@index');
+                $router->get('/options/{id}', 'OptionController@show');
+                $router->patch('/options/{id}', 'OptionController@update');
+                $router->delete('/options/{id}', 'OptionController@delete');
             }
         );
     }
