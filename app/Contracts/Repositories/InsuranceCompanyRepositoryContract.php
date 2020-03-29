@@ -4,7 +4,7 @@
 namespace App\Contracts\Repositories;
 
 
-interface InsuranceCompanyContract
+interface InsuranceCompanyRepositoryContract
 {
 
 }

@@ -7,7 +7,7 @@ namespace App\Repositories;
 use App\Contracts\Repositories\IntermediateDataRepositoryContract;
 use App\Models\IntermediateData;
 
-abstract class IntermediateDataRepository extends AbstractDataRepository implements IntermediateDataRepositoryContract
+class IntermediateDataRepository extends AbstractDataRepository implements IntermediateDataRepositoryContract
 {
     public function __construct(IntermediateData $model)
     {

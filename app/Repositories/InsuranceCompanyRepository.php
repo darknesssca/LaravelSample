@@ -4,10 +4,10 @@
 namespace App\Repositories;
 
 
-use App\Contracts\Repositories\InsuranceCompanyContract;
+use App\Contracts\Repositories\InsuranceCompanyRepositoryContract;
 use App\Models\InsuranceCompany;
 
-abstract class InsuranceCompanyRepository extends AbstractDataRepository implements InsuranceCompanyContract
+class InsuranceCompanyRepository extends AbstractDataRepository implements InsuranceCompanyRepositoryContract
 {
     public function __construct(InsuranceCompany $model)
     {

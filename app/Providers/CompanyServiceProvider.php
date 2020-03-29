@@ -54,8 +54,9 @@ use App\Services\Company\Tinkoff\TinkoffBillLinkService;
 use App\Services\Company\Tinkoff\TinkoffCalculateService;
 use App\Services\Company\Tinkoff\TinkoffCreateService;
 use App\Services\Company\Tinkoff\TinkoffMasterService;
+use Illuminate\Support\ServiceProvider;
 
-class CompanyServiceProvider
+class CompanyServiceProvider extends ServiceProvider
 {
     public function register()
     {

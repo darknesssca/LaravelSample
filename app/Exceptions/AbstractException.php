@@ -9,8 +9,8 @@ class AbstractException extends \Exception
     const exceptionName = "internal error";
     const exceptionCode = 500;
 
-    private $data = null;
-    private $code = 0;
+    protected $data = null;
+    protected $code = 0;
 
     public function __construct($data = null, int $code = 0, \Throwable $previous = null)
     {

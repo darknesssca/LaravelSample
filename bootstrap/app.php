@@ -1,5 +1,6 @@
 <?php
 
+use Benfin\Api\BenfinMacroProvider;
 use Benfin\Api\BenfinMicroserviceProvider;
 
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -92,10 +93,12 @@ $app->configure('api_sk');
 |
 */
 
-$app->register(App\Providers\CompanyServiceProvider::class);
 $app->register(App\Providers\AppServiceProvider::class);
+$app->register(App\Providers\CompanyServiceProvider::class);
+$app->register(App\Providers\RepositoryServiceProvider::class);
 $app->register(BenfinMicroserviceProvider::class);
 $app->routeMiddleware(['auth' => Benfin\Auth\Http\Middleware\Authenticate::class,]);
+$app->register(BenfinMacroProvider::class);
 $app->register(App\Providers\MinIOStorageServiceProvider::class);
 //$app->register(Avtocod\B2BApi\Laravel\ServiceProvider::class);
 // $app->register(App\Providers\AuthServiceProvider::class);

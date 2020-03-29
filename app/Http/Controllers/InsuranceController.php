@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\Company\CompanyServiceContract;
-use App\Contracts\Repositories\InsuranceCompanyContract;
+use App\Contracts\Repositories\InsuranceCompanyRepositoryContract;
 use App\Contracts\Repositories\IntermediateDataRepositoryContract;
 use App\Contracts\Repositories\RequestProcessRepositoryContract;
 use App\Exceptions\CompanyException;
@@ -45,7 +45,7 @@ class InsuranceController extends Controller
     public function __construct(
         IntermediateDataRepositoryContract $intermediateDataRepository,
         RequestProcessRepositoryContract $requestProcessRepository,
-        InsuranceCompanyContract $insuranceCompanyRepository
+        InsuranceCompanyRepositoryContract $insuranceCompanyRepository
     )
     {
         $this->intermediateDataRepository = $intermediateDataRepository;
