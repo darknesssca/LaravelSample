@@ -21,15 +21,15 @@ class RepositoryServiceProvider extends ServiceProvider
 
     protected function registerRepositoryProviders()
     {
-        $this->app->bind(
+        $this->app->singleton(
             InsuranceCompanyRepositoryContract::class,
             InsuranceCompanyRepository::class
         );
-        $this->app->bind(
+        $this->app->singleton(
             IntermediateDataRepositoryContract::class,
             IntermediateDataRepository::class
         );
-        $this->app->bind(
+        $this->app->singleton(
             RequestProcessRepositoryContract::class,
             RequestProcessRepository::class
         );
