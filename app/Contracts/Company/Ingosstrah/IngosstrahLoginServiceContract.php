@@ -2,7 +2,9 @@
 
 namespace App\Contracts\Company\Ingosstrah;
 
-interface IngosstrahLoginServiceContract
+use App\Contracts\Company\CompanyMethodServiceInterface;
+
+interface IngosstrahLoginServiceContract extends CompanyMethodServiceInterface
 {
 
 }

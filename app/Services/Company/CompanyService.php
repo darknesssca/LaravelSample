@@ -3,7 +3,6 @@
 
 namespace App\Services\Company;
 
-use App\Contracts\Company\CompanyServiceContract;
 use App\Contracts\Repositories\IntermediateDataRepositoryContract;
 use App\Contracts\Repositories\RequestProcessRepositoryContract;
 use App\Traits\Token;
@@ -11,7 +10,7 @@ use Benfin\Api\Contracts\NotifyMicroserviceContract;
 use Benfin\Api\Traits\HttpRequest;
 use Benfin\Api\Traits\SoapRequest;
 
-abstract class CompanyService implements CompanyServiceContract
+abstract class CompanyService
 {
     use HttpRequest, SoapRequest, Token;
 

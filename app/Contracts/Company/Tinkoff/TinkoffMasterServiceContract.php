@@ -4,7 +4,9 @@
 namespace App\Contracts\Company\Tinkoff;
 
 
-interface TinkoffMasterServiceContract
+use App\Contracts\Company\CompanyMasterServiceInterface;
+
+interface TinkoffMasterServiceContract extends CompanyMasterServiceInterface
 {
 
 }

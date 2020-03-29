@@ -4,7 +4,6 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieCancelCreateServiceContract;
-use App\Http\Controllers\RestController;
 
 class SoglasieCancelCreateService extends SoglasieService implements SoglasieCancelCreateServiceContract
 {

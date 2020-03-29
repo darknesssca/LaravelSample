@@ -3,7 +3,6 @@
 
 namespace App\Services\Company\Tinkoff;
 
-use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
 use App\Contracts\Repositories\IntermediateDataRepositoryContract;
 use App\Contracts\Repositories\RequestProcessRepositoryContract;
 use App\Exceptions\ConmfigurationException;
@@ -11,7 +10,7 @@ use App\Models\Policy;
 use App\Models\PolicyStatus;
 use App\Services\Company\CompanyService;
 
-abstract class TinkoffService extends CompanyService implements TinkoffServiceContract
+abstract class TinkoffService extends CompanyService
 {
     const companyCode = 'tinkoff';
 

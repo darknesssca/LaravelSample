@@ -3,8 +3,6 @@
 namespace App\Services\Company\Ingosstrah;
 
 use App\Contracts\Company\Ingosstrah\IngosstrahBillStatusServiceContract;
-use App\Http\Controllers\SoapController;
-use App\Services\Company\Ingosstrah\IngosstrahService;
 
 class IngosstrahBillStatusService extends IngosstrahService implements IngosstrahBillStatusServiceContract
 {
@@ -40,7 +38,7 @@ class IngosstrahBillStatusService extends IngosstrahService implements Ingosstra
         ];
     }
 
-    public function prepareData($attributes, $form)
+    protected function prepareData($attributes, $form)
     {
         return [
             'SessionToken' => $attributes['SessionToken'],

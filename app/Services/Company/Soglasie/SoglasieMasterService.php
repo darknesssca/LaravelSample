@@ -13,7 +13,7 @@ use Benfin\Api\GlobalStorage;
 
 class SoglasieMasterService extends SoglasieService implements SoglasieMasterServiceContract
 {
-    public function calculate($company, $attributes)
+    public function calculate($company, $attributes):array
     {
         $this->pushForm($attributes);
         if (!$attributes['policy']['isMultidrive']) {
@@ -42,11 +42,12 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
             'data' => json_encode($tokenData),
         ]);
         return [
+            'status' => 'calculated',
             'premium' => $dataCalculate['premium'],
         ];
     }
 
-    public function create($company, $attributes, $additionalData)
+    public function create($company, $attributes):array
     {
         $this->pushForm($attributes);
         $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);

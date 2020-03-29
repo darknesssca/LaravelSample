@@ -70,7 +70,7 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
         ];
     }
 
-    public function prepareData($attributes)
+    protected function prepareData($attributes)
     {
         $data = [
             'request' => [
@@ -131,7 +131,4 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
         }
         return $data;
     }
-
-
-
 }

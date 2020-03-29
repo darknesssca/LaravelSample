@@ -6,13 +6,13 @@ namespace App\Services\Company\Tinkoff;
 use App\Contracts\Company\Tinkoff\TinkoffBillLinkServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCreateServiceContract;
-use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
+use App\Contracts\Company\Tinkoff\TinkoffMasterServiceContract;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 
-class TinkoffMasterService extends TinkoffService implements TinkoffServiceContract
+class TinkoffMasterService extends TinkoffService implements TinkoffMasterServiceContract
 {
-    public function calculate($company, $attributes)
+    public function calculate($company, $attributes):array
     {
         $this->pushForm($attributes);
         $calculateService = app(TinkoffCalculateServiceContract::class);
@@ -31,7 +31,7 @@ class TinkoffMasterService extends TinkoffService implements TinkoffServiceContr
         ];
     }
 
-    public function create($company, $attributes)
+    public function create($company, $attributes):array
     {
         $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);
         $attributes['setNumber'] = $tokenData['setNumber'];
@@ -54,7 +54,7 @@ class TinkoffMasterService extends TinkoffService implements TinkoffServiceContr
             GlobalStorage::getUserId()
         );
         return [
-            'status' => $createData['status'],
+            'status' => 'done',
             'billUrl' => $billLinkData['billUrl'],
         ];
     }

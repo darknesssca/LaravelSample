@@ -4,23 +4,16 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieBillLinkServiceContract;
-use App\Contracts\Company\Soglasie\SoglasieCalculateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieCancelCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieCheckCreateServiceContract;
-use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
-use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
-use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
-use App\Contracts\Company\Soglasie\SoglasieServiceContract;
 use App\Contracts\Repositories\IntermediateDataRepositoryContract;
 use App\Contracts\Repositories\RequestProcessRepositoryContract;
 use App\Exceptions\ConmfigurationException;
-use App\Models\InsuranceCompany;
-use App\Http\Controllers\RestController;
 use App\Models\IntermediateData;
 use App\Models\RequestProcess;
 use App\Services\Company\CompanyService;
 
-abstract class SoglasieService extends CompanyService implements SoglasieServiceContract
+abstract class SoglasieService extends CompanyService
 {
     const companyCode = 'soglasie';
 

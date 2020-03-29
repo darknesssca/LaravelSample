@@ -61,7 +61,7 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
         ];
     }
 
-    public function prepareData($attributes)
+    protected function prepareData($attributes)
     {
         $data = [
             'request' => [

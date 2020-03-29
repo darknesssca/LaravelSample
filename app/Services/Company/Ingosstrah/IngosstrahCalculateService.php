@@ -39,7 +39,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
     }
 
 
-    public function prepareData($attributes)
+    protected function prepareData($attributes)
     {
         $data = [
             'SessionToken' => $attributes['sessionToken'],

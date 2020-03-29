@@ -49,7 +49,7 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
         return $data;
     }
 
-    public function prepareData($attributes)
+    protected function prepareData($attributes)
     {
         $data = [
             'SessionToken' => $attributes['sessionToken'],

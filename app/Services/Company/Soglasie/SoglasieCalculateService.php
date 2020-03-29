@@ -50,7 +50,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         ];
     }
 
-    public function prepareData($attributes)
+    protected function prepareData($attributes)
     {
         $data = [
             'subuser' => $this->apiSubUser,

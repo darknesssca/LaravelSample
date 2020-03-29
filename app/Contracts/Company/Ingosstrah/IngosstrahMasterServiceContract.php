@@ -4,7 +4,9 @@
 namespace App\Contracts\Company\Ingosstrah;
 
 
-interface IngosstrahMasterServiceContract
+use App\Contracts\Company\CompanyMasterServiceInterface;
+
+interface IngosstrahMasterServiceContract extends CompanyMasterServiceInterface
 {
 
 }

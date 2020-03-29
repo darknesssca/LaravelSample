@@ -8,7 +8,6 @@ use App\Contracts\Company\Ingosstrah\IngosstrahBillStatusServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahCheckCreateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahEosagoServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
-use App\Contracts\Company\Ingosstrah\IngosstrahServiceContract;
 use App\Contracts\Repositories\IntermediateDataRepositoryContract;
 use App\Contracts\Repositories\RequestProcessRepositoryContract;
 use App\Exceptions\ConmfigurationException;
@@ -17,7 +16,7 @@ use App\Models\PolicyStatus;
 use App\Models\RequestProcess;
 use App\Services\Company\CompanyService;
 
-abstract class IngosstrahService extends CompanyService implements IngosstrahServiceContract
+abstract class IngosstrahService extends CompanyService
 {
     const companyCode = 'ingosstrah';
 

@@ -31,7 +31,7 @@ class IngosstrahLoginService extends IngosstrahService implements IngosstrahLogi
         ];
     }
 
-    public function prepareData()
+    protected function prepareData()
     {
         return [
             'User' => $this->apiUser,

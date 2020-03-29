@@ -3,8 +3,6 @@
 namespace App\Services\Company\Ingosstrah;
 
 use App\Contracts\Company\Ingosstrah\IngosstrahCheckCreateServiceContract;
-use App\Http\Controllers\SoapController;
-use App\Services\Company\Ingosstrah\IngosstrahService;
 
 class IngosstrahCheckCreateService extends IngosstrahService implements IngosstrahCheckCreateServiceContract
 {
@@ -34,7 +32,14 @@ class IngosstrahCheckCreateService extends IngosstrahService implements Ingosstr
         if (!isset($response['response']->ResponseData->any)) {
             throw new \Exception('api not return xml');
         }
-        $response['parsedResponse'] = json_decode(json_encode(simplexml_load_string($response['response']->ResponseData->any, "SimpleXMLElement", LIBXML_NOCDATA)), true);
+        $response['parsedResponse'] = json_decode(
+            json_encode(
+                simplexml_load_string(
+                    $response['response']->ResponseData->any,
+                    "SimpleXMLElement",
+                    LIBXML_NOCDATA)
+            ),
+            true);
         if (!isset($response['parsedResponse']['@attributes']['State'])) {
             throw new \Exception('страховая компания вернула некорректный результат' . (isset($response['response']->ResponseStatus->ErrorMessage) ? ' | ' . $response['response']->ResponseStatus->ErrorMessage : ''));
         }
@@ -47,7 +52,7 @@ class IngosstrahCheckCreateService extends IngosstrahService implements Ingosstr
         ];
     }
 
-    public function prepareData($data)
+    protected function prepareData($data)
     {
         return [
             'SessionToken' => $data['data']['sessionToken'],

@@ -9,7 +9,6 @@ use App\Contracts\Company\Renessans\RenessansCheckCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCheckCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansGetStatusServiceContract;
-use App\Contracts\Company\Renessans\RenessansServiceContract;
 use App\Contracts\Repositories\IntermediateDataRepositoryContract;
 use App\Contracts\Repositories\RequestProcessRepositoryContract;
 use App\Exceptions\ConmfigurationException;
@@ -17,7 +16,7 @@ use App\Models\IntermediateData;
 use App\Models\PolicyStatus;
 use App\Services\Company\CompanyService;
 
-abstract class RenessansService extends CompanyService implements RenessansServiceContract
+abstract class RenessansService extends CompanyService
 {
     const companyCode = 'renessans';
 

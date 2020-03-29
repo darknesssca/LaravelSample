@@ -14,7 +14,7 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
 
     protected $apiPath = '/create/';
 
-    private function setAdditionalFields(&$attributes) {
+    protected function setAdditionalFields(&$attributes) {
         $attributes['CheckSegment'] = intval(isset($attributes['CheckSegment']) && $attributes['CheckSegment']);
     }
 

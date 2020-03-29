@@ -3,8 +3,6 @@
 namespace App\Services\Company\Ingosstrah;
 
 use App\Contracts\Company\Ingosstrah\IngosstrahBillServiceContract;
-use App\Http\Controllers\SoapController;
-use App\Services\Company\Ingosstrah\IngosstrahService;
 
 class IngosstrahBillService extends IngosstrahService implements IngosstrahBillServiceContract
 {
@@ -39,7 +37,7 @@ class IngosstrahBillService extends IngosstrahService implements IngosstrahBillS
         ];
     }
 
-    public function prepareData($data)
+    protected function prepareData($data)
     {
         $data = [
             'SessionToken' => $data['data']['sessionToken'],

@@ -11,7 +11,7 @@ use Benfin\Api\GlobalStorage;
 
 class IngosstrahMasterService extends IngosstrahService implements IngosstrahMasterServiceContract
 {
-    public function calculate($company, $attributes)
+    public function calculate($company, $attributes):array
     {
         $serviceLogin = app(IngosstrahLoginServiceContract::class);
         $loginData = $serviceLogin->run($company, $attributes);
@@ -32,7 +32,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         ];
     }
 
-    public function create($company, $attributes)
+    public function create($company, $attributes):array
     {
         $this->pushForm($attributes);
         $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);

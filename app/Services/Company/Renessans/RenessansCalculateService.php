@@ -43,7 +43,7 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
         ];
     }
 
-    public function prepareData($attributes)
+    protected function prepareData($attributes)
     {
         $data = [
             'key' => $attributes['key'],

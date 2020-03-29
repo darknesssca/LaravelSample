@@ -4,7 +4,6 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieCheckCreateServiceContract;
-use App\Http\Controllers\RestController;
 
 class SoglasieCheckCreateService extends SoglasieService implements SoglasieCheckCreateServiceContract
 {

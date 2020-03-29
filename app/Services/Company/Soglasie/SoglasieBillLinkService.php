@@ -4,7 +4,6 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieBillLinkServiceContract;
-use App\Http\Controllers\RestController;
 
 class SoglasieBillLinkService extends SoglasieService implements SoglasieBillLinkServiceContract
 {

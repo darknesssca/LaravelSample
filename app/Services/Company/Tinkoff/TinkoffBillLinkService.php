@@ -30,7 +30,7 @@ class TinkoffBillLinkService extends TinkoffService implements TinkoffBillLinkSe
         ];
     }
 
-    public function prepareData($attributes)
+    protected function prepareData($attributes)
     {
         $data = [];
         $this->setHeader($data);

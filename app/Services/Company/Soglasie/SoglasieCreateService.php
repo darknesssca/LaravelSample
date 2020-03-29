@@ -38,7 +38,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         ];
     }
 
-    public function prepareData($attributes)
+    protected function prepareData($attributes)
     {
         $owner = $this->searchSubjectById($attributes, $attributes['policy']['ownerId']);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);

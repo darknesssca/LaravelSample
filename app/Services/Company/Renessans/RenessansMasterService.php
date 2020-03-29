@@ -14,7 +14,7 @@ use Benfin\Api\GlobalStorage;
 
 class RenessansMasterService extends RenessansService implements RenessansMasterServiceContract
 {
-    public function calculate($company, $attributes)
+    public function calculate($company, $attributes):array
     {
         $this->pushForm($attributes);
         $serviceCalculate = app(RenessansCalculateServiceContract::class);
@@ -32,9 +32,12 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $this->intermediateDataRepository->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
+        return [
+            'status' => 'calculating',
+        ];
     }
 
-    public function create($company, $attributes)
+    public function create($company, $attributes):array
     {
         $this->pushForm($attributes);
         $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);
@@ -67,7 +70,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         ];
     }
 
-    public function calculating($company, $attributes)
+    public function calculating($company, $attributes):array
     {
         $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);
         if (!(isset($tokenData['status']) && $tokenData['status'])) {
@@ -90,7 +93,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         }
     }
 
-    public function processing($company, $attributes)
+    public function processing($company, $attributes):array
     {
         $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);
         if (!(isset($tokenData['status']) && $tokenData['status'])) {

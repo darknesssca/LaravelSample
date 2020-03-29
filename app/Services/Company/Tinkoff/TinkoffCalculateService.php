@@ -41,7 +41,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
         return $data;
     }
 
-    public function prepareData($attributes)
+    protected function prepareData($attributes)
     {
         $data = [];
         $this->setHeader($data);

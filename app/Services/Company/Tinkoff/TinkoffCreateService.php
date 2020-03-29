@@ -46,7 +46,7 @@ class TinkoffCreateService extends TinkoffService implements TinkoffCreateServic
         ];
     }
 
-    public function prepareData($attributes)
+    protected function prepareData($attributes)
     {
         $data = [];
         $this->setHeader($data);
