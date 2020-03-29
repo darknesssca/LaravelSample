@@ -16,7 +16,7 @@ abstract class AbstractDataRepository
         $this->model = $model;
     }
 
-    public function save($id, Model $model)
+    public function save($id, $model)
     {
         $this->storage[$id] = $model;
     }

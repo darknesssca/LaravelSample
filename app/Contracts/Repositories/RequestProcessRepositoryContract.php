@@ -4,7 +4,7 @@
 namespace App\Contracts\Repositories;
 
 
-interface RequestProcessRepositoryContract
+interface RequestProcessRepositoryContract extends AbstractRepositoryInterface
 {
 
 }
