@@ -23,7 +23,10 @@ abstract class CompanyService implements CompanyServiceContract
     public $companyCode;
     public $companyId;
 
-    public function __construct(IntermediateDataRepositoryContract $intermediateDataRepository, RequestProcessRepositoryContract $requestProcessRepository)
+    public function __construct(
+        IntermediateDataRepositoryContract $intermediateDataRepository,
+        RequestProcessRepositoryContract $requestProcessRepository
+    )
     {
         $this->intermediateDataRepository = $intermediateDataRepository;
         $this->requestProcessRepository = $requestProcessRepository;
@@ -106,7 +109,7 @@ abstract class CompanyService implements CompanyServiceContract
             foreach ($attributes['subjects'] as $subject) {
                 if ($subject['id'] == $driver['driver']['driverId']) {
                     $driversList[$subject['id']] = $subject['fields'];
-                    $driversList[$subject['id']]['dateBeginDrive'] = $driver['driver'];
+                    $driversList[$subject['id']]['dateBeginDrive'] = $driver['driver']['drivingLicenseIssueDateOriginal'];
                 }
             }
         }

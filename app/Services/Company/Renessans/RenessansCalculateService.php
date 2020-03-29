@@ -113,8 +113,10 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
                     'name' => 'firstName',
                     'birthday' => 'birthdate',
                     'middlename' => 'middleName',
-                    'dateBeginDrive' => 'drivingLicenseIssueDateOriginal',
                 ], $driver);
+                $pDriver['license'] = [
+                    'dateBeginDrive' => $driver['dateBeginDrive'],
+                ];
                 $driverLicense = $this->searchDocumentByType($driver, 'DriverLicense'); // todo значение из справочника
                 if ($driverLicense) {
                     $this->setValuesByArray($pDriver['license'], [

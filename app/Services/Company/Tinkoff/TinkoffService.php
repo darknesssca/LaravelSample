@@ -4,11 +4,11 @@
 namespace App\Services\Company\Tinkoff;
 
 use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
+use App\Contracts\Repositories\IntermediateDataRepositoryContract;
+use App\Contracts\Repositories\RequestProcessRepositoryContract;
 use App\Exceptions\ConmfigurationException;
 use App\Models\Policy;
 use App\Models\PolicyStatus;
-use App\Repositories\IntermediateDataRepository;
-use App\Repositories\RequestProcessRepository;
 use App\Services\Company\CompanyService;
 
 abstract class TinkoffService extends CompanyService implements TinkoffServiceContract
@@ -20,14 +20,17 @@ abstract class TinkoffService extends CompanyService implements TinkoffServiceCo
     protected $apiPassword;
     protected $apiProducerCode;
 
-    public function __construct(IntermediateDataRepository $intermediateDataRepository, RequestProcessRepository $requestProcessRepository)
+    public function __construct(
+        IntermediateDataRepositoryContract $intermediateDataRepository,
+        RequestProcessRepositoryContract $requestProcessRepository
+    )
     {
         $this->apiWsdlUrl = config('api_sk.tinkoff.wsdlUrl');
         $this->apiUser = config('api_sk.tinkoff.user');
         $this->apiPassword = config('api_sk.tinkoff.password');
         $this->apiProducerCode = config('api_sk.tinkoff.producerCode');
         if (!($this->apiWsdlUrl && $this->apiUser && $this->apiPassword && $this->apiProducerCode)) {
-            throw new ConmfigurationException('Ошибка конфигурации API');
+            throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
         parent::__construct($intermediateDataRepository, $requestProcessRepository);
     }

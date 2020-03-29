@@ -3,24 +3,28 @@
 namespace App\Services\Company\Ingosstrah;
 
 use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
-use App\Http\Controllers\SoapController;
-use App\Services\Company\Ingosstrah\IngosstrahService;
+use App\Exceptions\ApiRequestsException;
 
 class IngosstrahLoginService extends IngosstrahService implements IngosstrahLoginServiceContract
 {
 
-    public function run($company, $attributes, $additionalFields = []): array
+    public function run($company, $attributes): array
     {
         $data = $this->prepareData();
         $response = $this->requestBySoap($this->apiWsdlUrl, 'Login', $data);
-        if (!$response) {
-            throw new \Exception('api not return answer');
-        }
         if (isset($response['fault']) && $response['fault']) {
-            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
+            throw new ApiRequestsException(
+                'API страховой компании вернуло ошибку: ' .
+                isset($response['message']) ? $response['message'] : ''
+            );
         }
         if (!isset($response['response']->ResponseData->SessionToken)) {
-            throw new \Exception('страховая компания вернула некорректный результат' . (isset($response['response']->ResponseStatus->ErrorMessage) ? ' | ' . $response['response']->ResponseStatus->ErrorMessage : ''));
+            throw new ApiRequestsException([
+                'API страховой компании не вернуло данных',
+                isset($response['response']->ResponseStatus->ErrorMessage) ?
+                    $response['response']->ResponseStatus->ErrorMessage :
+                    'нет данных об ошибке',
+            ]);
         }
         return [
             'sessionToken' => $response['response']->ResponseData->SessionToken,
@@ -29,11 +33,10 @@ class IngosstrahLoginService extends IngosstrahService implements IngosstrahLogi
 
     public function prepareData()
     {
-        $data = [
+        return [
             'User' => $this->apiUser,
             'Password' => $this->apiPassword,
         ];
-        return $data;
     }
 
 }

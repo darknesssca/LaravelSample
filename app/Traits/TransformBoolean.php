@@ -14,4 +14,9 @@ trait TransformBoolean
     {
         return (int)$boolean;
     }
+
+    protected function transformBooleanToChar($boolean)
+    {
+        return $boolean ? 'Y' : 'N';
+    }
 }

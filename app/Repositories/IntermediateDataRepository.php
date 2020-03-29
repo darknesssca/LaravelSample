@@ -19,7 +19,7 @@ class IntermediateDataRepository extends AbstractDataRepository implements Inter
         if ($force) {
             return $this->model->find($token);
         }
-        return $this->model->load($token);
+        return $this->load($token);
     }
 
     public function update($token, $data)

@@ -12,6 +12,7 @@ use App\Contracts\Company\Ingosstrah\IngosstrahCheckCreateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahCreateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahEosagoServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
+use App\Contracts\Company\Ingosstrah\IngosstrahMasterServiceContract;
 use App\Contracts\Company\Renessans\RenessansBillLinkServiceContract;
 use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCheckCalculateServiceContract;
@@ -24,6 +25,7 @@ use App\Contracts\Company\Soglasie\SoglasieCancelCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieCheckCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
+use App\Contracts\Company\Soglasie\SoglasieMasterServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffBillLinkServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
@@ -37,6 +39,7 @@ use App\Services\Company\Ingosstrah\IngosstrahCheckCreateService;
 use App\Services\Company\Ingosstrah\IngosstrahCreateService;
 use App\Services\Company\Ingosstrah\IngosstrahEosagoService;
 use App\Services\Company\Ingosstrah\IngosstrahLoginService;
+use App\Services\Company\Ingosstrah\IngosstrahMasterService;
 use App\Services\Company\Renessans\RenessansBillLinkService;
 use App\Services\Company\Renessans\RenessansCalculateService;
 use App\Services\Company\Renessans\RenessansCheckCalculateService;
@@ -49,6 +52,7 @@ use App\Services\Company\Soglasie\SoglasieCancelCreateService;
 use App\Services\Company\Soglasie\SoglasieCheckCreateService;
 use App\Services\Company\Soglasie\SoglasieCreateService;
 use App\Services\Company\Soglasie\SoglasieKbmService;
+use App\Services\Company\Soglasie\SoglasieMasterService;
 use App\Services\Company\Soglasie\SoglasieScoringService;
 use App\Services\Company\Tinkoff\TinkoffBillLinkService;
 use App\Services\Company\Tinkoff\TinkoffCalculateService;
@@ -67,51 +71,8 @@ class CompanyServiceProvider extends ServiceProvider
     {
         $this->registerRenessansServices();
         $this->registerTinkoffServices();
-
-        //ingosstrah
-        $this->app->singleton(IngosstrahLoginServiceContract::class, function($app) {
-            return new IngosstrahLoginService();
-        });
-        $this->app->singleton(IngosstrahCalculateServiceContract::class, function($app) {
-            return new IngosstrahCalculateService();
-        });
-        $this->app->singleton(IngosstrahCreateServiceContract::class, function($app) {
-            return new IngosstrahCreateService();
-        });
-        $this->app->singleton(IngosstrahCheckCreateServiceContract::class, function($app) {
-            return new IngosstrahCheckCreateService();
-        });
-        $this->app->singleton(IngosstrahEosagoServiceContract::class, function($app) {
-            return new IngosstrahEosagoService();
-        });
-        $this->app->singleton(IngosstrahBillServiceContract::class, function($app) {
-            return new IngosstrahBillService();
-        });
-        $this->app->singleton(IngosstrahBillLinkServiceContract::class, function($app) {
-            return new IngosstrahBillLinkService();
-        });
-        $this->app->singleton(IngosstrahBillStatusServiceContract::class, function($app) {
-            return new IngosstrahBillStatusService();
-        });
-        //soglasie
-        $this->app->singleton(SoglasieKbmServiceContract::class, function($app) {
-            return new SoglasieKbmService();
-        });
-        $this->app->singleton(SoglasieScoringServiceContract::class, function($app) {
-            return new SoglasieScoringService();
-        });
-        $this->app->singleton(SoglasieCalculateServiceContract::class, function($app) {
-            return new SoglasieCalculateService();
-        });
-        $this->app->singleton(SoglasieCreateServiceContract::class, function($app) {
-            return new SoglasieCreateService();
-        });
-        $this->app->singleton(SoglasieCheckCreateServiceContract::class, function($app) {
-            return new SoglasieCheckCreateService();
-        });
-        $this->app->singleton(SoglasieCancelCreateServiceContract::class, function($app) {
-            return new SoglasieCancelCreateService();
-        });
+        $this->registerIngosstrahServices();
+        $this->registerSoglasieServices();
     }
 
     protected function registerRenessansServices()
@@ -138,5 +99,37 @@ class CompanyServiceProvider extends ServiceProvider
         // create
         $this->app->singleton(TinkoffCreateServiceContract::class, TinkoffCreateService::class);
         $this->app->singleton(TinkoffBillLinkServiceContract::class, TinkoffBillLinkService::class);
+    }
+
+    protected function registerIngosstrahServices()
+    {
+        // master
+        $this->app->singleton(IngosstrahMasterServiceContract::class, IngosstrahMasterService::class);
+        // login
+        $this->app->singleton(IngosstrahLoginServiceContract::class, IngosstrahLoginService::class);
+        // calculate
+        $this->app->singleton(IngosstrahCalculateServiceContract::class, IngosstrahCalculateService::class);
+        // create
+        $this->app->singleton(IngosstrahCreateServiceContract::class, IngosstrahCreateService::class);
+        $this->app->singleton(IngosstrahCheckCreateServiceContract::class, IngosstrahCheckCreateService::class);
+        $this->app->singleton(IngosstrahEosagoServiceContract::class, IngosstrahEosagoService::class);
+        $this->app->singleton(IngosstrahBillServiceContract::class, IngosstrahBillService::class);
+        $this->app->singleton(IngosstrahBillLinkServiceContract::class, IngosstrahBillLinkService::class);
+        // payment
+        $this->app->singleton(IngosstrahBillStatusServiceContract::class, IngosstrahBillStatusService::class);
+    }
+
+    protected function registerSoglasieServices()
+    {
+        // master
+        $this->app->singleton(SoglasieMasterServiceContract::class, SoglasieMasterService::class);
+        // calculate
+        $this->app->singleton(SoglasieKbmServiceContract::class, SoglasieKbmService::class);
+        $this->app->singleton(SoglasieScoringServiceContract::class, SoglasieScoringService::class);
+        $this->app->singleton(SoglasieCalculateServiceContract::class, SoglasieCalculateService::class);
+        // create
+        $this->app->singleton(SoglasieCreateServiceContract::class, SoglasieCreateService::class);
+        $this->app->singleton(SoglasieCheckCreateServiceContract::class, SoglasieCheckCreateService::class);
+        $this->app->singleton(SoglasieCancelCreateServiceContract::class, SoglasieCancelCreateService::class);
     }
 }

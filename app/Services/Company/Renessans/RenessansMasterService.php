@@ -36,9 +36,9 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
 
     public function create($company, $attributes)
     {
+        $this->pushForm($attributes);
         $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);
         $attributes['calcId'] = $tokenData['calcId'];
-        $this->pushForm($attributes);
         $createService = app(RenessansCreateServiceContract::class);
         $dataCreate = $createService->run($company, $attributes);
         $tokenData = $this->getTokenData($attributes['token'], true);

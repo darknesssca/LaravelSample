@@ -72,7 +72,7 @@ class InsuranceController extends Controller
             config('api_sk.logMicroserviceCode'),
             GlobalStorage::getUserId()
         );
-        return $this->success(['token' => $token]);
+        return $this->success(['token' => $token->token]);
     }
 
     public function getCompany($code)

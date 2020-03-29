@@ -5,96 +5,41 @@ namespace App\Services\Company\Ingosstrah;
 use App\Contracts\Company\Ingosstrah\IngosstrahBillServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahBillLinkServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahBillStatusServiceContract;
-use App\Contracts\Company\Ingosstrah\IngosstrahCalculateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahCheckCreateServiceContract;
-use App\Contracts\Company\Ingosstrah\IngosstrahCreateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahEosagoServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahServiceContract;
-use App\Models\InsuranceCompany;
-use App\Http\Controllers\RestController;
+use App\Contracts\Repositories\IntermediateDataRepositoryContract;
+use App\Contracts\Repositories\RequestProcessRepositoryContract;
+use App\Exceptions\ConmfigurationException;
 use App\Models\IntermediateData;
 use App\Models\PolicyStatus;
 use App\Models\RequestProcess;
 use App\Services\Company\CompanyService;
 
-class IngosstrahService extends CompanyService implements IngosstrahServiceContract
+abstract class IngosstrahService extends CompanyService implements IngosstrahServiceContract
 {
+    const companyCode = 'ingosstrah';
+
     protected $apiWsdlUrl;
     protected $apiUser;
     protected $apiPassword;
 
-    public function __construct()
+    public function __construct(
+        IntermediateDataRepositoryContract $intermediateDataRepository,
+        RequestProcessRepositoryContract $requestProcessRepository
+    )
     {
-        $this->companyCode = "ingosstrah";
-        $this->companyId = InsuranceCompany::where('code',$this->companyCode)->take(1)->get()[0]['id'];
         $this->apiWsdlUrl = config('api_sk.ingosstrah.wsdlUrl');
         $this->apiUser = config('api_sk.ingosstrah.user');
         $this->apiPassword = config('api_sk.ingosstrah.password');
         if (!($this->apiWsdlUrl && $this->apiUser && $this->apiPassword)) {
-            throw new \Exception('ingosstrah api is not configured');
+            throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
+        parent::__construct($intermediateDataRepository, $requestProcessRepository);
     }
 
-    public function calculate($company, $attributes, $additionalData = [])
-    {
-        $serviceLogin = app(IngosstrahLoginServiceContract::class);
-        $loginData = $serviceLogin->run($company, $attributes, $additionalData);
-        //$loginData['sessionToken'] = 'LANAUg5a8KQVFA6LHpZAVACH9SSsHQOAXA2P';
-        $attributes['sessionToken'] = $loginData['sessionToken'];
-        $serviceCalculate = app(IngosstrahCalculateServiceContract::class);
-        $data = $serviceCalculate->run($company, $attributes, $additionalData);
-        $tokenData = IntermediateData::getData($attributes['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
-        $tokenData[$company->code] = [
-            'sessionToken' => $loginData['sessionToken'],
-        ];
-        IntermediateData::where('token', $attributes['token'])->update([
-            'data' => $tokenData,
-        ]);
-        return [
-            'premium' => $data['premium'],
-        ];
-    }
-
-    public function create($company, $attributes, $additionalData)
-    {
-        if (!(isset($additionalData['tokenData']) && $additionalData['tokenData'])) {
-            throw new \Exception('no token data');
-        }
-        $attributes['sessionToken'] = $additionalData['tokenData']['sessionToken'];
-        $sessionToken = $additionalData['tokenData']['sessionToken'];
-        $serviceCreate = app(IngosstrahCreateServiceContract::class);
-        $dataCreate = $serviceCreate->run($company, $attributes, $additionalData);
-        if (isset($dataCreate['tokenError'])) {
-            $serviceLogin = app(IngosstrahLoginServiceContract::class);
-            $loginData = $serviceLogin->run($company, $attributes, $additionalData);
-            $sessionToken = $loginData['sessionToken'];
-            $attributes['sessionToken'] = $additionalData['tokenData']['sessionToken'];
-            $dataCreate = $serviceCreate->run($company, $attributes, $additionalData);
-        }
-        $tokenData = IntermediateData::getData($attributes['token']); // выполняем повторно, поскольку данные могли  поменяться пока шел запрос
-        $tokenData[$company->code] = [
-            'policyId' => $dataCreate['policyId'],
-            'status' => 'processing',
-            'sessionToken' => $sessionToken,
-        ];
-        IntermediateData::where('token', $attributes['token'])->update([
-            'data' => $tokenData,
-        ]);
-        RequestProcess::create([
-            'token' => $attributes['token'],
-            'company' => $company->code,
-            'state' => 50,
-            'data' => json_encode([
-                'policyId' => $dataCreate['policyId'],
-                'status' => 'processing',
-                'sessionToken' => $sessionToken,
-            ]),
-        ]);
-        return [
-            'status' => 'processing',
-        ];
-    }
+    // FIXME рефакторинг
 
     public function processing($company, $data, $additionalData)
     {
@@ -290,10 +235,4 @@ class IngosstrahService extends CompanyService implements IngosstrahServiceContr
             'data' => $tokenData,
         ]);
     }
-
-    protected function transformBoolean($boolean)
-    {
-        return $boolean ? 'Y' : 'N';
-    }
-
 }
