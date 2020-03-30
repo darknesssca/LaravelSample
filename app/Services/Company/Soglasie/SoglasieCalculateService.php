@@ -4,6 +4,9 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieCalculateServiceContract;
+use App\Contracts\Repositories\IntermediateDataRepositoryContract;
+use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\RequestProcessRepositoryContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\ConmfigurationException;
 use App\Traits\DateFormat;
@@ -13,13 +16,17 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
 {
     use TransformBoolean, DateFormat;
 
-    public function __construct()
+    public function __construct(
+        IntermediateDataRepositoryContract $intermediateDataRepository,
+        RequestProcessRepositoryContract $requestProcessRepository,
+        PolicyRepositoryContract $policyRepository
+    )
     {
         $this->apiWsdlUrl = config('api_sk.soglasie.calculateWsdlUrl');
         if (!($this->apiWsdlUrl)) {
             throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
-        parent::__construct();
+        parent::__construct($intermediateDataRepository, $requestProcessRepository, $policyRepository);
     }
 
     public function run($company, $attributes): array

@@ -7,6 +7,7 @@ use App\Contracts\Company\Soglasie\SoglasieBillLinkServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieCancelCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieCheckCreateServiceContract;
 use App\Contracts\Repositories\IntermediateDataRepositoryContract;
+use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\RequestProcessRepositoryContract;
 use App\Exceptions\ConmfigurationException;
 use App\Models\IntermediateData;
@@ -27,7 +28,8 @@ abstract class SoglasieService extends CompanyService
 
     public function __construct(
         IntermediateDataRepositoryContract $intermediateDataRepository,
-        RequestProcessRepositoryContract $requestProcessRepository
+        RequestProcessRepositoryContract $requestProcessRepository,
+        PolicyRepositoryContract $policyRepository
     )
     {
         $this->apiUser = config('api_sk.soglasie.user');
@@ -38,7 +40,7 @@ abstract class SoglasieService extends CompanyService
         if (!($this->apiUser && $this->apiPassword && $this->apiSubUser && $this->apiSubPassword)) {
             throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
-        parent::__construct($intermediateDataRepository, $requestProcessRepository);
+        parent::__construct($intermediateDataRepository, $requestProcessRepository, $policyRepository);
     }
 
     protected function getHeaders()

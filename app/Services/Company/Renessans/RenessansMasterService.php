@@ -8,7 +8,9 @@ use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansMasterServiceContract;
 use App\Exceptions\ApiRequestsException;
+use App\Exceptions\MethodForbiddenException;
 use App\Exceptions\TokenException;
+use App\Models\InsuranceCompany;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 
@@ -68,6 +70,19 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         return [
             'status' => 'processing',
         ];
+    }
+
+    /**
+     * Метод не используется для данного СК, но требуется для совместимости сервисов
+     *
+     * @param InsuranceCompany $company
+     * @param $attributes
+     * @return void
+     * @throws MethodForbiddenException
+     */
+    public function payment(InsuranceCompany $company, $attributes): void
+    {
+        throw new MethodForbiddenException('Вызов метода запрещен');
     }
 
     public function calculating($company, $attributes):array

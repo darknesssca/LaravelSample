@@ -8,6 +8,8 @@ use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieMasterServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
+use App\Exceptions\MethodForbiddenException;
+use App\Models\InsuranceCompany;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 
@@ -85,5 +87,18 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
         return [
             'status' => 'processing',
         ];
+    }
+
+    /**
+     * Метод не используется для данного СК, но требуется для совместимости сервисов
+     *
+     * @param InsuranceCompany $company
+     * @param $attributes
+     * @return void
+     * @throws MethodForbiddenException
+     */
+    public function payment(InsuranceCompany $company, $attributes): void
+    {
+        throw new MethodForbiddenException('Вызов метода запрещен');
     }
 }

@@ -10,6 +10,7 @@ use App\Contracts\Company\Renessans\RenessansCheckCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansGetStatusServiceContract;
 use App\Contracts\Repositories\IntermediateDataRepositoryContract;
+use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\RequestProcessRepositoryContract;
 use App\Exceptions\ConmfigurationException;
 use App\Models\IntermediateData;
@@ -25,7 +26,8 @@ abstract class RenessansService extends CompanyService
 
     public function __construct(
         IntermediateDataRepositoryContract $intermediateDataRepository,
-        RequestProcessRepositoryContract $requestProcessRepository
+        RequestProcessRepositoryContract $requestProcessRepository,
+        PolicyRepositoryContract $policyRepository
     )
     {
         $this->apiUrl = config('api_sk.renessans.apiUrl');
@@ -33,7 +35,7 @@ abstract class RenessansService extends CompanyService
         if (!($this->apiUrl && $this->secretKey)) {
             throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
-        parent::__construct($intermediateDataRepository, $requestProcessRepository);
+        parent::__construct($intermediateDataRepository, $requestProcessRepository, $policyRepository);
     }
 
     protected function setAuth(&$attributes)

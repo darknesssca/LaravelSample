@@ -7,6 +7,7 @@ use App\Contracts\Company\Tinkoff\TinkoffBillLinkServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCreateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffMasterServiceContract;
+use App\Exceptions\PolicyNotFoundException;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 
@@ -57,5 +58,26 @@ class TinkoffMasterService extends TinkoffService implements TinkoffMasterServic
             'status' => 'done',
             'billUrl' => $billLinkData['billUrl'],
         ];
+    }
+
+    public function payment($company, $attributes): void
+    {
+        if (
+            isset($attributes['Body']['sendPaymentNotificationPartnerRequest']['paymentStatus']) &&
+            $attributes['Body']['sendPaymentNotificationPartnerRequest']['paymentStatus'] &&
+            (strtolower($attributes['Body']['sendPaymentNotificationPartnerRequest']['paymentStatus']) == 'confirm') &&
+            isset($attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber']) &&
+            $attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber']
+        ) {
+            $policy = $this->policyRepository->getNotPaidPolicyByPaymentNumber($attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber']);
+            if (!$policy) {
+                throw new PolicyNotFoundException('Нет полиса с таким номером');
+            }
+            $this->policyRepository->update($policy->id, [
+                'paid' => true,
+            ]);
+        } else {
+            throw new PolicyNotFoundException('Не указан номер полиса или полис уже был отмечен как оплаченный');
+        }
     }
 }

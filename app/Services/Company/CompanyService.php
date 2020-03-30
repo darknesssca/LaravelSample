@@ -4,6 +4,7 @@
 namespace App\Services\Company;
 
 use App\Contracts\Repositories\IntermediateDataRepositoryContract;
+use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\RequestProcessRepositoryContract;
 use App\Traits\Token;
 use Benfin\Api\Contracts\NotifyMicroserviceContract;
@@ -18,17 +19,20 @@ abstract class CompanyService
 
     protected $intermediateDataRepository;
     protected $requestProcessRepository;
+    protected $policyRepository;
 
     public $companyCode;
     public $companyId;
 
     public function __construct(
         IntermediateDataRepositoryContract $intermediateDataRepository,
-        RequestProcessRepositoryContract $requestProcessRepository
+        RequestProcessRepositoryContract $requestProcessRepository,
+        PolicyRepositoryContract $policyRepository
     )
     {
         $this->intermediateDataRepository = $intermediateDataRepository;
         $this->requestProcessRepository = $requestProcessRepository;
+        $this->policyRepository = $policyRepository;
     }
 
     /**отправка ссылки на оплату на почту
@@ -40,8 +44,8 @@ abstract class CompanyService
     public function sendBillUrl($email, $billUrl)
     {
         return true; //fixme только для теста
-        $notify =  app(NotifyMicroserviceContract::class);
-        $notify->sendMail($email,$billUrl,config('api_sk.notifyMicroserviceCode'));
+        $notify = app(NotifyMicroserviceContract::class);
+        $notify->sendMail($email, $billUrl, config('api_sk.notifyMicroserviceCode'));
     }
 
     public function setValuesByArray(&$target, $dependencies, $source)

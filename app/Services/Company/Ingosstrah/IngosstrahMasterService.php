@@ -6,6 +6,8 @@ use App\Contracts\Company\Ingosstrah\IngosstrahCalculateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahCreateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahMasterServiceContract;
+use App\Exceptions\MethodForbiddenException;
+use App\Models\InsuranceCompany;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 
@@ -75,5 +77,18 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         return [
             'status' => 'processing',
         ];
+    }
+
+    /**
+     * Метод не используется для данного СК, но требуется для совместимости сервисов
+     *
+     * @param InsuranceCompany $company
+     * @param $attributes
+     * @return void
+     * @throws MethodForbiddenException
+     */
+    public function payment(InsuranceCompany $company, $attributes): void
+    {
+        throw new MethodForbiddenException('Вызов метода запрещен');
     }
 }

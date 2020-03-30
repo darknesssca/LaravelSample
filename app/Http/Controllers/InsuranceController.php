@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Contracts\Company\CompanyServiceContract;
 use App\Contracts\Repositories\InsuranceCompanyRepositoryContract;
 use App\Contracts\Repositories\IntermediateDataRepositoryContract;
 use App\Contracts\Repositories\RequestProcessRepositoryContract;
 use App\Exceptions\CompanyException;
-use App\Exceptions\MethodBoundException;
+use App\Exceptions\MethodNotFoundException;
 use App\Http\Requests\FormSendRequest;
+use App\Http\Requests\PaymentRequest;
 use App\Http\Requests\ProcessRequest;
 use App\Models\Country;
-use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
 use App\Models\Policy;
 use App\Models\RequestProcess;
@@ -23,16 +22,13 @@ use App\Services\Company\Tinkoff\TinkoffGuidesService;
 use App\Traits\Token;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
-use Benfin\Api\Services\LogMicroservice;
 use Carbon\Carbon;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Laravel\Lumen\Application;
-use PhpOffice\PhpSpreadsheet\Reader\Exception;
 
 class InsuranceController extends Controller
 {
@@ -72,7 +68,18 @@ class InsuranceController extends Controller
             config('api_sk.logMicroserviceCode'),
             GlobalStorage::getUserId()
         );
-        return $this->success(['token' => $token->token]);
+        return Response::success(['token' => $token->token]);
+    }
+
+    public function payment($code, PaymentRequest $request)
+    {
+        $company = $this->getCompany($code);
+        /**
+         * в связи с особенностями механизма роутинга требуется перепустить запрос на обновление платежных данных через
+         * независимый метод. В следствие этого целевой метод указывать требуется вручную параметром $method
+         */
+        $method = 'payment';
+        return Response::success($this->runService($company, $request->toArray(), $method));
     }
 
     public function getCompany($code)
@@ -88,7 +95,7 @@ class InsuranceController extends Controller
     {
         $controller = $this->getCompanyController($company);
         if (!method_exists($controller, $serviceMethod)) {
-            throw new MethodBoundException('Метод не найден');
+            throw new MethodNotFoundException('Метод не найден');
         }
         return $controller->$serviceMethod($company, $attributes);
     }
@@ -104,33 +111,7 @@ class InsuranceController extends Controller
     // FIXME требуется рефакторинг
 
 
-    public function payment($code, Request $request)
-    {
-        $company = $this->checkCompany($code);
-        if (!$company->count()) {
-            return $this->error('Компания не найдена', 404);
-        }
-        $serviceMethod = 'payment';
-        try {
-            $controller = $this->getCompanyController($company);
-            if (!method_exists($controller, $serviceMethod)) {
-                return $this->error('Метод не найден', 404); // todo вынести в отдельные эксепшены
-            }
-            $controller = $this->getCompanyController($company);
-            $response =  $controller->$serviceMethod($company, $request->toArray(), $serviceMethod);
-            if (isset($response['error']) && $response['error']) {
-                return response()->json($response, 500);
-            } else {
-                return $this->success($response, 200);
-            }
-        } catch (ValidationException $exception) {
-            return $this->error($exception->errors(), 400);
-        } catch (BindingResolutionException $exception) {
-            return $this->error('Не найден обработчик компании: ' . $exception->getMessage(), 404);
-        } catch (\Exception $exception) {
-            return $this->error($exception->getMessage(), 500);
-        }
-    }
+
 
 
 

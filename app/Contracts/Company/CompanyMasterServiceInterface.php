@@ -19,9 +19,18 @@ interface CompanyMasterServiceInterface
     /**
      * Метод создает полис в СК либо отправляет создание полиса в шину СК (в зависимости от того, как работает СК)
      *
-     * @param InsuranceCompany $company
-     * @param $attributes
+     * @param InsuranceCompany $company - объект выбранной компании
+     * @param $attributes - массив атрибутов, прошедших валидацию
      * @return array
      */
     public function create(InsuranceCompany $company, $attributes):array;
+
+    /**
+     * Метод отмечает полис как оплаченный по входящему запросу со стороны СК
+     *
+     * @param InsuranceCompany $company - объект выбранной компании
+     * @param $attributes - массив атрибутов, прошедших валидацию
+     * @return void
+     */
+    public function payment(InsuranceCompany $company, $attributes):void;
 }
