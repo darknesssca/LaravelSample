@@ -9,6 +9,7 @@ use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 use Laravel\Lumen\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Benfin\Requests\Exceptions\AbstractException;
 
 class Handler extends ExceptionHandler
 {
@@ -40,14 +41,15 @@ class Handler extends ExceptionHandler
     /**
      * Render an exception into an HTTP response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Exception  $exception
+     * @param \Illuminate\Http\Request $request
+     * @param \Exception $exception
      * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
+     * @throws \Throwable
      */
     public function render($request, Exception $exception)
     {
         if ($exception instanceof AbstractException) {
-            return Response::error($exception->getMessageData(), 400);
+            return Response::error($exception->getMessageData(), $exception->getHttpCode());
         }
         return parent::render($request, $exception);
     }

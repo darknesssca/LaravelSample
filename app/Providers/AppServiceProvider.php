@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 
-use App\Http\Requests\AbstractRequest;
+use Benfin\Requests\AbstractRequest;
 use Illuminate\Contracts\Validation\ValidatesWhenResolved;
 use Illuminate\Support\ServiceProvider;
 

@@ -38,9 +38,12 @@
         {
             "type": "vcs",
             "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/auth.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/requests.git"
         }
     ],
-
     "autoload": {
         "classmap": [
             "database/seeds",

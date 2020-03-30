@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3270d0a77410630f1154fda781c48e07",
+    "content-hash": "a579eb3d323f6f2dcad52b99f2aa3f40",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -92,13 +92,14 @@
         },
         {
             "name": "benfin/packages/api-communication",
-            "version": "v1.2.8",
+            "version": "v1.3.2",
             "source": {
                 "type": "git",
                 "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/api-communication.git",
-                "reference": "7d6085c9d0889f30a89e4ed523decac13d3ba0b1"
+                "reference": "8d2258606a4949216252d40077cb31c3e0a5b2bc"
             },
             "require": {
+                "benfin/packages/requests": ">=1.1",
                 "ext-json": "*",
                 "ext-soap": "*",
                 "ext-xml": "*",
@@ -124,7 +125,7 @@
                 }
             ],
             "description": "BENFIN Api communication",
-            "time": "2020-03-27T13:26:48+00:00"
+            "time": "2020-03-30T08:06:37+00:00"
         },
         {
             "name": "benfin/packages/auth",
@@ -159,6 +160,40 @@
             ],
             "description": "BENFIN Authorization",
             "time": "2020-03-26T12:29:53+00:00"
+        },
+        {
+            "name": "benfin/packages/requests",
+            "version": "v1.1.6",
+            "source": {
+                "type": "git",
+                "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/requests.git",
+                "reference": "3a8252c7b533f5be9f1d05485b5f6bc2f606a383"
+            },
+            "require": {
+                "ext-json": "*",
+                "guzzlehttp/guzzle": "^6.5",
+                "laravel/lumen-framework": ">=6.0",
+                "php": "^7.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Benfin\\Requests\\": [
+                        "src/"
+                    ]
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Mett Vasily",
+                    "email": "v.mett@qsoft.ru"
+                }
+            ],
+            "description": "BENFIN Requests",
+            "time": "2020-03-30T11:43:56+00:00"
         },
         {
             "name": "coraxster/flysystem-aws-s3-v3-minio",
