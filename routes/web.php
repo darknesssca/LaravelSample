@@ -57,9 +57,9 @@ $router->group(
 
                         $router->get('/marks', 'GuidesController@marks');
                         $router->get('/models/{mark_id:\d+}', 'GuidesController@models');
-                        $router->get('/models/', 'GuidesController@modelsAll');
-                        $router->get('/categories/', 'GuidesController@categories');
-                        $router->get('/countries/', 'GuidesController@countriesAll');
+                        $router->get('/models', 'GuidesController@modelsAll');
+                        $router->get('/categories', 'GuidesController@categories');
+                        $router->get('/countries', 'GuidesController@countriesAll');
                         $router->get('/countries/{country_id:\d+}', 'GuidesController@countries');
                         $router->get('/genders', 'GuidesController@genders');
                         $router->get('/doc-types', 'GuidesController@docTypes');
