@@ -16,12 +16,17 @@ class InsuranceCompanyRepository extends AbstractDataRepository implements Insur
 
     public function getCompany($code)
     {
-        return $this->model
+        if ($this->isStored($code)) {
+            return $this->load($code);
+        }
+        $object = $this->model
             ->where([
                 'code' => $code,
                 'active' => true,
             ])
             ->first();
+        $this->save($code, $object);
+        return $object;
     }
 
 }

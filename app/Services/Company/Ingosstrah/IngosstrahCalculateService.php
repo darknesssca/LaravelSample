@@ -5,14 +5,14 @@ namespace App\Services\Company\Ingosstrah;
 
 use App\Contracts\Company\Ingosstrah\IngosstrahCalculateServiceContract;
 use App\Exceptions\ApiRequestsException;
-use App\Traits\Addresses;
-use App\Traits\DateFormat;
-use App\Traits\TransformBoolean;
+use App\Traits\PrepareAddressesTrait;
+use App\Traits\DateFormatTrait;
+use App\Traits\TransformBooleanTrait;
 use Spatie\ArrayToXml\ArrayToXml;
 
 class IngosstrahCalculateService extends IngosstrahService implements IngosstrahCalculateServiceContract
 {
-    use TransformBoolean, DateFormat, Addresses;
+    use TransformBooleanTrait, DateFormatTrait, PrepareAddressesTrait;
 
     public function run($company, $attributes): array
     {
@@ -119,7 +119,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                 $this->cutStreetKladr($regAddress['StreetCode']);
             }
             if (isset($regAddress['CityCode']) && $regAddress['CityCode']) {
-                $this->cutStreetKladr($regAddress['CityCode']);
+                $this->cutCityKladr($regAddress['CityCode']);
             }
             $pAddress = [
                 "CountryCode" => $subject['fields']['citizenship'], // TODO: справочник

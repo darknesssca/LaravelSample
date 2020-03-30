@@ -26,6 +26,14 @@ interface AbstractRepositoryInterface
     public function load($id);
 
     /**
+     * Проверяет есть ли запись с таким id в хранилище
+     *
+     * @param $id - идентификатор записи
+     * @return mixed
+     */
+    public function isStored($id);
+
+    /**
      * Удаляет запись из локального хранилища
      *
      * @param $id - идентификатор записи

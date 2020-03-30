@@ -7,7 +7,7 @@ namespace App\Traits;
 use App\Exceptions\TokenException;
 use Illuminate\Support\Str;
 
-trait Token
+trait TokenTrait
 {
     protected function createToken($data, $try = 0)
     {

@@ -4,7 +4,7 @@
 namespace App\Exceptions;
 
 
-class AbstractException extends \Exception
+abstract class AbstractException extends \Exception
 {
     const exceptionName = "internal error";
     const exceptionCode = 500;

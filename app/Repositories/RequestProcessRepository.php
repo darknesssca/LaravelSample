@@ -13,4 +13,25 @@ class RequestProcessRepository extends AbstractDataRepository implements Request
     {
         parent::__construct($model);
     }
+
+    public function getPool($state, $count)
+    {
+        return $this->model
+            ->where('state', $state)
+            ->limit($count)
+            ->get();
+    }
+
+    public function updateCheckCount($token)
+    {
+        $object = $this->model->where('token', $token)->first();
+        $checkCount = ++$object->checkCount;
+        if ($checkCount >= config('api_sk.maxCheckCount')) {
+            $object->delete();
+            return false;
+        }
+        $object->update(['checkCount' => $checkCount]);
+        return true;
+
+    }
 }

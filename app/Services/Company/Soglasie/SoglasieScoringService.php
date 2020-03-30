@@ -9,12 +9,12 @@ use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\RequestProcessRepositoryContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\ConmfigurationException;
-use App\Traits\DateFormat;
-use App\Traits\TransformBoolean;
+use App\Traits\DateFormatTrait;
+use App\Traits\TransformBooleanTrait;
 
 class SoglasieScoringService extends SoglasieService implements SoglasieScoringServiceContract
 {
-    use TransformBoolean, DateFormat;
+    use TransformBooleanTrait, DateFormatTrait;
 
     public function __construct(
         IntermediateDataRepositoryContract $intermediateDataRepository,

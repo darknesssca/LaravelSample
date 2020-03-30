@@ -4,9 +4,10 @@
 namespace App\Repositories;
 
 
+use App\Contracts\Repositories\AbstractRepositoryInterface;
 use Illuminate\Database\Eloquent\Model;
 
-abstract class AbstractDataRepository
+abstract class AbstractDataRepository implements AbstractRepositoryInterface
 {
     protected $model;
     protected $storage;
@@ -34,6 +35,11 @@ abstract class AbstractDataRepository
         if (isset($this->storage[$id])) {
             unset($this->storage[$id]);
         }
+    }
+
+    public function isStored($id)
+    {
+        return isset($this->storage[$id]) && $this->storage[$id];
     }
 
     public function find($id)

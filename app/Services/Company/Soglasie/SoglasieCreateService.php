@@ -8,12 +8,12 @@ use App\Contracts\Repositories\IntermediateDataRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\RequestProcessRepositoryContract;
 use App\Exceptions\ConmfigurationException;
-use App\Traits\DateFormat;
-use App\Traits\TransformBoolean;
+use App\Traits\DateFormatTrait;
+use App\Traits\TransformBooleanTrait;
 
 class SoglasieCreateService extends SoglasieService implements SoglasieCreateServiceContract
 {
-    use TransformBoolean, DateFormat;
+    use TransformBooleanTrait, DateFormatTrait;
 
     public function __construct(
         IntermediateDataRepositoryContract $intermediateDataRepository,

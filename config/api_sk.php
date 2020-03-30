@@ -34,8 +34,9 @@ return [
     'logMicroserviceCode' => env('LOG_MICROSERVICE_CODE'),
     'notifyMicroserviceUrl' => env('NOTIFY_MICROSERVICE_URL'),
     'notifyMicroserviceCode' => env('NOTIFY_MICROSERVICE_CODE'),
-    'maxCheckCount' => env('API_PROCESSING_MAX_CHECK_COUNT'),
-    'maxRowsByCycle' => env('API_PROCESSING_MAX_ROWS_BY_CYCLE'),
     'billSuccessUrl' => env('API_BILL_SUCCESS_URL'),
     'billFailUrl' => env('API_BILL_FAIL_URL'),
+    'maxCheckCount' => env('API_PROCESSING_MAX_CHECK_COUNT'),
+    'maxRowsByCycle' => env('API_PROCESSING_MAX_ROWS_BY_CYCLE'),
+    'processingInterval' => env('API_PROCESSING_INTERVAL'),
 ];

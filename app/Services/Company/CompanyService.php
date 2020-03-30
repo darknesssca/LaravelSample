@@ -6,14 +6,14 @@ namespace App\Services\Company;
 use App\Contracts\Repositories\IntermediateDataRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\RequestProcessRepositoryContract;
-use App\Traits\Token;
+use App\Traits\TokenTrait;
 use Benfin\Api\Contracts\NotifyMicroserviceContract;
 use Benfin\Api\Traits\HttpRequest;
 use Benfin\Api\Traits\SoapRequest;
 
 abstract class CompanyService
 {
-    use HttpRequest, SoapRequest, Token;
+    use HttpRequest, SoapRequest, TokenTrait;
 
     const companyCode = '';
 

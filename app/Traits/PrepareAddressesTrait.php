@@ -5,9 +5,9 @@ namespace App\Traits;
 
 use Carbon\Carbon;
 
-trait Addresses
+trait PrepareAddressesTrait
 {
-    protected function cutCityKladr($kladrCode)
+    protected function cutCityKladr(&$kladrCode)
     {
         if (strlen($kladrCode) > 11) {
             $kladrCode = substr($kladrCode, 0, -2);

@@ -181,41 +181,7 @@ abstract class RenessansService extends CompanyService
 
     }
 
-    public function checkPreCalculate($company, $attributes, $process)
-    {
-        $dataProcess = $process->toArray();
-        $dataProcess['data'] = json_decode($dataProcess['data'], true);
-        $serviceCalculate = app(RenessansCheckCalculateServiceContract::class);
-        $dataCalculate = $serviceCalculate->run($company, $dataProcess['data'] , $process);
-        if ($dataCalculate['result']) {
-            $dataProcess['data']['premium'] = $dataCalculate['premium'];
-            $attributes['calcId'] = $dataProcess['data']['calcId'];
-            $attributes['CheckSegment'] = true;
-            $serviceCreate = app(RenessansCreateServiceContract::class);
-            $dataSegment = $serviceCreate->run($company, $attributes, $process);
-            $dataProcess['data']['segmentPolicyId'] = $dataSegment['policyId'];
-            $process->update([
-                'state' => 5,
-                'data' => json_encode($dataProcess['data']),
-                'checkCount' => 0,
-            ]);
-        } else {
-            $dataProcess['checkCount']++;
-            if ($dataProcess['checkCount'] < config('api_sk.maxCheckCount')) {
-                $process->update([
-                    'checkCount' => $dataProcess['checkCount'],
-                ]);
-            } else {
-                $process->delete();
-                $tokenData = IntermediateData::getData($attributes['token']);
-                $tokenData[$company->code]['status'] = 'error';
-                $tokenData[$company->code]['errorMessage'] = 'Произошла ошибка, попробуйте позднее. Статус последней ошибки: '.$dataCalculate['message'];
-                IntermediateData::where('token', $attributes['token'])->update([
-                    'data' => json_encode($tokenData),
-                ]);
-            }
-        }
-    }
+
 
     public function checkSegment($company, $attributes, $process)
     {

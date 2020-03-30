@@ -6,12 +6,12 @@ namespace App\Services\Company\Tinkoff;
 
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Exceptions\ApiRequestsException;
-use App\Traits\DateFormat;
-use App\Traits\TransformBoolean;
+use App\Traits\DateFormatTrait;
+use App\Traits\TransformBooleanTrait;
 
 class TinkoffCalculateService extends TinkoffService implements TinkoffCalculateServiceContract
 {
-    use TransformBoolean, DateFormat;
+    use TransformBooleanTrait, DateFormatTrait;
 
     public function run($company, $attributes): array
     {

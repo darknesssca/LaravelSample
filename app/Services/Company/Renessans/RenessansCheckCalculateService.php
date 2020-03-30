@@ -4,6 +4,7 @@
 namespace App\Services\Company\Renessans;
 
 use App\Contracts\Company\Renessans\RenessansCheckCalculateServiceContract;
+use App\Exceptions\ApiRequestsException;
 
 class RenessansCheckCalculateService extends RenessansService implements RenessansCheckCalculateServiceContract
 {
@@ -13,19 +14,18 @@ class RenessansCheckCalculateService extends RenessansService implements Renessa
     {
         $data = [];
         $this->setAuth($data);
-        $url = $this->getUrl($attributes);
+        $url = $this->getUrl($attributes['data']);
         $response = $this->getRequest($url, $data);
         if (!$response) {
-            throw new \Exception('api not return answer');
+            throw new ApiRequestsException('API страховой компании не вернуло ответ');
         }
         if (!$response['result'] || !isset($response['data']['response']['Premium'])) {
-            return [
-                'result' => false,
-                'message' => isset($response['message']) ? $response['message'] : '',
-            ];
+            throw new ApiRequestsException(
+                'API страховой компании не вернуло ответ',
+                isset($response['message']) ? $response['message'] : '',
+            );
         }
         return [
-            'result' => true,
             'premium' => $response['data']['response']['Premium'],
         ];
     }

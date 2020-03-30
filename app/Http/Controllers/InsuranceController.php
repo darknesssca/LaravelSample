@@ -19,7 +19,8 @@ use App\Services\Company\Ingosstrah\IngosstrahGuidesService;
 use App\Services\Company\Renessans\RenessansGuidesService;
 use App\Services\Company\Soglasie\SoglasieGuidesService;
 use App\Services\Company\Tinkoff\TinkoffGuidesService;
-use App\Traits\Token;
+use App\Traits\CompanyServicesTrait;
+use App\Traits\TokenTrait;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 use Carbon\Carbon;
@@ -32,7 +33,7 @@ use Laravel\Lumen\Application;
 
 class InsuranceController extends Controller
 {
-    use Token;
+    use TokenTrait, CompanyServicesTrait;
 
     protected $intermediateDataRepository;
     protected $requestProcessRepository;
@@ -82,31 +83,6 @@ class InsuranceController extends Controller
         return Response::success($this->runService($company, $request->toArray(), $method));
     }
 
-    public function getCompany($code)
-    {
-        $company = $this->insuranceCompanyRepository->getCompany($code);
-        if (!$company) {
-            throw new CompanyException('Компания ' . $code . ' не найдена или не доступна');
-        }
-        return $company;
-    }
-
-    private function runService($company, $attributes, $serviceMethod)
-    {
-        $controller = $this->getCompanyController($company);
-        if (!method_exists($controller, $serviceMethod)) {
-            throw new MethodNotFoundException('Метод не найден');
-        }
-        return $controller->$serviceMethod($company, $attributes);
-    }
-
-    protected function getCompanyController($company)
-    {
-        $company = ucfirst(strtolower($company->code));
-        $contract = 'App\\Contracts\\Company\\' . $company . '\\' . $company . 'MasterServiceContract';
-        return app($contract);
-    }
-
 
     // FIXME требуется рефакторинг
 
@@ -115,38 +91,7 @@ class InsuranceController extends Controller
 
 
 
-    public function getPreCalculate()
-    {
-        $count = config('api_sk.maxRowsByCycle');
-        $process = RequestProcess::where('state', 1)->limit($count)->get();
-        if ($process) {
-            foreach ($process as $processItem) {
-                try {
-                    $company = $this->checkCompany($processItem->company);
-                    $token = $processItem->token;
-                    $tokenData = IntermediateData::getData($token);
-                    $additionalData['tokenData'] = isset($tokenData[$company->code]) ? $tokenData[$company->code] : false;
-                    $attributes = $tokenData['form'];
-                    $attributes['token'] = $token;
-                    $companyCode = ucfirst(strtolower($company->code));
-                    $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
-                    $response = $controller->checkPreCalculate($company, $attributes, $processItem);
-                } catch (\Exception $exception) {
-                    $isUpdated = RequestProcess::updateCheckCount($processItem->token);
-                    if ($isUpdated === false) {
-                        $tokenData = IntermediateData::getData($processItem->token);
-                        $tokenData[$company->code]['status'] = 'error';
-                        IntermediateData::where('token', $processItem->token)->update([
-                            'data' => $tokenData,
-                        ]);
-                    }
-                }
-            }
-        } else {
-            sleep(5);
-            return;
-        }
-    }
+
 
     public function getSegment()
     {

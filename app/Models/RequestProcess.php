@@ -33,5 +33,4 @@ class RequestProcess extends Model
         self::where('token', $token)->update(['checkCount' => $checkCount]);
         return true;
     }
-
 }

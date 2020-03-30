@@ -6,11 +6,11 @@ namespace App\Services\Company\Renessans;
 
 use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
 use App\Exceptions\ApiRequestsException;
-use App\Traits\TransformBoolean;
+use App\Traits\TransformBooleanTrait;
 
 class RenessansCalculateService extends RenessansService implements RenessansCalculateServiceContract
 {
-    use TransformBoolean;
+    use TransformBooleanTrait;
 
     protected $apiPath = '/calculate/?fullInformation=true';
 

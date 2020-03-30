@@ -5,12 +5,14 @@ namespace App\Services\Company\Renessans;
 
 
 use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
+use App\Contracts\Company\Renessans\RenessansCheckCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansMasterServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\MethodForbiddenException;
 use App\Exceptions\TokenException;
 use App\Models\InsuranceCompany;
+use App\Models\IntermediateData;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 
@@ -132,6 +134,54 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
                 throw new ApiRequestsException($tokenData['errorMessage']);
             default:
                 throw new TokenException('Статус рассчета не валиден');
+        }
+    }
+
+    public function preCalculating($company, $processData)
+    {
+        $serviceCalculate = app(RenessansCheckCalculateServiceContract::class);
+        $dataCalculate = $serviceCalculate->run($company, $processData);
+        $processData['data']['premium'] = $dataCalculate['premium'];
+        $attributes = [];
+        $this->pushForm($attributes);
+        $attributes['calcId'] = $processData['data']['calcId'];
+        $attributes['CheckSegment'] = true;
+        $serviceCreate = app(RenessansCreateServiceContract::class);
+        $dataSegment = $serviceCreate->run($company, $attributes);
+        $processData['data']['segmentPolicyId'] = $dataSegment['policyId'];
+        $this->requestProcessRepository->update($processData['token'], [
+            'state' => 5,
+            'data' => json_encode($processData['data']),
+            'checkCount' => 0,
+        ]);
+
+        if ($dataCalculate['result']) {
+            $dataProcess['data']['premium'] = $dataCalculate['premium'];
+            $attributes['calcId'] = $attributes['data']['calcId']; // требуется для совместимости
+            $attributes['CheckSegment'] = true;
+            $serviceCreate = app(RenessansCreateServiceContract::class);
+            $dataSegment = $serviceCreate->run($company, $attributes, $process);
+            $dataProcess['data']['segmentPolicyId'] = $dataSegment['policyId'];
+            $process->update([
+                'state' => 5,
+                'data' => json_encode($dataProcess['data']),
+                'checkCount' => 0,
+            ]);
+        } else {
+            $dataProcess['checkCount']++;
+            if ($dataProcess['checkCount'] < config('api_sk.maxCheckCount')) {
+                $process->update([
+                    'checkCount' => $dataProcess['checkCount'],
+                ]);
+            } else {
+                $process->delete();
+                $tokenData = IntermediateData::getData($attributes['token']);
+                $tokenData[$company->code]['status'] = 'error';
+                $tokenData[$company->code]['errorMessage'] = 'Произошла ошибка, попробуйте позднее. Статус последней ошибки: '.$dataCalculate['message'];
+                IntermediateData::where('token', $attributes['token'])->update([
+                    'data' => json_encode($tokenData),
+                ]);
+            }
         }
     }
 }

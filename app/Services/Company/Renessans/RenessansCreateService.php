@@ -6,11 +6,11 @@ namespace App\Services\Company\Renessans;
 
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
 use App\Exceptions\ApiRequestsException;
-use App\Traits\TransformBoolean;
+use App\Traits\TransformBooleanTrait;
 
 class RenessansCreateService extends RenessansService implements RenessansCreateServiceContract
 {
-    use TransformBoolean;
+    use TransformBooleanTrait;
 
     protected $apiPath = '/create/';
 

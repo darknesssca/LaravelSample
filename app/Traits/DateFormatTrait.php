@@ -5,7 +5,7 @@ namespace App\Traits;
 
 use Carbon\Carbon;
 
-trait DateFormat
+trait DateFormatTrait
 {
     protected function dateTimeZoneFromDate($date)
     {

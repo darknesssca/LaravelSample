@@ -3,7 +3,7 @@
 
 namespace App\Traits;
 
-trait TransformBoolean
+trait TransformBooleanTrait
 {
     protected function transformAnyToBoolean($boolean)
     {
