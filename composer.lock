@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b05bbd3d73833d607328560d5f5b2d4d",
+    "content-hash": "3270d0a77410630f1154fda781c48e07",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -89,6 +89,76 @@
                 "sdk"
             ],
             "time": "2020-03-23T18:17:07+00:00"
+        },
+        {
+            "name": "benfin/packages/api-communication",
+            "version": "v1.2.8",
+            "source": {
+                "type": "git",
+                "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/api-communication.git",
+                "reference": "7d6085c9d0889f30a89e4ed523decac13d3ba0b1"
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-soap": "*",
+                "ext-xml": "*",
+                "guzzlehttp/guzzle": "^6.5",
+                "laravel/lumen-framework": ">=6.0",
+                "php": "^7.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Benfin\\Api\\": [
+                        "src/"
+                    ]
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Mett Vasily",
+                    "email": "v.mett@qsoft.ru"
+                }
+            ],
+            "description": "BENFIN Api communication",
+            "time": "2020-03-27T13:26:48+00:00"
+        },
+        {
+            "name": "benfin/packages/auth",
+            "version": "v1.1.8",
+            "source": {
+                "type": "git",
+                "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/auth.git",
+                "reference": "47b68672c194e57ec53821ed96e5916cbb2311ad"
+            },
+            "require": {
+                "benfin/packages/api-communication": ">=1.1",
+                "laravel/lumen-framework": ">=6.0",
+                "nowakowskir/php-jwt": "^1.1",
+                "php": "^7.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Benfin\\Auth\\": [
+                        "src/"
+                    ]
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Mett Vasily",
+                    "email": "v.mett@qsoft.ru"
+                }
+            ],
+            "description": "BENFIN Authorization",
+            "time": "2020-03-26T12:29:53+00:00"
         },
         {
             "name": "coraxster/flysystem-aws-s3-v3-minio",
@@ -5761,7 +5831,8 @@
         "ext-libxml": "*",
         "ext-simplexml": "*",
         "ext-soap": "*",
-        "ext-xml": "*"
+        "ext-xml": "*",
+        "ext-gd": "*"
     },
     "platform-dev": [],
     "plugin-api-version": "1.1.0"

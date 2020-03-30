@@ -1,5 +1,8 @@
 <?php
 
+use Benfin\Api\BenfinMacroProvider;
+use Benfin\Api\BenfinMicroserviceProvider;
+
 require_once __DIR__.'/../vendor/autoload.php';
 
 (new Laravel\Lumen\Bootstrap\LoadEnvironmentVariables(
@@ -92,6 +95,9 @@ $app->configure('api_sk');
 
 $app->register(App\Providers\AppServiceProvider::class);
 $app->register(App\Providers\MinIOStorageServiceProvider::class);
+$app->register(BenfinMicroserviceProvider::class);
+$app->register(BenfinMacroProvider::class);
+
 //$app->register(Avtocod\B2BApi\Laravel\ServiceProvider::class);
 // $app->register(App\Providers\AuthServiceProvider::class);
 // $app->register(App\Providers\EventServiceProvider::class);

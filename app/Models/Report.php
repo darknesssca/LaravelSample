@@ -12,7 +12,14 @@ class Report extends Model
         'name',
         'creator_id',
         'create_date',
-        'reward'
+        'reward',
+        'is_payed'
+    ];
+    protected  $hidden = [
+        'created_at',
+        'updated_at',
+        'file_id',
+        'creator_id'
     ];
 
     public function policies()

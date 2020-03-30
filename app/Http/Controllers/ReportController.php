@@ -7,19 +7,24 @@ namespace App\Http\Controllers;
 use App\Models\File;
 use App\Models\Policy;
 use App\Models\Report;
+use App\Services\Qiwi\ReportService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Nowakowskir\JWT\Exceptions\EmptyTokenException;
-use Nowakowskir\JWT\TokenEncoded;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
 
 class ReportController extends Controller
 {
     private $httpErrorCode = 400;
+    private $reportService;
+
+    public function __construct()
+    {
+        $this->reportService = new ReportService();
+    }
 
     //Методы обработки маршрутов
 
@@ -29,7 +34,7 @@ class ReportController extends Controller
      */
     public function create(Request $request)
     {
-        //TODO Реализовать метод проверки физ лица после реализации получения полисов
+
         try {
             $validation_result = $this->validate($request, $this->createReportValidationRules(),
                 $this->createReportValidationMessages());
@@ -101,23 +106,10 @@ class ReportController extends Controller
     public function show($id)
     {
         try {
-            $id = intval($id);
-
-            if ($id <= 0) {
-                $this->httpErrorCode = 404;
-                throw new Exception('Передан некорректный id');
-            }
-
-            $report = Report::find($id);
-
-            if (empty($report)) {
-                throw new Exception(sprintf('Не найден отчет с id %s', $id));
-            }
-
-            $creator = $this->getCreator($report->creator_id);
-            $report_info = $this->getReportInfo($report, $creator);
-
-            return response()->json($report_info, 200);
+            $response = $this->reportService->test();
+            return $response;
+//            $report_info = $this->qiwiReportService->getReportInfo($id);
+//            return response()->json($report_info, 200);
         } catch (Exception $exception) {
             return $this->error($exception->getMessage(), $this->httpErrorCode);
         }
@@ -190,56 +182,6 @@ class ReportController extends Controller
         }
 
         return $reward_sum;
-    }
-
-    /**
-     * @param $token
-     * @return int
-     * @throws EmptyTokenException
-     * @throws Exception
-     */
-    private function getUserId($token)
-    {
-        $tokenEncoded = new TokenEncoded($token);
-        $payload = $tokenEncoded->decode()->getPayload();
-        $user_id = intval($payload['user_id']);
-
-        if (empty($user_id) || $user_id <= 0) {
-            $this->httpErrorCode = 401;
-            throw new Exception('Пользователь не авторизован');
-        }
-
-        return $user_id;
-    }
-
-    /**
-     * @param $user_id
-     * @return array
-     * @throws Exception
-     */
-    private function getCreator($user_id)
-    {
-        if (env("APP_DEBUG")) {
-            $user = [
-                'id' => $user_id,
-                'full_name' => 'Иванов Иван Иванович'
-            ];
-            return $user;
-        }
-
-        $url = 'api/v1/auth/users/' . $user_id;
-        $response = $this->sendRequest('GET', $url);
-
-        if (empty($response['content'])) {
-            throw new Exception('Ошибка получения данных');
-        }
-
-        $user = json_decode($response['content'], true, 512, JSON_OBJECT_AS_ARRAY);
-
-        return [
-            'id' => $user['id'],
-            'full_name' => $user['full_name']
-        ];
     }
 
     /**
@@ -409,23 +351,6 @@ class ReportController extends Controller
         }
 
 
-    }
-
-    /**
-     * @param $report
-     * @param $creator
-     * @return array
-     * @throws Exception
-     */
-    private function getReportInfo($report, $creator)
-    {
-        return [
-            'id' => $report->id,
-            'name' => $report->name,
-            'creator' => $creator,
-            'is_payed' => $report->is_payed,
-            'policies' => $this->getPolicies($report)
-        ];
     }
 
     /**
