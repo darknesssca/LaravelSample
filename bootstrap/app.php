@@ -102,10 +102,6 @@ $app->register(BenfinRequestProvider::class);
 $app->routeMiddleware([ 'auth' => Benfin\Auth\Http\Middleware\Authenticate::class, ]);
 $app->register(App\Providers\MinIOStorageServiceProvider::class);
 
-//$app->register(Avtocod\B2BApi\Laravel\ServiceProvider::class);
-// $app->register(App\Providers\AuthServiceProvider::class);
-// $app->register(App\Providers\EventServiceProvider::class);
-
 /*
 |--------------------------------------------------------------------------
 | Load The Application Routes
