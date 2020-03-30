@@ -3,22 +3,25 @@
 
 namespace App\Http\Requests\Reports;
 
-use App\Contracts\ApiRequestContract;
-use Illuminate\Http\Request;
+use Benfin\Requests\AbstractRequest;
 
-class CreateReportRequest extends Request implements ApiRequestContract
+class CreateReportRequest extends AbstractRequest
 {
-    public function getRules(): array
+    public function rules(): array
     {
         return [
-            'agent_id' => 'array',
-            'client_name' => 'string',
+            'name' => 'required',
+            'policies' => 'required',
+            'creator_id' => 'required',
         ];
     }
 
-    public function getMessages(): array
+    public function messages(): array
     {
-        return [];
+        return [
+            'name.required' => 'Поле Название не заполнено',
+            'policies.required' => 'Поле Полисы не заполнено',
+            'creator_id.required' => 'Поле Создатель не заполнено',
+        ];
     }
-
 }

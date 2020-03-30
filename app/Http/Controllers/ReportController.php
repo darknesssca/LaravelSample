@@ -4,6 +4,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Http\Requests\Reports\CreateReportRequest;
 use App\Models\File;
 use App\Models\Policy;
 use App\Models\Report;
@@ -26,40 +27,37 @@ class ReportController extends Controller
         $this->reportService = new ReportService();
     }
 
-    //Методы обработки маршрутов
-
     /**
-     * @param Request $request
+     * @param CreateReportRequest $request
      * @return JsonResponse
      */
-    public function create(Request $request)
+    public function create(CreateReportRequest $request)
     {
-
         try {
-            $validation_result = $this->validate($request, $this->createReportValidationRules(),
-                $this->createReportValidationMessages());
+            $fields = $request->validated();
+            return $this->reportService->createReport($fields);
 
-            $user_id = $this->getUserId($validation_result['creator_id']);
-            $reward = $this->getReward($validation_result['policies'], $user_id);
 
-            if ($reward > 0) {
-                $report = Report::create([
-                    'name' => $validation_result['name'],
-                    'creator_id' => $user_id,
-                    'create_date' => Carbon::now(),
-                    'reward' => $reward
-                ]);
-
-                $report->policies()->sync($validation_result['policies']);
-
-                $policies = $this->getPoliciesForXls($validation_result['policies']);
-                $this->createXls($report->id, $policies);
-
-                $this->sendLog('Создан отчет', 'create_report', $user_id);
-                return $this->success();
-            } else {
-                throw new Exception('Отсутствует доступное вознаграждение');
-            }
+//            $reward = $this->getReward($validation_result['policies'], $user_id);
+//
+//            if ($reward > 0) {
+//                $report = Report::create([
+//                    'name' => $validation_result['name'],
+//                    'creator_id' => $user_id,
+//                    'create_date' => Carbon::now(),
+//                    'reward' => $reward
+//                ]);
+//
+//                $report->policies()->sync($validation_result['policies']);
+//
+//                $policies = $this->getPoliciesForXls($validation_result['policies']);
+//                $this->createXls($report->id, $policies);
+//
+//                $this->sendLog('Создан отчет', 'create_report', $user_id);
+//                return $this->success();
+//            } else {
+//                throw new Exception('Отсутствует доступное вознаграждение');
+//            }
         } catch (Exception $exception) {
             return $this->error($exception->getMessage(), $this->httpErrorCode);
         }

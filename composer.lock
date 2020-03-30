@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ceec28dcb8a0476c1fcee347c8fa367a",
+    "content-hash": "28b2e1cf5f2a5cc28ec9896194b93d63",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -159,6 +159,40 @@
             ],
             "description": "BENFIN Authorization",
             "time": "2020-03-26T12:29:53+00:00"
+        },
+        {
+            "name": "benfin/packages/requests",
+            "version": "v1.1.7",
+            "source": {
+                "type": "git",
+                "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/requests.git",
+                "reference": "d08fba4307a2bd0bdc48b909688acabc05fbabeb"
+            },
+            "require": {
+                "ext-json": "*",
+                "guzzlehttp/guzzle": "^6.5",
+                "laravel/lumen-framework": ">=6.0",
+                "php": "^7.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Benfin\\Requests\\": [
+                        "src/"
+                    ]
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Mett Vasily",
+                    "email": "v.mett@qsoft.ru"
+                }
+            ],
+            "description": "BENFIN Requests",
+            "time": "2020-03-30T12:00:24+00:00"
         },
         {
             "name": "coraxster/flysystem-aws-s3-v3-minio",
