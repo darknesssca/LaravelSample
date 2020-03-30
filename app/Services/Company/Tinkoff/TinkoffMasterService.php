@@ -24,7 +24,7 @@ class TinkoffMasterService extends TinkoffService implements TinkoffMasterServic
             'setNumber' => $dataCalculate['setNumber'],
             'premium' => $dataCalculate['premium'],
         ];
-        $this->intermediateDataRepository->update($attributes['token'], [
+        $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
         return [
@@ -45,7 +45,7 @@ class TinkoffMasterService extends TinkoffService implements TinkoffMasterServic
         $tokenData = $this->getTokenData($attributes['token'], true);
         $tokenData[$company->code]['status'] = $createData['status'];
         $tokenData[$company->code]['billUrl'] = $billLinkData['billUrl'];
-        $this->intermediateDataRepository->update($attributes['token'], [
+        $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
         $logger = app(LogMicroserviceContract::class);

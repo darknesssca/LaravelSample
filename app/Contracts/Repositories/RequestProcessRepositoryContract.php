@@ -4,7 +4,7 @@
 namespace App\Contracts\Repositories;
 
 
-interface RequestProcessRepositoryContract extends AbstractRepositoryInterface
+interface RequestProcessRepositoryContract
 {
     /**
      * Получение пула полисов, находящихся на этапе процессинга

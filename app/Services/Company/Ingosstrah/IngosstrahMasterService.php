@@ -26,7 +26,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
             'status' => 'calculated',
             'sessionToken' => $loginData['sessionToken'],
         ];
-        $this->intermediateDataRepository->update($attributes['token'], [
+        $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
         return [
@@ -55,10 +55,10 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
             'status' => 'processing',
             'sessionToken' => $newSessionToken,
         ];
-        $this->intermediateDataRepository->update($attributes['token'], [
+        $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
-        $this->requestProcessRepository->create([
+        $this->requestProcessService->create([
             'token' => $attributes['token'],
             'company' => $company->code,
             'state' => 50,

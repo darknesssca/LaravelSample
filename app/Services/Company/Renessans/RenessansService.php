@@ -7,11 +7,10 @@ use App\Contracts\Company\Renessans\RenessansBillLinkServiceContract;
 use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCheckCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCheckCreateServiceContract;
-use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansGetStatusServiceContract;
-use App\Contracts\Repositories\IntermediateDataRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
-use App\Contracts\Repositories\RequestProcessRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Exceptions\ConmfigurationException;
 use App\Models\IntermediateData;
 use App\Models\PolicyStatus;
@@ -25,17 +24,16 @@ abstract class RenessansService extends CompanyService
     protected $secretKey;
 
     public function __construct(
-        IntermediateDataRepositoryContract $intermediateDataRepository,
-        RequestProcessRepositoryContract $requestProcessRepository,
-        PolicyRepositoryContract $policyRepository
-    )
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
+        PolicyRepositoryContract $policyRepository)
     {
         $this->apiUrl = config('api_sk.renessans.apiUrl');
         $this->secretKey = config('api_sk.renessans.apiKey');
         if (!($this->apiUrl && $this->secretKey)) {
             throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
-        parent::__construct($intermediateDataRepository, $requestProcessRepository, $policyRepository);
+        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
     }
 
     protected function setAuth(&$attributes)

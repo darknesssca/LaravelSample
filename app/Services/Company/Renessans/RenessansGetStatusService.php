@@ -4,10 +4,23 @@
 namespace App\Services\Company\Renessans;
 
 use App\Contracts\Company\Renessans\RenessansGetStatusServiceContract;
+use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 
 class RenessansGetStatusService extends RenessansService implements RenessansGetStatusServiceContract
 {
     protected $apiPath = '/policy/{{policyId}}/info/';
+
+    public function __construct(
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
+        PolicyRepositoryContract $policyRepository
+    )
+    {
+        $this->init();
+        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+    }
 
     public function run($company, $attributes): array
     {

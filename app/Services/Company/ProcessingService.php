@@ -4,9 +4,9 @@
 namespace App\Services\Company;
 
 
-use App\Contracts\Repositories\IntermediateDataRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
-use App\Contracts\Repositories\RequestProcessRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Exceptions\AbstractException;
 use App\Traits\CompanyServicesTrait;
 use App\Traits\TokenTrait;
@@ -19,20 +19,20 @@ class ProcessingService extends CompanyService
     protected $maxRowsByCycle;
 
     public function __construct(
-        IntermediateDataRepositoryContract $intermediateDataRepository,
-        RequestProcessRepositoryContract $requestProcessRepository,
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
         PolicyRepositoryContract $policyRepository
     )
     {
         $this->processingInterval = config('api_sk.processingInterval');
         $this->maxRowsByCycle = config('api_sk.maxRowsByCycle');
-        parent::__construct($intermediateDataRepository, $requestProcessRepository, $policyRepository);
+        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
     }
 
     public function preCalculating()
     {
         $count = config('api_sk.maxRowsByCycle');
-        $processPool = $this->requestProcessRepository->getPool(1, $count);
+        $processPool = $this->requestProcessService->getPool(1, $count);
         if ($processPool) {
             foreach ($processPool as $process) {
                 $processItem = $process->toArray();
@@ -46,12 +46,12 @@ class ProcessingService extends CompanyService
                     } else {
                         $errorMessage = $exception->getMessage();
                     }
-                    $isUpdated = $this->requestProcessRepository->updateCheckCount($processItem['token']);
+                    $isUpdated = $this->requestProcessService->updateCheckCount($processItem['token']);
                     if ($isUpdated === false) {
                         $tokenData = $this->getTokenData($processItem['token'], true);
                         $tokenData[$company->code]['status'] = 'error';
                         $tokenData[$company->code]['errorMessages'] = $errorMessage;
-                        $this->intermediateDataRepository->update($processItem['token'], [
+                        $this->intermediateDataService->update($processItem['token'], [
                             'data' => json_encode($tokenData),
                         ]);
                     }

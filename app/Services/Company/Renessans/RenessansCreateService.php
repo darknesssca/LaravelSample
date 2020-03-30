@@ -5,6 +5,9 @@ namespace App\Services\Company\Renessans;
 
 
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
+use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Traits\TransformBooleanTrait;
 
@@ -13,6 +16,16 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
     use TransformBooleanTrait;
 
     protected $apiPath = '/create/';
+
+    public function __construct(
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
+        PolicyRepositoryContract $policyRepository
+    )
+    {
+        $this->init();
+        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+    }
 
     protected function setAdditionalFields(&$attributes) {
         $attributes['CheckSegment'] = intval(isset($attributes['CheckSegment']) && $attributes['CheckSegment']);
@@ -24,7 +37,6 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
         $this->setAuth($attributes);
         $url = $this->getUrl();
         $data = $this->prepareData($attributes);
-        $this->init();
         $response = $this->postRequest($url, $data, [], false);
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');

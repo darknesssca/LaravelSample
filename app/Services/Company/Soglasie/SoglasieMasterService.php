@@ -40,7 +40,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
             'scoringId' => $dataScoring['scoringId'],
             'kbmId' => $dataKbm['kbmId'],
         ];
-        $this->intermediateDataRepository->update($attributes['token'], [
+        $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
         return [
@@ -65,10 +65,10 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
             'packageId' => $dataCreate['packageId'],
             'status' => 'processing',
         ];
-        $this->intermediateDataRepository->update($attributes['token'], [
+        $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
-        $this->requestProcessRepository->create([
+        $this->requestProcessService->create([
             'token' => $attributes['token'],
             'state' => 50,
             'data' => json_encode([

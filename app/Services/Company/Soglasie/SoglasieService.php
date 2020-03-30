@@ -6,9 +6,9 @@ namespace App\Services\Company\Soglasie;
 use App\Contracts\Company\Soglasie\SoglasieBillLinkServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieCancelCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieCheckCreateServiceContract;
-use App\Contracts\Repositories\IntermediateDataRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
-use App\Contracts\Repositories\RequestProcessRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Exceptions\ConmfigurationException;
 use App\Models\IntermediateData;
 use App\Models\RequestProcess;
@@ -27,8 +27,8 @@ abstract class SoglasieService extends CompanyService
     protected $apiIsTest;
 
     public function __construct(
-        IntermediateDataRepositoryContract $intermediateDataRepository,
-        RequestProcessRepositoryContract $requestProcessRepository,
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
         PolicyRepositoryContract $policyRepository
     )
     {
@@ -40,7 +40,7 @@ abstract class SoglasieService extends CompanyService
         if (!($this->apiUser && $this->apiPassword && $this->apiSubUser && $this->apiSubPassword)) {
             throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
-        parent::__construct($intermediateDataRepository, $requestProcessRepository, $policyRepository);
+        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
     }
 
     protected function getHeaders()

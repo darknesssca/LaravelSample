@@ -4,7 +4,7 @@
 namespace App\Contracts\Repositories;
 
 
-interface PolicyRepositoryContract extends AbstractRepositoryInterface
+interface PolicyRepositoryContract
 {
     /**
      * Выполняет поиск компании по ее символьному коду

@@ -3,9 +3,10 @@
 
 namespace App\Services\Company\Tinkoff;
 
-use App\Contracts\Repositories\IntermediateDataRepositoryContract;
+
 use App\Contracts\Repositories\PolicyRepositoryContract;
-use App\Contracts\Repositories\RequestProcessRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Exceptions\ConmfigurationException;
 use App\Services\Company\CompanyService;
 
@@ -19,8 +20,8 @@ abstract class TinkoffService extends CompanyService
     protected $apiProducerCode;
 
     public function __construct(
-        IntermediateDataRepositoryContract $intermediateDataRepository,
-        RequestProcessRepositoryContract $requestProcessRepository,
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
         PolicyRepositoryContract $policyRepository
     )
     {
@@ -31,7 +32,7 @@ abstract class TinkoffService extends CompanyService
         if (!($this->apiWsdlUrl && $this->apiUser && $this->apiPassword && $this->apiProducerCode)) {
             throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
-        parent::__construct($intermediateDataRepository, $requestProcessRepository, $policyRepository);
+        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
     }
 
     protected function setHeader(&$data)

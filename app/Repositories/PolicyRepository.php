@@ -7,19 +7,17 @@ namespace App\Repositories;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Models\Policy;
 
-class PolicyRepository extends AbstractDataRepository implements PolicyRepositoryContract
+class PolicyRepository implements PolicyRepositoryContract
 {
-    public function __construct(Policy $model)
-    {
-        parent::__construct($model);
-    }
-
     public function getNotPaidPolicyByPaymentNumber($policyNumber)
     {
-        return $this->model
-            ->where('number', $policyNumber)
+        return Policy::where('number', $policyNumber)
             ->where('paid', 0)
             ->first();
     }
 
+    public function update($id, $data)
+    {
+        return Policy::where('id', $id)->update($data);
+    }
 }

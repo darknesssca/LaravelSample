@@ -11,7 +11,7 @@ trait CompanyServicesTrait
 {
     protected function getCompany($code)
     {
-        $company = $this->insuranceCompanyRepository->getCompany($code);
+        $company = $this->insuranceCompanyService->getCompany($code);
         if (!$company) {
             throw new CompanyException('Компания ' . $code . ' не найдена или не доступна');
         }

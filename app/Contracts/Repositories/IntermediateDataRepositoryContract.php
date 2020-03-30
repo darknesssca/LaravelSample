@@ -4,16 +4,16 @@
 namespace App\Contracts\Repositories;
 
 
-interface IntermediateDataRepositoryContract extends AbstractRepositoryInterface
+interface IntermediateDataRepositoryContract
 {
+
     /**
      * Получает промежуточные данные из БД
      *
      * @param $token - токен
-     * @param $force - флаг, принудительный запрос в БД, даже если запись есть в локальном хранилище. По умолчанию false
      * @return mixed
      */
-    public function getToken($token, $force);
+    public function find($token);
 
     /**
      * Обновляет промежуточные данные в БД
@@ -23,4 +23,10 @@ interface IntermediateDataRepositoryContract extends AbstractRepositoryInterface
      * @return mixed
      */
     public function update($token, $data);
+
+    /**
+     * @param $data
+     * @return mixed
+     */
+    public function create($data);
 }

@@ -4,7 +4,7 @@
 namespace App\Contracts\Repositories;
 
 
-interface InsuranceCompanyRepositoryContract extends AbstractRepositoryInterface
+interface InsuranceCompanyRepositoryContract
 {
     /**
      * Выполняет поиск компании по ее символьному коду

@@ -4,16 +4,16 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieBillLinkServiceContract;
-use App\Contracts\Repositories\IntermediateDataRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
-use App\Contracts\Repositories\RequestProcessRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 
 class SoglasieBillLinkService extends SoglasieService implements SoglasieBillLinkServiceContract
 {
 
     public function __construct(
-        IntermediateDataRepositoryContract $intermediateDataRepository,
-        RequestProcessRepositoryContract $requestProcessRepository,
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
         PolicyRepositoryContract $policyRepository
     )
     {
@@ -21,7 +21,8 @@ class SoglasieBillLinkService extends SoglasieService implements SoglasieBillLin
         if (!($this->apiRestUrl)) {
             throw new \Exception('soglasie api is not configured');
         }
-        parent::__construct($intermediateDataRepository, $requestProcessRepository, $policyRepository);
+        $this->init();
+        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
     }
 
     public function run($company, $data, $additionalFields = []): array

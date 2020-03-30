@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Contracts\Repositories\InsuranceCompanyRepositoryContract;
-use App\Contracts\Repositories\IntermediateDataRepositoryContract;
-use App\Contracts\Repositories\RequestProcessRepositoryContract;
-use App\Exceptions\CompanyException;
-use App\Exceptions\MethodNotFoundException;
+use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Http\Requests\FormSendRequest;
 use App\Http\Requests\PaymentRequest;
 use App\Http\Requests\ProcessRequest;
@@ -24,30 +22,24 @@ use App\Traits\TokenTrait;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 use Carbon\Carbon;
-use Illuminate\Contracts\Container\BindingResolutionException;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Laravel\Lumen\Application;
 
 class InsuranceController extends Controller
 {
     use TokenTrait, CompanyServicesTrait;
 
-    protected $intermediateDataRepository;
-    protected $requestProcessRepository;
-    protected $insuranceCompanyRepository;
+    protected $intermediateDataService;
+    protected $insuranceCompanyService;
 
     public function __construct(
-        IntermediateDataRepositoryContract $intermediateDataRepository,
-        RequestProcessRepositoryContract $requestProcessRepository,
-        InsuranceCompanyRepositoryContract $insuranceCompanyRepository
+        IntermediateDataServiceContract $intermediateDataService,
+        InsuranceCompanyServiceContract $insuranceCompanyService
     )
     {
-        $this->intermediateDataRepository = $intermediateDataRepository;
-        $this->requestProcessRepository = $requestProcessRepository;
-        $this->insuranceCompanyRepository = $insuranceCompanyRepository;
+        $this->intermediateDataService = $intermediateDataService;
+        $this->insuranceCompanyService = $insuranceCompanyService;
     }
 
     public function index($code, $method, ProcessRequest $request)

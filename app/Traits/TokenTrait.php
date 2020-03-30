@@ -13,37 +13,31 @@ trait TokenTrait
     {
         $token = Str::random(32);
         try {
-            return $this->intermediateDataRepository->create([
+            return $this->intermediateDataService->create([
                 'token' => $token,
                 'data' => json_encode($data)
             ]);
         } catch (\Exception $exception) {
             $try++;
             if ($try > 5) {
-                throw new TokenException('Не удалось создать токенза ' . $try . ' попыток: '.$exception->getMessage());
+                throw new TokenException('Не удалось создать токен за ' . $try . ' попыток: '.$exception->getMessage());
             }
             return self::createToken($data, $try);
         }
     }
 
-    protected function getToken($token)
+    protected function getToken($token, $force = false)
     {
-        $data = $this->intermediateDataRepository->getToken($token);
-        if (!$data) {
+        $object = $this->intermediateDataService->getToken($token, $force);
+        if (!$object) {
             throw new TokenException('Не найден токен');
         }
-        if (isset($data['data'])) {
-            $data['data'] = json_decode($data['data'], true);
-        }
-        return json_decode($data['data'], true);
+        return $object;
     }
 
     protected function getTokenData($token, $force = false)
     {
-        $object = $this->intermediateDataRepository->getToken($token, $force);
-        if (!$object) {
-            throw new TokenException('Не найден токен');
-        }
+        $object = $this->getToken($token, $force);
         if (!isset($object['data'])) {
             throw new TokenException('Не найдены данные процесса в токене');
         }

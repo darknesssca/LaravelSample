@@ -3,9 +3,10 @@
 
 namespace App\Services\Company;
 
-use App\Contracts\Repositories\IntermediateDataRepositoryContract;
+
 use App\Contracts\Repositories\PolicyRepositoryContract;
-use App\Contracts\Repositories\RequestProcessRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Traits\TokenTrait;
 use Benfin\Api\Contracts\NotifyMicroserviceContract;
 use Benfin\Api\Traits\HttpRequest;
@@ -16,22 +17,21 @@ abstract class CompanyService
     use HttpRequest, SoapRequest, TokenTrait;
 
     const companyCode = '';
+    protected $companyId;
 
-    protected $intermediateDataRepository;
-    protected $requestProcessRepository;
+    protected $intermediateDataService;
+    protected $requestProcessService;
     protected $policyRepository;
 
-    public $companyCode;
-    public $companyId;
 
     public function __construct(
-        IntermediateDataRepositoryContract $intermediateDataRepository,
-        RequestProcessRepositoryContract $requestProcessRepository,
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
         PolicyRepositoryContract $policyRepository
     )
     {
-        $this->intermediateDataRepository = $intermediateDataRepository;
-        $this->requestProcessRepository = $requestProcessRepository;
+        $this->intermediateDataService = $intermediateDataService;
+        $this->requestProcessService = $requestProcessService;
         $this->policyRepository = $policyRepository;
     }
 

@@ -7,31 +7,27 @@ namespace App\Repositories;
 use App\Contracts\Repositories\RequestProcessRepositoryContract;
 use App\Models\RequestProcess;
 
-class RequestProcessRepository extends AbstractDataRepository implements RequestProcessRepositoryContract
+class RequestProcessRepository implements RequestProcessRepositoryContract
 {
-    public function __construct(RequestProcess $model)
+    public function getPool($state, $limit)
     {
-        parent::__construct($model);
-    }
-
-    public function getPool($state, $count)
-    {
-        return $this->model
-            ->where('state', $state)
-            ->limit($count)
+        return RequestProcess::where('state', $state)
+            ->limit($limit)
             ->get();
     }
 
-    public function updateCheckCount($token)
+    public function update($token, $data)
     {
-        $object = $this->model->where('token', $token)->first();
-        $checkCount = ++$object->checkCount;
-        if ($checkCount >= config('api_sk.maxCheckCount')) {
-            $object->delete();
-            return false;
-        }
-        $object->update(['checkCount' => $checkCount]);
-        return true;
+        return RequestProcess::where('token', $token)->update($data);
+    }
 
+    public function find($token)
+    {
+        return RequestProcess::find($token);
+    }
+
+    public function create($data)
+    {
+        return RequestProcess::create($data);
     }
 }

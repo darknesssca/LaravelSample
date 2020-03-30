@@ -4,10 +4,23 @@
 namespace App\Services\Company\Renessans;
 
 use App\Contracts\Company\Renessans\RenessansCheckCreateServiceContract;
+use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 
 class RenessansCheckCreateService extends RenessansService implements RenessansCheckCreateServiceContract
 {
     protected $apiPath = '/policy/{{policyId}}/status/';
+
+    public function __construct(
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
+        PolicyRepositoryContract $policyRepository
+    )
+    {
+        $this->init();
+        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+    }
 
     public function run($company, $attributes): array
     {

@@ -5,6 +5,9 @@ namespace App\Services\Company\Renessans;
 
 
 use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
+use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Traits\TransformBooleanTrait;
 
@@ -14,9 +17,18 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
 
     protected $apiPath = '/calculate/?fullInformation=true';
 
-    public function run($company, $attributes): array
+    public function __construct(
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
+        PolicyRepositoryContract $policyRepository
+    )
     {
         $this->init();
+        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+    }
+
+    public function run($company, $attributes): array
+    {
         $this->setAuth($attributes);
         $url = $this->getUrl();
         $data = $this->prepareData($attributes);

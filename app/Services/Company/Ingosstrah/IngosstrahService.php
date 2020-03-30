@@ -8,9 +8,9 @@ use App\Contracts\Company\Ingosstrah\IngosstrahBillStatusServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahCheckCreateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahEosagoServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
-use App\Contracts\Repositories\IntermediateDataRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
-use App\Contracts\Repositories\RequestProcessRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Exceptions\ConmfigurationException;
 use App\Models\IntermediateData;
 use App\Models\PolicyStatus;
@@ -26,8 +26,8 @@ abstract class IngosstrahService extends CompanyService
     protected $apiPassword;
 
     public function __construct(
-        IntermediateDataRepositoryContract $intermediateDataRepository,
-        RequestProcessRepositoryContract $requestProcessRepository,
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
         PolicyRepositoryContract $policyRepository
     )
     {
@@ -37,7 +37,7 @@ abstract class IngosstrahService extends CompanyService
         if (!($this->apiWsdlUrl && $this->apiUser && $this->apiPassword)) {
             throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
-        parent::__construct($intermediateDataRepository, $requestProcessRepository, $policyRepository);
+        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
     }
 
     // FIXME рефакторинг

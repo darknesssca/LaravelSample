@@ -23,7 +23,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $this->pushForm($attributes);
         $serviceCalculate = app(RenessansCalculateServiceContract::class);
         $dataCalculate = $serviceCalculate->run($company, $attributes);
-        $this->requestProcessRepository->create([
+        $this->requestProcessService->create([
             'token' => $attributes['token'],
             'state' => 1,
             'company' => $company->code,
@@ -33,7 +33,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $tokenData[$company->code] = [
             'status' => 'calculating',
         ];
-        $this->intermediateDataRepository->update($attributes['token'], [
+        $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
         return [
@@ -51,10 +51,10 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $tokenData = $this->getTokenData($attributes['token'], true);
         $tokenData[$company->code]['policyId'] = $dataCreate['policyId'];
         $tokenData[$company->code]['status'] = 'processing';
-        $this->intermediateDataRepository->update($attributes['token'], [
+        $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
-        $this->requestProcessRepository->create([
+        $this->requestProcessService->create([
             'token' => $attributes['token'],
             'state' => 50,
             'company' => $company->code,
@@ -149,39 +149,10 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $serviceCreate = app(RenessansCreateServiceContract::class);
         $dataSegment = $serviceCreate->run($company, $attributes);
         $processData['data']['segmentPolicyId'] = $dataSegment['policyId'];
-        $this->requestProcessRepository->update($processData['token'], [
+        $this->requestProcessService->update($processData['token'], [
             'state' => 5,
             'data' => json_encode($processData['data']),
             'checkCount' => 0,
         ]);
-
-        if ($dataCalculate['result']) {
-            $dataProcess['data']['premium'] = $dataCalculate['premium'];
-            $attributes['calcId'] = $attributes['data']['calcId']; // требуется для совместимости
-            $attributes['CheckSegment'] = true;
-            $serviceCreate = app(RenessansCreateServiceContract::class);
-            $dataSegment = $serviceCreate->run($company, $attributes, $process);
-            $dataProcess['data']['segmentPolicyId'] = $dataSegment['policyId'];
-            $process->update([
-                'state' => 5,
-                'data' => json_encode($dataProcess['data']),
-                'checkCount' => 0,
-            ]);
-        } else {
-            $dataProcess['checkCount']++;
-            if ($dataProcess['checkCount'] < config('api_sk.maxCheckCount')) {
-                $process->update([
-                    'checkCount' => $dataProcess['checkCount'],
-                ]);
-            } else {
-                $process->delete();
-                $tokenData = IntermediateData::getData($attributes['token']);
-                $tokenData[$company->code]['status'] = 'error';
-                $tokenData[$company->code]['errorMessage'] = 'Произошла ошибка, попробуйте позднее. Статус последней ошибки: '.$dataCalculate['message'];
-                IntermediateData::where('token', $attributes['token'])->update([
-                    'data' => json_encode($tokenData),
-                ]);
-            }
-        }
     }
 }
