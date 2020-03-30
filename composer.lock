@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "aws/aws-sdk-php",
-            "version": "3.133.46",
+            "version": "3.133.47",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "98d359e61b365f3040ca61c66ae8883334cf5d74"
+                "reference": "706082d6a0e53c7656eca61866b456178112daf6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/98d359e61b365f3040ca61c66ae8883334cf5d74",
-                "reference": "98d359e61b365f3040ca61c66ae8883334cf5d74",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/706082d6a0e53c7656eca61866b456178112daf6",
+                "reference": "706082d6a0e53c7656eca61866b456178112daf6",
                 "shasum": ""
             },
             "require": {
@@ -88,7 +88,7 @@
                 "s3",
                 "sdk"
             ],
-            "time": "2020-03-27T18:15:32+00:00"
+            "time": "2020-03-30T18:15:57+00:00"
         },
         {
             "name": "benfin/packages/api-communication",
@@ -163,11 +163,11 @@
         },
         {
             "name": "benfin/packages/requests",
-            "version": "v1.1.7",
+            "version": "v1.1.8",
             "source": {
                 "type": "git",
                 "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/requests.git",
-                "reference": "d08fba4307a2bd0bdc48b909688acabc05fbabeb"
+                "reference": "8062b8de73e05405bcd844b1c061bca08b078035"
             },
             "require": {
                 "ext-json": "*",
@@ -193,7 +193,7 @@
                 }
             ],
             "description": "BENFIN Requests",
-            "time": "2020-03-30T12:00:24+00:00"
+            "time": "2020-03-30T18:22:13+00:00"
         },
         {
             "name": "coraxster/flysystem-aws-s3-v3-minio",
