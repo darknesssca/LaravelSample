@@ -34,6 +34,21 @@ class OptionRepository
     }
 
     /**
+     * @param string $code
+     * @return Option
+     */
+    public function getByCode($code)
+    {
+        $option = Option::where('code', $code)->first();
+
+        if (empty($option)){
+            throw new ModelNotFoundException(sprintf('Не найдены настройки с кодом %s', $code));
+        }
+
+        return $option;
+    }
+
+    /**
      * @return Option[]|Collection
      */
     public function getAll()

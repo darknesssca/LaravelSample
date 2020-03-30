@@ -35,7 +35,11 @@ class OptionController extends Controller
     public function show($id)
     {
         try {
-            $option_info = $this->optionRepository->getById($id)->toArray();
+            if (intval($id) > 0){
+                $option_info = $this->optionRepository->getById($id)->toArray();
+            } else {
+                $option_info = $this->optionRepository->getByCode($id)->toArray();
+            }
 
             return response()->json($option_info, 200, [], JSON_UNESCAPED_UNICODE);
         } catch (ModelNotFoundException $exception) {
