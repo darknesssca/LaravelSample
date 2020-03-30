@@ -12,6 +12,7 @@ use Illuminate\Validation\ValidationException;
 
 class AutocodController extends Controller
 {
+    /** @var AutocodReportService $engine */
     private $engine;
 
     public function __construct()
@@ -20,17 +21,15 @@ class AutocodController extends Controller
     }
 
     /**Получение отчета с ожиданием
-     * @param Request $request
+     * @param AutocodRequestReportRequest $request
      * @return JsonResponse
      */
-    public function requestReport(Request $request)
+    public function requestReport(AutocodRequestReportRequest $request)
     {
         try {
-            $params = $this->validate($request, AutocodRequestReportRequest::getRules(), AutocodRequestReportRequest::getMessages());
+            $params = $request->validated();
             $result = $this->engine->readReportAutocompleteSync($params['vin']); //ожидаем генерации отчета
             return Response::success($result);
-        } catch (ValidationException $exception) {
-            return $this->error($exception->errors(), 400);
         } catch (ClientException $cle) {
             return Response::error($cle->getMessage(), 500);
         } catch (\Exception $e) {
@@ -58,17 +57,15 @@ class AutocodController extends Controller
     }
 
     /**проверка регистраци машины в такси
-     * @param Request $request
+     * @param AutocodRequestReportRequest $request
      * @return JsonResponse
      */
-    public function checkTaxi(Request $request)
+    public function checkTaxi(AutocodRequestReportRequest $request)
     {
         try {
-            $params = $this->validate($request, AutocodRequestReportRequest::getRules(), AutocodRequestReportRequest::getMessages());
+            $params = $request->validated();
             $result = $this->engine->checkTaxi($params['vin']);
             return Response::success($result);
-        } catch (ValidationException $exception) {
-            return $this->error($exception->errors(), 400);
         } catch (ClientException $cle) {
             return Response::error($cle->getMessage(), 500);
         } catch (\Exception $e) {

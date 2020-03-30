@@ -4,17 +4,18 @@
 namespace App\Http\Requests;
 
 
-use Benfin\Requests\Interfaces\RequestValidationSource;
 
-class AutocodRequestReportRequest implements RequestValidationSource
+use Benfin\Requests\AbstractRequest;
+
+class AutocodRequestReportRequest extends AbstractRequest
 {
 
-    public static function getRules()
+    public  function rules():array
     {
         return  ['vin' => 'required'];//todo добавить регулярку на вин
     }
 
-    public static function getMessages()
+    public  function messages():array
     {
        return ['vin.required' => 'не задано поле vin'];//todo добавить регулярку на вин
     }
