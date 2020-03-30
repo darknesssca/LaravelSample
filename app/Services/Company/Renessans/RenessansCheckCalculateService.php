@@ -35,7 +35,7 @@ class RenessansCheckCalculateService extends RenessansService implements Renessa
         if (!$response['result'] || !isset($response['data']['response']['Premium'])) {
             throw new ApiRequestsException(
                 'API страховой компании не вернуло ответ',
-                isset($response['message']) ? $response['message'] : '',
+                isset($response['message']) ? $response['message'] : 'нет данных об ошибке'
             );
         }
         return [

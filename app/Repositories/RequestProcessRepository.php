@@ -30,4 +30,9 @@ class RequestProcessRepository implements RequestProcessRepositoryContract
     {
         return RequestProcess::create($data);
     }
+
+    public function delete($token)
+    {
+        return RequestProcess::where('token', $token)->delete();
+    }
 }

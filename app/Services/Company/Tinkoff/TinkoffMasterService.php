@@ -7,6 +7,7 @@ use App\Contracts\Company\Tinkoff\TinkoffBillLinkServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCreateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffMasterServiceContract;
+use App\Exceptions\MethodForbiddenException;
 use App\Exceptions\PolicyNotFoundException;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
@@ -40,6 +41,7 @@ class TinkoffMasterService extends TinkoffService implements TinkoffMasterServic
         $createData = $createService->run($company, $attributes);
         $billLinkService = app(TinkoffBillLinkServiceContract::class);
         $billLinkData = $billLinkService->run($company, $attributes);
+        $this->pushForm($attributes);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $this->sendBillUrl($insurer['email'], $billLinkData['billUrl']);
         $tokenData = $this->getTokenData($attributes['token'], true);
@@ -79,5 +81,96 @@ class TinkoffMasterService extends TinkoffService implements TinkoffMasterServic
         } else {
             throw new PolicyNotFoundException('Не указан номер полиса или полис уже был отмечен как оплаченный');
         }
+    }
+
+    /**
+     * Метод не используется для данного СК, но требуется для совместимости сервисов
+     *
+     * @param $company
+     * @param $attributes
+     * @return void
+     * @throws MethodForbiddenException
+     */
+    public function preCalculating($company, $attributes):void
+    {
+        throw new MethodForbiddenException('Вызов метода запрещен');
+    }
+
+    /**
+     * Метод не используется для данного СК, но требуется для совместимости сервисов
+     *
+     * @param $company
+     * @param $attributes
+     * @return void
+     * @throws MethodForbiddenException
+     */
+    public function segmenting($company, $attributes): void
+    {
+        throw new MethodForbiddenException('Вызов метода запрещен');
+    }
+
+    /**
+     * Метод не используется для данного СК, но требуется для совместимости сервисов
+     *
+     * @param $company
+     * @param $attributes
+     * @return void
+     * @throws MethodForbiddenException
+     */
+    public function segmentCalculating($company, $attributes): void
+    {
+        throw new MethodForbiddenException('Вызов метода запрещен');
+    }
+
+    /**
+     * Метод не используется для данного СК, но требуется для совместимости сервисов
+     *
+     * @param $company
+     * @param $attributes
+     * @return void
+     * @throws MethodForbiddenException
+     */
+    public function creating($company, $attributes): void
+    {
+        throw new MethodForbiddenException('Вызов метода запрещен');
+    }
+
+    /**
+     * Метод не используется для данного СК, но требуется для совместимости сервисов
+     *
+     * @param $company
+     * @param $attributes
+     * @return void
+     * @throws MethodForbiddenException
+     */
+    public function holding($company, $attributes): void
+    {
+        throw new MethodForbiddenException('Вызов метода запрещен');
+    }
+
+    /**
+     * Метод не используется для данного СК, но требуется для совместимости сервисов
+     *
+     * @param $company
+     * @param $attributes
+     * @return array
+     * @throws MethodForbiddenException
+     */
+    public function calculating($company, $attributes): array
+    {
+        throw new MethodForbiddenException('Вызов метода запрещен');
+    }
+
+    /**
+     * Метод не используется для данного СК, но требуется для совместимости сервисов
+     *
+     * @param $company
+     * @param $attributes
+     * @return array
+     * @throws MethodForbiddenException
+     */
+    public function processing($company, $attributes): array
+    {
+        throw new MethodForbiddenException('Вызов метода запрещен');
     }
 }

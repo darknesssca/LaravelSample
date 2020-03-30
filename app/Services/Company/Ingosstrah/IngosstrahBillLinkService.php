@@ -3,19 +3,23 @@
 namespace App\Services\Company\Ingosstrah;
 
 use App\Contracts\Company\Ingosstrah\IngosstrahBillLinkServiceContract;
+use App\Exceptions\ApiRequestsException;
+use App\Traits\TransformBooleanTrait;
 
 class IngosstrahBillLinkService extends IngosstrahService implements IngosstrahBillLinkServiceContract
 {
 
-    public function run($company, $data, $additionalFields = []): array
+    use TransformBooleanTrait;
+
+    public function run($company, $processData): array
     {
-        $data = $this->prepareData($data, $additionalFields);
+        $data = $this->prepareData($processData);
         $response = $this->requestBySoap($this->apiWsdlUrl, 'CreateOnlineBill', $data);
-        if (!$response) {
-            throw new \Exception('api not return answer');
-        }
         if (isset($response['fault']) && $response['fault']) {
-            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
+            throw new ApiRequestsException(
+                'API страховой компании вернуло ошибку: ' .
+                isset($response['message']) ? $response['message'] : 'нет данных об ошибке'
+            );
         }
         if (isset($response['response']->ResponseStatus->ErrorCode)) {
             switch ($response['response']->ResponseStatus->ErrorCode) {
@@ -30,24 +34,28 @@ class IngosstrahBillLinkService extends IngosstrahService implements IngosstrahB
             }
         }
         if (!isset($response['response']->ResponseData->PayURL)) {
-            throw new \Exception('страховая компания вернула некорректный результат' . (isset($response['response']->ResponseStatus->ErrorMessage) ? ' | ' . $response['response']->ResponseStatus->ErrorMessage : ''));
+            throw new ApiRequestsException([
+                'API страховой компании не вернуло данных',
+                isset($response['response']->ResponseStatus->ErrorMessage) ?
+                    $response['response']->ResponseStatus->ErrorMessage :
+                    'нет данных об ошибке',
+            ]);
         }
         return [
             'PayUrl' => $response['response']->ResponseData->PayURL,
         ];
     }
 
-    public function prepareData($data, $form)
+    public function prepareData($data, $processData)
     {
-        $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
         return [
             'SessionToken' => $data['data']['sessionToken'],
             'Bill' => [
                 'BillISN' => $data['data']['billIsn'],
                 'Client' => [
-                    'Email' => $insurer['email'],
-                    'SendByEmail' => $this->transformBoolean(true),
-                    'DigitalPolicyEmail' => $insurer['email'],
+                    'Email' => $processData['data']['insurerEmail'],
+                    'SendByEmail' => $this->transformBooleanToChar(true),
+                    'DigitalPolicyEmail' => $processData['data']['insurerEmail'],
                 ],
             ],
         ];

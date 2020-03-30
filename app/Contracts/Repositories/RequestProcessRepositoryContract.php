@@ -14,4 +14,8 @@ interface RequestProcessRepositoryContract
      * @return mixed
      */
     public function getPool($state, $count);
+    public function update($token, $data);
+    public function find($token);
+    public function create($data);
+    public function delete($token);
 }

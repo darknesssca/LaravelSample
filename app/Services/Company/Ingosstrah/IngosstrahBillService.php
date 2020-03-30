@@ -3,19 +3,20 @@
 namespace App\Services\Company\Ingosstrah;
 
 use App\Contracts\Company\Ingosstrah\IngosstrahBillServiceContract;
+use App\Exceptions\ApiRequestsException;
 
 class IngosstrahBillService extends IngosstrahService implements IngosstrahBillServiceContract
 {
 
-    public function run($company, $data, $additionalFields = []): array
+    public function run($company, $processData): array
     {
-        $data = $this->prepareData($data);
+        $data = $this->prepareData($processData);
         $response = $this->requestBySoap($this->apiWsdlUrl, 'CreateBill', $data);
-        if (!$response) {
-            throw new \Exception('api not return answer');
-        }
         if (isset($response['fault']) && $response['fault']) {
-            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
+            throw new ApiRequestsException(
+                'API страховой компании вернуло ошибку: ' .
+                isset($response['message']) ? $response['message'] : 'нет данных об ошибке'
+            );
         }
         if (isset($response['response']->ResponseStatus->ErrorCode)) {
             switch ($response['response']->ResponseStatus->ErrorCode) {
@@ -30,24 +31,28 @@ class IngosstrahBillService extends IngosstrahService implements IngosstrahBillS
             }
         }
         if (!isset($response['response']->ResponseData->BillISN)) {
-            throw new \Exception('страховая компания вернула некорректный результат' . (isset($response['response']->ResponseStatus->ErrorMessage) ? ' | ' . $response['response']->ResponseStatus->ErrorMessage : ''));
+            throw new ApiRequestsException([
+                'API страховой компании не вернуло данных',
+                isset($response['response']->ResponseStatus->ErrorMessage) ?
+                    $response['response']->ResponseStatus->ErrorMessage :
+                    'нет данных об ошибке',
+            ]);
         }
         return[
             'billIsn' => $response['response']->ResponseData->BillISN,
         ];
     }
 
-    protected function prepareData($data)
+    protected function prepareData($processData)
     {
-        $data = [
-            'SessionToken' => $data['data']['sessionToken'],
+        return [
+            'SessionToken' => $processData['data']['sessionToken'],
             'PaymentType' => 114916,
             'Payer' => 'Customer',
             'AgreementList' => [
-                'AgrID' => $data['data']['policyId'],
+                'AgrID' => $processData['data']['policyId'],
             ],
         ];
-        return $data;
     }
 
 }

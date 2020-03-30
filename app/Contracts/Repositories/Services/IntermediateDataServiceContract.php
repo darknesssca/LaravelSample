@@ -11,4 +11,5 @@ interface IntermediateDataServiceContract
     public function getToken($token, $force = false);
 
     public function update($token, $data);
+    public function create($data);
 }

@@ -52,6 +52,16 @@ class RequestProcessService implements RequestProcessServiceContract
         return $object;
     }
 
+    public function delete($token)
+    {
+        if ($this->isStored($token)) {
+            $object = $this->load($token);
+            $this->drop($token);
+            return $object->delete();
+        }
+        return $this->repository->delete($token);
+    }
+
     public function update($token, $data)
     {
         $object = $this->repository->update($token, $data);

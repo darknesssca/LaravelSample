@@ -4,15 +4,16 @@
 namespace App\Services\Company\Renessans;
 
 
+use App\Contracts\Company\Renessans\RenessansBillLinkServiceContract;
 use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCheckCalculateServiceContract;
+use App\Contracts\Company\Renessans\RenessansCheckCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
+use App\Contracts\Company\Renessans\RenessansGetStatusServiceContract;
 use App\Contracts\Company\Renessans\RenessansMasterServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\MethodForbiddenException;
 use App\Exceptions\TokenException;
-use App\Models\InsuranceCompany;
-use App\Models\IntermediateData;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 
@@ -74,19 +75,6 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         ];
     }
 
-    /**
-     * Метод не используется для данного СК, но требуется для совместимости сервисов
-     *
-     * @param InsuranceCompany $company
-     * @param $attributes
-     * @return void
-     * @throws MethodForbiddenException
-     */
-    public function payment(InsuranceCompany $company, $attributes): void
-    {
-        throw new MethodForbiddenException('Вызов метода запрещен');
-    }
-
     public function calculating($company, $attributes):array
     {
         $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);
@@ -137,7 +125,20 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         }
     }
 
-    public function preCalculating($company, $processData)
+    /**
+     * Метод не используется для данного СК, но требуется для совместимости сервисов
+     *
+     * @param $company
+     * @param $attributes
+     * @return void
+     * @throws MethodForbiddenException
+     */
+    public function payment($company, $attributes): void
+    {
+        throw new MethodForbiddenException('Вызов метода запрещен');
+    }
+
+    public function preCalculating($company, $processData):void
     {
         $serviceCalculate = app(RenessansCheckCalculateServiceContract::class);
         $dataCalculate = $serviceCalculate->run($company, $processData);
@@ -153,6 +154,147 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
             'state' => 5,
             'data' => json_encode($processData['data']),
             'checkCount' => 0,
+        ]);
+    }
+
+    public function segmenting($company, $processData):void
+    {
+        $segmentAttributes = [
+            'policyId' => $processData['data']['segmentPolicyId']
+        ];
+        $serviceCreate = app(RenessansCheckCreateServiceContract::class);
+        $dataCreate = $serviceCreate->run($company, $segmentAttributes);
+        if ($dataCreate['result'] && $dataCreate['status'] != 'ok') {
+            $this->requestProcessService->delete($processData['token']);
+            $tokenData = $this->getTokenData($processData['token'], true);
+            $tokenData[$company->code]['status'] = 'error';
+            $tokenData[$company->code]['errorMessages'] = $dataCreate['message'];
+            $this->intermediateDataService->update($processData['token'], [
+                'data' => json_encode($tokenData),
+            ]);
+            return;
+        }
+        $processData['data']['segment'] = true;
+        $attributes = [];
+        $this->pushForm($attributes);
+        $serviceCalculate = app(RenessansCalculateServiceContract::class);
+        $dataCalculate = $serviceCalculate->run($company, $attributes);
+        $processData['data']['finalCalcId'] = $dataCalculate['calcId'];
+        $processData['data']['finalPremium'] = $dataCalculate['premium'];
+        $this->requestProcessService->update($processData['token'], [
+            'state' => 10,
+            'data' => json_encode($processData['data']),
+            'checkCount' => 0,
+        ]);
+    }
+
+    public function segmentCalculating($company, $processData):void
+    {
+        $calculateAttributes = [
+            'calcId' => $processData['data']['finalCalcId'],
+        ];
+        $serviceCalculate = app(RenessansCheckCalculateServiceContract::class);
+        $dataCalculate = $serviceCalculate->run($company, $calculateAttributes);
+        $this->requestProcessService->delete($processData['token']);
+        $tokenData = $this->getTokenData($processData['token'], true);
+        $tokenData[$company->code]['status'] = 'calculated';
+        $tokenData[$company->code]['calcId'] = $processData['data']['finalCalcId'];
+        $tokenData[$company->code]['finalPremium'] = $dataCalculate['premium'];
+        $this->intermediateDataService->update($processData['token'], [
+            'data' => json_encode($tokenData),
+        ]);
+    }
+
+    public function creating($company, $processData):void
+    {
+        $attributes = [
+            'policyId' => $processData['data']['policyId']
+        ];
+        $serviceCreate = app(RenessansCheckCreateServiceContract::class);
+        $dataCreate = $serviceCreate->run($company, $attributes);
+        if ($dataCreate['result'] && $dataCreate['status'] != 'ok') {
+            $this->requestProcessService->delete($processData['token']);
+            $tokenData = $this->getTokenData($processData['token'], true);
+            $tokenData[$company->code]['status'] = 'error';
+            $tokenData[$company->code]['errorMessages'] = $dataCreate['message'];
+            $this->intermediateDataService->update($processData['token'], [
+                'data' => json_encode($tokenData),
+            ]);
+            return;
+        }
+        $serviceStatus = app(RenessansGetStatusServiceContract::class);
+        $dataStatus = $serviceStatus->run($company, $attributes);
+        if (!($dataStatus['result'] && $dataStatus['createStatus'])) {
+            if ($dataStatus['status'] == 'error') {
+                $this->requestProcessService->delete($processData['token']);
+                $tokenData = $this->getTokenData($processData['token'], true);
+                $tokenData[$company->code]['status'] = 'error';
+                $tokenData[$company->code]['errorMessages'] = $dataStatus['message'];
+                $this->intermediateDataService->update($processData['token'], [
+                    'data' => json_encode($tokenData),
+                ]);
+                return;
+            }
+            $this->requestProcessService->update($processData['token'], [
+                'state' => 75,
+                'data' => json_encode($processData['data']),
+                'checkCount' => 0,
+            ]);
+            $tokenData = $this->getTokenData($processData['token'], true);
+            $tokenData[$company->code]['status'] = 'hold';
+            $this->intermediateDataService->update($processData['token'], [
+                'data' => json_encode($tokenData),
+            ]);
+            return;
+        }
+        $serviceBill = app(RenessansBillLinkServiceContract::class);
+        $dataBill = $serviceBill->run($company, $attributes);
+        $this->pushForm($attributes);
+        $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
+        $this->sendBillUrl($insurer['email'], $dataBill['billUrl']);
+        $this->requestProcessService->delete($processData['token']);
+        $tokenData = $this->getTokenData($processData['token'], true);
+        $tokenData[$company->code]['status'] = 'done';
+        $tokenData[$company->code]['billUrl'] = $dataBill['billUrl'];
+        $this->intermediateDataService->update($processData['token'], [
+            'data' => json_encode($tokenData),
+        ]);
+    }
+
+    public function holding($company, $processData):void
+    {
+        $attributes = [
+            'policyId' => $processData['data']['policyId']
+        ];
+        $serviceStatus = app(RenessansGetStatusServiceContract::class);
+        $dataStatus = $serviceStatus->run($company, $attributes);
+        if (!($dataStatus['result'] && $dataStatus['createStatus'])) {
+            if ($dataStatus['status'] == 'error') {
+                $this->requestProcessService->delete($processData['token']);
+                $tokenData = $this->getTokenData($processData['token'], true);
+                $tokenData[$company->code]['status'] = 'error';
+                $tokenData[$company->code]['errorMessages'] = $dataStatus['message'];
+                $this->intermediateDataService->update($processData['token'], [
+                    'data' => json_encode($tokenData),
+                ]);
+                return;
+            }
+            throw new ApiRequestsException( // завершаем обработку эксепшеном, чтобы правильно отработать checkCount
+                'API страховой компании не вернуло ответ',
+                isset($dataStatus['message']) ? $dataStatus['message'] : 'нет данных об ошибке'
+            );
+        }
+        $serviceBill = app(RenessansBillLinkServiceContract::class);
+        $dataBill = $serviceBill->run($company, $attributes);
+        $this->pushForm($attributes);
+        $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
+        $this->sendBillUrl($insurer['email'], $dataBill['billUrl']);
+        $this->requestProcessService->delete($processData['token']);
+        $tokenData = $this->getTokenData($processData['token'], true);
+        $tokenData[$company->code]['status'] = 'done';
+        $tokenData[$company->code]['billUrl'] = $dataBill['billUrl'];
+        $this->intermediateDataService->update($processData['token'], [
+            'data' => json_encode($tokenData),
         ]);
     }
 }

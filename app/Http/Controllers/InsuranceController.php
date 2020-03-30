@@ -64,13 +64,21 @@ class InsuranceController extends Controller
         return Response::success(['token' => $token->token]);
     }
 
+    /**
+     * Получение данных об оплате входящим запросом микросервиса external_api
+     *
+     * в связи с особенностями механизма роутинга требуется перепустить запрос на обновление платежных данных через
+     * независимый метод-фабрику. В следствие этого целевой метод указывать требуется вручную параметром $method
+     *
+     * @param $code
+     * @param PaymentRequest $request
+     * @return mixed
+     * @throws \App\Exceptions\CompanyException
+     * @throws \App\Exceptions\MethodNotFoundException
+     */
     public function payment($code, PaymentRequest $request)
     {
         $company = $this->getCompany($code);
-        /**
-         * в связи с особенностями механизма роутинга требуется перепустить запрос на обновление платежных данных через
-         * независимый метод. В следствие этого целевой метод указывать требуется вручную параметром $method
-         */
         $method = 'payment';
         return Response::success($this->runService($company, $request->toArray(), $method));
     }
@@ -85,130 +93,7 @@ class InsuranceController extends Controller
 
 
 
-    public function getSegment()
-    {
-        $count = config('api_sk.maxRowsByCycle');
-        $process = RequestProcess::where('state', 5)->limit($count)->get();
-        if ($process) {
-            foreach ($process as $processItem) {
-                try {
-                    $company = $this->checkCompany($processItem->company);
-                    $token = $processItem->token;
-                    $tokenData = IntermediateData::getData($token);
-                    $additionalData['tokenData'] = isset($tokenData[$company->code]) ? $tokenData[$company->code] : false;
-                    $attributes = $tokenData['form'];
-                    $attributes['token'] = $token;
-                    $companyCode = ucfirst(strtolower($company->code));
-                    $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
-                    $response = $controller->checkSegment($company, $attributes, $processItem);
-                } catch (\Exception $exception) {
-                    $isUpdated = RequestProcess::updateCheckCount($processItem->token);
-                    if ($isUpdated === false) {
-                        $tokenData = IntermediateData::getData($processItem->token);
-                        $tokenData[$company->code]['status'] = 'error';
-                        IntermediateData::where('token', $processItem->token)->update([
-                            'data' => $tokenData,
-                        ]);
-                    }
-                }
-            }
-        } else {
-            sleep(5);
-            return;
-        }
-    }
 
-    public function getCalculate()
-    {
-        $count = config('api_sk.maxRowsByCycle');
-        $process = RequestProcess::where('state', 10)->limit($count)->get();
-        if ($process) {
-            foreach ($process as $processItem) {
-                try {
-                    $company = $this->checkCompany($processItem->company);
-                    $token = $processItem->token;
-                    $tokenData = IntermediateData::getData($token);
-                    $additionalData['tokenData'] = isset($tokenData[$company->code]) ? $tokenData[$company->code] : false;
-                    $attributes = $tokenData['form'];
-                    $attributes['token'] = $token;
-                    $companyCode = ucfirst(strtolower($company->code));
-                    $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
-                    $response = $controller->checkCalculate($company, $attributes, $processItem);
-                } catch (\Exception $exception) {
-                    $isUpdated = RequestProcess::updateCheckCount($processItem->token);
-                    if ($isUpdated === false) {
-                        $tokenData = IntermediateData::getData($processItem->token);
-                        $tokenData[$company->code]['status'] = 'error';
-                        $tokenData[$company->code]['errorMessage'] = 'произошла ошибка, попробуйте позднее';
-                        IntermediateData::where('token', $processItem->token)->update([
-                            'data' => $tokenData,
-                        ]);
-                    }
-                }
-            }
-        } else {
-            sleep(5);
-            return;
-        }
-    }
-
-    public function getHold()
-    {
-        $count = config('api_sk.maxRowsByCycle');
-        $process = RequestProcess::where('state', 75)->limit($count)->get();
-        if ($process) {
-            foreach ($process as $processItem) {
-                try {
-                    $company = $this->checkCompany($processItem->company);
-                    $companyCode = ucfirst(strtolower($company->code));
-                    $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
-                    $response = $controller->checkHold($company, $processItem);
-                } catch (\Exception $exception) {
-                    $isUpdated = RequestProcess::updateCheckCount($processItem->token);
-                    if ($isUpdated === false) {
-                        $tokenData = IntermediateData::getData($processItem->token);
-                        $tokenData[$company->code]['status'] = 'error';
-                        $tokenData[$company->code]['errorMessage'] = 'произошла ошибка, попробуйте позднее';
-                        IntermediateData::where('token', $processItem->token)->update([
-                            'data' => $tokenData,
-                        ]);
-                    }
-                }
-            }
-        } else {
-            sleep(5);
-            return;
-        }
-    }
-
-    public function getCreateStatus()
-    {
-        $count = config('api_sk.maxRowsByCycle');
-        $process = RequestProcess::where('state', 50)->limit($count)->get();
-        if ($process) {
-            foreach ($process as $processItem) {
-                try {
-                    $company = $this->checkCompany($processItem->company);
-                    $companyCode = ucfirst(strtolower($company->code));
-                    $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
-                    $response = $controller->checkCreate($company, $processItem);
-                } catch (\Exception $exception) {
-                    $isUpdated = RequestProcess::updateCheckCount($processItem->token);
-                    if ($isUpdated === false) {
-                        $tokenData = IntermediateData::getData($processItem->token);
-                        $tokenData[$company->code]['status'] = 'error';
-                        $tokenData[$company->code]['errorMessage'] = 'произошла ошибка, попробуйте позднее';
-                        IntermediateData::where('token', $processItem->token)->update([
-                            'data' => $tokenData,
-                        ]);
-                    }
-                }
-            }
-        } else {
-            sleep(5);
-            return;
-        }
-    }
 
     public function getPayment()
     {

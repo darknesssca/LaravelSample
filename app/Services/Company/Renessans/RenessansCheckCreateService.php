@@ -7,6 +7,7 @@ use App\Contracts\Company\Renessans\RenessansCheckCreateServiceContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Exceptions\ApiRequestsException;
 
 class RenessansCheckCreateService extends RenessansService implements RenessansCheckCreateServiceContract
 {
@@ -29,26 +30,26 @@ class RenessansCheckCreateService extends RenessansService implements RenessansC
         $url = $this->getUrl($attributes);
         $response = $this->getRequest($url, $data);
         if (!$response) {
-            throw new \Exception('api not return answer');
+            throw new ApiRequestsException('API страховой компании не вернуло ответ');
         }
         if (!isset($response['data']['Status']) || ($response['data']['Status'] != 'ok')) {
             if (isset($response['data']['return']['Status']) && ($response['data']['return']['Status'] == 'wait')) {
-                return [
-                    'result' => false,
-                    'status' => 'wait',
-                    'message' => isset($response['message']) ? $response['message'] : '',
-                ];
+                throw new ApiRequestsException(
+                    'API страховой компании не вернуло ответ',
+                    isset($response['message']) ? $response['message'] : 'нет данных об ошибке'
+                );
             } else {
                 return [
-                    'result' => false,
+                    'result' => true,
                     'status' => 'error',
-                    'message' => isset($response['message']) ? $response['message'] : '',
+                    'message' => isset($response['message']) ? $response['message'] : 'нет деталей ошибки',
                 ];
             }
         }
         return [
             'result' => true,
             'status' => 'ok',
+            'message' => isset($response['message']) ? $response['message'] : 'ok',
         ];
     }
 

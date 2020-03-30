@@ -14,4 +14,6 @@ interface PolicyRepositoryContract
      * @return mixed
      */
     public function getNotPaidPolicyByPaymentNumber($policyNumber);
+
+    public function update($id, $data);
 }

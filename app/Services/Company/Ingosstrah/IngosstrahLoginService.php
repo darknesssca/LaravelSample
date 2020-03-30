@@ -15,7 +15,7 @@ class IngosstrahLoginService extends IngosstrahService implements IngosstrahLogi
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(
                 'API страховой компании вернуло ошибку: ' .
-                isset($response['message']) ? $response['message'] : ''
+                isset($response['message']) ? $response['message'] : 'нет данных об ошибке'
             );
         }
         if (!isset($response['response']->ResponseData->SessionToken)) {

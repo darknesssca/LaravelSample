@@ -9,7 +9,6 @@ use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieMasterServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
 use App\Exceptions\MethodForbiddenException;
-use App\Models\InsuranceCompany;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 
@@ -92,13 +91,76 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
     /**
      * Метод не используется для данного СК, но требуется для совместимости сервисов
      *
-     * @param InsuranceCompany $company
+     * @param $company
      * @param $attributes
      * @return void
      * @throws MethodForbiddenException
      */
-    public function payment(InsuranceCompany $company, $attributes): void
+    public function payment($company, $attributes): void
     {
         throw new MethodForbiddenException('Вызов метода запрещен');
+    }
+
+    /**
+     * Метод не используется для данного СК, но требуется для совместимости сервисов
+     *
+     * @param $company
+     * @param $attributes
+     * @return void
+     * @throws MethodForbiddenException
+     */
+    public function preCalculating($company, $attributes):void
+    {
+        throw new MethodForbiddenException('Вызов метода запрещен');
+    }
+
+    /**
+     * Метод не используется для данного СК, но требуется для совместимости сервисов
+     *
+     * @param $company
+     * @param $attributes
+     * @return void
+     * @throws MethodForbiddenException
+     */
+    public function segmenting($company, $attributes): void
+    {
+        throw new MethodForbiddenException('Вызов метода запрещен');
+    }
+
+    /**
+     * Метод не используется для данного СК, но требуется для совместимости сервисов
+     *
+     * @param $company
+     * @param $attributes
+     * @return void
+     * @throws MethodForbiddenException
+     */
+    public function segmentCalculating($company, $attributes): void
+    {
+        throw new MethodForbiddenException('Вызов метода запрещен');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function creating($company, $attributes): void
+    {
+        // TODO: Implement creating() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function holding($company, $attributes): void
+    {
+        // TODO: Implement holding() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function calculating($company, $attributes): array
+    {
+        // TODO: Implement calculating() method.
     }
 }
