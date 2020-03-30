@@ -1,2 +1,5 @@
 <?php
-return [ "base_url"=>env("MICROSERVICE_BASE_PATH") ];
+
+return [
+    "base_url"=>"http://api-gateway/api/v1",
+];

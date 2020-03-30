@@ -94,6 +94,8 @@ $app->configure('api_sk');
 */
 
 $app->register(App\Providers\AppServiceProvider::class);
+$app->register(\Benfin\Api\BenfinMicroserviceProvider::class);
+$app->routeMiddleware([ 'auth' => Benfin\Auth\Http\Middleware\Authenticate::class, ]);
 $app->register(App\Providers\MinIOStorageServiceProvider::class);
 $app->register(BenfinMicroserviceProvider::class);
 $app->register(BenfinMacroProvider::class);

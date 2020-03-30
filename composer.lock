@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3270d0a77410630f1154fda781c48e07",
+    "content-hash": "ceec28dcb8a0476c1fcee347c8fa367a",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
-            "version": "3.133.42",
+            "version": "3.133.45",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "4f0259689e66237e429f9fc1d879b2bcdce6dadb"
+                "reference": "928a23e2ee7e195a66f93d0758895e26958c3b7d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/4f0259689e66237e429f9fc1d879b2bcdce6dadb",
-                "reference": "4f0259689e66237e429f9fc1d879b2bcdce6dadb",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/928a23e2ee7e195a66f93d0758895e26958c3b7d",
+                "reference": "928a23e2ee7e195a66f93d0758895e26958c3b7d",
                 "shasum": ""
             },
             "require": {
@@ -88,15 +88,15 @@
                 "s3",
                 "sdk"
             ],
-            "time": "2020-03-23T18:17:07+00:00"
+            "time": "2020-03-26T18:12:15+00:00"
         },
         {
             "name": "benfin/packages/api-communication",
-            "version": "v1.2.8",
+            "version": "v1.2.7",
             "source": {
                 "type": "git",
                 "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/api-communication.git",
-                "reference": "7d6085c9d0889f30a89e4ed523decac13d3ba0b1"
+                "reference": "83f758279e2ef59b4b5a0b1dba8c1a97818063cd"
             },
             "require": {
                 "ext-json": "*",
@@ -124,7 +124,7 @@
                 }
             ],
             "description": "BENFIN Api communication",
-            "time": "2020-03-27T13:26:48+00:00"
+            "time": "2020-03-26T13:25:04+00:00"
         },
         {
             "name": "benfin/packages/auth",
@@ -5831,8 +5831,7 @@
         "ext-libxml": "*",
         "ext-simplexml": "*",
         "ext-soap": "*",
-        "ext-xml": "*",
-        "ext-gd": "*"
+        "ext-xml": "*"
     },
     "platform-dev": [],
     "plugin-api-version": "1.1.0"

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\CarInfo\Autocod\AutocodReportService;
 use GuzzleHttp\Exception\ClientException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -18,7 +19,7 @@ class AutocodController extends Controller
 
     /**Получение отчета с ожиданием
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function requestReport(Request $request)
     {
@@ -37,7 +38,7 @@ class AutocodController extends Controller
 
     /**чтение уже готового отчета
      * @param $report_id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function readReport($report_id)
     {
@@ -56,7 +57,7 @@ class AutocodController extends Controller
 
     /**проверка регистраци машины в такси
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function checkTaxi(Request $request)
     {

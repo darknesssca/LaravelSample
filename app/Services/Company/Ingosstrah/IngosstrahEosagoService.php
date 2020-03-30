@@ -12,7 +12,7 @@ class IngosstrahEosagoService extends IngosstrahService implements IngosstrahEos
     public function run($company, $data, $additionalFields = []): array
     {
         $data = $this->prepareData($data);
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'MakeEOsago', $data);
+        $response = $this->requestBySoap($this->apiWsdlUrl, 'MakeEOsago', $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
@@ -29,7 +29,7 @@ class IngosstrahEosagoService extends IngosstrahService implements IngosstrahEos
             ];
         }
         if (!isset($response['response']->ResponseData->Bso->Serial) || !isset($response['response']->ResponseData->Bso->Number)) {
-            throw new \Exception('api not return status');
+            throw new \Exception('страховая компания вернула некорректный результат' . (isset($response['response']->ResponseStatus->ErrorMessage) ? ' | ' . $response['response']->ResponseStatus->ErrorMessage : ''));
         }
         return [
             'hold' => false,

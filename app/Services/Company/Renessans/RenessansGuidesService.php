@@ -31,7 +31,7 @@ class RenessansGuidesService extends RenessansService implements GuidesSourceInt
         try {
             $params = [];
             $this->setAuth($params);
-            $response = RestController::getRequest($this->baseUrl, $params);
+            $response = $this->getRequest($this->baseUrl, $params);
             if (!$response['result']) {
                 return false;
             }

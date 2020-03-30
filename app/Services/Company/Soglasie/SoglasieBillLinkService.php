@@ -24,7 +24,7 @@ class SoglasieBillLinkService extends SoglasieService implements SoglasieBillLin
             'policyId' => $data->data['policyId'],
         ]);
         $headers = $this->getHeaders();
-        $response = RestController::getRequest($url, [], $headers);
+        $response = $this->getRequest($url, [], $headers);
         return $response;
     }
 

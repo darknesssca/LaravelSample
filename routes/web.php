@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Route;
 $router->group(
     [
         'prefix' => 'v1',
+        "middleware" => "auth"
     ],
     function () use ($router) {
         $router->group(
@@ -33,8 +34,9 @@ $router->group(
                 $router->get('/drafts/{policeId}', 'DraftController@show');
                 $router->patch('/drafts/{policeId}', 'DraftController@update');
                 $router->delete('/drafts/{policeId}', 'DraftController@delete');
-                // policies
+                // запросы в страховые компании
                 $router->post('/registration/send', 'InsuranceController@store');
+                $router->post('/registration/{code}/payment', 'InsuranceController@payment');
                 $router->post('/registration/{code}/{method}', 'InsuranceController@index');
 
                 //autocod
@@ -46,6 +48,39 @@ $router->group(
                 $router->post('/reports', 'ReportController@create');
                 $router->get('/reports', 'ReportController@index');
                 $router->get('/reports/{id}', 'ReportController@show');
+
+                //guides
+                $router->group([
+                    'prefix' => 'guides',
+                ],
+                    function () use ($router) {
+
+                        $router->get('/marks', 'GuidesController@marks');
+                        $router->get('/models/{mark_id:\d+}', 'GuidesController@models');
+                        $router->get('/models', 'GuidesController@modelsAll');
+                        $router->get('/categories', 'GuidesController@categories');
+                        $router->get('/countries', 'GuidesController@countriesAll');
+                        $router->get('/countries/{country_id:\d+}', 'GuidesController@countries');
+                        $router->get('/genders', 'GuidesController@genders');
+                        $router->get('/doc-types', 'GuidesController@docTypes');
+                        $router->get('/usage-targets', 'GuidesController@usageTargets');
+                        $router->get('/insurance-companies', 'GuidesController@insuranceCompanies');
+                        $router->get('/source-acquisitions', 'GuidesController@sourceAcquisitions');
+                    }
+                );
+
+                //options
+                $router->group([
+                    'prefix' => 'options',
+                ],
+                    function () use ($router) {
+                        $router->post('/', 'OptionController@create');
+                        $router->get('/', 'OptionController@index');
+                        $router->get('/{id}', 'OptionController@show');
+                        $router->patch('/{id}', 'OptionController@update');
+                        $router->delete('/{id}', 'OptionController@delete');
+                    }
+                );
             }
         );
     }

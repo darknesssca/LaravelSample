@@ -18,7 +18,7 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
     public function run($company, $attributes, $additionalFields = []): array
     {
         $data = $this->prepareData($attributes);
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'CreateAgreement', $data);
+        $response = $this->requestBySoap($this->apiWsdlUrl, 'CreateAgreement', $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
@@ -38,7 +38,7 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
             }
         }
         if (!isset($response['response']->ResponseData->AgrID)) {
-            throw new \Exception('api not return AgrID');
+            throw new \Exception('страховая компания вернула некорректный результат' . (isset($response['response']->ResponseStatus->ErrorMessage) ? ' | ' . $response['response']->ResponseStatus->ErrorMessage : ''));
         }
         $data = [
             'policyId' => $response['response']->ResponseData->AgrID,

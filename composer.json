@@ -15,7 +15,6 @@
         "ext-simplexml": "*",
         "ext-soap": "*",
         "ext-xml": "*",
-        "ext-gd": "*",
         "benfin/packages/api-communication": ">=1.2",
         "benfin/packages/auth": ">=1.1",
         "coraxster/flysystem-aws-s3-v3-minio": "^1.0",

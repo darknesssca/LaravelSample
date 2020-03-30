@@ -6,12 +6,17 @@ use App\Contracts\Company\CompanyServiceContract;
 use App\Models\Country;
 use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
+use App\Models\Policy;
 use App\Models\RequestProcess;
 use App\Services\Company\GuidesSourceTrait;
 use App\Services\Company\Ingosstrah\IngosstrahGuidesService;
 use App\Services\Company\Renessans\RenessansGuidesService;
 use App\Services\Company\Soglasie\SoglasieGuidesService;
 use App\Services\Company\Tinkoff\TinkoffGuidesService;
+use Benfin\Api\Contracts\LogMicroserviceContract;
+use Benfin\Api\GlobalStorage;
+use Benfin\Api\Services\LogMicroservice;
+use Carbon\Carbon;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -62,13 +67,50 @@ class InsuranceController extends Controller
             $data = [
                 'form' => $attributes,
             ];
-            RestController::checkToken($attributes);
-            RestController::sendLog($attributes);
+
+            //отправка лога
+            $message= 'пользователь отправил форму со следующими полями: '.\GuzzleHttp\json_encode($data);
+            /**
+             * @var LogMicroservice $logger
+             */
+
+            $logger =  app(LogMicroserviceContract::class);
+            $logger->sendLog($message,config('api_sk.logMicroserviceCode'),GlobalStorage::getUserId());
+
+
             $token = IntermediateData::createToken($data);
             return $this->success(['token' => $token], 200);
         }
         catch (ValidationException $exception)
         {
+            return $this->error($exception->errors(), 400);
+        } catch (BindingResolutionException $exception) {
+            return $this->error('Не найден обработчик компании: ' . $exception->getMessage(), 404);
+        } catch (\Exception $exception) {
+            return $this->error($exception->getMessage(), 500);
+        }
+    }
+
+    public function payment($code, Request $request)
+    {
+        $company = $this->checkCompany($code);
+        if (!$company->count()) {
+            return $this->error('Компания не найдена', 404);
+        }
+        $serviceMethod = 'payment';
+        try {
+            $controller = $this->getCompanyController($company);
+            if (!method_exists($controller, $serviceMethod)) {
+                return $this->error('Метод не найден', 404); // todo вынести в отдельные эксепшены
+            }
+            $controller = $this->getCompanyController($company);
+            $response =  $controller->$serviceMethod($company, $request->toArray(), $serviceMethod);
+            if (isset($response['error']) && $response['error']) {
+                return response()->json($response, 500);
+            } else {
+                return $this->success($response, 200);
+            }
+        } catch (ValidationException $exception) {
             return $this->error($exception->errors(), 400);
         } catch (BindingResolutionException $exception) {
             return $this->error('Не найден обработчик компании: ' . $exception->getMessage(), 404);
@@ -88,7 +130,6 @@ class InsuranceController extends Controller
             $controller->validationRulesProcess(),
             $controller->validationMessagesProcess()
         );
-        RestController::checkToken($validatedFields);
         $tokenData = IntermediateData::getData($validatedFields['token']);
         if (!$tokenData) {
             throw new \Exception('token not valid'); // todo вынести в отдельные эксепшены
@@ -212,7 +253,7 @@ class InsuranceController extends Controller
 
     public function getHold()
     {
-        $count = config('api_sk.renessans.maxRowsByCycle');
+        $count = config('api_sk.maxRowsByCycle');
         $process = RequestProcess::where('state', 75)->limit($count)->get();
         if ($process) {
             foreach ($process as $processItem) {
@@ -241,7 +282,7 @@ class InsuranceController extends Controller
 
     public function getCreateStatus()
     {
-        $count = config('api_sk.renessans.maxRowsByCycle');
+        $count = config('api_sk.maxRowsByCycle');
         $process = RequestProcess::where('state', 50)->limit($count)->get();
         if ($process) {
             foreach ($process as $processItem) {
@@ -265,6 +306,36 @@ class InsuranceController extends Controller
         } else {
             sleep(5);
             return;
+        }
+    }
+
+    public function getPayment()
+    {
+        $count = config('api_sk.maxRowsByCycle');
+        $policies = Policy::with([
+            'status',
+            'company',
+            'bill',
+        ])
+            ->where('paid', 0)
+            ->whereHas('status', function ($query) {
+                $query->where('code', 'issued');
+            })
+            ->whereDate('registration_date', '>', (new Carbon)->subDays(2)->format('Y-m-d'))
+            ->limit($count)
+            ->get();
+        if (!$policies) {
+            return;
+        }
+        foreach ($policies as $policy) {
+            try {
+                $company = $this->checkCompany($policy->company->code);
+                $companyCode = ucfirst(strtolower($company->code));
+                $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
+                $response = $controller->checkPaid($company, $policy);
+            } catch (\Exception $exception) {
+                // игнорируем
+            }
         }
     }
 

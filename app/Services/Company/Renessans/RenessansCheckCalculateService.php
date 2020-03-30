@@ -16,7 +16,7 @@ class RenessansCheckCalculateService extends RenessansService implements Renessa
         $data = [];
         $this->setAuth($data);
         $url = $this->getUrl($attributes);
-        $response = RestController::getRequest($url, $data);
+        $response = $this->getRequest($url, $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }

@@ -5,10 +5,21 @@ namespace App\Services\Company;
 
 use App\Contracts\Company\CompanyServiceContract;
 use App\Models\InsuranceCompany;
+use Benfin\Api\Contracts\AuthMicroserviceContract;
+use Benfin\Api\Contracts\LogMicroserviceContract;
+use Benfin\Api\Contracts\NotifyMicroserviceContract;
+use Benfin\Api\Services\AuthMicroservice;
+use Benfin\Api\Services\LogMicroservice;
+use Benfin\Api\Services\NotifyMicroservice;
+use Benfin\Api\Traits\HttpRequest;
+use Benfin\Api\Traits\SoapRequest;
 use Illuminate\Support\Carbon;
+use Nowakowskir\JWT\TokenEncoded;
 
 class CompanyService implements CompanyServiceContract
 {
+    use HttpRequest, SoapRequest;
+
     public $companyCode;
     public $companyId;
 
@@ -83,7 +94,6 @@ class CompanyService implements CompanyServiceContract
             "car.document.number" => "required|string", // TODO: in справочник
             "car.document.dateIssue" => "required|string", // TODO: in справочник
             "car.inspection" => "required",
-            "car.inspection.documentType" => "required|integer", // TODO: in справочник
             "car.inspection.series" => "required|string",
             "car.inspection.number" => "required|string",
             "car.inspection.dateIssue" => "required|date|date_format:Y-m-d",
@@ -117,6 +127,25 @@ class CompanyService implements CompanyServiceContract
     {
         return [];
     }
+
+
+    /**отправка ссылки на оплату на почту
+     * @param $email
+     * @param $billUrl
+     * @return bool
+     * @throws \Exception
+     */
+    public function sendBillUrl($email, $billUrl)
+    {
+        return true; //fixme только для теста
+        /**
+         * @var NotifyMicroservice $notify
+         */
+        $notify =  app(NotifyMicroserviceContract::class);
+        $notify->sendMail($email,$billUrl,config('api_sk.notifyMicroserviceCode'));
+    }
+
+
 
     public function setValue(&$target, $targetName, $sourceName, $source)
     {

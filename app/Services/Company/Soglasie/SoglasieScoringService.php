@@ -33,7 +33,7 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
                 'partial' => $this->transformBoolean(false),
             ],
         ];
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'getScoringId', $data, $auth, $headers, $xmlAttributes);
+        $response = $this->requestBySoap($this->apiWsdlUrl, 'getScoringId', $data, $auth, $headers, $xmlAttributes);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
