@@ -3,6 +3,7 @@
 namespace App\Console;
 
 use App\Console\Commands\CheckCalculateStatusCommand;
+use App\Console\Commands\CheckPaymentStatusCommand;
 use App\Console\Commands\CheckPreCalculateStatusCommand;
 use App\Console\Commands\RefreshInsuranceGuidesCommand;
 use App\Console\Commands\CheckCreateStatusCommand;
@@ -24,6 +25,7 @@ class Kernel extends ConsoleKernel
         CheckCalculateStatusCommand::class,
         CheckCreateStatusCommand::class,
         CheckHoldStatusCommand::class,
+        CheckPaymentStatusCommand::class,
         RefreshInsuranceGuidesCommand::class,
     ];
 

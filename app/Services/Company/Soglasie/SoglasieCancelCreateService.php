@@ -24,7 +24,7 @@ class SoglasieCancelCreateService extends SoglasieService implements SoglasieCan
             'policyId' => $data->data['policyId'],
         ]);
         $headers = $this->getHeaders();
-        return RestController::getRequest($url, [], $headers);
+        return $this->getRequest($url, [], $headers);
     }
 
     protected function getHeaders()

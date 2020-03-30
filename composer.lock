@@ -1,23 +1,23 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "b05bbd3d73833d607328560d5f5b2d4d",
+    "content-hash": "ceec28dcb8a0476c1fcee347c8fa367a",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
-            "version": "3.133.42",
+            "version": "3.133.45",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "4f0259689e66237e429f9fc1d879b2bcdce6dadb"
+                "reference": "928a23e2ee7e195a66f93d0758895e26958c3b7d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/4f0259689e66237e429f9fc1d879b2bcdce6dadb",
-                "reference": "4f0259689e66237e429f9fc1d879b2bcdce6dadb",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/928a23e2ee7e195a66f93d0758895e26958c3b7d",
+                "reference": "928a23e2ee7e195a66f93d0758895e26958c3b7d",
                 "shasum": ""
             },
             "require": {
@@ -88,7 +88,77 @@
                 "s3",
                 "sdk"
             ],
-            "time": "2020-03-23T18:17:07+00:00"
+            "time": "2020-03-26T18:12:15+00:00"
+        },
+        {
+            "name": "benfin/packages/api-communication",
+            "version": "v1.2.7",
+            "source": {
+                "type": "git",
+                "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/api-communication.git",
+                "reference": "83f758279e2ef59b4b5a0b1dba8c1a97818063cd"
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-soap": "*",
+                "ext-xml": "*",
+                "guzzlehttp/guzzle": "^6.5",
+                "laravel/lumen-framework": ">=6.0",
+                "php": "^7.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Benfin\\Api\\": [
+                        "src/"
+                    ]
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Mett Vasily",
+                    "email": "v.mett@qsoft.ru"
+                }
+            ],
+            "description": "BENFIN Api communication",
+            "time": "2020-03-26T13:25:04+00:00"
+        },
+        {
+            "name": "benfin/packages/auth",
+            "version": "v1.1.8",
+            "source": {
+                "type": "git",
+                "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/auth.git",
+                "reference": "47b68672c194e57ec53821ed96e5916cbb2311ad"
+            },
+            "require": {
+                "benfin/packages/api-communication": ">=1.1",
+                "laravel/lumen-framework": ">=6.0",
+                "nowakowskir/php-jwt": "^1.1",
+                "php": "^7.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Benfin\\Auth\\": [
+                        "src/"
+                    ]
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Mett Vasily",
+                    "email": "v.mett@qsoft.ru"
+                }
+            ],
+            "description": "BENFIN Authorization",
+            "time": "2020-03-26T12:29:53+00:00"
         },
         {
             "name": "coraxster/flysystem-aws-s3-v3-minio",
@@ -1871,12 +1941,6 @@
                 "s3",
                 "sftp",
                 "storage"
-            ],
-            "funding": [
-                {
-                    "url": "https://offset.earth/frankdejonge",
-                    "type": "other"
-                }
             ],
             "time": "2020-03-17T18:58:12+00:00"
         },
@@ -5763,6 +5827,5 @@
         "ext-soap": "*",
         "ext-xml": "*"
     },
-    "platform-dev": [],
-    "plugin-api-version": "1.1.0"
+    "platform-dev": []
 }

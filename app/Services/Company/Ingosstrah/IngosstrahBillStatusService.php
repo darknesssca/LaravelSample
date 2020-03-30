@@ -2,17 +2,17 @@
 
 namespace App\Services\Company\Ingosstrah;
 
-use App\Contracts\Company\Ingosstrah\IngosstrahBillServiceContract;
+use App\Contracts\Company\Ingosstrah\IngosstrahBillStatusServiceContract;
 use App\Http\Controllers\SoapController;
 use App\Services\Company\Ingosstrah\IngosstrahService;
 
-class IngosstrahBillService extends IngosstrahService implements IngosstrahBillServiceContract
+class IngosstrahBillStatusService extends IngosstrahService implements IngosstrahBillStatusServiceContract
 {
 
-    public function run($company, $data, $additionalFields = []): array
+    public function run($company, $attributes, $additionalFields = []): array
     {
-        $data = $this->prepareData($data);
-        $response = $this->requestBySoap($this->apiWsdlUrl, 'CreateBill', $data);
+        $data = $this->prepareData($attributes, $additionalFields);
+        $response = $this->requestBySoap($this->apiWsdlUrl, 'GetBill', $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
@@ -28,28 +28,24 @@ class IngosstrahBillService extends IngosstrahService implements IngosstrahBillS
                 case -20807:
                     return [
                         'tokenError' => true,
+                        'paid' => false,
                     ];
             }
         }
-        if (!isset($response['response']->ResponseData->BillISN)) {
+        if (!isset($response['response']->ResponseData->Bill->Paid)) {
             throw new \Exception('страховая компания вернула некорректный результат' . (isset($response['response']->ResponseStatus->ErrorMessage) ? ' | ' . $response['response']->ResponseStatus->ErrorMessage : ''));
         }
-        return[
-            'billIsn' => $response['response']->ResponseData->BillISN,
+        return [
+            'paid' => $response['response']->ResponseData->Bill->Paid == 2,
         ];
     }
 
-    public function prepareData($data)
+    public function prepareData($attributes, $form)
     {
-        $data = [
-            'SessionToken' => $data['data']['sessionToken'],
-            'PaymentType' => 114916,
-            'Payer' => 'Customer',
-            'AgreementList' => [
-                'AgrID' => $data['data']['policyId'],
-            ],
+        return [
+            'SessionToken' => $attributes['SessionToken'],
+            'BillISN' => $attributes['BillISN'],
         ];
-        return $data;
     }
 
 }

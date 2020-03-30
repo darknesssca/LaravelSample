@@ -10,7 +10,7 @@ class Policy extends Model
 
     protected $fillable = [
         'agent_id',
-        //'number',
+        'number',
         'insurance_company_id',
         'status_id',
         'type_id',
@@ -19,7 +19,7 @@ class Policy extends Model
         //'commission_id',
         //'commission_paid',
         //'registration_date',
-        //'paid',
+        'paid',
         'client_id',
         'insurant_id',
         'vehicle_model_id',
@@ -50,7 +50,7 @@ class Policy extends Model
 
     public function company()
     {
-        return $this->belongsTo('App\Models\InsuranceCompany');
+        return $this->belongsTo('App\Models\InsuranceCompany', 'insurance_company_id', 'id');
     }
 
     public function model()
@@ -101,6 +101,11 @@ class Policy extends Model
     public function drivers()
     {
         return $this->belongsToMany('App\Models\Driver');
+    }
+
+    public function bill()
+    {
+        return $this->hasOne('App\Models\BillPolicy', 'policy_id', 'id');
     }
 
     public function reports()

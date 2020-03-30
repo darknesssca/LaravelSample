@@ -15,6 +15,8 @@
         "ext-simplexml": "*",
         "ext-soap": "*",
         "ext-xml": "*",
+        "benfin/packages/api-communication": ">=1.2",
+        "benfin/packages/auth": ">=1.1",
         "coraxster/flysystem-aws-s3-v3-minio": "^1.0",
         "guzzlehttp/guzzle": "^6.5",
         "laravel/lumen-framework": "^6.0",
@@ -27,6 +29,17 @@
         "mockery/mockery": "^1.0",
         "phpunit/phpunit": "^8.0"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/api-communication.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/auth.git"
+        }
+    ],
+
     "autoload": {
         "classmap": [
             "database/seeds",

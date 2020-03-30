@@ -7,6 +7,12 @@ namespace App\Http\Controllers;
 use App\Models\File;
 use App\Models\Policy;
 use App\Models\Report;
+use Benfin\Api\Contracts\AuthMicroserviceContract;
+use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
+use Benfin\Api\Contracts\LogMicroserviceContract;
+use Benfin\Api\Services\AuthMicroservice;
+use Benfin\Api\Services\CommissionCalculationMicroservice;
+use Benfin\Api\Services\LogMicroservice;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -47,9 +53,10 @@ class ReportController extends Controller
 
                 $report->policies()->sync($validation_result['policies']);
 
+                /** @var LogMicroservice $logger */
+                $logger = app(LogMicroserviceContract::class);
                 $policies = $this->getPoliciesForXls($validation_result['policies']);
                 $this->createXls($report->id, $policies);
-
                 $this->sendLog('Создан отчет', 'create_report', $user_id);
                 return $this->success();
             } else {
@@ -169,20 +176,21 @@ class ReportController extends Controller
             return 1;
         }
 
-        $url = 'api/v1/commission-calculation/rewards';
-        $params = ['user_id' => $user_id];
-        $response = $this->sendRequest('GET', $url, $params);
 
-        if (empty($response['content'])){
+        /** @var CommissionCalculationMicroservice $auth */
+        $auth = app(CommissionCalculationMicroserviceContract::class);
+        $response = $auth->getRewardByUserId($user_id);
+
+        if (empty($response['content'])) {
             throw new Exception('Ошибка получения данных');
         }
 
-        $content = json_decode($response['content'], true, 512,  JSON_OBJECT_AS_ARRAY);
+        $content = json_decode($response['content'], true, 512, JSON_OBJECT_AS_ARRAY);
 
         $rewards = $this->indexRewards($content);
 
         foreach ($policy_collection as $policy) {
-            if ($policy->paid == false){
+            if ($policy->paid == false) {
                 throw new Exception(sprintf('Полис %s не оплачен', $policy->number));
             }
 
@@ -227,8 +235,9 @@ class ReportController extends Controller
             return $user;
         }
 
-        $url = 'api/v1/auth/users/' . $user_id;
-        $response = $this->sendRequest('GET', $url);
+        /** @var AuthMicroservice $auth */
+        $auth = app(AuthMicroserviceContract::class);
+        $response = $auth->userInfo($user_id);
 
         if (empty($response['content'])) {
             throw new Exception('Ошибка получения данных');
@@ -438,7 +447,6 @@ class ReportController extends Controller
         foreach ($rewards as $reward){
             $new_rewards[$rewards['policy']['id']] = $reward;
         }
-
         return $new_rewards;
     }
 }

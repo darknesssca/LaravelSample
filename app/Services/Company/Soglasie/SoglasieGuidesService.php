@@ -31,7 +31,7 @@ class SoglasieGuidesService extends SoglasieService implements GuidesSourceInter
     {
         try {
             $headers = $this->generateHeaders();
-            $response = RestController::getRequest($this->baseUrl, [], $headers);
+            $response = $this->getRequest($this->baseUrl, [], $headers);
 
             foreach ($response as $mark) {
                 $val = $this->prepareMark($mark);
@@ -70,7 +70,7 @@ class SoglasieGuidesService extends SoglasieService implements GuidesSourceInter
         ];
         //МОДЕЛИ
         $headers = $this->generateHeaders();
-        $response = RestController::getRequest($this->baseUrl . "/" . $mark['id'], [], $headers);
+        $response = $this->getRequest($this->baseUrl . "/" . $mark['id'], [], $headers);
 
         foreach ($response as $model) {
             $model = [

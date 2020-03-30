@@ -21,7 +21,7 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
         $this->setAuth($attributes);
         $url = $this->getUrl();
         $data = $this->prepareData($attributes);
-        $response = RestController::postRequest($url, $data);
+        this($url, $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }

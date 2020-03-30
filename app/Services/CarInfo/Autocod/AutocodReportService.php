@@ -4,6 +4,8 @@
 namespace App\Services\CarInfo\Autocod;
 
 
+use Benfin\Api\GlobalStorage;
+
 class AutocodReportService extends AutocodService
 {
     private $token;
@@ -18,6 +20,7 @@ class AutocodReportService extends AutocodService
      * @param string $vin
      * @param string $uid
      * @return array
+     * @throws \Exception
      */
     public function getReport(string $vin, string $uid): array
     {
@@ -37,8 +40,8 @@ class AutocodReportService extends AutocodService
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
         ];
-        $res = $this->sendPost($this->baseurl . 'user/reports/' . $uid . '/_make', $data, $headers);
-        $this->sendLog("Запрошен отчет autocod: vin=$vin, uid=$uid", env("LOG_MICROSERVICE_CODE"));
+        $res = $this->postRequest($this->baseurl . 'user/reports/' . $uid . '/_make', $data, $headers,false);
+        $this->logger->sendLog("Запрошен отчет autocod: vin=$vin, uid=$uid", env("LOG_MICROSERVICE_CODE"));
         return ['report_id' => $res['data'][0]['uid'], 'suggest_get' => $res['data'][0]['suggest_get']];
     }
 
@@ -59,8 +62,7 @@ class AutocodReportService extends AutocodService
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
         ];
-        $res = $this->sendGet($this->baseurl . 'user/reports/' . $report_id, $data, $headers);
-        return $res;
+        return $this->getRequest($this->baseurl . 'user/reports/' . $report_id, $data, $headers,false);
     }
 
     /**запросить генерацию отчета и вернуть готовый отчет
