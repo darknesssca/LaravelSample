@@ -26,15 +26,15 @@ class AutocodController extends Controller
     public function requestReport(Request $request)
     {
         try {
-            $params = $this->validate($request,AutocodRequestReportRequest::getRules(),AutocodRequestReportRequest::getMessages() );
+            $params = $this->validate($request, AutocodRequestReportRequest::getRules(), AutocodRequestReportRequest::getMessages());
             $result = $this->engine->readReportAutocompleteSync($params['vin']); //ожидаем генерации отчета
-            return Response::success( $result);
+            return Response::success($result);
         } catch (ValidationException $exception) {
             return $this->error($exception->errors(), 400);
         } catch (ClientException $cle) {
-            return Response::error( $cle->getMessage(), 500);
+            return Response::error($cle->getMessage(), 500);
         } catch (\Exception $e) {
-            return Response::error( $e->getMessage(), 500);
+            return Response::error($e->getMessage(), 500);
         }
     }
 
@@ -47,13 +47,13 @@ class AutocodController extends Controller
         try {
             $result = $this->engine->readReport($report_id);
             if ($result['size'] == 0) {
-                return Response::error( 'Отчет не найден', 404);
+                return Response::error('Отчет не найден', 404);
             }
-            return Response::success( $result);
+            return Response::success($result);
         } catch (ClientException $cle) {
-            return Response::error( $cle->getMessage(), 500);
+            return Response::error($cle->getMessage(), 500);
         } catch (\Exception $e) {
-            return Response::error( $e->getMessage(), 500);
+            return Response::error($e->getMessage(), 500);
         }
     }
 
@@ -64,15 +64,15 @@ class AutocodController extends Controller
     public function checkTaxi(Request $request)
     {
         try {
-            $params = $this->validate($request,AutocodRequestReportRequest::getRules(),AutocodRequestReportRequest::getMessages() );
+            $params = $this->validate($request, AutocodRequestReportRequest::getRules(), AutocodRequestReportRequest::getMessages());
             $result = $this->engine->checkTaxi($params['vin']);
-            return Response::success( $result);
+            return Response::success($result);
         } catch (ValidationException $exception) {
             return $this->error($exception->errors(), 400);
         } catch (ClientException $cle) {
-            return Response::error( $cle->getMessage(), 500);
+            return Response::error($cle->getMessage(), 500);
         } catch (\Exception $e) {
-            return Response::error( $e->getMessage(), 500);
+            return Response::error($e->getMessage(), 500);
         }
     }
 
