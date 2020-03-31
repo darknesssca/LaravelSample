@@ -7,6 +7,8 @@ use App\Contracts\Company\Soglasie\SoglasieBillLinkServiceContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Exceptions\ApiRequestsException;
+use App\Exceptions\ConmfigurationException;
 
 class SoglasieBillLinkService extends SoglasieService implements SoglasieBillLinkServiceContract
 {
@@ -18,8 +20,8 @@ class SoglasieBillLinkService extends SoglasieService implements SoglasieBillLin
     )
     {
         $this->apiRestUrl = config('api_sk.soglasie.billLinkUrl');
-        if (!($this->apiRestUrl)) {
-            throw new \Exception('soglasie api is not configured');
+        if (!$this->apiRestUrl) {
+            throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
         $this->init();
         parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
@@ -32,7 +34,19 @@ class SoglasieBillLinkService extends SoglasieService implements SoglasieBillLin
         ]);
         $headers = $this->getHeaders();
         $response = $this->getRequest($url, [], $headers);
-        return $response;
+        if (!$response) {
+            throw new ApiRequestsException('API страховой компании не вернуло ответ');
+        }
+        if (
+            !isset($response['PayLink']) || !$response['PayLink']
+        ) {
+            throw new ApiRequestsException([
+                'API страховой компании не вернуло ссылку на оплату',
+            ]);
+        }
+        return [
+            'billUrl' => $response['PayLink'],
+        ];
     }
 
     protected function getHeaders()

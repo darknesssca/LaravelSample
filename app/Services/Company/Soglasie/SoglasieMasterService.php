@@ -3,12 +3,17 @@
 
 namespace App\Services\Company\Soglasie;
 
+use App\Contracts\Company\Soglasie\SoglasieBillLinkServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieCalculateServiceContract;
+use App\Contracts\Company\Soglasie\SoglasieCancelCreateServiceContract;
+use App\Contracts\Company\Soglasie\SoglasieCheckCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieMasterServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
+use App\Exceptions\ApiRequestsException;
 use App\Exceptions\MethodForbiddenException;
+use App\Exceptions\TokenException;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 
@@ -61,7 +66,6 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
         $tokenData = $this->getTokenData($attributes['token'], true);
         $tokenData[$company->code] = [
             'policyId' => $dataCreate['policyId'],
-            'packageId' => $dataCreate['packageId'],
             'status' => 'processing',
         ];
         $this->intermediateDataService->update($attributes['token'], [
@@ -72,7 +76,6 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
             'state' => 50,
             'data' => json_encode([
                 'policyId' => $dataCreate['policyId'],
-                'packageId' => $dataCreate['packageId'],
                 'status' => 'processing',
                 'company' => $company->code,
             ]),
@@ -86,6 +89,94 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
         return [
             'status' => 'processing',
         ];
+    }
+
+    public function processing($company, $attributes):array
+    {
+        $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);
+        switch ($tokenData['tokenData']['status']) {
+            case 'processing':
+                return [
+                    'status' => 'processing',
+                ];
+            case 'done':
+                return [
+                    'status' => 'done',
+                    'billUrl' => $tokenData['billUrl'],
+                ];
+            case 'error':
+                throw new ApiRequestsException($tokenData['errorMessage']);
+            default:
+                throw new TokenException('Статус рассчета не валиден');
+        }
+    }
+
+    public function creating($company, $processData): void
+    {
+        $checkService = app(SoglasieCheckCreateServiceContract::class);
+        $checkData = $checkService->run($company, $processData);
+        switch ($checkData['status']) {
+            case 'error':
+                $this->requestProcessService->delete($processData['token']);
+                $this->dropCreate($company, $processData['token'], $checkData['messages']);
+                break;
+            case 'COMPLETE':
+                switch ($checkData['policy']['status']) {
+                    case 'RSA_SIGN_FAIL':
+                    case 'RSA_CHECK_FAIL':
+                    case 'SK_CHECK_FAIL':
+                        $this->cancelCreate($company, $processData);
+                        $this->requestProcessService->delete($processData['token']);
+                        $this->dropCreate($company, $processData['token'], $checkData['messages']);
+                        break;
+                    case 'SK_CHECK_OK':
+                        $this->requestProcessService->delete($processData['token']);
+                        $billLinkService = app(SoglasieBillLinkServiceContract::class);
+                        $billLinkData = $billLinkService->run($company, $processData);
+                        $form = [];
+                        $this->pushForm($form);
+                        $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
+                        $tokenData = $this->getTokenData($processData['token'], true);
+                        $tokenData[$company->code]['status'] = 'done';
+                        $tokenData[$company->code]['billUrl'] = $billLinkData['billUrl'];
+                        $this->sendBillUrl($insurer['email'], $billLinkData['PayUrl']);
+                        $this->intermediateDataService->update($processData['token'], [
+                            'data' => json_encode($tokenData),
+                        ]);
+                        break;
+                    default:
+                        // todo по хорошему это нужно заверонуть в callback хендлера эксепшенов сервиса процессинга
+                        if (++$processData['checkCount'] >= config('api_sk.maxCheckCount')) {
+                            $this->cancelCreate($company, $processData);
+                        }
+                        throw new ApiRequestsException($checkData['messages']);
+                        break;
+                }
+                break;
+            default: // все остальные статусы рассматриваем как WORKING
+                // todo по хорошему это нужно заверонуть в callback хендлера эксепшенов сервиса процессинга
+                if (++$processData['checkCount'] >= config('api_sk.maxCheckCount')) {
+                    $this->cancelCreate($company, $processData);
+                }
+                throw new ApiRequestsException($checkData['messages']);
+                break;
+        }
+    }
+
+    public function cancelCreate($company, $processData)
+    {
+        $cancelService = app(SoglasieCancelCreateServiceContract::class);
+        return $cancelService->run($company, $processData);
+    }
+
+    protected function dropCreate($company, $token, $error)
+    {
+        $tokenData = $this->getTokenData($token, true);
+        $tokenData[$company->code]['status'] = 'error';
+        $tokenData[$company->code]['errorMessages'] = $error;
+        $this->intermediateDataService->update($token, [
+            'data' => json_encode($tokenData),
+        ]);
     }
 
     /**
@@ -140,27 +231,30 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
         throw new MethodForbiddenException('Вызов метода запрещен');
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function creating($company, $attributes): void
-    {
-        // TODO: Implement creating() method.
-    }
 
     /**
-     * @inheritDoc
+     * Метод не используется для данного СК, но требуется для совместимости сервисов
+     *
+     * @param $company
+     * @param $attributes
+     * @return void
+     * @throws MethodForbiddenException
      */
     public function holding($company, $attributes): void
     {
-        // TODO: Implement holding() method.
+        throw new MethodForbiddenException('Вызов метода запрещен');
     }
 
     /**
-     * @inheritDoc
+     * Метод не используется для данного СК, но требуется для совместимости сервисов
+     *
+     * @param $company
+     * @param $attributes
+     * @return array
+     * @throws MethodForbiddenException
      */
     public function calculating($company, $attributes): array
     {
-        // TODO: Implement calculating() method.
+        throw new MethodForbiddenException('Вызов метода запрещен');
     }
 }

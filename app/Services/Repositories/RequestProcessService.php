@@ -45,6 +45,15 @@ class RequestProcessService implements RequestProcessServiceContract
 
     }
 
+    public function getByToken($token)
+    {
+        if ($this->isStored($token)) {
+            return $this->load($token);
+        } else {
+           return$this->find($token);
+        }
+    }
+
     public function find($token)
     {
         $object = $this->repository->find($token);

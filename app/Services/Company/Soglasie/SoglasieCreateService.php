@@ -7,6 +7,7 @@ use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Exceptions\ApiRequestsException;
 use App\Exceptions\ConmfigurationException;
 use App\Traits\DateFormatTrait;
 use App\Traits\TransformBooleanTrait;
@@ -22,7 +23,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
     )
     {
         $this->apiRestUrl = config('api_sk.soglasie.createUrl');
-        if (!($this->apiRestUrl)) {
+        if (!$this->apiRestUrl) {
             throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
         $this->init();
@@ -35,7 +36,19 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         $headers = $this->getHeaders();
         $url = $this->getUrl();
         $response = $this->postRequest($url, $data, $headers);
-        return $response; // todo сделать адекватный вывод параметров
+        if (!$response) {
+            throw new ApiRequestsException('API страховой компании не вернуло ответ');
+        }
+        if (!isset($response['policyId']) || !$response['policyId']) {
+            throw new ApiRequestsException([
+                'API страховой компании не вернуло номер созданного полиса',
+                isset($response['error']) ? $response['error'] : 'нет данных об ошибке',
+                isset($response['errorInfo']) ? $response['errorInfo'] : 'нет данных об ошибке'
+            ]);
+        }
+        return [
+            'policyId' => $response['policyId']
+        ];
     }
 
     protected function getHeaders()
