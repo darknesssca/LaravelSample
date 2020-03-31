@@ -72,6 +72,7 @@ class CreateDraftsTable extends Migration
 
         Schema::table('policies', function (Blueprint $table) {
             $table->dropColumn(['status_id', 'commission_paid']);
+            $table->string('region_kladr');
         });
     }
 
@@ -87,6 +88,8 @@ class CreateDraftsTable extends Migration
         Schema::table('policies', function (Blueprint $table) {
             $table->unsignedInteger('status_id');
             $table->boolean('commission_paid')->default(false);
+            $table->dropColumn('region_kladr');
+            $table->unsignedInteger('region_id')->nullable();
         });
     }
 }

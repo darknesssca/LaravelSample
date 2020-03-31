@@ -14,7 +14,7 @@ class Policy extends Model
         'insurance_company_id',
         'status_id',
         'type_id',
-        'region_id',
+        'region_kladr',
         //'premium',
         //'commission_id',
         //'commission_paid',

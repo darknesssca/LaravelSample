@@ -61,7 +61,7 @@ class PolicyService implements PolicyServiceContract
             $draft->delete();
         }
 
-        app(CommissionCalculationMicroserviceContract::class)->createRewards($policy->id, $policy->registration_date, GlobalStorage::getUserId());
+        app(CommissionCalculationMicroserviceContract::class)->createRewards($policy->id, $policy->registration_date, $policy->region_kladr, GlobalStorage::getUserId());
 
         return $policy->id;
     }
