@@ -38,5 +38,6 @@ return [
     'billFailUrl' => env('API_BILL_FAIL_URL'),
     'maxCheckCount' => env('API_PROCESSING_MAX_CHECK_COUNT'),
     'maxRowsByCycle' => env('API_PROCESSING_MAX_ROWS_BY_CYCLE'),
+    'maxPoliciesCountForPaymentCheck' => env('API_PROCESSING_MAX_POLICIES_COUNT_FOR_PAYMENT_CHECK'),
     'processingInterval' => env('API_PROCESSING_INTERVAL'),
 ];

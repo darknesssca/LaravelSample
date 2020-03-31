@@ -4,14 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
-use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Http\Requests\FormSendRequest;
 use App\Http\Requests\PaymentRequest;
 use App\Http\Requests\ProcessRequest;
 use App\Models\Country;
-use App\Models\IntermediateData;
-use App\Models\Policy;
-use App\Models\RequestProcess;
 use App\Services\Company\GuidesSourceTrait;
 use App\Services\Company\Ingosstrah\IngosstrahGuidesService;
 use App\Services\Company\Renessans\RenessansGuidesService;
@@ -21,7 +17,6 @@ use App\Traits\CompanyServicesTrait;
 use App\Traits\TokenTrait;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
-use Carbon\Carbon;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Laravel\Lumen\Application;
@@ -68,7 +63,8 @@ class InsuranceController extends Controller
      * Получение данных об оплате входящим запросом микросервиса external_api
      *
      * в связи с особенностями механизма роутинга требуется перепустить запрос на обновление платежных данных через
-     * независимый метод-фабрику. В следствие этого целевой метод указывать требуется вручную параметром $method
+     * независимый метод-фабрику не прибегая к общему механизму, описанному методом index.
+     * В следствие этого целевой метод указывать требуется вручную параметром $method
      *
      * @param $code
      * @param PaymentRequest $request
@@ -83,51 +79,7 @@ class InsuranceController extends Controller
         return Response::success($this->runService($company, $request->toArray(), $method));
     }
 
-
     // FIXME требуется рефакторинг
-
-
-
-
-
-
-
-
-
-
-    public function getPayment()
-    {
-        $count = config('api_sk.maxRowsByCycle');
-        $policies = Policy::with([
-            'status',
-            'company',
-            'bill',
-        ])
-            ->where('paid', 0)
-            ->whereHas('status', function ($query) {
-                $query->where('code', 'issued');
-            })
-            ->whereDate('registration_date', '>', (new Carbon)->subDays(2)->format('Y-m-d'))
-            ->limit($count)
-            ->get();
-        if (!$policies) {
-            return;
-        }
-        foreach ($policies as $policy) {
-            try {
-                $company = $this->checkCompany($policy->company->code);
-                $companyCode = ucfirst(strtolower($company->code));
-                $controller = app('App\\Contracts\\Company\\'.$companyCode.'\\'.$companyCode.'ServiceContract');
-                $response = $controller->checkPaid($company, $policy);
-            } catch (\Exception $exception) {
-                // игнорируем
-            }
-        }
-    }
-
-
-
-
 
     /**
      * artisan команда обновления справочников

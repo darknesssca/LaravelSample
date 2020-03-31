@@ -173,4 +173,17 @@ class TinkoffMasterService extends TinkoffService implements TinkoffMasterServic
     {
         throw new MethodForbiddenException('Вызов метода запрещен');
     }
+
+    /**
+     * Данный метод необходим только для совместимости обработчиков компании
+     *
+     * @param $company
+     * @param $attributes
+     * @return void
+     * @throws MethodForbiddenException
+     */
+    public function getPayment($company, $attributes):void
+    {
+        throw new MethodForbiddenException('Вызов метода запрещен');
+    }
 }

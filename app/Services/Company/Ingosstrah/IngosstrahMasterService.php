@@ -4,12 +4,14 @@ namespace App\Services\Company\Ingosstrah;
 
 use App\Contracts\Company\Ingosstrah\IngosstrahBillLinkServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahBillServiceContract;
+use App\Contracts\Company\Ingosstrah\IngosstrahBillStatusServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahCalculateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahCheckCreateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahCreateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahEosagoServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahMasterServiceContract;
+use App\Contracts\Repositories\BillPolicyRepositoryContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\MethodForbiddenException;
 use App\Exceptions\TokenException;
@@ -308,4 +310,25 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         ]);
     }
 
+    public function getPayment($company, $processData): void
+    {
+        $serviceLogin = app(IngosstrahLoginServiceContract::class);
+        $loginData = $serviceLogin->run($company, []);
+        $attributes = [
+            'data' => [
+                'BillISN' => $processData['bill']['bill_id'],
+                'SessionToken' => $loginData['sessionToken'],
+            ]
+        ];
+        $serviceStatus = app(IngosstrahBillStatusServiceContract::class);
+        $dataStatus = $serviceStatus->run($company, $attributes);
+        if (isset($dataStatus['paid']) && $dataStatus['paid']) {
+            $this->policyRepository->update($processData['id'], [
+                'paid' => true,
+                'number' => $dataStatus['policyNumber'],
+            ]);
+            $billPolicyRepository = app(BillPolicyRepositoryContract::class);
+            $billPolicyRepository->delete($processData['id']);
+        }
+    }
 }

@@ -297,4 +297,19 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
             'data' => json_encode($tokenData),
         ]);
     }
+
+    public function getPayment($company, $processData): void
+    {
+        $attributes = [
+            'policyId' => (int)$processData['number']
+        ];
+        $serviceStatus = app(RenessansGetStatusServiceContract::class);
+        $dataStatus = $serviceStatus->run($company, $attributes);
+        if ($dataStatus['result'] && $dataStatus['payStatus'] && $dataStatus['policyNumber']) {
+            $this->policyRepository->update($processData['id'], [
+                'paid' => true,
+                'number' => $dataStatus['policyNumber'],
+            ]);
+        }
+    }
 }

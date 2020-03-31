@@ -12,7 +12,6 @@ use App\Exceptions\ConmfigurationException;
 
 class SoglasieCheckCreateService extends SoglasieService implements SoglasieCheckCreateServiceContract
 {
-
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         RequestProcessServiceContract $requestProcessService,
@@ -49,6 +48,8 @@ class SoglasieCheckCreateService extends SoglasieService implements SoglasieChec
         return [
             'status' => strtolower($response['status']),
             'policyStatus' => $response['policy']['status'],
+            'policySerial' => isset($response['policy']['policyserial']) ? $response['policy']['policyserial'] : '',
+            'policyNumber' => isset($response['policy']['policyno']) ? $response['policy']['policyno'] : '',
             'messages' => $this->getMessages($response),
         ];
     }

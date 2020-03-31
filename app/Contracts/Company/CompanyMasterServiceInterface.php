@@ -101,7 +101,7 @@ interface CompanyMasterServiceInterface
      * @throws MethodForbiddenException - выбрасывается в случаях, когда метод не требуется для данного СК и не был
      * реализован, но его все равно пытаются вызвать
      */
-    public function calculating($company, $attributes):array;
+    public function calculating(InsuranceCompany $company, $attributes):array;
 
     /**
      * Метод возвращает текущий статус заявки, отправленной на создание (для СК, где запросы идут через шину)
@@ -112,5 +112,16 @@ interface CompanyMasterServiceInterface
      * @throws MethodForbiddenException - выбрасывается в случаях, когда метод не требуется для данного СК и не был
      * реализован, но его все равно пытаются вызвать
      */
-    public function processing($company, $attributes):array;
+    public function processing(InsuranceCompany $company, $attributes):array;
+
+    /**
+     * Метод выполняет проверку статусов оплаты через методы СК
+     *
+     * @param InsuranceCompany $company
+     * @param $attributes
+     * @return void
+     * @throws MethodForbiddenException - выбрасывается в случаях, когда метод не требуется для данного СК и не был
+     * реализован, но его все равно пытаются вызвать
+     */
+    public function getPayment(InsuranceCompany $company, $attributes):void;
 }

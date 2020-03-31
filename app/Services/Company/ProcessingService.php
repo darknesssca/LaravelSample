@@ -29,6 +29,9 @@ class ProcessingService extends CompanyService
         parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
     }
 
+    /**
+     * Процессинг получение данных о предварительном рассчете
+     */
     public function preCalculating()
     {
         $state = 1;
@@ -36,6 +39,9 @@ class ProcessingService extends CompanyService
         $this->runProcessing($state, $method);
     }
 
+    /**
+     * Процессинг получение данных сегментации
+     */
     public function segmenting()
     {
         $state = 5;
@@ -43,6 +49,9 @@ class ProcessingService extends CompanyService
         $this->runProcessing($state, $method);
     }
 
+    /**
+     * Процессинг получение данных окончательного рассчета
+     */
     public function segmentCalculating()
     {
         $state = 10;
@@ -50,6 +59,12 @@ class ProcessingService extends CompanyService
         $this->runProcessing($state, $method);
     }
 
+    /**
+     * Процессинг получение статуса создания заявки
+     *
+     * При успешном создании может быть либо получен url оплаты, либо заявке может быть передан статус hold, если
+     * она успешно была создана но на стороне СК все еще не завершилась обработка, и url оплаты еще не был сформирован
+     */
     public function creating()
     {
         $state = 50;
@@ -57,6 +72,11 @@ class ProcessingService extends CompanyService
         $this->runProcessing($state, $method);
     }
 
+    /**
+     * Процессинг обработки заявок со статусом hold
+     *
+     * При успешной обработке заявке присваивается url оплаты
+     */
     public function holding()
     {
         $state = 75;
@@ -64,26 +84,43 @@ class ProcessingService extends CompanyService
         $this->runProcessing($state, $method);
     }
 
+    /**
+     * Общий механизм процессинга
+     *
+     * @param $state
+     * @param $method
+     * @throws \App\Exceptions\CompanyException
+     * @throws \App\Exceptions\TokenException
+     * @throws \Exception - может быть выбрашен только при фатальной ошибке в коде или необработанной ошибке СК.
+     *      В нормальной ситуации выбрасываться не может. Отлавливается для обеспечения стабильности всего механизма.
+     */
     protected function runProcessing($state, $method)
     {
         $processPool = $this->requestProcessService->getPool($state, $this->maxRowsByCycle);
-        if ($processPool) {
-            foreach ($processPool as $process) {
-                $processItem = $process->toArray();
-                $processItem['data'] = json_decode($processItem['data'], true);
-                $company = $this->getCompany($processItem['company']);
-                try {
-                    $this->runService($company, $processItem, $method);
-                } catch (\Exception $exception) {
-                    $this->processingError($company, $processItem, $exception);
-                }
-            }
-        } else {
+        if (!$processPool) {
             sleep($this->processingInterval);
             return;
         }
+        foreach ($processPool as $process) {
+            $processItem = $process->toArray();
+            $processItem['data'] = json_decode($processItem['data'], true);
+            $company = $this->getCompany($processItem['company']);
+            try {
+                $this->runService($company, $processItem, $method);
+            } catch (\Exception $exception) { // отлавливаем все эксепшены для обеспечения корректной работы механизма
+                $this->processingError($company, $processItem, $exception);
+            }
+        }
     }
 
+    /**
+     * Обработка эксепшенов общего процессинга
+     *
+     * @param $company
+     * @param $processItem
+     * @param $exception
+     * @throws \App\Exceptions\TokenException
+     */
     protected function processingError($company, $processItem, $exception)
     {
         if ($exception instanceof AbstractException) {
@@ -99,6 +136,28 @@ class ProcessingService extends CompanyService
             $this->intermediateDataService->update($processItem['token'], [
                 'data' => json_encode($tokenData),
             ]);
+        }
+    }
+
+    /**
+     * Получение данных об оплате от СК
+     *
+     * Независимый процессинг, использующий иной механизм обработки
+     */
+    public function getPayment()
+    {
+        $limit = config('api_sk.maxPoliciesCountForPaymentCheck');
+        $policies = $this->policyRepository->getNotPaidPolicies($limit);
+        $method = 'getPayment';
+        if (!$policies) {
+            return;
+        }
+        foreach ($policies as $policy) {
+            try {
+                $this->runService($policy->company, $policy->toArray(), $method);
+            } catch (\Exception $exception) {
+                // игнорируем
+            }
         }
     }
 }

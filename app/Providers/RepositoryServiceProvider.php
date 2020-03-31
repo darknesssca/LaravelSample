@@ -4,6 +4,7 @@
 namespace App\Providers;
 
 
+use App\Contracts\Repositories\BillPolicyRepositoryContract;
 use App\Contracts\Repositories\InsuranceCompanyRepositoryContract;
 use App\Contracts\Repositories\IntermediateDataRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
@@ -11,6 +12,7 @@ use App\Contracts\Repositories\RequestProcessRepositoryContract;
 use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Repositories\BillPolicyRepository;
 use App\Repositories\InsuranceCompanyRepository;
 use App\Repositories\IntermediateDataRepository;
 use App\Repositories\PolicyRepository;
@@ -34,6 +36,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IntermediateDataRepositoryContract::class, IntermediateDataRepository::class);
         $this->app->bind(RequestProcessRepositoryContract::class, RequestProcessRepository::class);
         $this->app->bind(PolicyRepositoryContract::class, PolicyRepository::class);
+        $this->app->bind(BillPolicyRepositoryContract::class, BillPolicyRepository::class);
     }
 
     protected function registerRepositoryServiceProviders()

@@ -43,20 +43,4 @@ abstract class TinkoffService extends CompanyService
         ];
         $data['producerCode'] = $this->apiProducerCode;
     }
-
-    // FIXME требуется рефакторинг
-
-    /**
-     * Данный метод необходим только для совместимости обработчиков компании
-     *
-     * @param $company
-     * @param $process
-     * @return void
-     */
-    public function checkPaid($company, $process)
-    {
-        return;
-    }
-
-
 }

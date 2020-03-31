@@ -11,6 +11,7 @@ use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieMasterServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
+use App\Contracts\Repositories\BillPolicyRepositoryContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\MethodForbiddenException;
 use App\Exceptions\TokenException;
@@ -120,7 +121,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
                 $this->requestProcessService->delete($processData['token']);
                 $this->dropCreate($company, $processData['token'], $checkData['messages']);
                 break;
-            case 'COMPLETE':
+            case 'complete':
                 switch ($checkData['policy']['status']) {
                     case 'RSA_SIGN_FAIL':
                     case 'RSA_CHECK_FAIL':
@@ -256,5 +257,31 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
     public function calculating($company, $attributes): array
     {
         throw new MethodForbiddenException('Вызов метода запрещен');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getPayment($company, $processData): void
+    {
+        $attributes = [
+            'data' => [
+                'policyId' => $processData['bill']['bill_id'],
+            ]
+        ];
+        $checkService = app(SoglasieCheckCreateServiceContract::class);
+        $dataStatus = $checkService->run($company, $attributes);
+        if (
+            $dataStatus['policyStatus'] == 'SIGNED' &&
+            isset($dataStatus['policySerial']) && $dataStatus['policySerial'] &&
+            isset($dataStatus['policyNumber']) && $dataStatus['policyNumber']
+        ) {
+            $this->policyRepository->update($processData['id'], [
+                'paid' => true,
+                'number' => $dataStatus['policySerial'] . ' ' . $dataStatus['policyNumber'],
+            ]);
+            $billPolicyRepository = app(BillPolicyRepositoryContract::class);
+            $billPolicyRepository->delete($processData['id']);
+        }
     }
 }
