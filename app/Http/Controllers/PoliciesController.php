@@ -12,14 +12,4 @@ class PoliciesController extends Controller
     {
         return response()->json(app(PolicyServiceContract::class)->getList($request->all()));
     }
-
-    public function getById($id)
-    {
-        return response()->json(app(PolicyServiceContract::class)->getById($id));
-    }
-
-    public function create(Request $request)
-    {
-        app(PolicyServiceContract::class)->create([]);
-    }
 }

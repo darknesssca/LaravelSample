@@ -6,5 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 interface PolicyRepositoryContract
 {
-    public function getById(int $id) : Model;
+    public function getList(array $filter);
+    public function create(array $data);
 }
