@@ -124,22 +124,24 @@ class ProcessingService extends CompanyService implements ProcessingServiceContr
      */
     protected function runProcessing($state, $method)
     {
+        $time = microtime(true);
         $processPool = $this->requestProcessService->getPool($state, $this->maxRowsByCycle);
-        if (!$processPool || !$processPool->count()) {
-            sleep($this->processingInterval);
-            return;
-        }
-        foreach ($processPool as $process) {
-            $processItem = $process->toArray();
-            $processItem['data'] = json_decode($processItem['data'], true);
-            $company = $this->getCompany($processItem['company']);
-            try {
-                $this->runService($company, $processItem, $method);
-            } catch (\Exception $exception) { // отлавливаем все эксепшены для обеспечения корректной работы механизма
-                $this->processingError($company, $processItem, $exception);
+        if ($processPool && $processPool->count()) {
+            foreach ($processPool as $process) {
+                $processItem = $process->toArray();
+                $processItem['data'] = json_decode($processItem['data'], true);
+                $company = $this->getCompany($processItem['company']);
+                try {
+                    $this->runService($company, $processItem, $method);
+                } catch (\Exception $exception) { // отлавливаем все эксепшены для обеспечения корректной работы механизма
+                    $this->processingError($company, $processItem, $exception);
+                }
             }
         }
-        sleep(2);
+        $delta = microtime(true) - $time;
+        if ($delta < $this->processingInterval) {
+            sleep(ceil($this->processingInterval - $delta));
+        }
     }
 
     /**

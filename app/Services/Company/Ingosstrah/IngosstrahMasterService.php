@@ -104,7 +104,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
                     'billUrl' => $tokenData['billUrl'],
                 ];
             case 'error':
-                throw new ApiRequestsException($tokenData['errorMessage']);
+                throw new ApiRequestsException($tokenData['errorMessages']);
             default:
                 throw new TokenException('Статус рассчета не валиден');
         }

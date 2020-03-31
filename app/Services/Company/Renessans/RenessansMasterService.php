@@ -92,7 +92,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
                     'premium' => $tokenData['finalPremium'],
                 ];
             case 'error':
-                throw new ApiRequestsException($tokenData['errorMessage']);
+                throw new ApiRequestsException($tokenData['errorMessages']);
             default:
                 throw new TokenException('Статус рассчета не валиден');
         }
@@ -119,7 +119,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
                     'status' => 'hold',
                 ];
             case 'error':
-                throw new ApiRequestsException($tokenData['errorMessage']);
+                throw new ApiRequestsException($tokenData['errorMessages']);
             default:
                 throw new TokenException('Статус рассчета не валиден');
         }
@@ -195,7 +195,9 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
     public function segmentCalculating($company, $processData):void
     {
         $calculateAttributes = [
-            'calcId' => $processData['data']['finalCalcId'],
+            'data' => [
+                'calcId' => $processData['data']['finalCalcId'],
+            ]
         ];
         $serviceCalculate = app(RenessansCheckCalculateServiceContract::class);
         $dataCalculate = $serviceCalculate->run($company, $calculateAttributes);
