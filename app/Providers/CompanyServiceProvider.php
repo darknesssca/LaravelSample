@@ -13,6 +13,7 @@ use App\Contracts\Company\Ingosstrah\IngosstrahCreateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahEosagoServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahMasterServiceContract;
+use App\Contracts\Company\ProcessingServiceContract;
 use App\Contracts\Company\Renessans\RenessansBillLinkServiceContract;
 use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCheckCalculateServiceContract;
@@ -40,6 +41,7 @@ use App\Services\Company\Ingosstrah\IngosstrahCreateService;
 use App\Services\Company\Ingosstrah\IngosstrahEosagoService;
 use App\Services\Company\Ingosstrah\IngosstrahLoginService;
 use App\Services\Company\Ingosstrah\IngosstrahMasterService;
+use App\Services\Company\ProcessingService;
 use App\Services\Company\Renessans\RenessansBillLinkService;
 use App\Services\Company\Renessans\RenessansCalculateService;
 use App\Services\Company\Renessans\RenessansCheckCalculateService;
@@ -73,6 +75,9 @@ class CompanyServiceProvider extends ServiceProvider
         $this->registerTinkoffServices();
         $this->registerIngosstrahServices();
         $this->registerSoglasieServices();
+
+        // сервис процессингов
+        $this->app->bind(ProcessingServiceContract::class, ProcessingService::class);
     }
 
     protected function registerRenessansServices()

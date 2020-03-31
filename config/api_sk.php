@@ -40,4 +40,5 @@ return [
     'maxRowsByCycle' => env('API_PROCESSING_MAX_ROWS_BY_CYCLE'),
     'maxPoliciesCountForPaymentCheck' => env('API_PROCESSING_MAX_POLICIES_COUNT_FOR_PAYMENT_CHECK'),
     'processingInterval' => env('API_PROCESSING_INTERVAL'),
+    'processingGetPaymentDelay' => env('API_PROCESSING_GET_PAYMENT_DELAY'),
 ];

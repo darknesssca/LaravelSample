@@ -4,14 +4,21 @@
 namespace App\Services\Company;
 
 
+use App\Contracts\Company\ProcessingServiceContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Exceptions\AbstractException;
+use App\Jobs\CreatingJob;
+use App\Jobs\GetPaymentJob;
+use App\Jobs\HoldingJob;
+use App\Jobs\PreCalculatingJob;
+use App\Jobs\SegmentCalculatingJob;
+use App\Jobs\SegmentingJob;
 use App\Traits\CompanyServicesTrait;
 use App\Traits\TokenTrait;
 
-class ProcessingService extends CompanyService
+class ProcessingService extends CompanyService implements ProcessingServiceContract
 {
     use CompanyServicesTrait, TokenTrait;
 
@@ -27,6 +34,16 @@ class ProcessingService extends CompanyService
         $this->processingInterval = config('api_sk.processingInterval');
         $this->maxRowsByCycle = config('api_sk.maxRowsByCycle');
         parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+    }
+
+    public function initDispatch()
+    {
+        dispatch((new PreCalculatingJob)->onQueue('preCalculating'));
+        dispatch((new SegmentingJob)->onQueue('segmenting'));
+        dispatch((new SegmentCalculatingJob)->onQueue('segmentCalculating'));
+        dispatch((new CreatingJob)->onQueue('creating'));
+        dispatch((new HoldingJob)->onQueue('holding'));
+        dispatch((new GetPaymentJob)->onQueue('getPayment'));
     }
 
     /**
