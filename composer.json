@@ -23,11 +23,7 @@
         "benfin/packages/auth": ">=1.1",
         "benfin/packages/requests": ">=1.1",
         "coraxster/flysystem-aws-s3-v3-minio": "^1.0",
-        "guzzlehttp/guzzle": "^6.5",
-        "laravel/lumen-framework": "^6.0",
-        "nowakowskir/php-jwt": "^1.1",
         "phpoffice/phpspreadsheet": "^1.11",
-        "spatie/array-to-xml": "^2.11"
     },
     "require-dev": {
         "fzaninotto/faker": "^1.9.1",
