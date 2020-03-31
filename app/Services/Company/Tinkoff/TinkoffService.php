@@ -10,6 +10,8 @@ use App\Contracts\Company\Tinkoff\TinkoffServiceContract;
 use App\Http\Controllers\RestController;
 use App\Models\InsuranceCompany;
 use App\Models\IntermediateData;
+use App\Models\Policy;
+use App\Models\PolicyStatus;
 use App\Services\Company\CompanyService;
 
 class TinkoffService extends CompanyService implements TinkoffServiceContract
@@ -59,7 +61,7 @@ class TinkoffService extends CompanyService implements TinkoffServiceContract
         $billLinkService = app(TinkoffBillLinkServiceContract::class);
         $billLinkData = $billLinkService->run($company, $attributes, $additionalData);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
-        RestController::sendBillUrl($insurer['email'], $billLinkData['billUrl']);
+        $this->sendBillUrl($insurer['email'], $billLinkData['billUrl']);
         $tokenData = IntermediateData::getData($attributes['token']);
         $tokenData[$company->code] = [
             'status' => $createData['status'],
@@ -72,6 +74,43 @@ class TinkoffService extends CompanyService implements TinkoffServiceContract
             'status' => $createData['status'],
             'billUrl' => $billLinkData['billUrl'],
         ];
+    }
+
+    public function checkPaid($company, $process)
+    {
+        // данный метод необходим для совместимости, но получение статусов происходит другим способом
+    }
+
+    public function payment($company, $attributes)
+    {
+        if (
+            isset($attributes['Body']['sendPaymentNotificationPartnerRequest']['paymentStatus']) &&
+            $attributes['Body']['sendPaymentNotificationPartnerRequest']['paymentStatus'] &&
+            (strtolower($attributes['Body']['sendPaymentNotificationPartnerRequest']['paymentStatus']) == 'confirm') &&
+            isset($attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber']) &&
+            $attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber']
+        ) {
+            $policy = Policy::with([
+                'status',
+                'company',
+            ])
+                ->where('number', $attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber'])
+                ->where('paid', 0)
+                ->whereHas('status', function ($query) {
+                    $query->where('code', 'issued');
+                })
+                ->first();
+            if ($policy) {
+                $policy->update([
+                    'paid' => true,
+                    'status_id' => PolicyStatus::where('code', 'paid')->first()->id, // todo справочник
+                ]);
+            } else {
+                throw new \Exception('Нет полиса с таким номером');
+            }
+        } else {
+            throw new \Exception('Не указан номер полиса или статус оплаты не соответсвует статусу CONFIRM');
+        }
     }
 
     protected function setHeader(&$data)

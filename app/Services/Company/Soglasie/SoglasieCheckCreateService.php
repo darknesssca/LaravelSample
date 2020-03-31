@@ -24,7 +24,7 @@ class SoglasieCheckCreateService extends SoglasieService implements SoglasieChec
             'policyId' => $data->data['policyId'],
         ]);
         $headers = $this->getHeaders();
-        return RestController::getRequest($url, [], $headers);
+        return $this->getRequest($url, [], $headers);
     }
 
     protected function getHeaders()

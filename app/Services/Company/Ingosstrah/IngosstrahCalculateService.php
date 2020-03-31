@@ -19,7 +19,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
     public function run($company, $attributes, $additionalFields = []): array
     {
         $data = $this->prepareData($attributes);
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'GetTariff', $data);
+        $response = $this->requestBySoap($this->apiWsdlUrl, 'GetTariff', $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
@@ -27,7 +27,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
         if (!isset($response['response']->ResponseData->Tariff->PremiumAmount)) {
-            throw new \Exception('api not return premium');
+            throw new \Exception('страховая компания вернула некорректный результат' . (isset($response['response']->ResponseStatus->ErrorMessage) ? ' | ' . $response['response']->ResponseStatus->ErrorMessage : ''));
         }
         $data = [
             'premium' => $response['response']->ResponseData->Tariff->PremiumAmount,

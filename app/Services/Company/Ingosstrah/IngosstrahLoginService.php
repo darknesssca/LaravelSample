@@ -12,7 +12,7 @@ class IngosstrahLoginService extends IngosstrahService implements IngosstrahLogi
     public function run($company, $attributes, $additionalFields = []): array
     {
         $data = $this->prepareData();
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'Login', $data);
+        $response = $this->requestBySoap($this->apiWsdlUrl, 'Login', $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
@@ -20,7 +20,7 @@ class IngosstrahLoginService extends IngosstrahService implements IngosstrahLogi
             throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
         }
         if (!isset($response['response']->ResponseData->SessionToken)) {
-            throw new \Exception('api not return SessionToken');
+            throw new \Exception('страховая компания вернула некорректный результат' . (isset($response['response']->ResponseStatus->ErrorMessage) ? ' | ' . $response['response']->ResponseStatus->ErrorMessage : ''));
         }
         return [
             'sessionToken' => $response['response']->ResponseData->SessionToken,

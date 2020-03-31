@@ -26,7 +26,7 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
         $this->setAuth($attributes);
         $url = $this->getUrl();
         $data = $this->prepareData($attributes);
-        $response = RestController::postRequest($url, $data);
+        $response = $this->postRequest($url, $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }

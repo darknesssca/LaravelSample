@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Contracts\Company\CompanyServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahBillLinkServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahBillServiceContract;
+use App\Contracts\Company\Ingosstrah\IngosstrahBillStatusServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahCalculateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahCheckCreateServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahCreateServiceContract;
@@ -35,6 +36,7 @@ use App\Models\Policy;
 use App\Services\Company\CompanyService;
 use App\Services\Company\Ingosstrah\IngosstrahBillLinkService;
 use App\Services\Company\Ingosstrah\IngosstrahBillService;
+use App\Services\Company\Ingosstrah\IngosstrahBillStatusService;
 use App\Services\Company\Ingosstrah\IngosstrahCalculateService;
 use App\Services\Company\Ingosstrah\IngosstrahCheckCreateService;
 use App\Services\Company\Ingosstrah\IngosstrahCreateService;
@@ -138,6 +140,9 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->singleton(IngosstrahBillLinkServiceContract::class, function() {
             return new IngosstrahBillLinkService();
+        });
+        $this->app->singleton(IngosstrahBillStatusServiceContract::class, function($app) {
+            return new IngosstrahBillStatusService();
         });
         //soglasie
         $this->app->singleton(SoglasieServiceContract::class, function() {

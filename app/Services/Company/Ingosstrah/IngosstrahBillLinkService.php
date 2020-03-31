@@ -12,7 +12,7 @@ class IngosstrahBillLinkService extends IngosstrahService implements IngosstrahB
     public function run($company, $data, $additionalFields = []): array
     {
         $data = $this->prepareData($data, $additionalFields);
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'CreateOnlineBill', $data);
+        $response = $this->requestBySoap($this->apiWsdlUrl, 'CreateOnlineBill', $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
@@ -32,7 +32,7 @@ class IngosstrahBillLinkService extends IngosstrahService implements IngosstrahB
             }
         }
         if (!isset($response['response']->ResponseData->PayURL)) {
-            throw new \Exception('api not return status');
+            throw new \Exception('страховая компания вернула некорректный результат' . (isset($response['response']->ResponseStatus->ErrorMessage) ? ' | ' . $response['response']->ResponseStatus->ErrorMessage : ''));
         }
         return [
             'PayUrl' => $response['response']->ResponseData->PayURL,

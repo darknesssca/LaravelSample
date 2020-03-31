@@ -159,7 +159,7 @@ class SoglasieService extends CompanyService implements SoglasieServiceContract
                         $tokenData = json_decode($tokenFullData['data'], true);
                         $form = json_decode($tokenFullData['form']);
                         $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
-                        RestController::sendBillUrl($insurer['email'], $billLinkData['PayURL']);
+                        $this->sendBillUrl($insurer['email'], $billLinkData['PayURL']);
                         $tokenData[$company->code] = [
                             'status' => 'done',
                             'billUrl' => $billLinkData['PayLink'],

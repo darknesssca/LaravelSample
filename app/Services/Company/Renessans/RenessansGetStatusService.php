@@ -16,7 +16,7 @@ class RenessansGetStatusService extends RenessansService implements RenessansGet
         $data = [];
         $this->setAuth($data);
         $url = $this->getUrl($attributes);
-        $response = RestController::getRequest($url, $data);
+        $response = $this->getRequest($url, $data);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
@@ -24,17 +24,21 @@ class RenessansGetStatusService extends RenessansService implements RenessansGet
             return [
                 'result' => false,
                 'message' => isset($response['message']) ? $response['message'] : '',
-            ];
-        }
-        if ((mb_strtolower($response['data']['return']['Status']) == 'согласован') && isset($response['data']['return']['Number']) && $response['data']['return']['Number']) {
-            return [
-                'billId' => $response['data']['return']['Number'],
-                'result' => true,
+                'createStatus' => false,
+                'payStatus' => false,
+                'status' => 'error',
+                'policyNumber' => false,
+                'billId' => false,
             ];
         }
         return [
-            'result' => false,
+            'result' => true,
+            'status' => $response['data']['return']['Status'],
+            'createStatus' => (mb_strtolower($response['data']['return']['Status']) == 'согласован') && isset($response['data']['return']['Number']) && $response['data']['return']['Number'],
+            'billId' => isset($response['data']['return']['Number']) ? $response['data']['return']['Number'] : false,
+            'payStatus' => (mb_strtolower($response['data']['return']['Status']) == 'оформлен') && (isset($response['data']['return']['StatusPay']) && mb_strtolower($response['data']['return']['StatusPay']) == 'оплачен'),
             'message' => isset($response['message']) ? $response['message'] : '',
+            'policyNumber' => isset($response['data']['return']['DocNumber']) ? $response['data']['return']['DocNumber'] : false,
         ];
     }
 

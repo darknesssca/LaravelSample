@@ -27,7 +27,7 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
         $data = $this->prepareData($attributes);
         $headers = $this->getHeaders();
         $auth = $this->getAuth();
-        $response = SoapController::requestBySoap($this->apiWsdlUrl, 'getKbm', $data, $auth, $headers);
+        $response = $this->requestBySoap($this->apiWsdlUrl, 'getKbm', $data, $auth, $headers);
         if (!$response) {
             throw new \Exception('api not return answer');
         }
