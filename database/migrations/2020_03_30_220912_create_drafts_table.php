@@ -60,6 +60,19 @@ class CreateDraftsTable extends Migration
             $table->foreign('vehicle_acquisition')->references('id')->on('source_acquisitions');
             $table->foreign('vehicle_usage_target')->references('id')->on('usage_targets');
         });
+
+        Schema::create('driver_draft', function (Blueprint $table) {
+            $table->unsignedInteger('driver_id');
+            $table->unsignedInteger('draft_id');
+            $table->timestamps();
+
+            $table->foreign('driver_id')->references('id')->on('drivers')->onDelete('cascade');
+            $table->foreign('draft_id')->references('id')->on('drafts');
+        });
+
+        Schema::table('policies', function (Blueprint $table) {
+            $table->dropColumn(['status_id', 'commission_paid']);
+        });
     }
 
     /**
@@ -70,5 +83,10 @@ class CreateDraftsTable extends Migration
     public function down()
     {
         Schema::dropIfExists('drafts');
+        Schema::dropIfExists('driver_draft');
+        Schema::table('policies', function (Blueprint $table) {
+            $table->unsignedInteger('status_id');
+            $table->boolean('commission_paid')->default(false);
+        });
     }
 }
