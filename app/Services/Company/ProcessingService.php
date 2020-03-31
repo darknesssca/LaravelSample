@@ -6,9 +6,10 @@ namespace App\Services\Company;
 
 use App\Contracts\Company\ProcessingServiceContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
-use App\Exceptions\AbstractException;
+use Benfin\Requests\Exceptions\AbstractException;
 use App\Jobs\CreatingJob;
 use App\Jobs\GetPaymentJob;
 use App\Jobs\HoldingJob;
@@ -17,6 +18,7 @@ use App\Jobs\SegmentCalculatingJob;
 use App\Jobs\SegmentingJob;
 use App\Traits\CompanyServicesTrait;
 use App\Traits\TokenTrait;
+use Illuminate\Support\Facades\DB;
 
 class ProcessingService extends CompanyService implements ProcessingServiceContract
 {
@@ -24,26 +26,35 @@ class ProcessingService extends CompanyService implements ProcessingServiceContr
 
     protected $processingInterval;
     protected $maxRowsByCycle;
+    protected $insuranceCompanyService;
 
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         RequestProcessServiceContract $requestProcessService,
-        PolicyRepositoryContract $policyRepository
+        PolicyRepositoryContract $policyRepository,
+        InsuranceCompanyServiceContract $insuranceCompanyService
     )
     {
         $this->processingInterval = config('api_sk.processingInterval');
         $this->maxRowsByCycle = config('api_sk.maxRowsByCycle');
+        $this->insuranceCompanyService = $insuranceCompanyService;
         parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
     }
 
     public function initDispatch()
     {
+        $this->clearJobTable(); // clear queue
         dispatch((new PreCalculatingJob)->onQueue('preCalculating'));
         dispatch((new SegmentingJob)->onQueue('segmenting'));
         dispatch((new SegmentCalculatingJob)->onQueue('segmentCalculating'));
         dispatch((new CreatingJob)->onQueue('creating'));
         dispatch((new HoldingJob)->onQueue('holding'));
         dispatch((new GetPaymentJob)->onQueue('getPayment'));
+    }
+
+    public function clearJobTable()
+    {
+        DB::table('jobs')->delete();
     }
 
     /**
@@ -114,7 +125,7 @@ class ProcessingService extends CompanyService implements ProcessingServiceContr
     protected function runProcessing($state, $method)
     {
         $processPool = $this->requestProcessService->getPool($state, $this->maxRowsByCycle);
-        if (!$processPool) {
+        if (!$processPool || !$processPool->count()) {
             sleep($this->processingInterval);
             return;
         }
@@ -128,6 +139,7 @@ class ProcessingService extends CompanyService implements ProcessingServiceContr
                 $this->processingError($company, $processItem, $exception);
             }
         }
+        sleep(2);
     }
 
     /**

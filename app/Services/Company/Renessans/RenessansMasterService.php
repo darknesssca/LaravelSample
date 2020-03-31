@@ -143,7 +143,9 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $serviceCalculate = app(RenessansCheckCalculateServiceContract::class);
         $dataCalculate = $serviceCalculate->run($company, $processData);
         $processData['data']['premium'] = $dataCalculate['premium'];
-        $attributes = [];
+        $attributes = [
+            'token' => $processData['token'],
+        ];
         $this->pushForm($attributes);
         $attributes['calcId'] = $processData['data']['calcId'];
         $attributes['CheckSegment'] = true;
@@ -175,7 +177,9 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
             return;
         }
         $processData['data']['segment'] = true;
-        $attributes = [];
+        $attributes = [
+            'token' => $processData['token'],
+        ];
         $this->pushForm($attributes);
         $serviceCalculate = app(RenessansCalculateServiceContract::class);
         $dataCalculate = $serviceCalculate->run($company, $attributes);
@@ -249,6 +253,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         }
         $serviceBill = app(RenessansBillLinkServiceContract::class);
         $dataBill = $serviceBill->run($company, $attributes);
+        $attributes['token'] = $processData['token'];
         $this->pushForm($attributes);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $this->sendBillUrl($insurer['email'], $dataBill['billUrl']);
@@ -286,6 +291,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         }
         $serviceBill = app(RenessansBillLinkServiceContract::class);
         $dataBill = $serviceBill->run($company, $attributes);
+        $attributes['token'] = $processData['token'];
         $this->pushForm($attributes);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $this->sendBillUrl($insurer['email'], $dataBill['billUrl']);

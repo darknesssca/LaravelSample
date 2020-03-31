@@ -30,7 +30,7 @@ class RenessansBillLinkService extends RenessansService implements RenessansBill
         $this->setUrlLinks($data);
         $this->setBillCode($attributes);
         $url = $this->getUrl($attributes);
-        $response = $this->getRequest($url, $data);
+        $response = $this->getRequest($url, $data, [], false);
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');
         }

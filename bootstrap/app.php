@@ -63,6 +63,7 @@ $app->singleton(
 
 $app->configure('app');
 $app->configure('api_sk');
+$app->configure('queue');
 
 /*
 |--------------------------------------------------------------------------

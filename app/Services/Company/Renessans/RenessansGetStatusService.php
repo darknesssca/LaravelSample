@@ -28,7 +28,7 @@ class RenessansGetStatusService extends RenessansService implements RenessansGet
         $data = [];
         $this->setAuth($data);
         $url = $this->getUrl($attributes);
-        $response = $this->getRequest($url, $data);
+        $response = $this->getRequest($url, $data, [], false);
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');
         }
