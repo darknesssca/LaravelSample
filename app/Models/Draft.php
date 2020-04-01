@@ -4,22 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Policy extends Model
+class Draft extends Model
 {
-    protected $table = 'policies';
+    protected $table = 'drafts';
 
     protected $fillable = [
         'agent_id',
-        'number',
         'insurance_company_id',
-        'status_id',
         'type_id',
         'region_kladr',
-        //'premium',
-        //'commission_id',
-        //'commission_paid',
-        //'registration_date',
-        'paid',
+        'registration_date',
         'client_id',
         'insurant_id',
         'vehicle_model_id',
@@ -50,7 +44,7 @@ class Policy extends Model
 
     public function company()
     {
-        return $this->belongsTo('App\Models\InsuranceCompany', 'insurance_company_id', 'id');
+        return $this->belongsTo('App\Models\InsuranceCompany');
     }
 
     public function model()
@@ -66,6 +60,16 @@ class Policy extends Model
     public function type()
     {
         return $this->belongsTo('App\Models\PolicyType');
+    }
+
+    public function owner()
+    {
+        return $this->belongsTo('App\Models\DraftClient', 'client_id', 'id');
+    }
+
+    public function insurer()
+    {
+        return $this->belongsTo('App\Models\DraftClient', 'insurant_id', 'id');
     }
 
     public function regcountry()
@@ -88,13 +92,15 @@ class Policy extends Model
         return $this->belongsToMany('App\Models\Driver');
     }
 
-    public function bill()
-    {
-        return $this->hasOne('App\Models\BillPolicy', 'policy_id', 'id');
-    }
-
     public function reports()
     {
         return $this->belongsToMany('App\Models\Report', 'report_policy');
+    }
+
+    public function delete()
+    {
+        parent::delete();
+        $this->owner()->delete();
+        $this->insurer()->delete();
     }
 }
