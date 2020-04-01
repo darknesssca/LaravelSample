@@ -10,12 +10,6 @@ use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use Benfin\Requests\Exceptions\AbstractException;
-use App\Jobs\CreatingJob;
-use App\Jobs\GetPaymentJob;
-use App\Jobs\HoldingJob;
-use App\Jobs\PreCalculatingJob;
-use App\Jobs\SegmentCalculatingJob;
-use App\Jobs\SegmentingJob;
 use App\Traits\CompanyServicesTrait;
 use App\Traits\TokenTrait;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +21,15 @@ class ProcessingService extends CompanyService implements ProcessingServiceContr
     protected $processingInterval;
     protected $maxRowsByCycle;
     protected $insuranceCompanyService;
+
+    const processingJobs = [
+        'preCalculating' => 'PreCalculatingJob',
+        'segmenting' => 'SegmentingJob',
+        'segmentCalculating' => 'SegmentCalculatingJob',
+        'creating' => 'CreatingJob',
+        'holding' => 'HoldingJob',
+        'getPayment' => 'GetPaymentJob',
+    ];
 
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
@@ -43,18 +46,11 @@ class ProcessingService extends CompanyService implements ProcessingServiceContr
 
     public function initDispatch()
     {
-        $this->clearJobTable(); // clear queue
-        dispatch((new PreCalculatingJob)->onQueue('preCalculating'));
-        dispatch((new SegmentingJob)->onQueue('segmenting'));
-        dispatch((new SegmentCalculatingJob)->onQueue('segmentCalculating'));
-        dispatch((new CreatingJob)->onQueue('creating'));
-        dispatch((new HoldingJob)->onQueue('holding'));
-        dispatch((new GetPaymentJob)->onQueue('getPayment'));
-    }
-
-    public function clearJobTable()
-    {
-        DB::table('jobs')->delete();
+        foreach (static::processingJobs as $jobQueue => $jobClass) {
+            DB::table('jobs')->where('queue', '=', $jobQueue)->delete();
+            $job = 'App\Jobs\\' . $jobClass;
+            dispatch((new $job)->onQueue($jobQueue));
+        }
     }
 
     /**
