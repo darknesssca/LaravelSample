@@ -4,30 +4,41 @@
 namespace App\Services\Company\Renessans;
 
 use App\Contracts\Company\Renessans\RenessansCheckCalculateServiceContract;
-use App\Http\Controllers\RestController;
-use App\Models\InsuranceCompany;
+use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Exceptions\ApiRequestsException;
 
 class RenessansCheckCalculateService extends RenessansService implements RenessansCheckCalculateServiceContract
 {
     protected $apiPath = '/calculate/{{calcId}}/';
 
-    public function run(InsuranceCompany $company, $attributes, $additionalFields = []): array
+    public function __construct(
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
+        PolicyRepositoryContract $policyRepository
+    )
+    {
+        $this->init();
+        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+    }
+
+    public function run($company, $attributes): array
     {
         $data = [];
         $this->setAuth($data);
-        $url = $this->getUrl($attributes);
-        $response = $this->getRequest($url, $data);
+        $url = $this->getUrl($attributes['data']);
+        $response = $this->getRequest($url, $data, [], false);
         if (!$response) {
-            throw new \Exception('api not return answer');
+            throw new ApiRequestsException('API страховой компании не вернуло ответ');
         }
         if (!$response['result'] || !isset($response['data']['response']['Premium'])) {
-            return [
-                'result' => false,
-                'message' => isset($response['message']) ? $response['message'] : '',
-            ];
+            throw new ApiRequestsException(
+                'API страховой компании не вернуло ответ',
+                isset($response['message']) ? $response['message'] : 'нет данных об ошибке'
+            );
         }
         return [
-            'result' => true,
             'premium' => $response['data']['response']['Premium'],
         ];
     }

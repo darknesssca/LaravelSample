@@ -2,7 +2,9 @@
 
 namespace App\Contracts\Company\Renessans;
 
-interface RenessansCheckCalculateServiceContract
+use App\Contracts\Company\CompanyMethodServiceInterface;
+
+interface RenessansCheckCalculateServiceContract extends CompanyMethodServiceInterface
 {
 
 }

@@ -1,11 +1,12 @@
 <?php
 
+
 use App\Providers\RepositoryServiceProvider;
 use Benfin\Api\BenfinMicroserviceProvider;
 use Benfin\Requests\BenfinMacroProvider;
 use Benfin\Requests\BenfinRequestProvider;
 
-require_once __DIR__.'/../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 (new Laravel\Lumen\Bootstrap\LoadEnvironmentVariables(
     dirname(__DIR__)
@@ -64,6 +65,7 @@ $app->singleton(
 
 $app->configure('app');
 $app->configure('api_sk');
+$app->configure('queue');
 
 /*
 |--------------------------------------------------------------------------
@@ -83,7 +85,7 @@ $app->configure('api_sk');
 // $app->routeMiddleware([
 //     'auth' => App\Http\Middleware\Authenticate::class,
 // ]);
-
+$app->routeMiddleware(['auth' => Benfin\Auth\Http\Middleware\Authenticate::class,]);
 /*
 |--------------------------------------------------------------------------
 | Register Service Providers
@@ -96,10 +98,11 @@ $app->configure('api_sk');
 */
 
 $app->register(App\Providers\AppServiceProvider::class);
+$app->register(App\Providers\CompanyServiceProvider::class);
+$app->register(App\Providers\RepositoryServiceProvider::class);
 $app->register(BenfinMicroserviceProvider::class);
-$app->register(BenfinRequestProvider::class);
 $app->register(BenfinMacroProvider::class);
-$app->routeMiddleware([ 'auth' => Benfin\Auth\Http\Middleware\Authenticate::class, ]);
+$app->register(BenfinRequestProvider::class);
 $app->register(App\Providers\MinIOStorageServiceProvider::class);
 $app->register(RepositoryServiceProvider::class);
 /*
@@ -115,9 +118,12 @@ $app->register(RepositoryServiceProvider::class);
 
 $app->router->group([
     'prefix' => 'api',
+    "middleware" => "auth",
+    "uses" => 'UserController@show',
     'namespace' => 'App\Http\Controllers',
-], function ($router) {
-    require __DIR__.'/../routes/web.php';
+], function ($router)
+{
+    require __DIR__ . '/../routes/web.php';
 });
 
 return $app;

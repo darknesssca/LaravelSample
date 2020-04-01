@@ -16,3 +16,67 @@ services:
       - 8000:80
     volumes:
       - ./:/var/www
+  car-insurance-data-migrations:
+    container_name: car-insurance-data-migrations
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+      args:
+        build_env: devel
+    entrypoint: sh -c "cd /var/www/ && php artisan migrate && sleep 10"
+  car-insurance-data-dispatch:
+    container_name: car-insurance-data-dispatch
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+      args:
+        build_env: devel
+    entrypoint: sh -c "cd /var/www/ && php artisan benfin:processing && sleep 10"
+  car-insurance-data-job-precalculating:
+    container_name: car-insurance-data-job-precalculating
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+      args:
+        build_env: devel
+    entrypoint: sh -c "cd /var/www/ && php artisan queue:work --queue=preCalculating"
+  car-insurance-data-job-segmenting:
+    container_name: car-insurance-data-job-segmenting
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+      args:
+        build_env: devel
+    entrypoint: sh -c "cd /var/www/ && php artisan queue:work --queue=segmenting"
+  car-insurance-data-job-segmentcalculating:
+    container_name: car-insurance-data-job-segmentcalculating
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+      args:
+        build_env: devel
+    entrypoint: sh -c "cd /var/www/ && php artisan queue:work --queue=segmentCalculating"
+  car-insurance-data-job-creating:
+    container_name: car-insurance-data-job-creating
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+      args:
+        build_env: devel
+    entrypoint: sh -c "cd /var/www/ && php artisan queue:work --queue=creating"
+  car-insurance-data-job-holding:
+    container_name: car-insurance-data-job-holding
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+      args:
+        build_env: devel
+    entrypoint: sh -c "cd /var/www/ && php artisan queue:work --queue=holding"
+  car-insurance-data-job-getpayment:
+    container_name: car-insurance-data-job-getpayment
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+      args:
+        build_env: devel
+    entrypoint: sh -c "cd /var/www/ && php artisan queue:work --queue=getPayment"

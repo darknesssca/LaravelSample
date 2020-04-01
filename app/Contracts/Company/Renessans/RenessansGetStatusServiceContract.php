@@ -2,7 +2,9 @@
 
 namespace App\Contracts\Company\Renessans;
 
-interface RenessansGetStatusServiceContract
+use App\Contracts\Company\CompanyMethodServiceInterface;
+
+interface RenessansGetStatusServiceContract extends CompanyMethodServiceInterface
 {
 
 }

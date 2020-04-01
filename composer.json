@@ -19,6 +19,7 @@
         "ext-simplexml": "*",
         "ext-soap": "*",
         "ext-xml": "*",
+        "ext-gd": "*",
         "benfin/packages/api-communication": ">=1.2",
         "benfin/packages/auth": ">=1.1",
         "benfin/packages/requests": ">=1.1",
@@ -44,7 +45,6 @@
             "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/requests.git"
         }
     ],
-
     "autoload": {
         "classmap": [
             "database/seeds",

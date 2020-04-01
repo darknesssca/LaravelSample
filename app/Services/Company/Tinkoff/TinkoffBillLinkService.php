@@ -3,26 +3,34 @@
 namespace App\Services\Company\Tinkoff;
 
 use App\Contracts\Company\Tinkoff\TinkoffBillLinkServiceContract;
-use App\Http\Controllers\SoapController;
+use App\Exceptions\ApiRequestsException;
 
 class TinkoffBillLinkService extends TinkoffService implements TinkoffBillLinkServiceContract
 {
-    public function run($company, $attributes, $additionalFields = []): array
+    public function run($company, $attributes): array
     {
         $data = $this->prepareData($attributes);
         $response = $this->requestBySoap($this->apiWsdlUrl, 'getPaymentReferencePartner', $data);
         if (isset($response['fault']) && $response['fault']) {
-            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
+            throw new ApiRequestsException(
+                'API страховой компании вернуло ошибку: ' .
+                isset($response['message']) ? $response['message'] : ''
+            );
         }
         if (!isset($response['response']->paymentURL)) {
-            throw new \Exception('api not return paymentURL' . isset($response['response']->Header->resultInfo->errorInfo->descr) ? ' | ' . $response['response']->Header->resultInfo->errorInfo->descr : '');
+            throw new ApiRequestsException([
+                'API страховой компании не вернуло данных',
+                isset($response['response']->Header->resultInfo->errorInfo->descr) ?
+                    $response['response']->Header->resultInfo->errorInfo->descr :
+                    'нет данных об ошибке',
+            ]);
         }
         return [
             'billUrl' => $response['response']->paymentURL,
         ];
     }
 
-    public function prepareData($attributes)
+    protected function prepareData($attributes)
     {
         $data = [];
         $this->setHeader($data);

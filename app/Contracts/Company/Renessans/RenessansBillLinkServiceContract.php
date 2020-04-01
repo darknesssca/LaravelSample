@@ -2,7 +2,9 @@
 
 namespace App\Contracts\Company\Renessans;
 
-interface RenessansBillLinkServiceContract
+use App\Contracts\Company\CompanyMethodServiceInterface;
+
+interface RenessansBillLinkServiceContract extends CompanyMethodServiceInterface
 {
 
 }

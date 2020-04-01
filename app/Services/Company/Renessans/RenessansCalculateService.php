@@ -5,31 +5,48 @@ namespace App\Services\Company\Renessans;
 
 
 use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
-use App\Http\Controllers\RestController;
-use App\Models\InsuranceCompany;
+use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Exceptions\ApiRequestsException;
+use App\Traits\TransformBooleanTrait;
 
 class RenessansCalculateService extends RenessansService implements RenessansCalculateServiceContract
 {
+    use TransformBooleanTrait;
+
     protected $apiPath = '/calculate/?fullInformation=true';
 
-    private $catalogPurpose = ["Личная", "Такси"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-    private $catalogTypeOfDocument = []; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-    private $catalogCatCategory = ["A", "B"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
+    public function __construct(
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
+        PolicyRepositoryContract $policyRepository
+    )
+    {
+        $this->init();
+        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+    }
 
-    public function run(InsuranceCompany $company, $attributes, $additionalFields = []): array
+    public function run($company, $attributes): array
     {
         $this->setAuth($attributes);
         $url = $this->getUrl();
         $data = $this->prepareData($attributes);
-        this($url, $data);
+        $response = $this->postRequest($url, $data, [], false);
         if (!$response) {
-            throw new \Exception('api not return answer');
+            throw new ApiRequestsException('API страховой компании не вернуло ответ');
         }
         if (!$response['result']) {
-            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
+            throw new ApiRequestsException(
+                'API страховой компании вернуло ошибку: ' .
+                isset($response['message']) ? $response['message'] : ''
+            );
         }
         if (!isset($response['data']) || !$response['data'] || !count($response['data'])) {
-            throw new \Exception('api not return data');
+            throw new ApiRequestsException([
+                'API страховой компании не вернуло данных',
+                isset($response['message']) ? $response['message'] : 'нет данных об ошибке'
+            ]);
         }
         $calcData = array_shift($response['data']);
         return [
@@ -38,7 +55,7 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
         ];
     }
 
-    public function prepareData($attributes)
+    protected function prepareData($attributes)
     {
         $data = [
             'key' => $attributes['key'],
@@ -48,7 +65,9 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             'limitDrivers' => $this->transformBooleanToInteger(!$attributes['policy']['isMultidrive']),
             'trailer' => $this->transformBooleanToInteger($attributes['car']['isUsedWithTrailer']),
             'isJuridical' => 0,
-            'owner' => [],
+            'owner' => [
+                'document' => []
+            ],
             'car' => [
                 'make' => $attributes['car']['maker'], // TODO: справочник,
                 'model' => $attributes['car']['model'], // TODO: справочник,
@@ -68,16 +87,15 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
         ];
         //owner
         $owner = $this->searchSubjectById($attributes, $attributes['policy']['ownerId']);
-        $data['owner'] = [
-            "lastname" => $owner['lastName'],
-            "name" => $owner['firstName'],
-            "birthday" => $owner['birthdate'],
-            'document' => [],
-        ];
-        $this->setValue($data['owner'], 'middlename', 'middleName', $owner);
-        $ownerAddress = $this->searchAddressByType($owner, 'registration');
-        $data['codeKladr'] = $ownerAddress['regionKladr'];
-        $ownerPassport = $this->searchDocumentByType($owner, 'RussianPassport');
+        $this->setValuesByArray($data['owner'], [
+            'lastname' => 'lastName',
+            'name' => 'firstName',
+            'birthday' => 'birthdate',
+            'middlename' => 'middleName',
+        ], $owner);
+        $ownerAddress = $this->searchAddressByType($owner, 'registration'); // TODO: справочник
+        $data['codeKladr'] = $ownerAddress['regionKladr']; // TODO проверить что за кладр
+        $ownerPassport = $this->searchDocumentByType($owner, 'RussianPassport'); // TODO: справочник
         $data['owner']['document'] = [
             'typeofdocument' => $ownerPassport['documentType'],  // TODO: справочник
         ];
@@ -101,19 +119,16 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             $data['drivers'] = [];
             $drivers = $this->searchDrivers($attributes);
             foreach ($drivers as $iDriver => $driver) {
-                $pDriver = [
-                    'name' => $owner['firstName'],
-                    'lastname' => $owner['lastName'],
-                    'birthday' => $owner['birthdate'],
+                $pDriver = [];
+                $this->setValuesByArray($pDriver, [
+                    'lastname' => 'lastName',
+                    'name' => 'firstName',
+                    'birthday' => 'birthdate',
+                    'middlename' => 'middleName',
+                ], $driver);
+                $pDriver['license'] = [
+                    'dateBeginDrive' => $driver['dateBeginDrive'],
                 ];
-                foreach ($attributes['drivers'] as $tDriver) {
-                    if ($iDriver == $tDriver['driver']['driverId']) {
-                        $pDriver['license'] = [
-                            "dateBeginDrive" => $tDriver['driver']['drivingLicenseIssueDateOriginal'],
-                        ];
-                    }
-                }
-                $this->setValue($pDriver, 'middlename', 'middleName', $driver);
                 $driverLicense = $this->searchDocumentByType($driver, 'DriverLicense'); // todo значение из справочника
                 if ($driverLicense) {
                     $this->setValuesByArray($pDriver['license'], [

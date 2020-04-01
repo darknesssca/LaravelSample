@@ -26,12 +26,4 @@ class InsuranceCompany extends Model
     {
         return $this->belongsTo('App\Models\Files');
     }
-
-    public static function scopeGetCompany($query, $code)
-    {
-        return $query->where([
-            'code' => $code,
-            'active' => true,
-        ])->first();
-    }
 }

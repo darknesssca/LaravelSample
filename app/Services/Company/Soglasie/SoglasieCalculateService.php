@@ -4,46 +4,62 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieCalculateServiceContract;
-use App\Http\Controllers\SoapController;
-use Carbon\Carbon;
+use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Exceptions\ApiRequestsException;
+use App\Exceptions\ConmfigurationException;
+use App\Traits\DateFormatTrait;
+use App\Traits\TransformBooleanTrait;
 
 class SoglasieCalculateService extends SoglasieService implements SoglasieCalculateServiceContract
 {
+    use TransformBooleanTrait, DateFormatTrait;
 
-    private $catalogPurpose = ["Личная", "Такси"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-    private $catalogTypeOfDocument = []; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-    private $catalogCatCategory = ["A", "B"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-
-    public function __construct()
+    public function __construct(
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
+        PolicyRepositoryContract $policyRepository
+    )
     {
         $this->apiWsdlUrl = config('api_sk.soglasie.calculateWsdlUrl');
         if (!($this->apiWsdlUrl)) {
-            throw new \Exception('soglasie api is not configured');
+            throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
-        parent::__construct();
+        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
     }
 
-    public function run($company, $attributes, $additionalFields = []): array
+    public function run($company, $attributes): array
     {
         $data = $this->prepareData($attributes);
         $headers = $this->getHeaders();
         $auth = $this->getAuth();
         $response = $this->requestBySoap($this->apiWsdlUrl, 'CalcProduct', $data, $auth, $headers);
         if (isset($response['fault']) && $response['fault']) {
-            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
+            throw new ApiRequestsException(
+                'API страховой компании вернуло ошибку: ' .
+                isset($response['message']) ? $response['message'] : ''
+            );
         }
-        if (!isset($response['response']->data->contract->result) || !$response['response']->data->contract->result) {
-            throw new \Exception('api not return premium');
+        if (
+            !isset($response['response']->data->contract->result) ||
+            !$response['response']->data->contract->result
+        ) {
+            throw new ApiRequestsException([
+                'API страховой компании не вернуло данных',
+                isset($response['response']->response->ErrorList->ErrorInfo->Message) ?
+                    $response['response']->response->ErrorList->ErrorInfo->Message :
+                    'нет данных об ошибке',
+            ]);
         }
         return [
             'premium' => $response['response']->data->contract->result,
         ];
     }
 
-    public function prepareData($attributes)
+    protected function prepareData($attributes)
     {
         $data = [
-            //'debug' => $this->apiIsTest,
             'subuser' => $this->apiSubUser,
             'product' => [
                 'brief' => 'ОСАГО', // todo из справочника, возможно заменить на id
@@ -156,12 +172,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                     $properties['driverLicense'][] = (isset($driverLicense['series']) ? $driverLicense['series'] : '') . $driverLicense['number'];
                 }
                 $properties['yearsOld'][] = $this->getYearsOld($driver['birthdate']);
-                foreach ($attributes['drivers'] as $driverInfo) {
-                    if ($iDriver == $driverInfo['driver']['driverId']) {
-                        $properties['experience'][] = $this->getYearsOld($driverInfo['driver']['drivingLicenseIssueDateOriginal']);
-                        break;
-                    }
-                }
+                $properties['experience'][] = $this->getYearsOld($driver['dateBeginDrive']);
                 $properties['fio'][] = $driver['lastName'] . ' ' .
                     $driver['firstName'] .
                     isset($driver['middleName']) ? ' ' . $driver['middleName'] : '';
@@ -220,14 +231,12 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
             'id' => 4024,
             'val' => $owner['phone']['numberPhone'],
         ];
-        foreach ($owner['addresses'] as $address) {
-            if ($address['address']['addressType'] == 'registration_address') { // todo справочник
-                $data['contract']['param'][] = [
-                    'id' => 1122,
-                    'val' => isset($address['address']['cityKladr']) ? $address['address']['cityKladr'] : $address['address']['populatedCenterKladr'],
-                ];
-                break;
-            }
+        $regAddress = $this->searchAddressByType($owner, 'registration_address');
+        if ($regAddress) {
+            $data['contract']['param'][] = [
+                'id' => 1122,
+                'val' => isset($address['address']['cityKladr']) ? $regAddress['cityKladr'] : $regAddress['populatedCenterKladr'],
+            ];
         }
         //insurer
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
@@ -262,13 +271,6 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
             'data' => $data,
         ];
         return $data;
-    }
-
-    protected function getYearsOld($birthdate)
-    {
-        $date = Carbon::createFromFormat('Y-m-d', $birthdate);
-        $now = date('Y');
-        return (int)$now - (int)$date->format('Y');
     }
 
 }

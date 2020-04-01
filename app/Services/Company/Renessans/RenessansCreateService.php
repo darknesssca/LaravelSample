@@ -5,36 +5,53 @@ namespace App\Services\Company\Renessans;
 
 
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
-use App\Http\Controllers\RestController;
-use App\Models\InsuranceCompany;
+use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Exceptions\ApiRequestsException;
+use App\Traits\TransformBooleanTrait;
 
 class RenessansCreateService extends RenessansService implements RenessansCreateServiceContract
 {
+    use TransformBooleanTrait;
+
     protected $apiPath = '/create/';
 
-    private $catalogPurpose = ["Личная", "Такси"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-    private $catalogTypeOfDocument = [31, 32, 30]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-    private $catalogStsDocType = []; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
+    public function __construct(
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
+        PolicyRepositoryContract $policyRepository
+    )
+    {
+        $this->init();
+        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+    }
 
-    private function setAdditionalFields(&$attributes) {
+    protected function setAdditionalFields(&$attributes) {
         $attributes['CheckSegment'] = intval(isset($attributes['CheckSegment']) && $attributes['CheckSegment']);
     }
 
-    public function run(InsuranceCompany $company, $attributes, $additionalFields = []): array
+    public function run($company, $attributes): array
     {
         $this->setAdditionalFields($attributes);
         $this->setAuth($attributes);
         $url = $this->getUrl();
         $data = $this->prepareData($attributes);
-        $response = $this->postRequest($url, $data);
+        $response = $this->postRequest($url, $data, [], false);
         if (!$response) {
-            throw new \Exception('api not return answer');
+            throw new ApiRequestsException('API страховой компании не вернуло ответ');
         }
         if (!$response['result']) {
-            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
+            throw new ApiRequestsException(
+                'API страховой компании вернуло ошибку: ' .
+                isset($response['message']) ? $response['message'] : ''
+            );
         }
         if (!isset($response['data']['policyId']) || !$response['data']['policyId']) {
-            throw new \Exception('api not return policyId');
+            throw new ApiRequestsException([
+                'API страховой компании не вернуло номер созданного полиса',
+                isset($response['message']) ? $response['message'] : 'нет данных об ошибке'
+            ]);
         }
         return [
             'policyId' => $response['data']['policyId'],
@@ -87,15 +104,14 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
 
     protected function getSubjectData($subject)
     {
-        $subjectData = [
-            'email' => $subject['email'],
-            'phone' => $subject['phone'],
-            'name' => $subject['firstName'],
-            'lastname' => $subject['lastName'],
-            'birthday' => $subject['birthdate'],
-        ];
+        $subjectData = [];
         $this->setValuesByArray($subjectData, [
+            'email' => 'email',
+            'phone' => 'phone',
+            'name' => 'firstName',
+            'lastname' => 'lastName',
             'middlename' => 'middleName',
+            'birthday' => 'birthdate',
         ], $subject);
         $document = $this->searchDocumentByType($subject, 'RussianPassport'); //todo справочник
         if ($document) {
@@ -122,10 +138,9 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
 
     protected function getAddressData($address)
     {
-        $addressData = [
-            'country' => $address['country'],
-        ];
+        $addressData = [];
         $this->setValuesByArray($addressData, [
+            'country' => 'country',
             'zip' => 'postCode',
             'city' => 'city',
             'settlement' => 'populatedCenter',

@@ -4,30 +4,51 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
-use App\Http\Controllers\RestController;
-use Illuminate\Support\Carbon;
+use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Exceptions\ApiRequestsException;
+use App\Exceptions\ConmfigurationException;
+use App\Traits\DateFormatTrait;
+use App\Traits\TransformBooleanTrait;
 
 class SoglasieCreateService extends SoglasieService implements SoglasieCreateServiceContract
 {
+    use TransformBooleanTrait, DateFormatTrait;
 
-    private $catalogPurpose = ["Личная", "Такси"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-    private $catalogTypeOfDocument = []; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-    private $catalogCatCategory = ["A", "B"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-
-    public function __construct()
+    public function __construct(
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
+        PolicyRepositoryContract $policyRepository
+    )
     {
         $this->apiRestUrl = config('api_sk.soglasie.createUrl');
-        if (!($this->apiRestUrl)) {
-            throw new \Exception('soglasie api is not configured');
+        if (!$this->apiRestUrl) {
+            throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
-        parent::__construct();
+        $this->init();
+        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
     }
 
-    public function run($company, $attributes, $additionalFields = []): array
+    public function run($company, $attributes): array
     {
         $data = $this->prepareData($attributes);
         $headers = $this->getHeaders();
-        $this->postRequest($this->apiRestUrl, $data, $headers);
+        $url = $this->getUrl();
+        $response = $this->postRequest($url, $data, $headers, false);
+        if (!$response) {
+            throw new ApiRequestsException('API страховой компании не вернуло ответ');
+        }
+        if (!isset($response['policyId']) || !$response['policyId']) {
+            throw new ApiRequestsException([
+                'API страховой компании не вернуло номер созданного полиса',
+                isset($response['error']) ? $response['error'] : 'нет данных об ошибке',
+                isset($response['errorInfo']) ? $response['errorInfo'] : 'нет данных об ошибке'
+            ]);
+        }
+        return [
+            'policyId' => $response['policyId']
+        ];
     }
 
     protected function getHeaders()
@@ -39,22 +60,19 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         ];
     }
 
-    public function prepareData($attributes)
+    protected function prepareData($attributes)
     {
         $owner = $this->searchSubjectById($attributes, $attributes['policy']['ownerId']);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
-        if (!$owner) {
-            throw new \Exception('no owner');
-        }
         $data = [
             'CodeInsurant' => '000',
-            'BeginDate' => $this->formatDateTime($attributes['policy']['beginDate']),
-            'EndDate' => $this->formatDateTime($attributes['policy']['endDate']),
+            'BeginDate' => $this->dateTimeFromDate($attributes['policy']['beginDate']),
+            'EndDate' => $this->dateTimeFromDate($attributes['policy']['endDate']),
             //'PrevPolicy' => '', //todo пролонгация
             'Period1Begin' => $attributes['policy']['beginDate'],
             'Period1End' => $attributes['policy']['endDate'],
             'IsTransCar' => false, // fixme заглушка
-            'IsInsureTrailer' => $this->transformBoolean($attributes['car']['isUsedWithTrailer']),
+            'IsInsureTrailer' => $this->transformAnyToBoolean($attributes['car']['isUsedWithTrailer']),
             'CarInfo' => [
                 'VIN' => $attributes['car']['vin'],
                 'MarkModelCarCode' => $attributes['car']['model'],
@@ -67,8 +85,8 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
                     'Number' => $attributes['car']['inspection']['number'],
                     'Date' => $attributes['car']['inspection']['dateIssue'],
                 ],
-                'TicketCarYear' => Carbon::createFromFormat('Y-m-d', $attributes['car']['inspection']['dateEnd'])->format('Y'),
-                'TicketCarMonth' => Carbon::createFromFormat('Y-m-d', $attributes['car']['inspection']['dateEnd'])->format('m'),
+                'TicketCarYear' => $this->getYearFromDate($attributes['car']['inspection']['dateEnd']),
+                'TicketCarMonth' => $this->getMonthFromDate($attributes['car']['inspection']['dateEnd']),
                 'TicketDiagnosticDate' => $attributes['car']['inspection']['dateIssue'],
                 'EngCap' => $attributes['car']['enginePower'],
                 'GoalUse' => "Personal", //$attributes['car']['vehicleUsage'], // todo справочник

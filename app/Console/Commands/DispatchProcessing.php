@@ -2,24 +2,24 @@
 
 namespace App\Console\Commands;
 
-use App\Http\Controllers\InsuranceController;
+use App\Contracts\Company\ProcessingServiceContract;
 use Illuminate\Console\Command;
 
-class CheckPaymentStatusCommand extends Command
+class DispatchProcessing extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'check:payment';
+    protected $signature = 'benfin:processing';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'получение статуса оплаты полиса';
+    protected $description = 'отправка всех процессингов в очереди';
 
     /**
      * Create a new command instance.
@@ -38,7 +38,7 @@ class CheckPaymentStatusCommand extends Command
      */
     public function handle()
     {
-        $controller = new InsuranceController();
-        $controller->getPayment();
+        $service = app(ProcessingServiceContract::class);
+        $service->initDispatch();
     }
 }

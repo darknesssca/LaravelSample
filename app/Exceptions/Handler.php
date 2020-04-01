@@ -6,7 +6,6 @@ use Benfin\Requests\Exceptions\AbstractException;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 use Laravel\Lumen\Exceptions\Handler as ExceptionHandler;
@@ -42,15 +41,16 @@ class Handler extends ExceptionHandler
     /**
      * Render an exception into an HTTP response.
      *
-     * @param Request $request
+     * @param \Illuminate\Http\Request $request
      * @param \Exception $exception
-     * @return \Symfony\Component\HttpFoundation\Response
-     * @throws Exception
+     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
+     * @throws \Throwable
      */
     public function render($request, Exception $exception)
     {
         if ($exception instanceof AbstractException) {
-            return Response::error($exception->getMessageData(), $exception->getHttpCode()); }
+            return Response::error($exception->getMessageData(), $exception->getHttpCode());
+        }
         return parent::render($request, $exception);
     }
 }

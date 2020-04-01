@@ -2,7 +2,9 @@
 
 namespace App\Contracts\Company\Soglasie;
 
-interface SoglasieCreateServiceContract
+use App\Contracts\Company\CompanyMethodServiceInterface;
+
+interface SoglasieCreateServiceContract extends CompanyMethodServiceInterface
 {
 
 }

@@ -3,31 +3,50 @@
 namespace App\Services\Company\Tinkoff;
 
 use App\Contracts\Company\Tinkoff\TinkoffCreateServiceContract;
-use App\Http\Controllers\SoapController;
+use App\Exceptions\ApiRequestsException;
 
 class TinkoffCreateService extends TinkoffService implements TinkoffCreateServiceContract
 {
-    public function run($company, $attributes, $additionalFields = []): array
+    public function run($company, $attributes): array
     {
         $data = $this->prepareData($attributes);
         $response = $this->requestBySoap($this->apiWsdlUrl, 'issueQuoteSetPartner', $data);
         if (isset($response['fault']) && $response['fault']) {
-            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
+            throw new ApiRequestsException(
+                'API страховой компании вернуло ошибку: ' .
+                isset($response['message']) ? $response['message'] : ''
+            );
         }
         if (!isset($response['response']->Header->resultInfo->status)) {
-            throw new \Exception('При попытке создать полис был не был возвращен статус' . isset($response['response']->Header->resultInfo->errorInfo->descr) ? ' | ' . $response['response']->Header->resultInfo->errorInfo->descr : '');
+            throw new ApiRequestsException([
+                'API страховой компании не вернуло данных',
+                isset($response['response']->Header->resultInfo->errorInfo->descr) ?
+                    $response['response']->Header->resultInfo->errorInfo->descr :
+                    'нет данных об ошибке',
+            ]);
+        }
+        if (!isset($response['response']->Header->resultInfo->status)) {
+            throw new ApiRequestsException([
+                'При попытке создать полис был не был возвращен статус',
+                isset($response['response']->Header->resultInfo->errorInfo->descr) ?
+                    $response['response']->Header->resultInfo->errorInfo->descr :
+                    'нет данных об ошибке',
+            ]);
         }
         if (strtolower($response['response']->Header->resultInfo->status) != 'ok') {
-            throw new \Exception('При попытке создать полис был возвращен некорректный статус: ' . $response['response']->Header->resultInfo->status .
-            ' | код ошибки: ' . (isset($response['response']->Header->resultInfo->errorInfo->code) ? $response['response']->Header->resultInfo->errorInfo->code : '') .
-            ' | текст ошибки: ' . (isset($response['response']->Header->resultInfo->errorInfo->descr) ? $response['response']->Header->resultInfo->errorInfo->descr : ''));
+            throw new ApiRequestsException([
+                'При попытке создать полис был возвращен некорректный статус: ' . $response['response']->Header->resultInfo->status,
+                isset($response['response']->Header->resultInfo->errorInfo->descr) ?
+                    $response['response']->Header->resultInfo->errorInfo->descr :
+                    'нет данных об ошибке',
+            ]);
         }
         return [
             'status' => 'done',
         ];
     }
 
-    public function prepareData($attributes)
+    protected function prepareData($attributes)
     {
         $data = [];
         $this->setHeader($data);
