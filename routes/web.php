@@ -42,9 +42,9 @@ $router->group(
                 //policies
                 $router->group(['prefix' => 'policies'] , function () use ($router) {
                     $router->get('/', 'PoliciesController@list');
+                    $router->get('statistic', 'PoliciesController@statistic');
                     $router->get('/{id}', 'PoliciesController@getById');
                     $router->post('/', 'PoliciesController@create');
-                    $router->get('statistic', 'PoliciesController@statistic');
                 });
 
 

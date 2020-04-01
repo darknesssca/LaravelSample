@@ -78,7 +78,7 @@ class DraftService implements DraftServiceContract
         ) {
             foreach ($attributes['subjects'] as $subject) {
                 $subjectData = [];
-                $this->prepareSubjects($subjectData, $attributes);
+                $this->prepareSubjects($subjectData, $subject);
                 if (
                     isset($attributes['policy']['ownerId']) && $attributes['policy']['ownerId'] &&
                     isset($attributes['policy']['insurantId']) && $attributes['policy']['insurantId'] &&
@@ -146,7 +146,7 @@ class DraftService implements DraftServiceContract
         ) {
             foreach ($attributes['subjects'] as $subject) {
                 $subjectData = [];
-                $this->prepareSubjects($subjectData, $attributes);
+                $this->prepareSubjects($subjectData, $subject);
                 if ((!isset($attributes['policy']['ownerId']) || !$attributes['policy']['ownerId']) && $oldDraft->client_id) {
                     $isNeedDeleteOwner = true;
                     $policyData['client_id'] = null;
@@ -227,7 +227,13 @@ class DraftService implements DraftServiceContract
         if (!$draftId) {
             throw new DraftNotFoundException('Передан некорректный id черновика', 400);
         }
-        $this->draftRepository->delete($draftId);
+        $agentId = GlobalStorage::getUserId();
+        $draft = $this->draftRepository->getById($draftId, $agentId);
+        if (!$draft) {
+            throw new DraftNotFoundException('Черновик не найден');
+        }
+        $draft->drivers()->delete();
+        $draft->delete();
     }
 
     protected function preparePolicyData(&$policyData, $attributes)

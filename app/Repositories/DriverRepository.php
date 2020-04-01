@@ -13,4 +13,9 @@ class DriverRepository implements DriverRepositoryContract
     {
         return Driver::where('id', $id)->update($attributes);
     }
+
+    public function delete($id)
+    {
+        return Driver::where('id', $id)->delete();
+    }
 }
