@@ -17,4 +17,9 @@ class InsuranceCompanyRepository implements InsuranceCompanyRepositoryContract
             ])
             ->first();
     }
+
+    public function getInsuranceCompanyList()
+    {
+        return InsuranceCompany::select(["id", "code", "name"])->where("active", true)->get();
+    }
 }

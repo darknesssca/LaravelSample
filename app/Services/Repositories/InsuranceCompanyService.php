@@ -6,17 +6,20 @@ namespace App\Services\Repositories;
 
 use App\Contracts\Repositories\InsuranceCompanyRepositoryContract;
 use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
+use App\Exceptions\GuidesNotFoundException;
+use App\Traits\Cache\CacheTrait;
 use App\Traits\LocalStorageTrait;
+use Illuminate\Support\Facades\Cache;
 
 class InsuranceCompanyService implements InsuranceCompanyServiceContract
 {
-    use LocalStorageTrait;
+    use LocalStorageTrait, CacheTrait;
 
-    protected $repository;
+    protected $insuranceCompanyRepository;
 
-    public function __construct(InsuranceCompanyRepositoryContract $repository)
+    public function __construct(InsuranceCompanyRepositoryContract $insuranceCompanyRepository)
     {
-        $this->repository = $repository;
+        $this->insuranceCompanyRepository = $insuranceCompanyRepository;
     }
 
     public function getCompany($code)
@@ -24,8 +27,21 @@ class InsuranceCompanyService implements InsuranceCompanyServiceContract
         if ($this->isStored($code)) {
             return $this->load($code);
         }
-        $object = $this->repository->getCompany($code);
+        $object = $this->insuranceCompanyRepository->getCompany($code);
         $this->save($code, $object);
         return $object;
+    }
+
+    public function getInsuranceCompanyList()
+    {
+        $tag = $this->getGuidesInsuranceCompaniesTag();
+        $key = $this->getCacheKey($tag, 'all');
+        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () {
+            return $this->insuranceCompanyRepository->getInsuranceCompanyList();
+        });
+        if (!$data || !$data->count()) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        return $data->jsonSerialize();
     }
 }

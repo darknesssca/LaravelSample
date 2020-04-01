@@ -2,83 +2,93 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CarCategory;
-use App\Models\CarMark;
-use App\Models\CarModel;
-use App\Models\Country;
-use App\Models\DocType;
-use App\Models\Gender;
-use App\Models\InsuranceCompany;
-use App\Models\SourceAcquisition;
-use App\Models\UsageTarget;
+use App\Contracts\Repositories\Services\CarCategoryServiceContract;
+use App\Contracts\Repositories\Services\CarMarkServiceContract;
+use App\Contracts\Repositories\Services\CarModelServiceContract;
+use App\Contracts\Repositories\Services\CountryServiceContract;
+use App\Contracts\Repositories\Services\DocTypeServiceContract;
+use App\Contracts\Repositories\Services\GenderServiceContract;
+use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
+use App\Contracts\Repositories\Services\SourceAcquisitionServiceContract;
+use App\Contracts\Repositories\Services\UsageTargetServiceContract;
 use Illuminate\Http\Response;
 
 class GuidesController extends Controller
 {
     public function marks()
     {
-        $data = CarMark::select(["id", "code", "name"])->get()->jsonSerialize();
+        $service = app(CarMarkServiceContract::class);
+        $data = $service->getMarkList();
         return Response::success($data);
     }
 
     public function models($mark_id)
     {
-        $data = CarModel::select(["id", "code", "name", "category_id", "mark_id"])->where("mark_id", $mark_id)->get()->jsonSerialize();
+        $service = app(CarModelServiceContract::class);
+        $data = $service->getModelListByMarkId($mark_id);
         return Response::success($data);
     }
 
     public function modelsAll()
     {
-        $data = CarModel::select(["id", "code", "name", "category_id", "mark_id"])->get()->jsonSerialize();
+        $service = app(CarModelServiceContract::class);
+        $data = $service->getModelList();
         return Response::success($data);
     }
 
     public function categories()
     {
-        $data = CarCategory::select(["id", "code", "name"])->get()->jsonSerialize();
+        $service = app(CarCategoryServiceContract::class);
+        $data = $service->getCategoryList();
         return Response::success($data);
     }
 
     public function countriesAll()
     {
-        $data = Country::select(["id", "code", "name", "short_name", "alpha2", "alpha3"])->get()->jsonSerialize();
+        $service = app(CountryServiceContract::class);
+        $data = $service->getCountryList();
         return Response::success($data);
     }
 
     public function countries($country_id)
     {
-        $data = Country::select(["id", "code", "name", "short_name", "alpha2", "alpha3"])->where("id", $country_id)->get()->jsonSerialize();
+        $service = app(CountryServiceContract::class);
+        $data = $service->getCountryById($country_id);
         return Response::success($data);
     }
 
     public function genders()
     {
-        $data = Gender::select(["id", "code", "name"])->get()->jsonSerialize();
+        $service = app(GenderServiceContract::class);
+        $data = $service->getGendersList();
         return Response::success($data);
     }
 
     public function docTypes()
     {
-        $data = DocType::select(["id", "code", "name"])->get()->jsonSerialize();
+        $service = app(DocTypeServiceContract::class);
+        $data = $service->getDocTypesList();
         return Response::success($data);
     }
 
-
     public function usageTargets()
     {
-        $data = UsageTarget::select(["id", "code", "name"])->get()->jsonSerialize();
+        $service = app(UsageTargetServiceContract::class);
+        $data = $service->getDocTypesList();
         return Response::success($data);
     }
 
     public function insuranceCompanies()
     {
-        $data = InsuranceCompany::select(["id", "code", "name"])->where("active", true)->get()->jsonSerialize();
+        $service = app(InsuranceCompanyServiceContract::class);
+        $data = $service->getDocTypesList();
         return Response::success($data);
     }
 
     public function sourceAcquisitions()
     {
-        $data = SourceAcquisition::select(["id", "code", "name"])->get()->jsonSerialize();
+        $service = app(SourceAcquisitionServiceContract::class);
+        $data = $service->getDocTypesList();
         return Response::success($data);
     }
 
