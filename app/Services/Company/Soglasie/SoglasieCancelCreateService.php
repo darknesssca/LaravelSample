@@ -32,7 +32,7 @@ class SoglasieCancelCreateService extends SoglasieService implements SoglasieCan
             'policyId' => $processData['data']['policyId'],
         ]);
         $headers = $this->getHeaders();
-        return $this->getRequest($url, [], $headers); // нам без разницы что там произошло в результате, поэтому никаких эксепшенов отлавливать не будем
+        return $this->getRequest($url, [], $headers, false); // нам без разницы что там произошло в результате, поэтому никаких эксепшенов отлавливать не будем
     }
 
     protected function getHeaders()

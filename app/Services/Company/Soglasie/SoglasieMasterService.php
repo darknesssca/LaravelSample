@@ -134,7 +134,9 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
                         $this->requestProcessService->delete($processData['token']);
                         $billLinkService = app(SoglasieBillLinkServiceContract::class);
                         $billLinkData = $billLinkService->run($company, $processData);
-                        $form = [];
+                        $form = [
+                            'token' => $processData['token'],
+                        ];
                         $this->pushForm($form);
                         $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
                         $tokenData = $this->getTokenData($processData['token'], true);

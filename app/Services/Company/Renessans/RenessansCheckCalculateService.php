@@ -28,7 +28,7 @@ class RenessansCheckCalculateService extends RenessansService implements Renessa
         $data = [];
         $this->setAuth($data);
         $url = $this->getUrl($attributes['data']);
-        $response = $this->getRequest($url, $data);
+        $response = $this->getRequest($url, $data, [], false);
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');
         }

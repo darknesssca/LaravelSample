@@ -92,7 +92,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
                     'premium' => $tokenData['finalPremium'],
                 ];
             case 'error':
-                throw new ApiRequestsException($tokenData['errorMessage']);
+                throw new ApiRequestsException($tokenData['errorMessages']);
             default:
                 throw new TokenException('Статус рассчета не валиден');
         }
@@ -119,7 +119,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
                     'status' => 'hold',
                 ];
             case 'error':
-                throw new ApiRequestsException($tokenData['errorMessage']);
+                throw new ApiRequestsException($tokenData['errorMessages']);
             default:
                 throw new TokenException('Статус рассчета не валиден');
         }
@@ -143,7 +143,9 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $serviceCalculate = app(RenessansCheckCalculateServiceContract::class);
         $dataCalculate = $serviceCalculate->run($company, $processData);
         $processData['data']['premium'] = $dataCalculate['premium'];
-        $attributes = [];
+        $attributes = [
+            'token' => $processData['token'],
+        ];
         $this->pushForm($attributes);
         $attributes['calcId'] = $processData['data']['calcId'];
         $attributes['CheckSegment'] = true;
@@ -175,7 +177,9 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
             return;
         }
         $processData['data']['segment'] = true;
-        $attributes = [];
+        $attributes = [
+            'token' => $processData['token'],
+        ];
         $this->pushForm($attributes);
         $serviceCalculate = app(RenessansCalculateServiceContract::class);
         $dataCalculate = $serviceCalculate->run($company, $attributes);
@@ -191,7 +195,9 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
     public function segmentCalculating($company, $processData):void
     {
         $calculateAttributes = [
-            'calcId' => $processData['data']['finalCalcId'],
+            'data' => [
+                'calcId' => $processData['data']['finalCalcId'],
+            ]
         ];
         $serviceCalculate = app(RenessansCheckCalculateServiceContract::class);
         $dataCalculate = $serviceCalculate->run($company, $calculateAttributes);
@@ -249,6 +255,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         }
         $serviceBill = app(RenessansBillLinkServiceContract::class);
         $dataBill = $serviceBill->run($company, $attributes);
+        $attributes['token'] = $processData['token'];
         $this->pushForm($attributes);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $this->sendBillUrl($insurer['email'], $dataBill['billUrl']);
@@ -286,6 +293,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         }
         $serviceBill = app(RenessansBillLinkServiceContract::class);
         $dataBill = $serviceBill->run($company, $attributes);
+        $attributes['token'] = $processData['token'];
         $this->pushForm($attributes);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $this->sendBillUrl($insurer['email'], $dataBill['billUrl']);

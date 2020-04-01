@@ -104,7 +104,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
                     'billUrl' => $tokenData['billUrl'],
                 ];
             case 'error':
-                throw new ApiRequestsException($tokenData['errorMessage']);
+                throw new ApiRequestsException($tokenData['errorMessages']);
             default:
                 throw new TokenException('Статус рассчета не валиден');
         }
@@ -284,7 +284,9 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         $billService = app(IngosstrahBillServiceContract::class);
         $billData = $billService->run($company, $processData);
         $processData['data']['billIsn'] = $billData['billIsn'];
-        $form = [];
+        $form = [
+            'token' => $processData['token'],
+        ];
         $this->pushForm($form);
         $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
         $processData['data']['insurerEmail'] = $insurer['email'];
