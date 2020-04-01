@@ -38,7 +38,7 @@ class DraftClient extends Model
 
     public function citizenship()
     {
-        return $this->belongsTo('App\Models\Citizenship');
+        return $this->belongsTo('App\Models\Country');
     }
 
 }

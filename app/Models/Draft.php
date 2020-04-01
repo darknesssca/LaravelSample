@@ -10,10 +10,7 @@ class Draft extends Model
 
     protected $fillable = [
         'agent_id',
-        'insurance_company_id',
         'type_id',
-        'region_kladr',
-        'registration_date',
         'client_id',
         'insurant_id',
         'vehicle_model_id',

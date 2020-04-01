@@ -11,11 +11,7 @@ class CreateDraftsTable extends Migration
         Schema::create('drafts', function (Blueprint $table) {
             $table->integerIncrements('id');
             $table->unsignedInteger('agent_id');
-            $table->string('number')->nullable();
-            $table->unsignedInteger('insurance_company_id')->nullable();
             $table->unsignedInteger('type_id')->nullable();
-            $table->string('region_kladr')->nullable();
-            $table->date('registration_date')->nullable();
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
             $table->boolean('is_multi_drive')->default(false);
@@ -50,7 +46,6 @@ class CreateDraftsTable extends Migration
 
             $table->timestamps();
 
-            $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');
             $table->foreign('vehicle_model_id')->references('id')->on('car_models');
             $table->foreign('vehicle_reg_doc_type_id')->references('id')->on('doc_types');
             $table->foreign('type_id')->references('id')->on('policy_types');
@@ -84,7 +79,7 @@ class CreateDraftsTable extends Migration
     public function down()
     {
         Schema::dropIfExists('drafts');
-        Schema::dropIfExists('driver_draft');
+        Schema::dropIfExists('draft_driver');
         Schema::table('policies', function (Blueprint $table) {
             $table->unsignedInteger('status_id');
             $table->boolean('commission_paid')->default(false);
