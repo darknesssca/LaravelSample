@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
@@ -59,7 +60,7 @@ class ReportController extends Controller
 //                throw new Exception('Отсутствует доступное вознаграждение');
 //            }
         } catch (Exception $exception) {
-            return $this->error($exception->getMessage(), $this->httpErrorCode);
+            return Response::error($exception->getMessage(), $this->httpErrorCode);
         }
 
     }
@@ -115,30 +116,6 @@ class ReportController extends Controller
 
 
     //Вспомогательные методы
-
-    /**
-     * @return array
-     */
-    private function createReportValidationRules()
-    {
-        return [
-            'name' => 'required',
-            'policies' => 'required',
-            'creator_id' => 'required',
-        ];
-    }
-
-    /**
-     * @return array
-     */
-    private function createReportValidationMessages()
-    {
-        return [
-            'name.required' => 'Поле Название не заполнено',
-            'policies.required' => 'Поле Полисы не заполнено',
-            'creator_id.required' => 'Поле Создатель не заполнено',
-        ];
-    }
 
     /**
      * @param array $policies_ids

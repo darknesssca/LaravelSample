@@ -12,7 +12,6 @@ class CreateReportRequest extends AbstractRequest
         return [
             'name' => 'required',
             'policies' => 'required',
-            'creator_id' => 'required',
         ];
     }
 
@@ -21,7 +20,6 @@ class CreateReportRequest extends AbstractRequest
         return [
             'name.required' => 'Поле Название не заполнено',
             'policies.required' => 'Поле Полисы не заполнено',
-            'creator_id.required' => 'Поле Создатель не заполнено',
         ];
     }
 }
