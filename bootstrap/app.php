@@ -66,7 +66,8 @@ $app->singleton(
 $app->configure('app');
 $app->configure('api_sk');
 $app->configure('queue');
-$app->configure('cache');
+$app->configure('api');
+$app->configure('database');
 
 /*
 |--------------------------------------------------------------------------
