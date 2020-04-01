@@ -19,6 +19,7 @@ class CarInfoService
 
     protected function __construct()
     {
+        $this->init();
         /** @var LogMicroservice logger */
         $this->logger = app(LogMicroserviceContract::class);
     }

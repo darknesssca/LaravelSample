@@ -24,4 +24,8 @@ interface PolicyRepositoryContract
     public function getNotPaidPolicies($limit);
 
     public function update($id, $data);
+
+    public function getList(array $filter);
+
+    public function create(array $data);
 }

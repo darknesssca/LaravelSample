@@ -1,5 +1,7 @@
 <?php
 
+
+use App\Providers\RepositoryServiceProvider;
 use Benfin\Api\BenfinMicroserviceProvider;
 use Benfin\Requests\BenfinMacroProvider;
 use Benfin\Requests\BenfinRequestProvider;
@@ -82,7 +84,7 @@ $app->configure('api_sk');
 // $app->routeMiddleware([
 //     'auth' => App\Http\Middleware\Authenticate::class,
 // ]);
-
+$app->routeMiddleware(['auth' => Benfin\Auth\Http\Middleware\Authenticate::class,]);
 /*
 |--------------------------------------------------------------------------
 | Register Service Providers
@@ -98,14 +100,10 @@ $app->register(App\Providers\AppServiceProvider::class);
 $app->register(App\Providers\CompanyServiceProvider::class);
 $app->register(App\Providers\RepositoryServiceProvider::class);
 $app->register(BenfinMicroserviceProvider::class);
-$app->routeMiddleware(['auth' => Benfin\Auth\Http\Middleware\Authenticate::class,]);
 $app->register(BenfinMacroProvider::class);
 $app->register(BenfinRequestProvider::class);
 $app->register(App\Providers\MinIOStorageServiceProvider::class);
-//$app->register(Avtocod\B2BApi\Laravel\ServiceProvider::class);
-// $app->register(App\Providers\AuthServiceProvider::class);
-// $app->register(App\Providers\EventServiceProvider::class);
-
+$app->register(RepositoryServiceProvider::class);
 /*
 |--------------------------------------------------------------------------
 | Load The Application Routes
