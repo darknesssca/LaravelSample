@@ -99,6 +99,7 @@ class Draft extends Model
 
     public function delete()
     {
+        $this->drivers()->delete();
         parent::delete();
         $this->owner()->delete();
         $this->insurer()->delete();

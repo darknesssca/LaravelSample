@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 interface DraftRepositoryContract
 {
-    public function getById(int $id) : Model;
+    public function getById(int $id, int $agentId) : Model;
 }

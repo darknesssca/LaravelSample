@@ -78,9 +78,4 @@ class PolicyRepository implements PolicyRepositoryContract
         return Policy::where('id', $id)->update($data);
     }
 
-    public function deleteBill($id)
-    {
-
-    }
-
 }

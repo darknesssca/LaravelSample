@@ -31,9 +31,9 @@ $router->group(
                 // drafts
                 $router->get('/drafts', 'DraftController@index');
                 $router->post('/drafts', 'DraftController@store');
-                $router->get('/drafts/{policeId}', 'DraftController@show');
-                $router->patch('/drafts/{policeId}', 'DraftController@update');
-                $router->delete('/drafts/{policeId}', 'DraftController@delete');
+                $router->get('/drafts/{draftId}', 'DraftController@show');
+                $router->patch('/drafts/{draftId}', 'DraftController@update');
+                $router->delete('/drafts/{draftId}', 'DraftController@delete');
                 // запросы в страховые компании
                 $router->post('/registration/send', 'InsuranceController@store');
                 $router->post('/registration/{code}/payment', 'InsuranceController@payment');
