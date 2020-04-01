@@ -18,4 +18,17 @@ class CarModelRepository implements CarModelRepositoryContract
     {
         return CarModel::select(["id", "code", "name", "category_id", "mark_id"])->get();
     }
+
+    public function getCompanyModel($id, $companyId)
+    {
+        return CarModel::with([
+            'codes' => function ($query) use ($companyId) {
+                $query->where('insurance_company_id', $companyId);
+            },
+        ])
+            ->with([
+                'category'
+            ])
+            ->where('id', $id)->first();
+    }
 }

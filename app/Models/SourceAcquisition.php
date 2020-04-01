@@ -12,8 +12,8 @@ class SourceAcquisition extends Model
     ];
     protected $table = 'source_acquisitions';
 
-    public function insuranceCodes()
+    public function codes()
     {
-        return $this->belongsToMany('App\Models\SourceAcquisitionInsurance');
+        return $this->hasMany('App\Models\SourceAcquisitionInsurance', 'acquisition_id', 'id');
     }
 }

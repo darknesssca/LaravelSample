@@ -13,4 +13,14 @@ class GenderRepository implements GenderRepositoryContract
     {
         return Gender::select(["id", "code", "name"])->get();
     }
+
+    public function getCompanyGender($id, $companyId)
+    {
+        return Gender::with([
+            'codes' => function ($query) use ($companyId) {
+                $query->where('insurance_company_id', $companyId);
+            }
+        ])
+            ->where('id', $id)->first();
+    }
 }

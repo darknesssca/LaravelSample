@@ -12,9 +12,9 @@ class DocType extends Model
     ];
     protected $table = 'doc_types';
 
-    public function insuranceCodes()
+    public function codes()
     {
-        return $this->belongsToMany('App\Models\DocTypeInsurance');
+        return $this->hasMany('App\Models\DocTypeInsurance', 'doctype_id', 'id');
     }
 
 }

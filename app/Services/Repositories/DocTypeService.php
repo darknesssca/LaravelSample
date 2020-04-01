@@ -35,4 +35,21 @@ class DocTypeService implements DocTypeServiceContract
         }
         return $data->jsonSerialize();
     }
+
+    public function getCompanyDocTypeByCode($code, $companyId)
+    {
+        $tag = $this->getGuidesDocTypesTag();
+        $key = $this->getCacheKey($tag, $code, $companyId);
+        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($code, $companyId){
+            return $this->docTypeRepository->getCompanyDocTypeByCode($code, $companyId);
+        });
+        if (!$data || !$data->count()) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        $codes = $data->codes;
+        if (!$codes || !$codes->count()) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        return $data->codes->first()->reference_doctype_code;
+    }
 }

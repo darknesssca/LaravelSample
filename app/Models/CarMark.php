@@ -12,9 +12,9 @@ class CarMark extends Model
     ];
     protected $table = 'car_marks';
 
-    public function insuranceCodes()
+    public function codes()
     {
-        return $this->belongsToMany('App\Models\CarMarkInsurance');
+        return $this->hasMany('App\Models\InsuranceMark','mark_id', 'id');
     }
 
 }

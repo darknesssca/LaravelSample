@@ -8,4 +8,5 @@ interface CarModelRepositoryContract
 {
     public function getModelListByMarkId($mark_id);
     public function getModelList();
+    public function getCompanyModel($id, $companyId);
 }

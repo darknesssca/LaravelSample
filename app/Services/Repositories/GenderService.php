@@ -35,4 +35,21 @@ class GenderService implements GenderServiceContract
         }
         return $data->jsonSerialize();
     }
+
+    public function getCompanyGender($id, $companyId)
+    {
+        $tag = $this->getGuidesGendersTag();
+        $key = $this->getCacheKey($tag, $id, $companyId);
+        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($id, $companyId){
+            return $this->genderRepository->getCompanyGender($id, $companyId);
+        });
+        if (!$data || !$data->count()) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        $codes = $data->codes;
+        if (!$codes || !$codes->count()) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        return $data->codes->first()->reference_gender_code;
+    }
 }
