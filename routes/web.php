@@ -44,7 +44,9 @@ $router->group(
                     $router->get('/', 'PoliciesController@list');
                     $router->get('/{id}', 'PoliciesController@getById');
                     $router->post('/', 'PoliciesController@create');
+                    $router->get('statistic', 'PoliciesController@statistic');
                 });
+
 
                 //autocod
                 $router->get('autocod/check-taxi', 'AutocodController@checkTaxi'); //проверка на такси

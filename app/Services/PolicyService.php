@@ -6,6 +6,7 @@ use App\Contracts\Repositories\DraftRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Services\PolicyServiceContract;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 
 class PolicyService implements PolicyServiceContract
 {
@@ -64,5 +65,18 @@ class PolicyService implements PolicyServiceContract
         app(CommissionCalculationMicroserviceContract::class)->createRewards($policy->id, $policy->registration_date, $policy->region_kladr, GlobalStorage::getUserId());
 
         return $policy->id;
+    }
+
+    public function statistic(array $filter = [])
+    {
+        /**
+         * @var Collection $policies
+         */
+        $policies =  $this->policyRepository->getList($filter);
+
+        return [
+            'count' => $policies->count(),
+            'sum' => $policies->sum('premium')
+        ];
     }
 }
