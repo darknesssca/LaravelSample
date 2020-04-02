@@ -7,8 +7,8 @@ namespace App\Services\Repositories;
 use App\Contracts\Repositories\InsuranceCompanyRepositoryContract;
 use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
 use App\Exceptions\GuidesNotFoundException;
-use App\Traits\Cache\CacheTrait;
 use App\Traits\LocalStorageTrait;
+use Benfin\Cache\CacheTrait;
 use Illuminate\Support\Facades\Cache;
 
 class InsuranceCompanyService implements InsuranceCompanyServiceContract

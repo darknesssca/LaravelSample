@@ -7,7 +7,7 @@ namespace App\Services\Repositories;
 use App\Contracts\Repositories\GenderRepositoryContract;
 use App\Contracts\Repositories\Services\GenderServiceContract;
 use App\Exceptions\GuidesNotFoundException;
-use App\Traits\Cache\CacheTrait;
+use Benfin\Cache\CacheTrait;
 use Illuminate\Support\Facades\Cache;
 
 class GenderService implements GenderServiceContract

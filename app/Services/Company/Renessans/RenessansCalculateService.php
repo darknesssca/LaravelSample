@@ -8,7 +8,9 @@ use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Contracts\Repositories\Services\UsageTargetServiceContract;
 use App\Exceptions\ApiRequestsException;
+use App\Models\UsageTarget;
 use App\Traits\TransformBooleanTrait;
 
 class RenessansCalculateService extends RenessansService implements RenessansCalculateServiceContract

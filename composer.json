@@ -18,6 +18,7 @@
         "ext-xml": "*",
         "benfin/packages/api-communication": ">=1.2",
         "benfin/packages/auth": ">=1.1",
+        "benfin/packages/cache": "^1.0",
         "benfin/packages/requests": ">=1.1",
         "coraxster/flysystem-aws-s3-v3-minio": "^1.0",
         "guzzlehttp/guzzle": "^6.5",
@@ -45,6 +46,10 @@
         {
             "type": "vcs",
             "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/requests.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/cache.git"
         }
     ],
     "autoload": {

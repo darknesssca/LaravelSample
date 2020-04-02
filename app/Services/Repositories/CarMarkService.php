@@ -7,7 +7,7 @@ namespace App\Services\Repositories;
 use App\Contracts\Repositories\CarMarkRepositoryContract;
 use App\Contracts\Repositories\Services\CarMarkServiceContract;
 use App\Exceptions\GuidesNotFoundException;
-use App\Traits\Cache\CacheTrait;
+use Benfin\Cache\CacheTrait;
 use Illuminate\Support\Facades\Cache;
 
 class CarMarkService implements CarMarkServiceContract

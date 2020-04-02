@@ -7,7 +7,7 @@ namespace App\Services\Repositories;
 use App\Contracts\Repositories\Services\UsageTargetServiceContract;
 use App\Contracts\Repositories\UsageTargetRepositoryContract;
 use App\Exceptions\GuidesNotFoundException;
-use App\Traits\Cache\CacheTrait;
+use Benfin\Cache\CacheTrait;
 use Illuminate\Support\Facades\Cache;
 
 class UsageTargetService implements UsageTargetServiceContract

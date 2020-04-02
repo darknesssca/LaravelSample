@@ -7,7 +7,7 @@ namespace App\Services\Repositories;
 use App\Contracts\Repositories\Services\SourceAcquisitionServiceContract;
 use App\Contracts\Repositories\SourceAcquisitionRepositoryContract;
 use App\Exceptions\GuidesNotFoundException;
-use App\Traits\Cache\CacheTrait;
+use Benfin\Cache\CacheTrait;
 use Illuminate\Support\Facades\Cache;
 
 class SourceAcquisitionService implements SourceAcquisitionServiceContract

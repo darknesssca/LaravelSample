@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 
-use App\Observers\Observer;
 use Laravel\Lumen\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -17,13 +16,7 @@ class EventServiceProvider extends ServiceProvider
 
     public function boot()
     {
-        $observer = app(Observer::class);
-        //create observers
-        $this->listen = $observer->getListeners();
-        // boot observers
-        parent::boot();
-        // handle events for observer
-        $observer->setEvents();
+
     }
 
 }
