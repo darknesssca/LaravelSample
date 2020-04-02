@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+
 use Illuminate\Database\Eloquent\Model;
 
 class CarMark extends Model
@@ -16,5 +17,4 @@ class CarMark extends Model
     {
         return $this->hasMany('App\Models\InsuranceMark','mark_id', 'id');
     }
-
 }
