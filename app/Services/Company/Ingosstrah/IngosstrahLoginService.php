@@ -12,7 +12,6 @@ class IngosstrahLoginService extends IngosstrahService implements IngosstrahLogi
     {
         $data = $this->prepareData();
         $response = $this->requestBySoap($this->apiWsdlUrl, 'Login', $data);
-        dd($response);
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(
                 'API страховой компании вернуло ошибку: ' .
