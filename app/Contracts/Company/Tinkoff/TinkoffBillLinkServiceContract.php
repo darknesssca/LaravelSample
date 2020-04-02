@@ -2,7 +2,9 @@
 
 namespace App\Contracts\Company\Tinkoff;
 
-interface TinkoffBillLinkServiceContract
+use App\Contracts\Company\CompanyMethodServiceInterface;
+
+interface TinkoffBillLinkServiceContract extends CompanyMethodServiceInterface
 {
 
 }

@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Route;
 $router->group(
     [
         'prefix' => 'v1',
-        "middleware" => "auth"
+        'middleware' => 'auth',
     ],
     function () use ($router) {
         $router->group(
@@ -38,6 +38,15 @@ $router->group(
                 $router->post('/registration/send', 'InsuranceController@store');
                 $router->post('/registration/{code}/payment', 'InsuranceController@payment');
                 $router->post('/registration/{code}/{method}', 'InsuranceController@index');
+
+                //policies
+                $router->group(['prefix' => 'policies'] , function () use ($router) {
+                    $router->get('/', 'PoliciesController@list');
+                    $router->get('/{id}', 'PoliciesController@getById');
+                    $router->post('/', 'PoliciesController@create');
+                    $router->get('statistic', 'PoliciesController@statistic');
+                });
+
 
                 //autocod
                 $router->get('autocod/check-taxi', 'AutocodController@checkTaxi'); //проверка на такси

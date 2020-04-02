@@ -2,7 +2,9 @@
 
 namespace App\Contracts\Company\Ingosstrah;
 
-interface IngosstrahCheckCreateServiceContract
+use App\Contracts\Company\CompanyMethodServiceInterface;
+
+interface IngosstrahCheckCreateServiceContract extends CompanyMethodServiceInterface
 {
 
 }

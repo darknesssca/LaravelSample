@@ -4,29 +4,41 @@
 namespace App\Services\Company\Renessans;
 
 use App\Contracts\Company\Renessans\RenessansBillLinkServiceContract;
-use App\Http\Controllers\RestController;
-use App\Models\InsuranceCompany;
+use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Exceptions\ApiRequestsException;
 
 class RenessansBillLinkService extends RenessansService implements RenessansBillLinkServiceContract
 {
     protected $apiPath = '/policy/{{policyId}}/acquiring/{{code}}/';
 
-    public function run(InsuranceCompany $company, $attributes, $additionalFields = []): array
+    public function __construct(
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
+        PolicyRepositoryContract $policyRepository
+    )
+    {
+        $this->init();
+        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+    }
+
+    public function run($company, $attributes): array
     {
         $data = [];
         $this->setAuth($data);
         $this->setUrlLinks($data);
         $this->setBillCode($attributes);
         $url = $this->getUrl($attributes);
-        $response = $this->getRequest($url, $data);
+        $response = $this->getRequest($url, $data, [], false);
         if (!$response) {
-            throw new \Exception('api not return answer');
+            throw new ApiRequestsException('API страховой компании не вернуло ответ');
         }
-        if (!$response['result']) {
-            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
-        }
-        if (!isset($response['data']['url'])) {
-            throw new \Exception('api no return url');
+        if (!$response['result'] || !(isset($response['data']['url']) && $response['data']['url'])) {
+            throw new ApiRequestsException(
+                'API страховой компании не вернуло ответ',
+                isset($response['message']) ? $response['message'] : 'нет данных об ошибке'
+            );
         }
         return [
             'billUrl' => $response['data']['url'],

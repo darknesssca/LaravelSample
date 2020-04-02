@@ -4,44 +4,59 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
-use App\Http\Controllers\SoapController;
+use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Exceptions\ApiRequestsException;
+use App\Exceptions\ConmfigurationException;
+use App\Traits\DateFormatTrait;
+use App\Traits\TransformBooleanTrait;
 
 class SoglasieScoringService extends SoglasieService implements SoglasieScoringServiceContract
 {
+    use TransformBooleanTrait, DateFormatTrait;
 
-    private $catalogPurpose = ["Личная", "Такси"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-    private $catalogTypeOfDocument = []; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-    private $catalogCatCategory = ["A", "B"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-
-    public function __construct()
+    public function __construct(
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
+        PolicyRepositoryContract $policyRepository
+    )
     {
         $this->apiWsdlUrl = config('api_sk.soglasie.scoringWsdlUrl');
         if (!($this->apiWsdlUrl)) {
-            throw new \Exception('soglasie api is not configured');
+            throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
-        parent::__construct();
+        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
     }
 
-    public function run($company, $attributes, $additionalFields = []): array
+    public function run($company, $attributes): array
     {
         $data = $this->prepareData($attributes);
         $headers = $this->getHeaders();
         $auth = $this->getAuth();
         $xmlAttributes = [
             'request' => [
-                'test' => $this->transformBoolean($this->apiIsTest),
-                'partial' => $this->transformBoolean(false),
+                'test' => $this->transformAnyToBoolean($this->apiIsTest),
+                'partial' => $this->transformAnyToBoolean(false),
             ],
         ];
         $response = $this->requestBySoap($this->apiWsdlUrl, 'getScoringId', $data, $auth, $headers, $xmlAttributes);
-        if (!$response) {
-            throw new \Exception('api not return answer');
-        }
         if (isset($response['fault']) && $response['fault']) {
-            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
+            throw new ApiRequestsException(
+                'API страховой компании вернуло ошибку: ' .
+                isset($response['message']) ? $response['message'] : ''
+            );
         }
-        if (!isset($response['response']->response->scoringid) || !$response['response']->response->scoringid) {
-            throw new \Exception('api not return scoringid');
+        if (
+            !isset($response['response']->response->scoringid) ||
+            !$response['response']->response->scoringid
+        ) {
+            throw new ApiRequestsException([
+                'API страховой компании не вернуло данных',
+                isset($response['response']->response->ErrorList->ErrorInfo->Message) ?
+                    $response['response']->response->ErrorList->ErrorInfo->Message :
+                    'нет данных об ошибке',
+            ]);
         }
         return [
             'scoringId' => $response['response']->response->scoringid,
@@ -62,7 +77,7 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
         ];
     }
 
-    public function prepareData($attributes)
+    protected function prepareData($attributes)
     {
         $data = [
             'request' => [
@@ -84,7 +99,7 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
                 'addresses' => [
                     'address' => [],
                 ],
-                "sex" => $owner['firstName'], // todo из справочника
+                "sex" => $owner['gender'], // todo из справочника
                 "note" => '',
             ];
             foreach ($owner['documents'] as $iDocument => $document) {
@@ -123,7 +138,4 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
         }
         return $data;
     }
-
-
-
 }

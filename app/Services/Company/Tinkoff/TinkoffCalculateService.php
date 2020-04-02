@@ -5,27 +5,34 @@ namespace App\Services\Company\Tinkoff;
 
 
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
-use App\Http\Controllers\SoapController;
+use App\Exceptions\ApiRequestsException;
+use App\Traits\DateFormatTrait;
+use App\Traits\TransformBooleanTrait;
 
 class TinkoffCalculateService extends TinkoffService implements TinkoffCalculateServiceContract
 {
+    use TransformBooleanTrait, DateFormatTrait;
 
-    private $catalogPurpose = ["Личная", "Такси"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-    private $catalogTypeOfDocument = []; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-    private $catalogCatCategory = ["A", "B"]; // TODO: значение из справочника, справочник нужно прогружать при валидации, будет кэшироваться
-
-    public function run($company, $attributes, $additionalFields = []): array
+    public function run($company, $attributes): array
     {
         $data = $this->prepareData($attributes);
         $response = $this->requestBySoap($this->apiWsdlUrl, 'calcPartnerFQuote', $data);
         if (isset($response['fault']) && $response['fault']) {
-            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
+            throw new ApiRequestsException(
+                'API страховой компании вернуло ошибку: ' .
+                isset($response['message']) ? $response['message'] : ''
+            );
         }
         if (!isset($response['response']->OSAGOFQ->totalPremium)) {
-            throw new \Exception('api not return premium' . isset($response['response']->Header->resultInfo->errorInfo->descr) ? ' | ' . $response['response']->Header->resultInfo->errorInfo->descr : '');
+            throw new ApiRequestsException([
+                'API страховой компании не вернуло данных',
+                isset($response['response']->Header->resultInfo->errorInfo->descr) ?
+                    $response['response']->Header->resultInfo->errorInfo->descr :
+                    'нет данных об ошибке',
+            ]);
         }
         if (isset($response['response']->OSAGOFQ->isTerminalG) && $response['response']->OSAGOFQ->isTerminalG) {
-            throw new \Exception('Выдача полиса запрещена страховой компанией');
+            throw new ApiRequestsException('Выдача полиса запрещена страховой компанией');
         }
         $data = [
             'setNumber' => $response['response']->setNumber,
@@ -34,7 +41,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
         return $data;
     }
 
-    public function prepareData($attributes)
+    protected function prepareData($attributes)
     {
         $data = [];
         $this->setHeader($data);
@@ -53,7 +60,9 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     'document' => [],
                 ],
             ];
-            $this->setValue($pSubject['subjectDetails'], 'middleName', 'middleName', $subject['fields']['middleName']);
+            $this->setValuesByArray($pSubject['subjectDetails'], [
+                'middleName' => 'middleName'
+            ], $subject['fields']['middleName']);
             foreach ($subject['fields']['addresses'] as $iAddress => $address) {
                 $pAddress = [
                     'addressType' => $address['address']['addressType'],  // TODO: справочник
@@ -78,9 +87,10 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 $pSubject['subjectDetails']['address'][] = $pAddress;
             }
             foreach ($subject['fields']['documents'] as $document) {
-                $pDocument = [];
+                $pDocument = [
+                    "documentType" => $document['document']['documentType'], // TODO: справочник
+                ];
                 $this->setValuesByArray($pDocument, [
-                    "documentType" => 'documentType',
                     "series" => 'series',
                     "number" => 'number',
                     "issuedBy" => 'issuedBy',
@@ -113,7 +123,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     'isChassisMissing' => true,
                 ],
                 'isKeyless' => false, // TODO: понять будет ли поле или заглушка
-                'isUsedWithTrailer' => $this->transformBoolean($attributes['car']['isUsedWithTrailer']),
+                'isUsedWithTrailer' => $this->transformAnyToBoolean($attributes['car']['isUsedWithTrailer']),
                 'kuzovNumber' => [
                     'isKuzovMissing' => true,
                 ],
@@ -128,7 +138,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 'vehicleUseRegion' => $attributes['car']['vehicleUseRegion'], // TODO: справочник
                 'VIN' => [
                     'isVINMissing' => false,
-                    'isIrregularVIN' => $this->transformBoolean($attributes['car']['isIrregularVIN']),
+                    'isIrregularVIN' => $this->transformAnyToBoolean($attributes['car']['isIrregularVIN']),
                     'VIN' => $attributes['car']['vin'],
                 ],
                 'year' => $attributes['car']['year'],
@@ -146,7 +156,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
         ], $attributes['car']['document']);
         //OSAGOFQ
         $data['OSAGOFQ'] = [
-            'effectiveDate' => $this->formatDateTimeZone($attributes['policy']['beginDate']),
+            'effectiveDate' => $this->dateTimeZoneFromDate($attributes['policy']['beginDate']),
             'isEOSAGO' => true,
             'insurant' => [
                 'subjectNumber' => $attributes['policy']['insurantId'],
@@ -155,7 +165,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 'subjectNumber' => $attributes['policy']['ownerId'],
             ],
             'driversList' => [
-                'isMultidrive' => $this->transformBoolean($attributes['policy']['isMultidrive']),
+                'isMultidrive' => $this->transformAnyToBoolean($attributes['policy']['isMultidrive']),
             ],
         ];
         if (!$attributes['policy']['isMultidrive']) {

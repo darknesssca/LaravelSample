@@ -4,26 +4,38 @@
 namespace App\Services\Company\Renessans;
 
 use App\Contracts\Company\Renessans\RenessansGetStatusServiceContract;
-use App\Http\Controllers\RestController;
-use App\Models\InsuranceCompany;
+use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Exceptions\ApiRequestsException;
 
 class RenessansGetStatusService extends RenessansService implements RenessansGetStatusServiceContract
 {
     protected $apiPath = '/policy/{{policyId}}/info/';
 
-    public function run(InsuranceCompany $company, $attributes, $additionalFields = []): array
+    public function __construct(
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
+        PolicyRepositoryContract $policyRepository
+    )
+    {
+        $this->init();
+        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+    }
+
+    public function run($company, $attributes): array
     {
         $data = [];
         $this->setAuth($data);
         $url = $this->getUrl($attributes);
-        $response = $this->getRequest($url, $data);
+        $response = $this->getRequest($url, $data, [], false);
         if (!$response) {
-            throw new \Exception('api not return answer');
+            throw new ApiRequestsException('API страховой компании не вернуло ответ');
         }
         if (!$response['result'] || !isset($response['data']['return']['Status'])) {
             return [
                 'result' => false,
-                'message' => isset($response['message']) ? $response['message'] : '',
+                'message' => isset($response['message']) ? $response['message'] : 'нет данных об ошибке',
                 'createStatus' => false,
                 'payStatus' => false,
                 'status' => 'error',
@@ -34,9 +46,12 @@ class RenessansGetStatusService extends RenessansService implements RenessansGet
         return [
             'result' => true,
             'status' => $response['data']['return']['Status'],
-            'createStatus' => (mb_strtolower($response['data']['return']['Status']) == 'согласован') && isset($response['data']['return']['Number']) && $response['data']['return']['Number'],
+            'createStatus' => (mb_strtolower($response['data']['return']['Status']) == 'согласован') &&
+                isset($response['data']['return']['Number']) && $response['data']['return']['Number'],
             'billId' => isset($response['data']['return']['Number']) ? $response['data']['return']['Number'] : false,
-            'payStatus' => (mb_strtolower($response['data']['return']['Status']) == 'оформлен') && (isset($response['data']['return']['StatusPay']) && mb_strtolower($response['data']['return']['StatusPay']) == 'оплачен'),
+            'payStatus' => (mb_strtolower($response['data']['return']['Status']) == 'оформлен') &&
+                (isset($response['data']['return']['StatusPay']) &&
+                mb_strtolower($response['data']['return']['StatusPay']) == 'оплачен'),
             'message' => isset($response['message']) ? $response['message'] : '',
             'policyNumber' => isset($response['data']['return']['DocNumber']) ? $response['data']['return']['DocNumber'] : false,
         ];

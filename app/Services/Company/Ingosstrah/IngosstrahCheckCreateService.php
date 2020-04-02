@@ -3,21 +3,20 @@
 namespace App\Services\Company\Ingosstrah;
 
 use App\Contracts\Company\Ingosstrah\IngosstrahCheckCreateServiceContract;
-use App\Http\Controllers\SoapController;
-use App\Services\Company\Ingosstrah\IngosstrahService;
+use App\Exceptions\ApiRequestsException;
 
 class IngosstrahCheckCreateService extends IngosstrahService implements IngosstrahCheckCreateServiceContract
 {
 
-    public function run($company, $processData, $additionalFields = []): array
+    public function run($company, $processData): array
     {
         $data = $this->prepareData($processData);
         $response = $this->requestBySoap($this->apiWsdlUrl, 'GetAgreement', $data);
-        if (!$response) {
-            throw new \Exception('api not return answer');
-        }
         if (isset($response['fault']) && $response['fault']) {
-            throw new \Exception('api return '.isset($response['message']) ? $response['message'] : 'no message');
+            throw new ApiRequestsException(
+                'API страховой компании вернуло ошибку: ' .
+                isset($response['message']) ? $response['message'] : 'нет данных об ошибке'
+            );
         }
         if (isset($response['response']->ResponseStatus->ErrorCode)) {
             switch ($response['response']->ResponseStatus->ErrorCode) {
@@ -32,11 +31,28 @@ class IngosstrahCheckCreateService extends IngosstrahService implements Ingosstr
             }
         }
         if (!isset($response['response']->ResponseData->any)) {
-            throw new \Exception('api not return xml');
+            throw new ApiRequestsException([
+                'API страховой компании не вернуло данных',
+                isset($response['response']->ResponseStatus->ErrorMessage) ?
+                    $response['response']->ResponseStatus->ErrorMessage :
+                    'нет данных об ошибке',
+            ]);
         }
-        $response['parsedResponse'] = json_decode(json_encode(simplexml_load_string($response['response']->ResponseData->any, "SimpleXMLElement", LIBXML_NOCDATA)), true);
+        $response['parsedResponse'] = json_decode(
+            json_encode(
+                simplexml_load_string(
+                    $response['response']->ResponseData->any,
+                    "SimpleXMLElement",
+                    LIBXML_NOCDATA)
+            ),
+            true);
         if (!isset($response['parsedResponse']['@attributes']['State'])) {
-            throw new \Exception('страховая компания вернула некорректный результат' . (isset($response['response']->ResponseStatus->ErrorMessage) ? ' | ' . $response['response']->ResponseStatus->ErrorMessage : ''));
+            throw new ApiRequestsException([
+                'API страховой компании не вернуло данных',
+                isset($response['response']->ResponseStatus->ErrorMessage) ?
+                    $response['response']->ResponseStatus->ErrorMessage :
+                    'нет данных об ошибке',
+            ]);
         }
         return [
             'state' => mb_strtolower($response['parsedResponse']['@attributes']['State']),
@@ -44,10 +60,13 @@ class IngosstrahCheckCreateService extends IngosstrahService implements Ingosstr
             'policySerial' => isset($response['parsedResponse']['General']['Policy']['Serial']) ? $response['parsedResponse']['General']['Policy']['Serial'] : false,
             'policyNumber' => isset($response['parsedResponse']['General']['Policy']['No']) ? $response['parsedResponse']['General']['Policy']['No'] : false,
             'isEosago' => isset($response['parsedResponse']['General']['IsEOsago']) ? $response['parsedResponse']['General']['IsEOsago'] == 'Y' : false,
+            'message' => isset($response['response']->ResponseStatus->ErrorMessage) ?
+                $response['response']->ResponseStatus->ErrorMessage :
+                'нет данных об ошибке',
         ];
     }
 
-    public function prepareData($data)
+    protected function prepareData($data)
     {
         return [
             'SessionToken' => $data['data']['sessionToken'],

@@ -4,7 +4,9 @@
 namespace App\Contracts\Company\Renessans;
 
 
-interface RenessansCreateServiceContract
+use App\Contracts\Company\CompanyMethodServiceInterface;
+
+interface RenessansCreateServiceContract extends CompanyMethodServiceInterface
 {
 
 }

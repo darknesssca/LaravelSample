@@ -14,7 +14,7 @@ class Policy extends Model
         'insurance_company_id',
         'status_id',
         'type_id',
-        'region_id',
+        'region_kladr',
         //'premium',
         //'commission_id',
         //'commission_paid',
@@ -63,24 +63,9 @@ class Policy extends Model
         return $this->belongsTo('App\Models\DocType', 'vehicle_reg_doc_type_id', 'id');
     }
 
-    public function status()
-    {
-        return $this->belongsTo('App\Models\PolicyStatus');
-    }
-
     public function type()
     {
         return $this->belongsTo('App\Models\PolicyType');
-    }
-
-    public function owner()
-    {
-        return $this->belongsTo('App\Models\DraftClient', 'client_id', 'id');
-    }
-
-    public function insurer()
-    {
-        return $this->belongsTo('App\Models\DraftClient', 'insurant_id', 'id');
     }
 
     public function regcountry()
@@ -111,64 +96,5 @@ class Policy extends Model
     public function reports()
     {
         return $this->belongsToMany('App\Models\Report', 'report_policy');
-    }
-
-    public function delete() {
-        parent::delete();
-        $this->owner()->delete();
-        $this->insurer()->delete();
-    }
-
-    public static function scopeGetDrafts($query, $agentId)
-    {
-        $draftStatusId = PolicyStatus::where('code', 'draft')->first()->id;
-        return self::with([
-            'model',
-            'model.mark',
-            'model.category',
-            'doctype',
-            'status',
-            'type',
-            'owner',
-            'owner.gender',
-            'owner.citizenship',
-            'insurer',
-            'insurer.gender',
-            'insurer.citizenship',
-            'regcountry',
-            'acquisition',
-            'usagetarget',
-            'drivers',
-        ])
-            ->where('agent_id', $agentId)
-            ->where('status_id', $draftStatusId)
-            ->get();
-    }
-
-    public static function scopeGetDraftById($query, $agentId, $id)
-    {
-        $draftStatusId = PolicyStatus::where('code', 'draft')->first()->id;
-        return self::with([
-            'model',
-            'model.mark',
-            'model.category',
-            'doctype',
-            'status',
-            'type',
-            'owner',
-            'owner.gender',
-            'owner.citizenship',
-            'insurer',
-            'insurer.gender',
-            'insurer.citizenship',
-            'regcountry',
-            'acquisition',
-            'usagetarget',
-            'drivers',
-        ])
-            ->where('agent_id', $agentId)
-            ->where('status_id', $draftStatusId)
-            ->where('id', $id)->get()
-            ->first();
     }
 }

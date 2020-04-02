@@ -3,131 +3,37 @@
 
 namespace App\Services\Company;
 
-use App\Contracts\Company\CompanyServiceContract;
-use App\Models\InsuranceCompany;
-use Benfin\Api\Contracts\AuthMicroserviceContract;
-use Benfin\Api\Contracts\LogMicroserviceContract;
+
+use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Traits\TokenTrait;
 use Benfin\Api\Contracts\NotifyMicroserviceContract;
-use Benfin\Api\Services\AuthMicroservice;
-use Benfin\Api\Services\LogMicroservice;
-use Benfin\Api\Services\NotifyMicroservice;
 use Benfin\Api\Traits\HttpRequest;
 use Benfin\Api\Traits\SoapRequest;
-use Illuminate\Support\Carbon;
-use Nowakowskir\JWT\TokenEncoded;
 
-class CompanyService implements CompanyServiceContract
+abstract class CompanyService
 {
-    use HttpRequest, SoapRequest;
+    use HttpRequest, SoapRequest, TokenTrait;
 
-    public $companyCode;
-    public $companyId;
+    const companyCode = '';
+    protected $companyId;
 
-    public function run(InsuranceCompany $company, $attributes, $additionalData): array
+    protected $intermediateDataService;
+    protected $requestProcessService;
+    protected $policyRepository;
+
+
+    public function __construct(
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
+        PolicyRepositoryContract $policyRepository
+    )
     {
-        //
+        $this->intermediateDataService = $intermediateDataService;
+        $this->requestProcessService = $requestProcessService;
+        $this->policyRepository = $policyRepository;
     }
-
-    public function validationRulesForm(): array
-    {
-        return [
-            'auth_token' => "required",
-            'draftId' => "integer",
-            'subjects' => "required|array",
-            "subjects.*.id" => "required|integer",
-            "subjects.*.fields.lastName" => "required|string",
-            "subjects.*.fields.firstName" => "required|string",
-            "subjects.*.fields.middleName" => "string",
-            "subjects.*.fields.birthdate" => "required|date|date_format:Y-m-d",
-            "subjects.*.fields.birthPlace" => "required|string",
-            "subjects.*.fields.email" => "email",
-            "subjects.*.fields.gender" => "required|string", // TODO: in справочник
-            "subjects.*.fields.citizenship" => "required|string", // TODO: in справочник
-            "subjects.*.fields.isResident" => "required|boolean", // TODO: in справочник
-            "subjects.*.fields.addresses" => "required|array",
-            "subjects.*.fields.addresses.*.address.addressType" => "required|string", // TODO: in справочник
-            "subjects.*.fields.addresses.*.address.country" => "required|string", // TODO: in справочник
-            "subjects.*.fields.addresses.*.address.postCode" => "string",
-            "subjects.*.fields.addresses.*.address.region" => "required|string", // TODO: in справочник
-            "subjects.*.fields.addresses.*.address.regionKladr" => "required|string",
-            "subjects.*.fields.addresses.*.address.district" => "required|string",
-            "subjects.*.fields.addresses.*.address.districtKladr" => "string",
-            "subjects.*.fields.addresses.*.address.city" => "string",
-            "subjects.*.fields.addresses.*.address.cityKladr" => "string",
-            "subjects.*.fields.addresses.*.address.populatedCenter" => "string",
-            "subjects.*.fields.addresses.*.address.populatedCenterKladr" => "string",
-            "subjects.*.fields.addresses.*.address.street" => "required|string",
-            "subjects.*.fields.addresses.*.address.streetKladr" => "required|string",
-            "subjects.*.fields.addresses.*.address.building" => "required|string",
-            "subjects.*.fields.addresses.*.address.buildingKladr" => "string",
-            "subjects.*.fields.addresses.*.address.flat" => "required|string",
-//            "subjects.*.fields.document" => "array",
-            "subjects.*.fields.document.*.documentType" => "required|string", // TODO: in справочник
-            "subjects.*.fields.document.*.series" => "string",
-            "subjects.*.fields.document.*.number" => "required|string",
-            "subjects.*.fields.document.*.issuedBy" => "required|string",
-            "subjects.*.fields.document.*.dateIssue" => "required|date|date_format:Y-m-d",
-            "subjects.*.fields.document.*.validTo" => "date|date_format:Y-m-d",
-            "subjects.*.fields.document.*.subdivisionCode" => "string",
-            "subjects.*.fields.phone" => "required|string",
-            'car' => "required",
-            "car.model" => "required|string", // TODO: in справочник
-            "car.maker" => "required|string", // TODO: in справочник
-            "car.enginePower" => "required|integer",
-            "car.countryOfRegistration" => "required|string", // TODO: in справочник
-            "car.isUsedWithTrailer" => "required|boolean",
-            "car.minWeight" => "integer",
-            "car.maxWeight" => "integer",
-            "car.seats" => "integer",
-            "car.mileage" => "required|integer",
-            "car.sourceAcquisition" => "required|string", // TODO: in справочник
-            "car.vehicleCost" => "required|integer",
-            "car.vehicleUsage" => "required|string", // TODO: in справочник
-            "car.vehicleUseRegion" => "required|string", // TODO: in справочник
-            "car.isIrregularVIN" => "required|boolean",
-            "car.vin" => "required|string",
-            "car.regNumber" => "string", // todo required_if если тип дока машины СТС
-            "car.year" => "required|string|min:4|max:4",
-            "car.document" => "required",
-            "car.document.documentType" => "required|string", // TODO: in справочник
-            "car.document.series" => "required|string", // TODO: in справочник
-            "car.document.number" => "required|string", // TODO: in справочник
-            "car.document.dateIssue" => "required|string", // TODO: in справочник
-            "car.inspection" => "required",
-            "car.inspection.series" => "required|string",
-            "car.inspection.number" => "required|string",
-            "car.inspection.dateIssue" => "required|date|date_format:Y-m-d",
-            "car.inspection.dateEnd" => "required|date|date_format:Y-m-d",
-            'policy' => "required",
-            'policy.beginDate' => "required|date|date_format:Y-m-d",
-            'policy.endDate' => "required|date|date_format:Y-m-d",
-            'policy.insurantId' => "required|integer",
-            'policy.ownerId' => "required|integer",
-            'policy.isMultidrive' => "required|boolean",
-            'drivers' => "required|array",
-            'drivers.*.driver' => "required",
-            'drivers.*.driver.driverId' => "integer",
-            'drivers.*.driver.drivingLicenseIssueDateOriginal' => "date|date_format:Y-m-d",
-        ];
-    }
-
-    public function validationMessagesForm(): array
-    {
-        return [];
-    }
-
-    public function validationRulesProcess(): array
-    {
-        return [
-            'token' => "required|string|min:32|max:32",
-        ];
-    }
-
-    public function validationMessagesProcess(): array
-    {
-        return [];
-    }
-
 
     /**отправка ссылки на оплату на почту
      * @param $email
@@ -138,20 +44,8 @@ class CompanyService implements CompanyServiceContract
     public function sendBillUrl($email, $billUrl)
     {
         return true; //fixme только для теста
-        /**
-         * @var NotifyMicroservice $notify
-         */
-        $notify =  app(NotifyMicroserviceContract::class);
-        $notify->sendMail($email,$billUrl,config('api_sk.notifyMicroserviceCode'));
-    }
-
-
-
-    public function setValue(&$target, $targetName, $sourceName, $source)
-    {
-        if (isset($source[$sourceName]) && $source[$sourceName]) {
-            $target[$targetName] = $source[$sourceName];
-        }
+        $notify = app(NotifyMicroserviceContract::class);
+        $notify->sendMail($email, $billUrl, config('api_sk.notifyMicroserviceCode'));
     }
 
     public function setValuesByArray(&$target, $dependencies, $source)
@@ -164,24 +58,6 @@ class CompanyService implements CompanyServiceContract
                 $target[$targetName] = $source[$sourceName];
             }
         }
-    }
-
-    protected function formatDateTimeZone($date)
-    {
-        $date = Carbon::createFromFormat('Y-m-d', $date);
-        return $date->format('Y-m-d\TH:i:sP');
-    }
-
-    protected function formatDateToRuFormat($date)
-    {
-        $date = Carbon::createFromFormat('Y-m-d', $date);
-        return $date->format('d-m-Y');
-    }
-
-    protected function formatDateTime($date)
-    {
-        $date = Carbon::createFromFormat('Y-m-d', $date);
-        return $date->format('Y-m-d\TH:i:s');
     }
 
     protected function searchDocumentByTypeAndId($attributes, $subjectId, $type)
@@ -236,6 +112,7 @@ class CompanyService implements CompanyServiceContract
             foreach ($attributes['subjects'] as $subject) {
                 if ($subject['id'] == $driver['driver']['driverId']) {
                     $driversList[$subject['id']] = $subject['fields'];
+                    $driversList[$subject['id']]['dateBeginDrive'] = $driver['driver']['drivingLicenseIssueDateOriginal'];
                 }
             }
         }
