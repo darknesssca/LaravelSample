@@ -49,14 +49,14 @@ class CarModelService implements CarModelServiceContract
         return $data->jsonSerialize();
     }
 
-    public function getCompanyModel($id, $companyId)
+    public function getCompanyModel($mark_id, $id, $companyId)
     {
         $tag = $this->getGuidesModelsTag();
         $key = $this->getCacheKey($tag, $id, $companyId);
-        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($id, $companyId){
-            return $this->carModelRepository->getCompanyModel($id, $companyId);
+        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($mark_id, $id, $companyId){
+            return $this->carModelRepository->getCompanyModel($mark_id, $id, $companyId);
         });
-        if (!$data || !$data->count()) {
+        if (!$data) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
         $codes = $data->codes;
@@ -64,12 +64,36 @@ class CarModelService implements CarModelServiceContract
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
         $category = $data->category;
-        if (!$category || !$category->count()) {
+        if (!$category) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
         return [
             'model' => $data->codes->first()->reference_model_code,
-            'category' => $data->codes->first()->code
+            'category' => $data->category->code
+        ];
+    }
+
+    public function getCompanyModelByName($mark_id, $name, $companyId)
+    {
+        $tag = $this->getGuidesModelsTag();
+        $key = $this->getCacheKey($tag, $name, $companyId);
+        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($mark_id, $name, $companyId){
+            return $this->carModelRepository->getCompanyModelByName($mark_id, $name, $companyId);
+        });
+        if (!$data) {
+            return null;
+        }
+        $codes = $data->codes;
+        if (!$codes || !$codes->count()) {
+            return null;
+        }
+        $category = $data->category;
+        if (!$category) {
+            return null;
+        }
+        return [
+            'model' => $data->codes->first()->reference_model_code,
+            'category' => $data->category->name
         ];
     }
 }

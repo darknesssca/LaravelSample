@@ -43,7 +43,7 @@ class GenderService implements GenderServiceContract
         $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($id, $companyId){
             return $this->genderRepository->getCompanyGender($id, $companyId);
         });
-        if (!$data || !$data->count()) {
+        if (!$data) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
         $codes = $data->codes;

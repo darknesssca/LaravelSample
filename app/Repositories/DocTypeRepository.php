@@ -23,4 +23,57 @@ class DocTypeRepository implements DocTypeRepositoryContract
         ])
             ->where('code', $code)->first();
     }
+
+    public function getPassportCode($isRussian)
+    {
+        $codes = $this->getDocTypeRelations();
+        if ($isRussian)
+        {
+            return isset($codes['passport']['russian']) ? $codes['passport']['russian'] : null;
+        }
+        return isset($codes['passport']['foreign']) ? $codes['passport']['foreign'] : null;
+    }
+
+    public function getLicenseCode($isRussian)
+    {
+        $codes = $this->getDocTypeRelations();
+        if ($isRussian)
+        {
+            return isset($codes['license']['russian']) ? $codes['license']['russian'] : null;
+        }
+        return isset($codes['license']['foreign']) ? $codes['license']['foreign'] : null;
+    }
+
+    public function getCarDocCode($type)
+    {
+        $codes = $this->getDocTypeRelations();
+        return isset($codes['car'][$type]) ? $codes['car'][$type] : null;
+    }
+
+    public function getInspectionCode()
+    {
+        $codes = $this->getDocTypeRelations();
+        return isset($codes['inspection']['inspection']) ? $codes['inspection']['inspection'] : null;
+    }
+
+    public function getDocTypeRelations()
+    {
+        return [
+            'passport' => [
+                'russian' => 'RussianPassport',
+                'foreign' => 'ForeignPassport',
+            ],
+            'license' => [
+                'russian' => 'DriverLicense',
+                'foreign' => 'ForeignDriverLicense',
+            ],
+            'car' => [
+                'pts' => 'pts',
+                'sts' => 'sts',
+            ],
+            'inspection' => [
+                'inspection' => 'inspection',
+            ],
+        ];
+    }
 }

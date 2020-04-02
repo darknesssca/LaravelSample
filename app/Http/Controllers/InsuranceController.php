@@ -79,8 +79,6 @@ class InsuranceController extends Controller
         return Response::success($this->runService($company, $request->toArray(), $method));
     }
 
-    // FIXME требуется рефакторинг
-
     /**
      * artisan команда обновления справочников
      */

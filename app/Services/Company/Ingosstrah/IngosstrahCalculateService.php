@@ -4,6 +4,11 @@
 namespace App\Services\Company\Ingosstrah;
 
 use App\Contracts\Company\Ingosstrah\IngosstrahCalculateServiceContract;
+use App\Contracts\Repositories\Services\CarModelServiceContract;
+use App\Contracts\Repositories\Services\CountryServiceContract;
+use App\Contracts\Repositories\Services\DocTypeServiceContract;
+use App\Contracts\Repositories\Services\GenderServiceContract;
+use App\Contracts\Repositories\Services\UsageTargetServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Traits\PrepareAddressesTrait;
 use App\Traits\DateFormatTrait;
@@ -16,7 +21,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
 
     public function run($company, $attributes): array
     {
-        $data = $this->prepareData($attributes);
+        $data = $this->prepareData($company, $attributes);
         $response = $this->requestBySoap($this->apiWsdlUrl, 'GetTariff', $data);
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(
@@ -39,14 +44,20 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
     }
 
 
-    protected function prepareData($attributes)
+    protected function prepareData($company, $attributes)
     {
+        $usageTargetService = app(UsageTargetServiceContract::class);
+        $carModelService = app(CarModelServiceContract::class);
+        $docTypeService = app(DocTypeServiceContract::class);
+        $genderService = app(GenderServiceContract::class);
+        $countryService = app(CountryServiceContract::class);
+        $carModel = $carModelService->getCompanyModelByName($attributes['car']['maker'],$attributes['car']['model'], $company->id);
         $data = [
             'SessionToken' => $attributes['sessionToken'],
             'TariffParameters' => [
                 'Agreement' => [
                     "General" => [
-                        "Product" => '753518300', //todo из справочника, вероятно статика
+                        "Product" => '753518300',
                         'DateBeg' => $this->dateTimeFromDate($attributes['policy']['beginDate']),
                         'DateEnd' => $attributes['policy']['endDate'],
 //                        "PrevAgrID" => "", //todo пролонгация
@@ -63,22 +74,23 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                         "Subject" => [],
                     ],
                     "Vehicle" => [
-                        'Model' => $attributes['car']['model'], // TODO: справочник
+                        'Model' => $carModel['model'] ? $carModel['model'] : $carModel['otherModel'],
                         'VIN' => $attributes['car']['vin'],
                         "Category" => "B", // TODO из справочника
                         "Constructed" => $this->dateFromYear($attributes['car']['year']),
                         'EnginePowerHP' => $attributes['car']['enginePower'],
                         "Document" => [],
                         "DocInspection" => [
-                            "DocType" => $attributes['car']['inspection']['documentType'],
+                            "DocType" => $docTypeService->getCompanyInspectionDocType($company->id),
                         ],
                     ],
                     "Condition" => [
                         "Liability" => [
-                            "RiskCtg" => "28966116", // TODO из справочника
-                            'UsageType' => '1381850903', // TODO из справочника
+                            "RiskCtg" => "28966116",
+                            'UsageType' => '1381850903',
                             "UsageTarget" => [
-                                $attributes['car']['vehicleUsage'] => $this->transformBooleanToChar(true), // TODO имя параметра из справочника
+                                $usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id) =>
+                                    $this->transformBooleanToChar(true),
                             ],
                             "UseWithTrailer" => $this->transformBooleanToChar($attributes['car']['isUsedWithTrailer']),
                             "PeriodList" => [
@@ -107,14 +119,16 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
             $pSubject = [
                 '_attributes' => ['SbjKey' => $subject['id']],
                 "SbjType" => 'Ф',
-                "SbjResident" => $this->transformBooleanToChar($subject['fields']['isResident']),
+                "SbjResident" => $this->transformBooleanToChar(
+                    $countryService->getCountryById($subject['fields']['citizenship'])['alpha2'] == 'RU'
+                ),
                 'FullName' => $subject['fields']['lastName'] . ' ' . $subject['fields']['firstName'] .
                     (isset($subject['fields']['middleName']) ? ' ' . $subject['fields']['middleName'] : ''),
-                "Gender" => $subject['fields']['gender'], // TODO: справочник
+                "Gender" => $genderService->getCompanyGender($subject['fields']['gender'], $company->id),
                 "BirthDate" => $subject['fields']['birthdate'],
-                "CountryCode" => $subject['fields']['citizenship'], // TODO: справочник
+                "CountryCode" => $countryService->getCountryById($subject['fields']['citizenship'])['code'],
             ];
-            $regAddress = $this->searchAddressByType($subject['fields'], 'Registered'); // TODO: справочник
+            $regAddress = $this->searchAddressByType($subject['fields'], 'registration');
             if (isset($regAddress['StreetCode']) && $regAddress['StreetCode']) {
                 $this->cutStreetKladr($regAddress['StreetCode']);
             }
@@ -122,7 +136,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                 $this->cutCityKladr($regAddress['CityCode']);
             }
             $pAddress = [
-                "CountryCode" => $subject['fields']['citizenship'], // TODO: справочник
+                "CountryCode" => $countryService->getCountryById($subject['fields']['citizenship'])['code']
             ];
             $this->setValuesByArray($pAddress, [
                 'CityCode' => 'cityKladr',
@@ -132,10 +146,10 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                 "Flat" => 'flat',
             ], $regAddress);
             $pSubject['Address'] = $pAddress;
-            $sDocument = $this->searchDocumentByType($subject['fields'], '30363316'); // todo занчение из справочника
+            $sDocument = $this->searchDocumentByType($subject['fields'], 'passport');
             if ($sDocument) {
                 $pDocument = [
-                    'DocType' => $sDocument['documentType'],  // TODO: справочник
+                    'DocType' => $docTypeService->getCompanyPassportDocType($sDocument['isRussian'], $company->id),
                 ];
                 $this->setValuesByArray($pDocument, [
                     "Serial" => 'series',
@@ -155,7 +169,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
             'RegNum' => 'regNumber',
         ], $attributes['car']);
         $data['TariffParameters']['Agreement']['Vehicle']['Document'] = [
-            'DocType' => $attributes['car']['document']['documentType'],  // TODO: справочник
+            'DocType' => $docTypeService->getCompanyCarDocType($attributes['car']['document']['documentType'], $company->id),
         ];
         $this->setValuesByArray($data['TariffParameters']['Agreement']['Vehicle']['Document'], [
             "Serial" => 'series',
@@ -177,10 +191,10 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                     'SbjRef' => $driver['driver']['driverId'],
                     'DrvDateBeg' => $driver['driver']['drivingLicenseIssueDateOriginal'],
                 ];
-                $sDocument = $this->searchDocumentByTypeAndId($attributes, $driver['driver']['driverId'], '765912000'); // todo занчение из справочника
+                $sDocument = $this->searchDocumentByTypeAndId($attributes, $driver['driver']['driverId'], 'license');
                 if ($sDocument) {
                     $pDriver['DriverLicense'] = [
-                        'DocType' => $sDocument['documentType'],  // TODO: справочник
+                        'DocType' => $docTypeService->getCompanyLicenseDocType($sDocument['documentType'], $company->id),
                     ];
                     $this->setValuesByArray($pDriver['DriverLicense'], [
                         "Serial" => 'series',

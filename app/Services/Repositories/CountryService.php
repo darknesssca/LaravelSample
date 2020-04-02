@@ -43,9 +43,9 @@ class CountryService implements CountryServiceContract
         $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($country_id) {
             return $this->countryRepository->getCountryById($country_id);
         });
-        if (!$data || !$data->count()) {
+        if (!$data) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
-        return $data->jsonSerialize();
+        return $data->toArray();
     }
 }

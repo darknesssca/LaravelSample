@@ -5,8 +5,11 @@ namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieCalculateServiceContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\CarModelServiceContract;
+use App\Contracts\Repositories\Services\CountryServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Contracts\Repositories\Services\UsageTargetServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\ConmfigurationException;
 use App\Traits\DateFormatTrait;
@@ -31,7 +34,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
 
     public function run($company, $attributes): array
     {
-        $data = $this->prepareData($attributes);
+        $data = $this->prepareData($company, $attributes);
         $headers = $this->getHeaders();
         $auth = $this->getAuth();
         $response = $this->requestBySoap($this->apiWsdlUrl, 'CalcProduct', $data, $auth, $headers);
@@ -57,17 +60,21 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         ];
     }
 
-    protected function prepareData($attributes)
+    protected function prepareData($company, $attributes)
     {
+        $usageTargetService = app(UsageTargetServiceContract::class);
+        $carModelService = app(CarModelServiceContract::class);
+        $countryService = app(CountryServiceContract::class);
+        $carModel = $carModelService->getCompanyModelByName($attributes['car']['maker'],$attributes['car']['model'], $company->id);
         $data = [
             'subuser' => $this->apiSubUser,
             'product' => [
-                'brief' => 'ОСАГО', // todo из справочника, возможно заменить на id
+                'brief' => 'ОСАГО',
             ],
             'contract' => [
                 'datebeg' => $attributes['policy']['beginDate'],
                 'dateend' => $attributes['policy']['endDate'],
-                'brief' => 'ОСАГО', // todo из справочника, возможно заменить на id
+                'brief' => 'ОСАГО',
                 'param' => [
                     [
                         'id' => 1162,
@@ -87,7 +94,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                     ],
                     [
                         'id' => 22,
-                        'val' => $attributes['car']['model'], // todo справочник
+                        'val' => $carModel['model'] ? $carModel['model'] : $carModel['otherModel'],
                     ],
                     [
                         'id' => 3,
@@ -95,11 +102,11 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                     ],
                     [
                         'id' => 1130,
-                        'val' => $this->transformBooleanToInteger(false), // todo заглушка
+                        'val' => $this->transformBooleanToInteger(false), // заглушка
                     ],
                     [
                         'id' => 849,
-                        'val' => $this->transformBooleanToInteger(false), // todo заглушка
+                        'val' => $this->transformBooleanToInteger(false), // заглушка
                     ],
 //                    [
 //                        'id' => 981,
@@ -119,7 +126,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
 //                    ],
                     [
                         'id' => 29,
-                        'val' => 8, // todo справочник
+                        'val' => 8,
                     ],
                     [
                         'id' => 964,
@@ -127,15 +134,15 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                     ],
                     [
                         'id' => 32,
-                        'val' => 1001, // todo справочник
+                        'val' => 1001,
                     ],
                     [
                         'id' => 846,
-                        'val' => $attributes['car']['vehicleUsage'], // todo справочник
+                        'val' => $usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id),
                     ],
                     [
                         'id' => 961,
-                        'val' => 1001, // todo справочник
+                        'val' => 1001,
                     ],
                     [
                         'id' => 642,
@@ -143,11 +150,13 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                     ],
                     [
                         'id' => 463,
-                        'val' => $this->transformBooleanToInteger(false), // todo заглушка
+                        'val' => $this->transformBooleanToInteger(false), // заглушка
                     ],
                     [
                         'id' => 43,
-                        'val' => $this->transformBooleanToInteger($attributes['car']['countryOfRegistration'] == 'RU'), // todo справочник
+                        'val' => $this->transformBooleanToInteger(
+                            $countryService->getCountryById($attributes['car']['countryOfRegistration'])['alpha2'] == 'RU'
+                        ),
                     ],
                 ],
             ],
@@ -167,7 +176,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                 'fio' => [],
             ];
             foreach ($drivers as $iDriver => $driver) {
-                $driverLicense = $this->searchDocumentByType($driver, 'driverLicense'); // todo значение из справочника
+                $driverLicense = $this->searchDocumentByType($driver, 'license');
                 if ($driverLicense) {
                     $properties['driverLicense'][] = (isset($driverLicense['series']) ? $driverLicense['series'] : '') . $driverLicense['number'];
                 }
@@ -229,9 +238,9 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         ];
         $data['contract']['param'][] = [
             'id' => 4024,
-            'val' => $owner['phone']['numberPhone'],
+            'val' => $owner['phone'],
         ];
-        $regAddress = $this->searchAddressByType($owner, 'registration_address');
+        $regAddress = $this->searchAddressByType($owner, 'registration');
         if ($regAddress) {
             $data['contract']['param'][] = [
                 'id' => 1122,
@@ -240,7 +249,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         }
         //insurer
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
-        $insurerPassport = $this->searchDocumentByType($insurer, 'passport'); // todo справочник
+        $insurerPassport = $this->searchDocumentByType($insurer, 'passport');
         $data['contract']['param'][] = [
             'id' => 3157,
             'val' => (isset($insurerPassport['series']) ? $insurerPassport['series'] : '') . $insurerPassport['number'],

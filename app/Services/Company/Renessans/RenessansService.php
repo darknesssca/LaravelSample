@@ -20,7 +20,8 @@ abstract class RenessansService extends CompanyService
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         RequestProcessServiceContract $requestProcessService,
-        PolicyRepositoryContract $policyRepository)
+        PolicyRepositoryContract $policyRepository
+    )
     {
         $this->apiUrl = config('api_sk.renessans.apiUrl');
         $this->secretKey = config('api_sk.renessans.apiKey');
