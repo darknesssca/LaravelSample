@@ -6,6 +6,7 @@
 namespace App\Services\Qiwi;
 
 
+use App\Contracts\Repositories\ReportRepositoryContract;
 use App\Contracts\Repositories\ReportsRepositoryContract;
 use App\Models\File;
 use App\Models\Policy;
@@ -35,9 +36,9 @@ class ReportService
     private $log_mks;
 
 
-    public function __construct()
+    public function __construct(ReportRepositoryContract $reportRepository)
     {
-        $this->reportRepository = new ReportRepository();
+        $this->reportRepository = $reportRepository;
         $this->qiwi = new Qiwi();
 
         $this->auth_mks = app(AuthMicroserviceContract::class);
