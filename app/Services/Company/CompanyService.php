@@ -8,13 +8,14 @@ use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Traits\TokenTrait;
+use App\Traits\ValueSetterTrait;
 use Benfin\Api\Contracts\NotifyMicroserviceContract;
 use Benfin\Api\Traits\HttpRequest;
 use Benfin\Api\Traits\SoapRequest;
 
 abstract class CompanyService
 {
-    use HttpRequest, SoapRequest, TokenTrait;
+    use HttpRequest, SoapRequest, TokenTrait, ValueSetterTrait;
 
     const companyCode = '';
     protected $companyId;
@@ -46,18 +47,6 @@ abstract class CompanyService
         return true; //fixme только для теста
         $notify = app(NotifyMicroserviceContract::class);
         $notify->sendMail($email, $billUrl, config('api_sk.notifyMicroserviceCode'));
-    }
-
-    public function setValuesByArray(&$target, $dependencies, $source)
-    {
-        foreach ($dependencies as $targetName => $sourceName) {
-            if (isset($source[$sourceName]) && $source[$sourceName]) {
-                if (gettype($source[$sourceName]) == 'array') {
-                    continue;
-                }
-                $target[$targetName] = $source[$sourceName];
-            }
-        }
     }
 
     protected function searchDocumentByTypeAndId($attributes, $subjectId, $type)
