@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\Company\Ingosstrah\IngosstrahGuidesSourceContract;
+use App\Contracts\Company\Renessans\RenessansGuidesSourceContract;
+use App\Contracts\Company\Soglasie\SoglasieGuidesSourceContract;
+use App\Contracts\Company\Tinkoff\TinkoffGuidesSourceContract;
 use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Http\Requests\FormSendRequest;
 use App\Http\Requests\PaymentRequest;
 use App\Http\Requests\ProcessRequest;
 use App\Models\Country;
+use App\Services\Company\CompanyService;
 use App\Services\Company\GuidesSourceTrait;
 use App\Services\Company\Ingosstrah\IngosstrahGuidesService;
 use App\Services\Company\Renessans\RenessansGuidesService;
@@ -84,20 +89,22 @@ class InsuranceController extends Controller
     /**
      * artisan команда обновления справочников
      */
-    public function refreshGuides()
+    public static function refreshGuides()
     {
-        //список объектов, реализующих интерфейс GuidesSourceInterface
+        //список объектов, реализующих интерфейс GuidesSourceContract
         $companies = [
-            new IngosstrahGuidesService(),
-            new RenessansGuidesService(),
-            new SoglasieGuidesService(),
-            new TinkoffGuidesService(),
+            app(RenessansGuidesSourceContract::class),
+            app(IngosstrahGuidesSourceContract::class),
+            app(SoglasieGuidesSourceContract::class),
+            app(TinkoffGuidesSourceContract::class),
         ];
 
-        $this->loadCountries();
+       self::loadCountries();
 
         foreach ($companies as $company) {
-            echo "Импорт марок и моделей: " . $company->companyCode . "\n";
+            /** @var CompanyService $company */
+            echo "Импорт марок и моделей: " . $company::companyCode. "\n";
+
             if (!$company->updateCarModelsGuides()) {
                 echo "!!!!!!!!!!!!!!!!!!!!!!!!ОШИБКА!!!!!!!!!!!!!!!!!!!!!!!!";
             }
@@ -110,7 +117,7 @@ class InsuranceController extends Controller
     /**
      * обновление общей таблицы стран
      */
-    private function loadCountries()
+    private static function loadCountries()
     {
         DB::transaction(function () {
             $filename = Application::getInstance()->basePath() . "/storage/import/countries.json"; //todo: сделать импорт из minio

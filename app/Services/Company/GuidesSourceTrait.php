@@ -95,7 +95,6 @@ trait GuidesSourceTrait
         DB::beginTransaction(); //начало транзакции
 
         try {
-
             //МАРКИ
             //добавление в общие таблицы
             $mark_com = CarMark::updateOrCreate([
@@ -147,6 +146,7 @@ trait GuidesSourceTrait
                 );
             }
         } catch (\Exception $ex) {
+            dd($ex);
             DB::rollBack(); //откат транзакции, если что-то случилось
             throw $ex;
         }

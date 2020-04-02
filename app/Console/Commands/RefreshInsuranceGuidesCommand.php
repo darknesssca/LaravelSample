@@ -42,8 +42,7 @@ class RefreshInsuranceGuidesCommand extends Command
     {
         echo "----Начало обновления справочников----\n";
         //модели и марки машин
-        $controller = new InsuranceController();
-        $controller->refreshGuides();
+       InsuranceController::refreshGuides();
 
         echo "----Конец обновления справочников----\n";
     }

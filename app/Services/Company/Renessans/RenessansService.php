@@ -12,7 +12,7 @@ use App\Services\Company\CompanyService;
 
 abstract class RenessansService extends CompanyService
 {
-    const companyCode = 'renessans';
+    public const companyCode = 'renessans';
 
     protected $apiUrl;
     protected $secretKey;
