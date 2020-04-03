@@ -92,7 +92,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
                 'YearIssue' => $attributes['car']['year'],
                 'DocumentCar' => [],
                 'TicketCar' => [
-                    'TypeRSA' => $docTypeService->getCompanyInspectionDocType($company->id),
+                    'TypeRSA' => $docTypeService->getCompanyInspectionDocType3(true, $company->id),
                     'Number' => $attributes['car']['inspection']['number'],
                     'Date' => $attributes['car']['inspection']['dateIssue'],
                 ],
@@ -151,7 +151,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         ], $attributes['car']['inspection']);
         //car.documents
         $data['CarInfo']['DocumentCar'] = [
-            'TypeRSA' => $docTypeService->getCompanyCarDocType($attributes['car']['document']['documentType'], $company->id),
+            'TypeRSA' => $docTypeService->getCompanyCarDocType3($attributes['car']['document']['documentType'], $company->id),
             'IsPrimary' => true,
         ];
         $this->setValuesByArray($data['CarInfo']['DocumentCar'], [
@@ -190,7 +190,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         $documents = [];
         foreach ($subject['documents'] as $document) {
             $pDocument = [
-                'TypeRSA' => $docTypeService->getCompanyDocTypeByRelation($document['document']['documentType'], $document['document']['isRussian'], $company->id),
+                'TypeRSA' => $docTypeService->getCompanyDocTypeByRelation3($document['document']['documentType'], $document['document']['isRussian'], $company->id),
                 'Number' => $document['document']['number'],
                 'Date' => $document['document']['dateIssue'],
                 'Exit' => $document['document']['issuedBy'],
@@ -210,7 +210,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         $documents = [];
         foreach ($subject['documents'] as $document) {
             $pDocument = [
-                'TypeRSA' => $docTypeService->getCompanyDocTypeByRelation($document['document']['documentType'], $document['document']['isRussian'], $company->id),
+                'TypeRSA' => $docTypeService->getCompanyDocTypeByRelation3($document['document']['documentType'], $document['document']['isRussian'], $company->id),
                 'Number' => $document['document']['number'],
             ];
             $this->setValuesByArray($pDocument, [

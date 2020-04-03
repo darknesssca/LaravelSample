@@ -5,6 +5,7 @@ namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieCalculateServiceContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\CarCategoryServiceContract;
 use App\Contracts\Repositories\Services\CarModelServiceContract;
 use App\Contracts\Repositories\Services\CountryServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
@@ -65,6 +66,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         $usageTargetService = app(UsageTargetServiceContract::class);
         $carModelService = app(CarModelServiceContract::class);
         $countryService = app(CountryServiceContract::class);
+        $categoryService = app(CarCategoryServiceContract::class);
         $carModel = $carModelService->getCompanyModelByName($attributes['car']['maker'],$attributes['car']['model'], $company->id);
         $data = [
             'subuser' => $this->apiSubUser,
@@ -146,7 +148,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                     ],
                     [
                         'id' => 642,
-                        'val' => 2, // todo справочник
+                        'val' => $categoryService->getCompanyCategory($attributes['car']['category'], $attributes['car']['isUsedWithTrailer'], $company->code),
                     ],
                     [
                         'id' => 463,

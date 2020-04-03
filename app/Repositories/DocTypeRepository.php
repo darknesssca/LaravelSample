@@ -50,10 +50,14 @@ class DocTypeRepository implements DocTypeRepositoryContract
         return isset($codes['car'][$type]) ? $codes['car'][$type] : null;
     }
 
-    public function getInspectionCode()
+    public function getInspectionCode($isRussian)
     {
         $codes = $this->getDocTypeRelations();
-        return isset($codes['inspection']['inspection']) ? $codes['inspection']['inspection'] : null;
+        if ($isRussian)
+        {
+            return isset($codes['inspection']['russian']) ? $codes['inspection']['russian'] : null;
+        }
+        return isset($codes['inspection']['foreign']) ? $codes['inspection']['foreign'] : null;
     }
 
     public function getDocTypeRelations()
@@ -72,7 +76,8 @@ class DocTypeRepository implements DocTypeRepositoryContract
                 'sts' => 'sts',
             ],
             'inspection' => [
-                'inspection' => 'inspection',
+                'russian' => 'Inspection',
+                'foreign' => 'ForeignInspection',
             ],
         ];
     }

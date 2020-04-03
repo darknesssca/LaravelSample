@@ -5,6 +5,7 @@ namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\DocTypeServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Exceptions\ApiRequestsException;
@@ -31,7 +32,7 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
 
     public function run($company, $attributes): array
     {
-        $data = $this->prepareData($attributes);
+        $data = $this->prepareData($company, $attributes);
         $headers = $this->getHeaders();
         $auth = $this->getAuth();
         $response = $this->requestBySoap($this->apiWsdlUrl, 'getKbm', $data, $auth, $headers);
@@ -68,8 +69,9 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
         ];
     }
 
-    protected function prepareData($attributes)
+    protected function prepareData($company, $attributes)
     {
+        $docTypeService = app(DocTypeServiceContract::class);
         $data = [
             'request' => [
                 'CalcRequestValue' => [
@@ -92,8 +94,8 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
         $pSubject = [];
         foreach ($owner['documents'] as $iDocument => $document) {
             $pDocument = [];
-            if ($document['document']['documentType'] != 'driverLicense') {
-                $pDocument['DocPerson'] = 20; //$document['document']['documentType'];  // TODO: справочник, ВАЖНО тут передается тоже driveLicense
+            if ($document['document']['documentType'] == 'passport') {
+                $pDocument['DocPerson'] = $docTypeService->getCompanyDocTypeByRelation2($document['document']['documentType'], $document['document']['isRussian'], $company->id);
             }
             $this->setValuesByArray($pDocument, [
                 "Serial" => 'series',
@@ -101,10 +103,10 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
             ], $document['document']);
             $targetName = '';
             switch ($document['document']['documentType']) {
-                case 'driverLicense': // TODO: справочник
+                case 'license':
                     $targetName = 'DriverDocument';
                     break;
-                case 'passport': // TODO: справочник
+                case 'passport':
                     $targetName = 'PersonDocument';
                     break;
                 default:

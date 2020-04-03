@@ -155,6 +155,8 @@ class CreateCarInsuranceDataTables extends Migration
             $table->unsignedInteger('doctype_id');
             $table->unsignedInteger('insurance_company_id');
             $table->string('reference_doctype_code');
+            $table->string('reference_doctype_code2');
+            $table->string('reference_doctype_code3');
             $table->timestamps();
 
             $table->foreign('doctype_id')->references('id')->on('doc_types')->onDelete('cascade');
@@ -216,7 +218,6 @@ class CreateCarInsuranceDataTables extends Migration
     {
         Schema::dropIfExists('car_categories');
     }
-
 
     // модель автомобиля
     private function upCarModels()

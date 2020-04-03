@@ -81,7 +81,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                         'EnginePowerHP' => $attributes['car']['enginePower'],
                         "Document" => [],
                         "DocInspection" => [
-                            "DocType" => $docTypeService->getCompanyInspectionDocType($company->id),
+                            "DocType" => $docTypeService->getCompanyInspectionDocType(true, $company->id),
                         ],
                     ],
                     "Condition" => [

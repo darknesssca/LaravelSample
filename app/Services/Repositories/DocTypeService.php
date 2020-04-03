@@ -53,20 +53,65 @@ class DocTypeService implements DocTypeServiceContract
         return $data->codes->first()->reference_doctype_code;
     }
 
-    public function getCompanyPassportDocType($isRussian, $companyId)
+    public function getCompanyDocTypeByCode2($code, $companyId)
     {
-        $code = $this->docTypeRepository->getPassportCode($isRussian);
-        if (!$code) {
-            throw new GuidesNotFoundException('Не найдены данные в справочнике');
-        }
         $tag = $this->getGuidesDocTypesTag();
-        $key = $this->getCacheKey($tag, $code, $companyId);
+        $key = $this->getCacheKey($tag, $code, 'alter' ,$companyId);
         $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($code, $companyId){
             return $this->docTypeRepository->getCompanyDocTypeByCode($code, $companyId);
         });
         if (!$data) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
+        $codes = $data->codes;
+        if (!$codes || !$codes->count()) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        return $data->codes->first()->reference_doctype_code2;
+    }
+
+    public function getCompanyDocTypeByCode3($code, $companyId)
+    {
+        $tag = $this->getGuidesDocTypesTag();
+        $key = $this->getCacheKey($tag, $code, 'alter2' ,$companyId);
+        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($code, $companyId){
+            return $this->docTypeRepository->getCompanyDocTypeByCode($code, $companyId);
+        });
+        if (!$data) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        $codes = $data->codes;
+        if (!$codes || !$codes->count()) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        return $data->codes->first()->reference_doctype_code3;
+    }
+
+    public function getCompanyPassportDocType($isRussian, $companyId)
+    {
+        $code = $this->docTypeRepository->getPassportCode($isRussian);
+        if (!$code) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        return $this->getCompanyDocTypeByCode($code, $companyId);
+    }
+
+    public function getCompanyPassportDocType2($isRussian, $companyId)
+    {
+        $code = $this->docTypeRepository->getPassportCode($isRussian);
+        if (!$code) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        return $this->getCompanyDocTypeByCode2($code, $companyId);
+    }
+
+    public function getCompanyPassportDocType3($isRussian, $companyId)
+    {
+        $code = $this->docTypeRepository->getPassportCode($isRussian);
+        if (!$code) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        return $this->getCompanyDocTypeByCode3($code, $companyId);
     }
 
     public function getCompanyLicenseDocType($isRussian, $companyId)
@@ -75,14 +120,25 @@ class DocTypeService implements DocTypeServiceContract
         if (!$code) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
-        $tag = $this->getGuidesDocTypesTag();
-        $key = $this->getCacheKey($tag, $code, $companyId);
-        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($code, $companyId){
-            return $this->docTypeRepository->getCompanyDocTypeByCode($code, $companyId);
-        });
-        if (!$data) {
+        return $this->docTypeRepository->getCompanyDocTypeByCode($code, $companyId);
+    }
+
+    public function getCompanyLicenseDocType2($isRussian, $companyId)
+    {
+        $code = $this->docTypeRepository->getLicenseCode($isRussian);
+        if (!$code) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
+        return $this->getCompanyDocTypeByCode2($code, $companyId);
+    }
+
+    public function getCompanyLicenseDocType3($isRussian, $companyId)
+    {
+        $code = $this->docTypeRepository->getLicenseCode($isRussian);
+        if (!$code) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        return $this->getCompanyDocTypeByCode3($code, $companyId);
     }
 
     public function getCompanyCarDocType($type, $companyId)
@@ -91,30 +147,52 @@ class DocTypeService implements DocTypeServiceContract
         if (!$code) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
-        $tag = $this->getGuidesDocTypesTag();
-        $key = $this->getCacheKey($tag, $code, $companyId);
-        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($code, $companyId){
-            return $this->docTypeRepository->getCompanyDocTypeByCode($code, $companyId);
-        });
-        if (!$data) {
-            throw new GuidesNotFoundException('Не найдены данные в справочнике');
-        }
+        return $this->getCompanyDocTypeByCode($code, $companyId);
     }
 
-    public function getCompanyInspectionDocType($companyId)
+    public function getCompanyCarDocType2($type, $companyId)
     {
-        $code = $this->docTypeRepository->getInspectionCode();
+        $code = $this->docTypeRepository->getCarDocCode($type);
         if (!$code) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
-        $tag = $this->getGuidesDocTypesTag();
-        $key = $this->getCacheKey($tag, $code, $companyId);
-        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($code, $companyId){
-            return $this->docTypeRepository->getCompanyDocTypeByCode($code, $companyId);
-        });
-        if (!$data) {
+        return $this->getCompanyDocTypeByCode2($code, $companyId);
+    }
+
+    public function getCompanyCarDocType3($type, $companyId)
+    {
+        $code = $this->docTypeRepository->getCarDocCode($type);
+        if (!$code) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
+        return $this->getCompanyDocTypeByCode3($code, $companyId);
+    }
+
+    public function getCompanyInspectionDocType($isRussian, $companyId)
+    {
+        $code = $this->docTypeRepository->getInspectionCode($isRussian);
+        if (!$code) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        return $this->getCompanyDocTypeByCode($code, $companyId);
+    }
+
+    public function getCompanyInspectionDocType2($isRussian, $companyId)
+    {
+        $code = $this->docTypeRepository->getInspectionCode($isRussian);
+        if (!$code) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        return $this->getCompanyDocTypeByCode2($code, $companyId);
+    }
+
+    public function getCompanyInspectionDocType3($isRussian, $companyId)
+    {
+        $code = $this->docTypeRepository->getInspectionCode($isRussian);
+        if (!$code) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        return $this->getCompanyDocTypeByCode3($code, $companyId);
     }
 
     public function getCompanyDocTypeByRelation($relationCode, $type, $companyId)
@@ -127,7 +205,39 @@ class DocTypeService implements DocTypeServiceContract
             case 'car':
                 return $this->getCompanyCarDocType($type, $companyId);
             case 'inspection':
-                return $this->getCompanyInspectionDocType($companyId);
+                return $this->getCompanyInspectionDocType($type, $companyId);
+            default:
+                throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+    }
+
+    public function getCompanyDocTypeByRelation2($relationCode, $type, $companyId)
+    {
+        switch ($relationCode) {
+            case 'passport':
+                return $this->getCompanyPassportDocType2($type, $companyId);
+            case 'license':
+                return $this->getCompanyLicenseDocType2($type, $companyId);
+            case 'car':
+                return $this->getCompanyCarDocType2($type, $companyId);
+            case 'inspection':
+                return $this->getCompanyInspectionDocType2($companyId);
+            default:
+                throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+    }
+
+    public function getCompanyDocTypeByRelation3($relationCode, $type, $companyId)
+    {
+        switch ($relationCode) {
+            case 'passport':
+                return $this->getCompanyPassportDocType3($type, $companyId);
+            case 'license':
+                return $this->getCompanyLicenseDocType3($type, $companyId);
+            case 'car':
+                return $this->getCompanyCarDocType3($type, $companyId);
+            case 'inspection':
+                return $this->getCompanyInspectionDocType3($type, $companyId);
             default:
                 throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }

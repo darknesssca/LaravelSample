@@ -11,6 +11,6 @@ interface DocTypeRepositoryContract
     public function getPassportCode($isRussian);
     public function getLicenseCode($isRussian);
     public function getCarDocCode($type);
-    public function getInspectionCode();
+    public function getInspectionCode($isRussian);
     public function getDocTypeRelations();
 }

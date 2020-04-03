@@ -5,10 +5,14 @@ namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\CountryServiceContract;
+use App\Contracts\Repositories\Services\DocTypeServiceContract;
+use App\Contracts\Repositories\Services\GenderServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\ConmfigurationException;
+use App\Services\Repositories\AddressTypeService;
 use App\Traits\DateFormatTrait;
 use App\Traits\TransformBooleanTrait;
 
@@ -31,7 +35,7 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
 
     public function run($company, $attributes): array
     {
-        $data = $this->prepareData($attributes);
+        $data = $this->prepareData($company, $attributes);
         $headers = $this->getHeaders();
         $auth = $this->getAuth();
         $xmlAttributes = [
@@ -77,8 +81,12 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
         ];
     }
 
-    protected function prepareData($attributes)
+    protected function prepareData($company, $attributes)
     {
+        $countryService = app(CountryServiceContract::class);
+        $docTypeService = app(DocTypeServiceContract::class);
+        $genderService = app(GenderServiceContract::class);
+        $addressTypeService = app(AddressTypeService::class);
         $data = [
             'request' => [
                 'private' => [],
@@ -99,12 +107,12 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
                 'addresses' => [
                     'address' => [],
                 ],
-                "sex" => $owner['gender'], // todo из справочника
+                "sex" => $genderService->getCompanyGender($owner['gender'], $company->id),
                 "note" => '',
             ];
             foreach ($owner['documents'] as $iDocument => $document) {
                 $pDocument = [
-                    'doctype' => $document['document']['documentType'],  // TODO: справочник
+                    'doctype' => $docTypeService->getCompanyDocTypeByRelation2($document['document']['documentType'], $document['document']['isRussian'], $company->id),
                     'docseria' => isset($document['document']['documentType']) ? $document['document']['documentType'] : '',
                 ];
                 $this->setValuesByArray($pDocument, [
@@ -116,8 +124,9 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
             }
             foreach ($owner['addresses'] as $iAddress => $address) {
                 $pAddress = [
-                    'type' => $address['address']['addressType'] , // TODO: справочник
-                    'address' => $address['address']['country'] . ', ' . $address['address']['region'] . ', ' .
+                    'type' => $addressTypeService->getCompanyAddressType($address['address']['addressType'], $company->code),
+                    'address' => $countryService->getCountryById($address['address']['country'])['name'] . ', ' .
+                        $address['address']['region'] . ', ' .
                         $address['address']['district'] . ', ' .
                         (isset($address['address']['city']) ? $address['address']['city'] : $address['address']['populatedCenter']) . ', ' .
                         $address['address']['street'] . ', ' .
@@ -125,10 +134,10 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
                         $address['address']['flat'],
                     'city' => isset($address['address']['city']) ? $address['address']['city'] : $address['address']['populatedCenter'],
                     'street' => $address['address']['street'],
-                    'house' => $address['address']['building'],
-                    'flat' => $address['address']['flat'],
                 ];
                 $this->setValuesByArray($pAddress, [
+                    "house" => 'building',
+                    "flat" => 'flat',
                     "index" => 'postCode',
                     "region" => 'region',
                     "zone" => 'district',
