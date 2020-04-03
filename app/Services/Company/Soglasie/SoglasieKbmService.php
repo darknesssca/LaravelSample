@@ -101,19 +101,16 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
                 "Serial" => 'series',
                 "Number" => 'number',
             ], $document['document']);
-            $targetName = '';
             switch ($document['document']['documentType']) {
                 case 'license':
-                    $targetName = 'DriverDocument';
+                    $pSubject['DriverDocument'] = $pDocument;
                     break;
                 case 'passport':
-                    $targetName = 'PersonDocument';
+                    $pSubject['PersonDocument'] = $pDocument;
                     break;
                 default:
-                    $targetName = 'PersonDocumentAdd';
                     break;
             }
-            $pSubject[$targetName] = $pDocument;
             $pSubject['PersonNameBirthHash'] = '### '.
                 $owner['lastName'] . '|'.
                 $owner['firstName'] . '|'.

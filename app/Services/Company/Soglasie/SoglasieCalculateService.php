@@ -50,12 +50,23 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
             !isset($response['response']->data->contract->result) ||
             !$response['response']->data->contract->result
         ) {
-            throw new ApiRequestsException([
+            $messages = [
                 'API страховой компании не вернуло данных',
-                isset($response['response']->response->ErrorList->ErrorInfo->Message) ?
-                    $response['response']->response->ErrorList->ErrorInfo->Message :
-                    'нет данных об ошибке',
-            ]);
+            ];
+            if (isset($response['response']->response->ErrorList->ErrorInfo->Message)) {
+                $messages[] = $response['response']->response->ErrorList->ErrorInfo->Message;
+            }
+            if (isset($response['response']->data->contract->error) && (gettype($response['response']->data->contract->error) == 'array')) {
+                foreach ($response['response']->data->contract->error as $error) {
+                    $errorType = isset($error->level) ? strtolower($error->level) : 'default';
+                    if (($errorType == 'error') || ($errorType == 'warning')) {
+                        $messages[] = $error->_;
+                    }
+                }
+            } else {
+                $messages[] = 'нет данных об ошибке';
+            }
+            throw new ApiRequestsException($messages);
         }
         return [
             'premium' => $response['response']->data->contract->result,
