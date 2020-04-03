@@ -417,12 +417,53 @@ class PolicySeeder extends Seeder
 
     protected static $usageTarget = [
         [
-            'code' => 'person',
-            'name' => 'лично',
+            'code' => 'personal',
+            'name' => 'Личная',
+        ],
+        [
+            'code' => 'taxi',
+            'name' => 'Такси',
+        ],
+        [
+            'code' => 'rent',
+            'name' => 'Сдача в аренду',
+        ],
+        [
+            'code' => 'training',
+            'name' => 'Учебная езда',
+        ],
+        [
+            'code' => 'dangerous',
+            'name' => 'Перевозка опасных и легковоспламеняющихся грузов',
+        ],
+        [
+            'code' => 'passenger',
+            'name' => 'Пассажирские перевозки',
+        ],
+        [
+            'code' => 'emergency',
+            'name' => 'Экстренные и коммунальные службы',
+        ],
+        [
+            'code' => 'road',
+            'name' => 'Дорожные и специальные ТС',
+        ],
+        [
+            'code' => 'collection',
+            'name' => 'Инкассация',
+        ],
+        [
+            'code' => 'ambulance',
+            'name' => 'Скорая помощь',
+        ],
+        [
+            'code' => 'other',
+            'name' => 'Прочее',
         ],
     ];
 
     protected static $insuranceUsageTarget = [
+        // Личная
         [
             'target_id' => 1,
             'insurance_company_id' => 1,
@@ -431,7 +472,7 @@ class PolicySeeder extends Seeder
         [
             'target_id' => 1,
             'insurance_company_id' => 2,
-            'reference_usage_target_code' => 'PURCHASED_FROM_PERSON',
+            'reference_usage_target_code' => 'Personal',
         ],
         [
             'target_id' => 1,
@@ -442,6 +483,216 @@ class PolicySeeder extends Seeder
             'target_id' => 1,
             'insurance_company_id' => 4,
             'reference_usage_target_code' => 'personal',
+        ],
+        // Такси
+        [
+            'target_id' => 2,
+            'insurance_company_id' => 1,
+            'reference_usage_target_code' => 'Такси',
+        ],
+        [
+            'target_id' => 2,
+            'insurance_company_id' => 2,
+            'reference_usage_target_code' => 'Taxi',
+        ],
+        [
+            'target_id' => 2,
+            'insurance_company_id' => 3,
+            'reference_usage_target_code' => '5',
+        ],
+        [
+            'target_id' => 2,
+            'insurance_company_id' => 4,
+            'reference_usage_target_code' => 'taxi',
+        ],
+        // Сдача в аренду
+        [
+            'target_id' => 3,
+            'insurance_company_id' => 1,
+            'reference_usage_target_code' => 'СдачаВАренду',
+        ],
+        [
+            'target_id' => 3,
+            'insurance_company_id' => 2,
+            'reference_usage_target_code' => 'Rent',
+        ],
+        [
+            'target_id' => 3,
+            'insurance_company_id' => 3,
+            'reference_usage_target_code' => '11',
+        ],
+        [
+            'target_id' => 3,
+            'insurance_company_id' => 4,
+            'reference_usage_target_code' => 'rental',
+        ],
+        // Учебная езда
+        [
+            'target_id' => 4,
+            'insurance_company_id' => 1,
+            'reference_usage_target_code' => 'УчебнаяЕзда',
+        ],
+        [
+            'target_id' => 4,
+            'insurance_company_id' => 2,
+            'reference_usage_target_code' => 'RidingTraining',
+        ],
+        [
+            'target_id' => 4,
+            'insurance_company_id' => 3,
+            'reference_usage_target_code' => '2',
+        ],
+        [
+            'target_id' => 4,
+            'insurance_company_id' => 4,
+            'reference_usage_target_code' => 'training_driving',
+        ],
+        // Перевозка опасных и легковоспламеняющихся грузов
+        [
+            'target_id' => 5,
+            'insurance_company_id' => 1,
+            'reference_usage_target_code' => 'ОпасныйГруз',
+        ],
+        [
+            'target_id' => 5,
+            'insurance_company_id' => 2,
+            'reference_usage_target_code' => 'DangerousCargo',
+        ],
+        [
+            'target_id' => 5,
+            'insurance_company_id' => 3,
+            'reference_usage_target_code' => '10',
+        ],
+        [
+            'target_id' => 5,
+            'insurance_company_id' => 4,
+            'reference_usage_target_code' => 'dangerous_goods',
+        ],
+        // Пассажирские перевозки
+        [
+            'target_id' => 6,
+            'insurance_company_id' => 1,
+            'reference_usage_target_code' => 'ПассажирскиеПеревозки',
+        ],
+        [
+            'target_id' => 6,
+            'insurance_company_id' => 2,
+            'reference_usage_target_code' => 'PassengerService',
+        ],
+        [
+            'target_id' => 6,
+            'insurance_company_id' => 3,
+            'reference_usage_target_code' => '12',
+        ],
+        [
+            'target_id' => 6,
+            'insurance_company_id' => 4,
+            'reference_usage_target_code' => 'passenger_transportation',
+        ],
+        // Экстренные и коммунальные службы
+        [
+            'target_id' => 7,
+            'insurance_company_id' => 1,
+            'reference_usage_target_code' => 'ЭкстренныеИКоммСлужбы',
+        ],
+        [
+            'target_id' => 7,
+            'insurance_company_id' => 2,
+            'reference_usage_target_code' => 'Emergency',
+        ],
+        [
+            'target_id' => 7,
+            'insurance_company_id' => 3,
+            'reference_usage_target_code' => '13',
+        ],
+        [
+            'target_id' => 7,
+            'insurance_company_id' => 4,
+            'reference_usage_target_code' => 'emergency_services',
+        ],
+        // Дорожные и специальные ТС
+        [
+            'target_id' => 8,
+            'insurance_company_id' => 1,
+            'reference_usage_target_code' => 'ДорожныеИСпециальныеТС',
+        ],
+        [
+            'target_id' => 8,
+            'insurance_company_id' => 2,
+            'reference_usage_target_code' => 'RoadVehicles',
+        ],
+        [
+            'target_id' => 8,
+            'insurance_company_id' => 3,
+            'reference_usage_target_code' => '6',
+        ],
+        [
+            'target_id' => 8,
+            'insurance_company_id' => 4,
+            'reference_usage_target_code' => 'road_and_special_vehicles',
+        ],
+        // Инкассация
+        [
+            'target_id' => 9,
+            'insurance_company_id' => 1,
+            'reference_usage_target_code' => 'Прочее',
+        ],
+        [
+            'target_id' => 9,
+            'insurance_company_id' => 2,
+            'reference_usage_target_code' => 'Others',
+        ],
+        [
+            'target_id' => 9,
+            'insurance_company_id' => 3,
+            'reference_usage_target_code' => '3',
+        ],
+        [
+            'target_id' => 9,
+            'insurance_company_id' => 4,
+            'reference_usage_target_code' => 'other',
+        ],
+        // Скорая помощь
+        [
+            'target_id' => 10,
+            'insurance_company_id' => 1,
+            'reference_usage_target_code' => 'ЭкстренныеИКоммСлужбы',
+        ],
+        [
+            'target_id' => 10,
+            'insurance_company_id' => 2,
+            'reference_usage_target_code' => 'Emergency',
+        ],
+        [
+            'target_id' => 10,
+            'insurance_company_id' => 3,
+            'reference_usage_target_code' => '4',
+        ],
+        [
+            'target_id' => 10,
+            'insurance_company_id' => 4,
+            'reference_usage_target_code' => 'emergency_services',
+        ],
+        // Прочее
+        [
+            'target_id' => 11,
+            'insurance_company_id' => 1,
+            'reference_usage_target_code' => 'Прочее',
+        ],
+        [
+            'target_id' => 11,
+            'insurance_company_id' => 2,
+            'reference_usage_target_code' => 'Others',
+        ],
+        [
+            'target_id' => 11,
+            'insurance_company_id' => 3,
+            'reference_usage_target_code' => '9',
+        ],
+        [
+            'target_id' => 11,
+            'insurance_company_id' => 4,
+            'reference_usage_target_code' => 'other',
         ],
     ];
 
