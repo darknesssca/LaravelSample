@@ -80,7 +80,7 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             'car' => [
                 'make' => $carMarkService->getCompanyMark($attributes['car']['maker'], $company->id),
                 'model' => $carModel['model'] ? $carModel['model'] : $carModel['otherModel'],
-                'MarkAndModelString' => $carMarkService->getCompanyMark($attributes['car']['maker'], $company->id) .
+                'MarkAndModelString' => $carMarkService->getCarMarkName($attributes['car']['maker']) .
                     ' ' . $attributes['car']['model'],
                 'category' => $carModel['category'],
                 'power' => $attributes['car']['enginePower'],

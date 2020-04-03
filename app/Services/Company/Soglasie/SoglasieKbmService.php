@@ -95,7 +95,7 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
         foreach ($owner['documents'] as $iDocument => $document) {
             $pDocument = [];
             if ($document['document']['documentType'] == 'passport') {
-                $pDocument['DocPerson'] = $docTypeService->getCompanyDocTypeByRelation2($document['document']['documentType'], $document['document']['isRussian'], $company->id);
+                $pDocument['DocPerson'] = $docTypeService->getCompanyPassportDocType2($document['document']['isRussian'], $company->id);
             }
             $this->setValuesByArray($pDocument, [
                 "Serial" => 'series',

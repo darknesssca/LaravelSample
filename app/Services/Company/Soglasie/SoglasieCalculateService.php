@@ -8,6 +8,7 @@ use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\CarCategoryServiceContract;
 use App\Contracts\Repositories\Services\CarModelServiceContract;
 use App\Contracts\Repositories\Services\CountryServiceContract;
+use App\Contracts\Repositories\Services\GenderServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Contracts\Repositories\Services\UsageTargetServiceContract;
@@ -67,6 +68,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         $carModelService = app(CarModelServiceContract::class);
         $countryService = app(CountryServiceContract::class);
         $categoryService = app(CarCategoryServiceContract::class);
+        $genderService = app(GenderServiceContract::class);
         $carModel = $carModelService->getCompanyModelByName($attributes['car']['maker'],$attributes['car']['model'], $company->id);
         $data = [
             'subuser' => $this->apiSubUser,
@@ -236,7 +238,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         ];
         $data['contract']['param'][] = [
             'id' => 4763,
-            'val' => $owner['gender'],
+            'val' =>  $genderService->getCompanyGender($owner['gender'], $company->id),
         ];
         $data['contract']['param'][] = [
             'id' => 4024,
@@ -276,7 +278,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         ];
         $data['contract']['param'][] = [
             'id' => 4764,
-            'val' => $owner['gender'],
+            'val' =>  $genderService->getCompanyGender($owner['gender'], $company->id),
         ];
         $data = [
             'data' => $data,

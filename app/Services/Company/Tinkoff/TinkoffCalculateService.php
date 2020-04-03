@@ -136,7 +136,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 'isChangeNumAgg' => false, // заглушка
                 'countryOfRegistration' => [
                     'isNoCountryOfRegistration' => false,
-                    'countryOfRegistration' => $attributes['car']['countryOfRegistration']
+                    'countryOfRegistration' => $countryService->getCountryById($attributes['car']['countryOfRegistration'])['alpha2'],
                 ],
                 'chassis' => [
                     'isChassisMissing' => true,

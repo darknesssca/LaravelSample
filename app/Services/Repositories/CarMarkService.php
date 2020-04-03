@@ -36,6 +36,19 @@ class CarMarkService implements CarMarkServiceContract
         return $data->jsonSerialize();
     }
 
+    public function getCarMarkName($id)
+    {
+        $tag = $this->getGuidesMarksTag();
+        $key = $this->getCacheKey($tag, $id, 'markName');
+        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($id){
+            return $this->carMarkRepository->getCarMarkById($id);
+        });
+        if (!$data) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        return $data->name;
+    }
+
     public function getCompanyMark($id, $companyId)
     {
         $tag = $this->getGuidesMarksTag();

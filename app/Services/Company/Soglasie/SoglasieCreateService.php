@@ -6,6 +6,7 @@ namespace App\Services\Company\Soglasie;
 use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\CarMarkServiceContract;
+use App\Contracts\Repositories\Services\CarModelServiceContract;
 use App\Contracts\Repositories\Services\CountryServiceContract;
 use App\Contracts\Repositories\Services\DocTypeServiceContract;
 use App\Contracts\Repositories\Services\GenderServiceContract;
@@ -73,6 +74,8 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         $docTypeService = app(DocTypeServiceContract::class);
         $countryService = app(CountryServiceContract::class);
         $genderService = app(GenderServiceContract::class);
+        $carModelService = app(CarModelServiceContract::class);
+        $carModel = $carModelService->getCompanyModelByName($attributes['car']['maker'],$attributes['car']['model'], $company->id);
         $owner = $this->searchSubjectById($attributes, $attributes['policy']['ownerId']);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $data = [
@@ -86,7 +89,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
             'IsInsureTrailer' => $this->transformAnyToBoolean($attributes['car']['isUsedWithTrailer']),
             'CarInfo' => [
                 'VIN' => $attributes['car']['vin'],
-                'MarkModelCarCode' => $attributes['car']['model'],
+                'MarkModelCarCode' => $carModel['model'] ? $carModel['model'] : $carModel['otherModel'],
                 'MarkPTS' => $carMarkService->getCompanyMark($attributes['car']['maker'], $company->id),
                 'ModelPTS' => $attributes['car']['model'],
                 'YearIssue' => $attributes['car']['year'],
@@ -230,9 +233,9 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
             $pAddress = [
                 'Type' => $addressTypeService->getCompanyAddressType($address['address']['addressType'], $company->code),
                 'Country' => $countryService->getCountryById($address['address']['country'])['code'],
-                'AddressCode' => $address['address']['streetKladr'],
             ];
             $this->setValuesByArray($pAddress, [
+                'AddressCode' => 'streetKladr',
                 'Street' => 'street',
                 'Hous' => 'building',
                 'Flat' => 'flat',

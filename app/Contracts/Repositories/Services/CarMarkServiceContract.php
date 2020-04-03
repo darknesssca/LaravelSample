@@ -8,4 +8,5 @@ interface CarMarkServiceContract
 {
     public function getMarkList();
     public function getCompanyMark($id, $companyId);
+    public function getCarMarkName($id);
 }

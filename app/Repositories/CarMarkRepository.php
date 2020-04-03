@@ -23,4 +23,9 @@ class CarMarkRepository implements CarMarkRepositoryContract
         ])
             ->where('id', $id)->first();
     }
+
+    public function getCarMarkById($id)
+    {
+        return CarMark::where('id', $id)->first();
+    }
 }

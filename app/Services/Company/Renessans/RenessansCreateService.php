@@ -65,6 +65,7 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
     {
         $usageTargetService = app(UsageTargetServiceContract::class);
         $carMarkService = app(CarMarkServiceContract::class);
+        $docTypeService = app(DocTypeServiceContract::class);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $owner = $this->searchSubjectById($attributes, $attributes['policy']['ownerId']);
         $data = [
@@ -78,7 +79,7 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
             'isInsurerJuridical' => $this->transformBooleanToInteger(false),
             'car' => [
                 'year' => $attributes['car']['year'],
-                'MarkAndModelString' => $carMarkService->getCompanyMark($attributes['car']['maker'], $company->id) .
+                'MarkAndModelString' =>  $carMarkService->getCarMarkName($attributes['car']['maker']) .
                     ' ' . $attributes['car']['model'],
             ],
         ];
@@ -90,12 +91,13 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
                 'dateIssue' => 'dateIssue',
             ], $attributes['car']['document']);
         } else {
-            $data['car']['sts'] = [];
+            $data['car']['sts'] = [
+                'docType' => $docTypeService->getCompanyCarDocType($attributes['car']['document']['documentType'], $company->id)
+            ];
             $this->setValuesByArray($data['car']['sts'], [
                 'serie' => 'series',
                 'number' => 'number',
                 'dateIssue' => 'dateIssue',
-                'docType' => 'documentType',
             ], $attributes['car']['document']);
         }
         $data['car']['diagnostic'] = [];

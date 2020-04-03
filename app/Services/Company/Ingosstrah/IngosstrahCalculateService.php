@@ -76,7 +76,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                     "Vehicle" => [
                         'Model' => $carModel['model'] ? $carModel['model'] : $carModel['otherModel'],
                         'VIN' => $attributes['car']['vin'],
-                        "Category" => "B", // TODO из справочника
+                        "Category" => $carModel['category'],
                         "Constructed" => $this->dateFromYear($attributes['car']['year']),
                         'EnginePowerHP' => $attributes['car']['enginePower'],
                         "Document" => [],
