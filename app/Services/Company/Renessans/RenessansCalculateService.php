@@ -104,7 +104,9 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             'middlename' => 'middleName',
         ], $owner);
         $ownerAddress = $this->searchAddressByType($owner, 'registration');
-        $data['codeKladr'] = $ownerAddress['regionKladr'];
+        if (isset($ownerAddress['regionKladr'])) {
+            $data['codeKladr'] = $ownerAddress['regionKladr'];
+        }
         $ownerPassport = $this->searchDocumentByType($owner, 'passport');
         $data['owner']['document'] = [
             'typeofdocument' => $docTypeService->getCompanyPassportDocType($ownerPassport['isRussian'], $company->id),
