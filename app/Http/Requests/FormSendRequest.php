@@ -54,7 +54,7 @@ class FormSendRequest extends AbstractRequest
             "car.maker" => "required|integer|exists:car_marks,id",
             "car.category" => "required|integer|exists:car_categories,id",
             "car.enginePower" => "required|integer",
-            "car.countryOfRegistration" => "required|integer",
+            "car.countryOfRegistration" => "required|integer|exists:countries,id",
             "car.isUsedWithTrailer" => "required|boolean",
             "car.minWeight" => "integer",
             "car.maxWeight" => "integer",
