@@ -51,7 +51,11 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
         $docTypeService = app(DocTypeServiceContract::class);
         $genderService = app(GenderServiceContract::class);
         $countryService = app(CountryServiceContract::class);
-        $carModel = $carModelService->getCompanyModelByName($attributes['car']['maker'],$attributes['car']['model'], $company->id);
+        $carModel = $carModelService->getCompanyModelByName(
+            $attributes['car']['maker'],
+            $attributes['car']['category'],
+            $attributes['car']['model'],
+            $company->id);
         $data = [
             'SessionToken' => $attributes['sessionToken'],
             'TariffParameters' => [

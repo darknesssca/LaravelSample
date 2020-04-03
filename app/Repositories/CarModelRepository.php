@@ -48,4 +48,21 @@ class CarModelRepository implements CarModelRepositoryContract
             ->where('name', $name)
             ->first();
     }
+
+    public function getCompanyOtherModel($mark_id, $categoryId, $companyId)
+    {
+        return CarModel::with([
+            'codes' => function ($query) use ($companyId) {
+                $query->where('insurance_company_id', $companyId);
+            },
+        ])
+            ->with([
+                'category'
+            ])
+            ->where('mark_id', $mark_id)
+            ->where('code', 'like', 'drug%')
+            //->where('code', 'drugaya-model-legkovoy')
+            ->where('category_id', $categoryId)
+            ->first();
+    }
 }

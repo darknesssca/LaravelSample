@@ -42,7 +42,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         $data = $this->prepareData($company, $attributes);
         $headers = $this->getHeaders();
         $url = $this->getUrl();
-        $response = $this->postRequest($url, $data, $headers, false);
+        $response = $this->postRequest($url, $data, $headers, false, false, true);
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');
         }
@@ -75,7 +75,11 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         $countryService = app(CountryServiceContract::class);
         $genderService = app(GenderServiceContract::class);
         $carModelService = app(CarModelServiceContract::class);
-        $carModel = $carModelService->getCompanyModelByName($attributes['car']['maker'],$attributes['car']['model'], $company->id);
+        $carModel = $carModelService->getCompanyModelByName(
+            $attributes['car']['maker'],
+            $attributes['car']['category'],
+            $attributes['car']['model'],
+            $company->id);
         $owner = $this->searchSubjectById($attributes, $attributes['policy']['ownerId']);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $data = [

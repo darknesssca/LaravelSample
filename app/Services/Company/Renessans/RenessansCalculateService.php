@@ -65,7 +65,11 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
         $carMarkService = app(CarMarkServiceContract::class);
         $carModelService = app(CarModelServiceContract::class);
         $docTypeService = app(DocTypeServiceContract::class);
-        $carModel = $carModelService->getCompanyModelByName($attributes['car']['maker'],$attributes['car']['model'], $company->id);
+        $carModel = $carModelService->getCompanyModelByName(
+            $attributes['car']['maker'],
+            $attributes['car']['category'],
+            $attributes['car']['model'],
+            $company->id);
         $data = [
             'key' => $attributes['key'],
             'dateStart' => $attributes['policy']['beginDate'],

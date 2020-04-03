@@ -80,7 +80,11 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         $countryService = app(CountryServiceContract::class);
         $categoryService = app(CarCategoryServiceContract::class);
         $genderService = app(GenderServiceContract::class);
-        $carModel = $carModelService->getCompanyModelByName($attributes['car']['maker'],$attributes['car']['model'], $company->id);
+        $carModel = $carModelService->getCompanyModelByName(
+            $attributes['car']['maker'],
+            $attributes['car']['category'],
+            $attributes['car']['model'],
+            $company->id);
         $data = [
             'subuser' => $this->apiSubUser,
             'product' => [

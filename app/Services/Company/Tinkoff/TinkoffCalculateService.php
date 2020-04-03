@@ -57,7 +57,11 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
         $countryService = app(CountryServiceContract::class);
         $addressTypeService = app(AddressTypeService::class);
         $sourceAcquisitionService = app(SourceAcquisitionServiceContract::class);
-        $carModel = $carModelService->getCompanyModelByName($attributes['car']['maker'],$attributes['car']['model'], $company->id);
+        $carModel = $carModelService->getCompanyModelByName(
+            $attributes['car']['maker'],
+            $attributes['car']['category'],
+            $attributes['car']['model'],
+            $company->id);
         $data = [];
         $this->setHeader($data);
         //subjectInfo
