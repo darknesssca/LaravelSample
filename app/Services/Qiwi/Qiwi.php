@@ -4,30 +4,143 @@
 namespace App\Services\Qiwi;
 
 
+use App\Exceptions\TaxStatusNotServiceException;
 use GuzzleHttp\Client;
 
 class Qiwi
 {
-    private $params;
+    private $connectionParams;
+    private $payoutParams;
+    private $payoutRecipient;
+    private $commonParams;
 
-    public function __construct()
+    public function __construct($user_requisites, $tax_status_code, $description = 'Перевод')
     {
-        $this->params = [
-            'endpoint' => 'https://api-test.qiwi.com/partner/payout/v1/',
-            'agent_id' => 'pareks',
-            'point_id' => 'kzewxc',
-            'bearer_token' => 'pareks-b122b936-57c9-473b-8c85-d615db5eb2fe',
-            'application_id' => '83cca1c0-49f2-417a-bd88-2803058dfd7a',
-            'application_secret' => '2924502d-f1e4-4f06-96ed-cdce126cf49c',
+        $this->connectionParams = [
+            'endpoint' => env('QIWI_ENDPOINT'),
+            'agent_id' => env('QIWI_AGENT_ID'),
+            'point_id' => env('QIWI_POINT_ID'),
+            'bearer_token' => env('QIWI_BEARER_TOKEN'),
+            'application_id' => env('QIWI_APPLICATION_ID'),
+            'application_secret' => env('QIWI_APPLICATION_SECRET'),
+        ];
+
+        $this->commonParams = [
+            'requisites' => $user_requisites,
+            'tax_status' => $tax_status_code,
+            'description' => $description,
         ];
     }
+
+    //Методы запросов к api
+
+    public function getProviders($providerCode = '')
+    {
+        $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/providers/{$providerCode}";
+        $response = $this->sendRequest('GET', $url);
+        return $response['content'];
+    }
+
+    public function getProvidersDirectories($providerCode = '', $expand = true)
+    {
+        $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/providers/directory/{$providerCode}?expand={$expand}";
+        $response = $this->sendRequest('GET', $url);
+        return $response['content'];
+    }
+
+    /**
+     * @param $amount
+     * @return string
+     * @throws TaxStatusNotServiceException
+     */
+    public function makePayout($amount)
+    {
+        $this->createPayout($amount);
+        $this->executePayout();
+        return $this->commonParams['payout_id'];
+    }
+
+    /**
+     * @param $amount
+     * @throws TaxStatusNotServiceException
+     */
+    private function createPayout($amount)
+    {
+        $this->setPayoutParams($amount);
+        $this->setPayoutRecipientParams();
+        $this->commonParams['payout_id'] = $this->getGUID();
+        $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/payments/{$this->commonParams['payout_id']}";
+        $this->sendRequest('PUT', $url, json_encode($this->payoutParams));
+
+    }
+
+    private function executePayout()
+    {
+        $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/payments/{$this->commonParams['payout_id']}/execute";
+        $this->sendRequest('POST', $url, json_encode($this->payoutParams));
+    }
+
+
+    //Методы создания объектов
+
+    private function setPayoutParams($amount)
+    {
+        $this->payoutParams = [
+            'recipientDetails' => $this->payoutRecipient,
+            'amount' => [
+                'value' => number_format($amount, 2, '.', ''),
+                'currency' => 'RUB'
+            ],
+            'source' => [
+                'paymentType' => 'NO_EXTRA_CHARGE',
+                'paymentToolType' => 'BANK_ACCOUNT',
+                'paymentTerminalType' => 'INTERNET_BANKING',
+            ]
+        ];
+    }
+
+    /**
+     * @return array
+     * @throws TaxStatusNotServiceException
+     */
+    private function setPayoutRecipientParams()
+    {
+        switch ($this->commonParams['tax_status']) {
+            case 'individual':
+                return [
+                    'providerCode' => 'bank-card-russia',
+                    'fields' => [
+                        'sinap-form-version' => 'payout::bank-card-russia, 1',
+                        'pan' => $this->commonParams['requisites']['card_number']
+                    ]
+                ];
+
+            case 'self_employed':
+                return [
+                    'providerCode' => 'self-employed-bank-card',
+                    'fields' => [
+                        'sinap-form-version' => 'payout::self-employed-bank-card, 1',
+                        'inn' => $this->commonParams['requisites']['inn'],
+                        'account' => $this->commonParams['requisites']['card_number'],
+                        'incomeType' => 'FROM_INDIVIDUAL',
+                        'description' => $this->commonParams['description'],
+                        'fio_optional' => ''
+                    ]
+                ];
+
+            default:
+                throw new TaxStatusNotServiceException();
+        }
+    }
+
+    //Вспомогательные функции
 
     /**отправка запроса
      * @param string $method
      * метод запроса
      * @param string $url
      * адрес
-     * @param array $data
+     * @param string $data
      * данные
      * @param bool $async
      * если истина, то запрос выполняется асинхронно и без результата
@@ -39,12 +152,12 @@ class Qiwi
         $method = strtoupper($method);
         $headers = [
             "Content-Type" => "application/json",
-            "Authorization" => "Bearer {$this->params['bearer_token']}",
+            "Authorization" => "Bearer {$this->connectionParams['bearer_token']}",
             "Accept" => "application/json",
         ];
 
         $client = new Client([
-            'base_uri' => $this->params['endpoint'],
+            'base_uri' => $this->connectionParams['endpoint'],
             'timeout' => 1.0,
         ]);
         if (!$async) {
@@ -62,74 +175,18 @@ class Qiwi
         }
     }
 
-    public function getProviders($providerCode = '')
-    {
-        $url = "agents/{$this->params['agent_id']}/points/{$this->params['point_id']}/providers/{$providerCode}";
-        $response = $this->sendRequest('GET', $url);
-        return $response['content'];
-    }
-
-    public function getProvidersDirectories($providerCode = '', $expand = true)
-    {
-        $url = "agents/{$this->params['agent_id']}/points/{$this->params['point_id']}/providers/directory/{$providerCode}?expand={$expand}";
-        $response = $this->sendRequest('GET', $url);
-        return $response['content'];
-    }
-
-
-    /**
-     *Осуществить выплату
-     */
-    public function makePayment()
-    {
-
-    }
-
-    public function createPayment($value, $account)
-    {
-        $PaymentCreationParams = [
-            "recipientDetails" => [
-                'providerCode' => 'bank-card-russia',
-                'fields' => [
-                    'account' => $account
-                ]
-            ],
-            "amount" => [
-                'value' => number_format($value, 2, '.', ''),
-                'currency' => 'RUB'
-            ],
-        ];
-
-
-        $payment_id = $this->getGUID();
-        $url = "agents/{$this->params['agent_id']}/points/{$this->params['point_id']}/payments/{$payment_id}";
-//        $this->sendRequest('PUT', $url, json_encode($PaymentCreationParams));
-
-        echo '<pre>';
-        print_r($this->getGUID());
-        echo '</pre>';
-
-        echo '<pre>';
-        print_r(json_encode($PaymentCreationParams));
-        echo '</pre>';
-    }
-
     private function getGUID()
     {
-        if (function_exists('com_create_guid')) {
-            return com_create_guid();
-        } else {
-            mt_srand((double)microtime() * 10000);//optional for php 4.2.0 and up.
-            $charid = strtoupper(md5(uniqid(rand(), true)));
-            $hyphen = chr(45);// "-"
-            $uuid = chr(123)// "{"
-                . substr($charid, 0, 8) . $hyphen
-                . substr($charid, 8, 4) . $hyphen
-                . substr($charid, 12, 4) . $hyphen
-                . substr($charid, 16, 4) . $hyphen
-                . substr($charid, 20, 12)
-                . chr(125);// "}"
-            return $uuid;
-        }
+        mt_srand((double)microtime() * 10000);
+        $charid = strtoupper(md5(uniqid(rand(), true)));
+        $hyphen = chr(45);// "-"
+        $uuid = chr(123)// "{"
+            . substr($charid, 0, 8) . $hyphen
+            . substr($charid, 8, 4) . $hyphen
+            . substr($charid, 12, 4) . $hyphen
+            . substr($charid, 16, 4) . $hyphen
+            . substr($charid, 20, 12)
+            . chr(125);// "}"
+        return $uuid;
     }
 }

@@ -4,13 +4,13 @@
 namespace App\Repositories;
 
 
-use App\Contracts\Repositories\ReportsRepositoryContract;
+use App\Contracts\Repositories\ReportRepositoryContract;
 use App\Models\Report;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use InvalidArgumentException;
 
-class ReportRepository implements ReportsRepositoryContract
+class ReportRepository implements ReportRepositoryContract
 {
     public function getById($id): Model
     {

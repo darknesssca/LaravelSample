@@ -7,11 +7,9 @@ namespace App\Services\Qiwi;
 
 
 use App\Contracts\Repositories\ReportRepositoryContract;
-use App\Contracts\Repositories\ReportsRepositoryContract;
 use App\Models\File;
 use App\Models\Policy;
 use App\Models\Report;
-use App\Repositories\ReportRepository;
 use Benfin\Api\Contracts\AuthMicroserviceContract;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\Contracts\NotifyMicroserviceContract;
