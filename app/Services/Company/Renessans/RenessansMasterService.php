@@ -11,6 +11,7 @@ use App\Contracts\Company\Renessans\RenessansCheckCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansGetStatusServiceContract;
 use App\Contracts\Company\Renessans\RenessansMasterServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\MethodForbiddenException;
 use App\Exceptions\TokenException;
@@ -64,6 +65,8 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
                 'status' => 'processing',
             ])
         ]);
+        $policyService = app(PolicyServiceContract::class);
+        $policyService->createPolicyFromCustomData($company, $attributes);
         $logger = app(LogMicroserviceContract::class);
         $logger->sendLog(
             'пользователь отправил запрос на создание заявки в компанию ' . $company->name,

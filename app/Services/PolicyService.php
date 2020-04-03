@@ -5,12 +5,15 @@ namespace App\Services;
 use App\Contracts\Repositories\DraftRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Services\PolicyServiceContract;
+use App\Traits\ValueSetterTrait;
 use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 
 class PolicyService implements PolicyServiceContract
 {
+    use ValueSetterTrait;
+
     private $policyRepository;
 
     public function __construct(PolicyRepositoryContract $policyRepository)
@@ -80,4 +83,97 @@ class PolicyService implements PolicyServiceContract
             'sum' => $policies->sum('premium')
         ];
     }
+
+    public function createPolicyFromCustomData($company, $attributes)
+    {
+        $fields = [
+            'insurance_company_id' => $company->id,
+            'subjects' => [],
+            'car' => [],
+            'drivers' => [],
+        ];
+        if (isset($attributes['number'])) {
+            $fields['number'] = $attributes['number'];
+        }
+        foreach ($attributes['subjects'] as $subject) {
+            $pSubject = [
+                'id' => $subject['id'],
+                'fields' => [],
+            ];
+            $this->setValuesByArray($pSubject['fields'], [
+                'lastName' => 'lastName',
+                'firstName' => 'firstName',
+                'birthdate' => 'birthdate',
+                'birthPlace' => 'birthPlace',
+                'email' => 'email',
+                'gender' => 'gender',
+                'citizenship' => 'citizenship',
+                'phone' => 'phone',
+            ], $subject['fields']);
+            foreach ($subject['addresses'] as $address) {
+                if ($address['address']['addressType'] == 'registration') {
+                    $pSubject['fields']['address'] = $address['address'];
+                }
+            }
+            foreach ($subject['documents'] as $document) {
+                if ($document['document']['documentType'] == 'passport') {
+                    $pSubject['fields']['passport'] = $document['document'];
+                }
+            }
+            $fields['subjects'] = $pSubject;
+        }
+        $this->setValuesByArray($fields['car'], [
+            'model' => 'model',
+            'maker' => 'maker',
+            'countryOfRegistration' => 'countryOfRegistration',
+            'isUsedWithTrailer' => 'isUsedWithTrailer',
+            'mileage' => 'mileage',
+            'sourceAcquisition' => 'sourceAcquisition',
+            'vehicleCost' => 'vehicleCost',
+            'vehicleUsage' => 'vehicleUsage',
+            'vin' => 'vin',
+            'regNumber' => 'regNumber',
+            'year' => 'year',
+            'minWeight' => 'minWeight',
+            'maxWeight' => 'maxWeight',
+            'seats' => 'seats',
+        ], $attributes['car']);
+        $fields['car']['document'] = $attributes['car']['document'];
+        $fields['car']['inspection'] = $attributes['car']['inspection'];
+        $fields['policy'] = $attributes['policy'];
+        foreach ($attributes['drivers'] as $driver) {
+            foreach ($attributes['subjects'] as $subject) {
+                if ($subject['id'] == $driver['driver']['driverId']) {
+                    $pDriver = [];
+                    $this->setValuesByArray($pDriver, [
+                        'lastName' => 'lastName',
+                        'firstName' => 'firstName',
+                        'birthdate' => 'birthdate',
+                    ], $subject['fields']);
+                    $this->setValuesByArray($pDriver, [
+                        'drivingLicenseIssueDateOriginal' => 'drivingLicenseIssueDateOriginal',
+                    ], $driver['driver']);
+                    foreach ($subject['documents'] as $document) {
+                        if ($document['document']['documentType'] == 'license') {
+                            $this->setValuesByArray($pDriver, [
+                                'license_series' => 'series',
+                                'license_number' => 'number',
+                                'license_date' => 'dateIssue',
+                            ], $document['document']);
+                        }
+                    }
+                    $fields['drivers'][] = $pDriver;
+                }
+            }
+        }
+        return $this->create($fields, isset($attributes['draftId']) ? $attributes['draftId'] : null);
+    }
+
+    public function updatePolicyNumber($policyId, $number)
+    {
+        return $this->policyRepository->update($policyId, [
+            'number' => $number,
+        ]);
+    }
+
 }

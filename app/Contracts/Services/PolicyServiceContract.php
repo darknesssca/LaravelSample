@@ -9,4 +9,6 @@ interface PolicyServiceContract
     public function statistic(array $filter = []);
 
     public function create(array $fields, int $draftId = null);
+
+    public function createPolicyFromCustomData($company, $attributes);
 }

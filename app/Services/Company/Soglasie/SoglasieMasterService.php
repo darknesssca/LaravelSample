@@ -12,6 +12,7 @@ use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieMasterServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
 use App\Contracts\Repositories\BillPolicyRepositoryContract;
+use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\MethodForbiddenException;
 use App\Exceptions\TokenException;
@@ -81,6 +82,8 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
                 'company' => $company->code,
             ]),
         ]);
+        $policyService = app(PolicyServiceContract::class);
+        $policyService->createPolicyFromCustomData($company, $attributes);
         $logger = app(LogMicroserviceContract::class);
         $logger->sendLog(
             'пользователь отправил запрос на создание заявки в компанию ' . $company->name,

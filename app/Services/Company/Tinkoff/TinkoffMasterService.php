@@ -7,6 +7,7 @@ use App\Contracts\Company\Tinkoff\TinkoffBillLinkServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCreateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffMasterServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\MethodForbiddenException;
 use App\Exceptions\PolicyNotFoundException;
 use Benfin\Api\Contracts\LogMicroserviceContract;
@@ -50,6 +51,8 @@ class TinkoffMasterService extends TinkoffService implements TinkoffMasterServic
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
+        $policyService = app(PolicyServiceContract::class);
+        $policyService->createPolicyFromCustomData($company, $attributes);
         $logger = app(LogMicroserviceContract::class);
         $logger->sendLog(
             'пользователь отправил запрос на создание заявки в компанию ' . $company->name,

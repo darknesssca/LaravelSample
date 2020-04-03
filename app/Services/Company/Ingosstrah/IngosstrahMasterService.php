@@ -12,6 +12,7 @@ use App\Contracts\Company\Ingosstrah\IngosstrahEosagoServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahMasterServiceContract;
 use App\Contracts\Repositories\BillPolicyRepositoryContract;
+use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\MethodForbiddenException;
 use App\Exceptions\TokenException;
@@ -65,6 +66,8 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
+        $policyService = app(PolicyServiceContract::class);
+        $policyService->createPolicyFromCustomData($company, $attributes);
         $this->requestProcessService->create([
             'token' => $attributes['token'],
             'company' => $company->code,
