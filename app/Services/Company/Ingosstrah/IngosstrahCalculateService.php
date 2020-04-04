@@ -88,8 +88,6 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                         "Product" => '753518300',
                         'DateBeg' => $this->dateTimeFromDate($attributes['policy']['beginDate']),
                         'DateEnd' => $attributes['policy']['endDate'],
-//                        "PrevAgrID" => "", //todo пролонгация
-//                        "ParentISN" => "", //todo пролонгация
                         "Individual" => $this->transformBooleanToChar(false),
                     ],
                     "Insurer" => [

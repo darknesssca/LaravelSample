@@ -78,4 +78,11 @@ class PolicyRepository implements PolicyRepositoryContract
         return Policy::where('id', $id)->update($data);
     }
 
+    public function searchOldPolicyByPolicyNumber($companyId, $policyNumber)
+    {
+        return Policy::where('paid', 1)
+            ->where('insurance_company_id', $companyId)
+            ->where('number', $policyNumber)
+            ->first();
+    }
 }

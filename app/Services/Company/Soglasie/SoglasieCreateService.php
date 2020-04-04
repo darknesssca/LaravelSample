@@ -103,7 +103,6 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
             'CodeInsurant' => '000',
             'BeginDate' => $this->dateTimeFromDate($attributes['policy']['beginDate']),
             'EndDate' => $this->dateTimeFromDate($attributes['policy']['endDate']),
-            //'PrevPolicy' => '', //todo пролонгация
             'Period1Begin' => $attributes['policy']['beginDate'],
             'Period1End' => $attributes['policy']['endDate'],
             'IsTransCar' => false, // заглушка
@@ -166,6 +165,14 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
             ],
             'IKP1l' => ' ',
         ];
+        $prolongationPolicyNumber = $this->policyService->searchOldPolicyByPolicyNumber($company->id, $attributes);
+        if ($prolongationPolicyNumber) {
+            $serialNumber = explode(' ', $prolongationPolicyNumber);
+            $data['PrevPolicy'] = [
+                'Serial' => $serialNumber[0],
+                'Number' => $serialNumber[1],
+            ];
+        }
         $this->setValuesByArray($data['CarInfo'], [
             "MaxMass" => 'maxWeight',
             "PasQuant" => 'seats',

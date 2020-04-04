@@ -91,7 +91,6 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
 
     protected function prepareData($company, $attributes)
     {
-
         $carModel = $this->carModelService->getCompanyModelByName(
             $attributes['car']['maker'],
             $attributes['car']['category'],
@@ -139,10 +138,6 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                         'id' => 849,
                         'val' => $this->transformBooleanToInteger(false), // заглушка
                     ],
-//                    [
-//                        'id' => 981,
-//                        'val' => , // todo пролонгация
-//                    ],
                     [
                         'id' => 1129,
                         'val' => 12,
@@ -151,10 +146,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                         'id' => 1402,
                         'val' => $this->transformBooleanToInteger($attributes['car']['isUsedWithTrailer']),
                     ],
-//                    [
-//                        'id' => 722,
-//                        'val' => , // todo пролонгация
-//                    ],
+
                     [
                         'id' => 29,
                         'val' => 8,
@@ -192,6 +184,24 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                 ],
             ],
         ];
+        // пролонгация
+        $prolongationPolicyNumber = $this->policyService->searchOldPolicyByPolicyNumber($company->id, $attributes);
+        if ($prolongationPolicyNumber) {
+            $serialNumber = explode(' ', $prolongationPolicyNumber);
+            $data['contract']['param'][] = [
+                'id' => 981,
+                'val' => $serialNumber[1],
+            ];
+            $data['contract']['param'][] = [
+                'id' => 722,
+                'val' => $this->transformBooleanToInteger(true),
+            ];
+        } else {
+            $data['contract']['param'][] = [
+                'id' => 722,
+                'val' => $this->transformBooleanToInteger(false),
+            ];
+        }
         //kbm
         $data['contract']['param'][] = [
             'id' => 1329,

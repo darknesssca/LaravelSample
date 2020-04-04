@@ -184,4 +184,16 @@ class PolicyService implements PolicyServiceContract
         return $this->policyRepository->getNotPaidPolicies($limit);
     }
 
+    public function searchOldPolicyByPolicyNumber($companyId, $attributes)
+    {
+        if (!isset($attributes['number'])) {
+            return false;
+        }
+        $policy = $this->policyRepository->searchOldPolicyByPolicyNumber($companyId, $attributes['number']);
+        if (!$policy) {
+            return false;
+        }
+        return $policy->number;
+    }
+
 }
