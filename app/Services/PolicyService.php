@@ -169,11 +169,19 @@ class PolicyService implements PolicyServiceContract
         return $this->create($fields, isset($attributes['draftId']) ? $attributes['draftId'] : null);
     }
 
-    public function updatePolicyNumber($policyId, $number)
+    public function update($id, $data)
     {
-        return $this->policyRepository->update($policyId, [
-            'number' => $number,
-        ]);
+        return $this->policyRepository->update($id, $data);
+    }
+
+    public function getNotPaidPolicyByPaymentNumber($policyNumber)
+    {
+        return $this->policyRepository->getNotPaidPolicyByPaymentNumber($policyNumber);
+    }
+
+    public function getNotPaidPolicies($limit)
+    {
+        return $this->policyRepository->getNotPaidPolicies($limit);
     }
 
 }

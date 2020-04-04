@@ -4,9 +4,9 @@
 namespace App\Services\Company\Renessans;
 
 use App\Contracts\Company\Renessans\RenessansBillLinkServiceContract;
-use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 
 class RenessansBillLinkService extends RenessansService implements RenessansBillLinkServiceContract
@@ -16,11 +16,11 @@ class RenessansBillLinkService extends RenessansService implements RenessansBill
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         RequestProcessServiceContract $requestProcessService,
-        PolicyRepositoryContract $policyRepository
+        PolicyServiceContract $policyService
     )
     {
         $this->init();
-        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+        parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
     public function run($company, $attributes): array

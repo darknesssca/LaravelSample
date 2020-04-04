@@ -8,7 +8,10 @@ use App\Contracts\Repositories\Services\CarModelServiceContract;
 use App\Contracts\Repositories\Services\CountryServiceContract;
 use App\Contracts\Repositories\Services\DocTypeServiceContract;
 use App\Contracts\Repositories\Services\GenderServiceContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Contracts\Repositories\Services\UsageTargetServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Traits\PrepareAddressesTrait;
 use App\Traits\DateFormatTrait;
@@ -18,6 +21,31 @@ use Spatie\ArrayToXml\ArrayToXml;
 class IngosstrahCalculateService extends IngosstrahService implements IngosstrahCalculateServiceContract
 {
     use TransformBooleanTrait, DateFormatTrait, PrepareAddressesTrait;
+
+    protected $usageTargetService;
+    protected $carModelService;
+    protected $docTypeService;
+    protected $genderService;
+    protected $countryService;
+
+    public function __construct(
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
+        PolicyServiceContract $policyService,
+        UsageTargetServiceContract $usageTargetService,
+        CarModelServiceContract $carModelService,
+        DocTypeServiceContract $docTypeService,
+        GenderServiceContract $genderService,
+        CountryServiceContract $countryService
+    )
+    {
+        $this->usageTargetService = $usageTargetService;
+        $this->carModelService = $carModelService;
+        $this->docTypeService = $docTypeService;
+        $this->genderService = $genderService;
+        $this->countryService = $countryService;
+        parent::__construct($intermediateDataService, $requestProcessService, $policyService);
+    }
 
     public function run($company, $attributes): array
     {
@@ -46,12 +74,8 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
 
     protected function prepareData($company, $attributes)
     {
-        $usageTargetService = app(UsageTargetServiceContract::class);
-        $carModelService = app(CarModelServiceContract::class);
-        $docTypeService = app(DocTypeServiceContract::class);
-        $genderService = app(GenderServiceContract::class);
-        $countryService = app(CountryServiceContract::class);
-        $carModel = $carModelService->getCompanyModelByName(
+
+        $carModel = $this->carModelService->getCompanyModelByName(
             $attributes['car']['maker'],
             $attributes['car']['category'],
             $attributes['car']['model'],
@@ -85,7 +109,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                         'EnginePowerHP' => $attributes['car']['enginePower'],
                         "Document" => [],
                         "DocInspection" => [
-                            "DocType" => $docTypeService->getCompanyInspectionDocType(true, $company->id),
+                            "DocType" => $this->docTypeService->getCompanyInspectionDocType(true, $company->id),
                         ],
                     ],
                     "Condition" => [
@@ -93,7 +117,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                             "RiskCtg" => "28966116",
                             'UsageType' => '1381850903',
                             "UsageTarget" => [
-                                $usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id) =>
+                                $this->usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id) =>
                                     $this->transformBooleanToChar(true),
                             ],
                             "UseWithTrailer" => $this->transformBooleanToChar($attributes['car']['isUsedWithTrailer']),
@@ -124,13 +148,13 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                 '_attributes' => ['SbjKey' => $subject['id']],
                 "SbjType" => 'Ф',
                 "SbjResident" => $this->transformBooleanToChar(
-                    $countryService->getCountryById($subject['fields']['citizenship'])['alpha2'] == 'RU'
+                    $this->countryService->getCountryById($subject['fields']['citizenship'])['alpha2'] == 'RU'
                 ),
                 'FullName' => $subject['fields']['lastName'] . ' ' . $subject['fields']['firstName'] .
                     (isset($subject['fields']['middleName']) ? ' ' . $subject['fields']['middleName'] : ''),
-                "Gender" => $genderService->getCompanyGender($subject['fields']['gender'], $company->id),
+                "Gender" => $this->genderService->getCompanyGender($subject['fields']['gender'], $company->id),
                 "BirthDate" => $subject['fields']['birthdate'],
-                "CountryCode" => $countryService->getCountryById($subject['fields']['citizenship'])['code'],
+                "CountryCode" => $this->countryService->getCountryById($subject['fields']['citizenship'])['code'],
             ];
             $regAddress = $this->searchAddressByType($subject['fields'], 'registration');
             if (isset($regAddress['StreetCode']) && $regAddress['StreetCode']) {
@@ -140,7 +164,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                 $this->cutCityKladr($regAddress['CityCode']);
             }
             $pAddress = [
-                "CountryCode" => $countryService->getCountryById($subject['fields']['citizenship'])['code']
+                "CountryCode" => $this->countryService->getCountryById($subject['fields']['citizenship'])['code']
             ];
             $this->setValuesByArray($pAddress, [
                 'CityCode' => 'cityKladr',
@@ -153,7 +177,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
             $sDocument = $this->searchDocumentByType($subject['fields'], 'passport');
             if ($sDocument) {
                 $pDocument = [
-                    'DocType' => $docTypeService->getCompanyPassportDocType($sDocument['isRussian'], $company->id),
+                    'DocType' => $this->docTypeService->getCompanyPassportDocType($sDocument['isRussian'], $company->id),
                 ];
                 $this->setValuesByArray($pDocument, [
                     "Serial" => 'series',
@@ -173,7 +197,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
             'RegNum' => 'regNumber',
         ], $attributes['car']);
         $data['TariffParameters']['Agreement']['Vehicle']['Document'] = [
-            'DocType' => $docTypeService->getCompanyCarDocType($attributes['car']['document']['documentType'], $company->id),
+            'DocType' => $this->docTypeService->getCompanyCarDocType($attributes['car']['document']['documentType'], $company->id),
         ];
         $this->setValuesByArray($data['TariffParameters']['Agreement']['Vehicle']['Document'], [
             "Serial" => 'series',
@@ -198,7 +222,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                 $sDocument = $this->searchDocumentByTypeAndId($attributes, $driver['driver']['driverId'], 'license');
                 if ($sDocument) {
                     $pDriver['DriverLicense'] = [
-                        'DocType' => $docTypeService->getCompanyLicenseDocType($sDocument['documentType'], $company->id),
+                        'DocType' => $this->docTypeService->getCompanyLicenseDocType($sDocument['documentType'], $company->id),
                     ];
                     $this->setValuesByArray($pDriver['DriverLicense'], [
                         "Serial" => 'series',

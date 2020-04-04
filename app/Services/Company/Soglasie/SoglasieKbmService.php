@@ -4,10 +4,10 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
-use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\DocTypeServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\ConmfigurationException;
 use App\Traits\DateFormatTrait;
@@ -20,14 +20,14 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         RequestProcessServiceContract $requestProcessService,
-        PolicyRepositoryContract $policyRepository
+        PolicyServiceContract $policyService
     )
     {
         $this->apiWsdlUrl = config('api_sk.soglasie.kbmWsdlUrl');
         if (!$this->apiWsdlUrl) {
             throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
-        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+        parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
     public function run($company, $attributes): array

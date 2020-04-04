@@ -4,7 +4,6 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
-use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\CarMarkServiceContract;
 use App\Contracts\Repositories\Services\CarModelServiceContract;
 use App\Contracts\Repositories\Services\CountryServiceContract;
@@ -13,6 +12,7 @@ use App\Contracts\Repositories\Services\GenderServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Contracts\Repositories\Services\UsageTargetServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\ConmfigurationException;
 use App\Services\Repositories\AddressTypeService;
@@ -23,18 +23,40 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
 {
     use TransformBooleanTrait, DateFormatTrait;
 
+    protected $usageTargetService;
+    protected $carModelService;
+    protected $docTypeService;
+    protected $genderService;
+    protected $countryService;
+    protected $addressTypeService;
+    protected $carMarkService;
+
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         RequestProcessServiceContract $requestProcessService,
-        PolicyRepositoryContract $policyRepository
+        PolicyServiceContract $policyService,
+        UsageTargetServiceContract $usageTargetService,
+        CarModelServiceContract $carModelService,
+        DocTypeServiceContract $docTypeService,
+        GenderServiceContract $genderService,
+        CountryServiceContract $countryService,
+        AddressTypeService $addressTypeService,
+        CarMarkServiceContract $carMarkService
     )
     {
+        $this->usageTargetService = $usageTargetService;
+        $this->carModelService = $carModelService;
+        $this->docTypeService = $docTypeService;
+        $this->genderService = $genderService;
+        $this->countryService = $countryService;
+        $this->addressTypeService = $addressTypeService;
+        $this->carMarkService = $carMarkService;
         $this->apiRestUrl = config('api_sk.soglasie.createUrl');
         if (!$this->apiRestUrl) {
             throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
         $this->init();
-        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+        parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
     public function run($company, $attributes): array
@@ -69,13 +91,8 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
 
     protected function prepareData($company, $attributes)
     {
-        $usageTargetService = app(UsageTargetServiceContract::class);
-        $carMarkService = app(CarMarkServiceContract::class);
-        $docTypeService = app(DocTypeServiceContract::class);
-        $countryService = app(CountryServiceContract::class);
-        $genderService = app(GenderServiceContract::class);
-        $carModelService = app(CarModelServiceContract::class);
-        $carModel = $carModelService->getCompanyModelByName(
+
+        $carModel = $this->carModelService->getCompanyModelByName(
             $attributes['car']['maker'],
             $attributes['car']['category'],
             $attributes['car']['model'],
@@ -94,12 +111,12 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
             'CarInfo' => [
                 'VIN' => $attributes['car']['vin'],
                 'MarkModelCarCode' => $carModel['model'] ? $carModel['model'] : $carModel['otherModel'],
-                'MarkPTS' => $carMarkService->getCompanyMark($attributes['car']['maker'], $company->id),
+                'MarkPTS' => $this->carMarkService->getCompanyMark($attributes['car']['maker'], $company->id),
                 'ModelPTS' => $attributes['car']['model'],
                 'YearIssue' => $attributes['car']['year'],
                 'DocumentCar' => [],
                 'TicketCar' => [
-                    'TypeRSA' => $docTypeService->getCompanyInspectionDocType3(true, $company->id),
+                    'TypeRSA' => $this->docTypeService->getCompanyInspectionDocType3(true, $company->id),
                     'Number' => $attributes['car']['inspection']['number'],
                     'Date' => $attributes['car']['inspection']['dateIssue'],
                 ],
@@ -107,16 +124,16 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
                 'TicketCarMonth' => $this->getMonthFromDate($attributes['car']['inspection']['dateEnd']),
                 'TicketDiagnosticDate' => $attributes['car']['inspection']['dateIssue'],
                 'EngCap' => $attributes['car']['enginePower'],
-                'GoalUse' => $usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id),
-                'Rented' => $usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id) == 'Rent',
+                'GoalUse' => $this->usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id),
+                'Rented' => $this->usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id) == 'Rent',
             ],
             'Insurer' => [
                 'Phisical' => [
-                    'Resident' => $countryService->getCountryById($insurer['citizenship'])['alpha2'] == 'RU',
+                    'Resident' => $this->countryService->getCountryById($insurer['citizenship'])['alpha2'] == 'RU',
                     'Surname' => $insurer['lastName'],
                     'Name' => $insurer['firstName'],
                     'BirthDate' => $insurer['birthdate'],
-                    'Sex' => $genderService->getCompanyGender($insurer['gender'], $company->id),
+                    'Sex' => $this->genderService->getCompanyGender($insurer['gender'], $company->id),
                     'Email' => $insurer['email'],
                     'PhoneMobile' => $insurer['phone'],
                     'Documents' => [
@@ -129,11 +146,11 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
             ],
             'CarOwner' => [
                 'Phisical' => [
-                    'Resident' => $countryService->getCountryById($owner['citizenship'])['alpha2'] == 'RU',
+                    'Resident' => $this->countryService->getCountryById($owner['citizenship'])['alpha2'] == 'RU',
                     'Surname' => $owner['lastName'],
                     'Name' => $owner['firstName'],
                     'BirthDate' => $owner['birthdate'],
-                    'Sex' => $genderService->getCompanyGender($owner['gender'], $company->id),
+                    'Sex' => $this->genderService->getCompanyGender($owner['gender'], $company->id),
                     'Email' => $owner['email'],
                     'PhoneMobile' => $owner['phone'],
                     'Documents' => [
@@ -158,7 +175,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         ], $attributes['car']['inspection']);
         //car.documents
         $data['CarInfo']['DocumentCar'] = [
-            'TypeRSA' => $docTypeService->getCompanyCarDocType3($attributes['car']['document']['documentType'], $company->id),
+            'TypeRSA' => $this->docTypeService->getCompanyCarDocType3($attributes['car']['document']['documentType'], $company->id),
             'IsPrimary' => true,
         ];
         $this->setValuesByArray($data['CarInfo']['DocumentCar'], [
@@ -193,11 +210,10 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
 
     protected function prepareSubjectDocument($company, $subject)
     {
-        $docTypeService = app(DocTypeServiceContract::class);
         $documents = [];
         foreach ($subject['documents'] as $document) {
             $pDocument = [
-                'TypeRSA' => $docTypeService->getCompanyDocTypeByRelation3($document['document']['documentType'], $document['document']['isRussian'], $company->id),
+                'TypeRSA' => $this->docTypeService->getCompanyDocTypeByRelation3($document['document']['documentType'], $document['document']['isRussian'], $company->id),
                 'Number' => $document['document']['number'],
                 'Date' => $document['document']['dateIssue'],
                 'Exit' => $document['document']['issuedBy'],
@@ -213,11 +229,10 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
 
     protected function prepareDriverDocument($company, $subject)
     {
-        $docTypeService = app(DocTypeServiceContract::class);
         $documents = [];
         foreach ($subject['documents'] as $document) {
             $pDocument = [
-                'TypeRSA' => $docTypeService->getCompanyDocTypeByRelation3($document['document']['documentType'], $document['document']['isRussian'], $company->id),
+                'TypeRSA' => $this->docTypeService->getCompanyDocTypeByRelation3($document['document']['documentType'], $document['document']['isRussian'], $company->id),
                 'Number' => $document['document']['number'],
             ];
             $this->setValuesByArray($pDocument, [
@@ -230,13 +245,11 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
 
     protected function prepareSubjectAddress($company, $subject)
     {
-        $countryService = app(CountryServiceContract::class);
-        $addressTypeService = app(AddressTypeService::class);
         $addresses = [];
         foreach ($subject['addresses'] as $address) {
             $pAddress = [
-                'Type' => $addressTypeService->getCompanyAddressType($address['address']['addressType'], $company->code),
-                'Country' => $countryService->getCountryById($address['address']['country'])['code'],
+                'Type' => $this->addressTypeService->getCompanyAddressType($address['address']['addressType'], $company->code),
+                'Country' => $this->countryService->getCountryById($address['address']['country'])['code'],
             ];
             $this->setValuesByArray($pAddress, [
                 'AddressCode' => 'streetKladr',
@@ -261,15 +274,13 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
 
     protected function prepareDriver($company, $driver, $driverRef)
     {
-        $countryService = app(CountryServiceContract::class);
-        $genderService = app(GenderServiceContract::class);
         $pDriver = [
             'Face' => [
-                'Resident' => $countryService->getCountryById($driver['citizenship'])['alpha2'] == 'RU',
+                'Resident' => $this->countryService->getCountryById($driver['citizenship'])['alpha2'] == 'RU',
                 'Surname' => $driver['lastName'],
                 'Name' => $driver['firstName'],
                 'BirthDate' => $driver['birthdate'],
-                'Sex' => $genderService->getCompanyGender($driver['gender'], $company->id),
+                'Sex' => $this->genderService->getCompanyGender($driver['gender'], $company->id),
                 'Documents' => [
                     'Document' => [],
                 ],

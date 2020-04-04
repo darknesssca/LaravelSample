@@ -12,6 +12,8 @@ use App\Contracts\Company\Ingosstrah\IngosstrahEosagoServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahMasterServiceContract;
 use App\Contracts\Repositories\BillPolicyRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\MethodForbiddenException;
@@ -21,6 +23,19 @@ use Benfin\Api\GlobalStorage;
 
 class IngosstrahMasterService extends IngosstrahService implements IngosstrahMasterServiceContract
 {
+    protected $billPolicyRepository;
+
+    public function __construct(
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
+        PolicyServiceContract $policyService,
+        BillPolicyRepositoryContract $billPolicyRepository
+    )
+    {
+        $this->billPolicyRepository = $billPolicyRepository;
+        parent::__construct($intermediateDataService, $requestProcessService, $policyService);
+    }
+
     public function calculate($company, $attributes): array
     {
         $serviceLogin = app(IngosstrahLoginServiceContract::class);
@@ -328,12 +343,11 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         $serviceStatus = app(IngosstrahBillStatusServiceContract::class);
         $dataStatus = $serviceStatus->run($company, $attributes);
         if (isset($dataStatus['paid']) && $dataStatus['paid']) {
-            $this->policyRepository->update($processData['id'], [
+            $this->policyService->update($processData['id'], [
                 'paid' => true,
                 'number' => $dataStatus['policyNumber'],
             ]);
-            $billPolicyRepository = app(BillPolicyRepositoryContract::class);
-            $billPolicyRepository->delete($processData['id']);
+            $this->billPolicyRepository->delete($processData['id']);
         }
     }
 }

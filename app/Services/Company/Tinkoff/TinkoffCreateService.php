@@ -41,8 +41,17 @@ class TinkoffCreateService extends TinkoffService implements TinkoffCreateServic
                     'нет данных об ошибке',
             ]);
         }
+        if (!isset($response['response']->additionalPolicyInfo->quoteNumber)) {
+            throw new ApiRequestsException([
+                'При попытке создать полис был не был возвращен номер полиса',
+                isset($response['response']->Header->resultInfo->errorInfo->descr) ?
+                    $response['response']->Header->resultInfo->errorInfo->descr :
+                    'нет данных об ошибке',
+            ]);
+        }
         return [
             'status' => 'done',
+            'number' => $response['response']->additionalPolicyInfo->quoteNumber,
         ];
     }
 

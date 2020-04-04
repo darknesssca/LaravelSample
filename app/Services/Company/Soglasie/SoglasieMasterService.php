@@ -12,6 +12,8 @@ use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieMasterServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
 use App\Contracts\Repositories\BillPolicyRepositoryContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\MethodForbiddenException;
@@ -21,6 +23,19 @@ use Benfin\Api\GlobalStorage;
 
 class SoglasieMasterService extends SoglasieService implements SoglasieMasterServiceContract
 {
+    protected $billPolicyRepository;
+
+    public function __construct(
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
+        PolicyServiceContract $policyService,
+        BillPolicyRepositoryContract $billPolicyRepository
+    )
+    {
+        $this->billPolicyRepository = $billPolicyRepository;
+        parent::__construct($intermediateDataService, $requestProcessService, $policyService);
+    }
+
     public function calculate($company, $attributes):array
     {
         $this->pushForm($attributes);
@@ -281,12 +296,11 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
             isset($dataStatus['policySerial']) && $dataStatus['policySerial'] &&
             isset($dataStatus['policyNumber']) && $dataStatus['policyNumber']
         ) {
-            $this->policyRepository->update($processData['id'], [
+            $this->policyService->update($processData['id'], [
                 'paid' => true,
                 'number' => $dataStatus['policySerial'] . ' ' . $dataStatus['policyNumber'],
             ]);
-            $billPolicyRepository = app(BillPolicyRepositoryContract::class);
-            $billPolicyRepository->delete($processData['id']);
+            $this->billPolicyRepository->delete($processData['id']);
         }
     }
 }

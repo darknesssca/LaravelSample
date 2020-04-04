@@ -5,10 +5,10 @@ namespace App\Services\Company;
 
 
 use App\Contracts\Company\ProcessingServiceContract;
-use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
 use Benfin\Requests\Exceptions\AbstractException;
 use App\Traits\CompanyServicesTrait;
 use App\Traits\TokenTrait;
@@ -34,14 +34,14 @@ class ProcessingService extends CompanyService implements ProcessingServiceContr
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         RequestProcessServiceContract $requestProcessService,
-        PolicyRepositoryContract $policyRepository,
+        PolicyServiceContract $policyService,
         InsuranceCompanyServiceContract $insuranceCompanyService
     )
     {
         $this->processingInterval = config('api_sk.processingInterval');
         $this->maxRowsByCycle = config('api_sk.maxRowsByCycle');
         $this->insuranceCompanyService = $insuranceCompanyService;
-        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+        parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
     public function initDispatch()
@@ -174,7 +174,7 @@ class ProcessingService extends CompanyService implements ProcessingServiceContr
     public function getPayment()
     {
         $limit = config('api_sk.maxPoliciesCountForPaymentCheck');
-        $policies = $this->policyRepository->getNotPaidPolicies($limit);
+        $policies = $this->policyService->getNotPaidPolicies($limit);
         $method = 'getPayment';
         if (!$policies) {
             return;

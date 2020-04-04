@@ -317,7 +317,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $serviceStatus = app(RenessansGetStatusServiceContract::class);
         $dataStatus = $serviceStatus->run($company, $attributes);
         if ($dataStatus['result'] && $dataStatus['payStatus'] && $dataStatus['policyNumber']) {
-            $this->policyRepository->update($processData['id'], [
+            $this->policyService->update($processData['id'], [
                 'paid' => true,
                 'number' => $dataStatus['policyNumber'],
             ]);

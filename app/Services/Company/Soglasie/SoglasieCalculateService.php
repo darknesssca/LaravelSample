@@ -4,7 +4,6 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieCalculateServiceContract;
-use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\CarCategoryServiceContract;
 use App\Contracts\Repositories\Services\CarModelServiceContract;
 use App\Contracts\Repositories\Services\CountryServiceContract;
@@ -12,6 +11,7 @@ use App\Contracts\Repositories\Services\GenderServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Contracts\Repositories\Services\UsageTargetServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\ConmfigurationException;
 use App\Traits\DateFormatTrait;
@@ -21,17 +21,33 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
 {
     use TransformBooleanTrait, DateFormatTrait;
 
+    protected $usageTargetService;
+    protected $carModelService;
+    protected $genderService;
+    protected $countryService;
+    protected $carCategoryService;
+
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         RequestProcessServiceContract $requestProcessService,
-        PolicyRepositoryContract $policyRepository
+        PolicyServiceContract $policyService,
+        UsageTargetServiceContract $usageTargetService,
+        CarModelServiceContract $carModelService,
+        GenderServiceContract $genderService,
+        CountryServiceContract $countryService,
+        CarCategoryServiceContract $carCategoryService
     )
     {
+        $this->usageTargetService = $usageTargetService;
+        $this->carModelService = $carModelService;
+        $this->genderService = $genderService;
+        $this->countryService = $countryService;
+        $this->carCategoryService = $carCategoryService;
         $this->apiWsdlUrl = config('api_sk.soglasie.calculateWsdlUrl');
         if (!($this->apiWsdlUrl)) {
             throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
-        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+        parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
     public function run($company, $attributes): array
@@ -75,12 +91,8 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
 
     protected function prepareData($company, $attributes)
     {
-        $usageTargetService = app(UsageTargetServiceContract::class);
-        $carModelService = app(CarModelServiceContract::class);
-        $countryService = app(CountryServiceContract::class);
-        $categoryService = app(CarCategoryServiceContract::class);
-        $genderService = app(GenderServiceContract::class);
-        $carModel = $carModelService->getCompanyModelByName(
+
+        $carModel = $this->carModelService->getCompanyModelByName(
             $attributes['car']['maker'],
             $attributes['car']['category'],
             $attributes['car']['model'],
@@ -157,7 +169,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                     ],
                     [
                         'id' => 846,
-                        'val' => $usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id),
+                        'val' => $this->usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id),
                     ],
                     [
                         'id' => 961,
@@ -165,7 +177,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                     ],
                     [
                         'id' => 642,
-                        'val' => $categoryService->getCompanyCategory($attributes['car']['category'], $attributes['car']['isUsedWithTrailer'], $company->code),
+                        'val' => $this->carCategoryService->getCompanyCategory($attributes['car']['category'], $attributes['car']['isUsedWithTrailer'], $company->code),
                     ],
                     [
                         'id' => 463,
@@ -174,7 +186,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                     [
                         'id' => 43,
                         'val' => $this->transformBooleanToInteger(
-                            $countryService->getCountryById($attributes['car']['countryOfRegistration'])['alpha2'] == 'RU'
+                            $this->countryService->getCountryById($attributes['car']['countryOfRegistration'])['alpha2'] == 'RU'
                         ),
                     ],
                 ],
@@ -253,7 +265,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         ];
         $data['contract']['param'][] = [
             'id' => 4763,
-            'val' =>  $genderService->getCompanyGender($owner['gender'], $company->id),
+            'val' =>  $this->genderService->getCompanyGender($owner['gender'], $company->id),
         ];
         $data['contract']['param'][] = [
             'id' => 4024,
@@ -295,7 +307,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         ];
         $data['contract']['param'][] = [
             'id' => 4764,
-            'val' =>  $genderService->getCompanyGender($owner['gender'], $company->id),
+            'val' =>  $this->genderService->getCompanyGender($owner['gender'], $company->id),
         ];
         $data = [
             'data' => $data,

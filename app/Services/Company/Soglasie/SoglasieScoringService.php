@@ -4,12 +4,12 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieScoringServiceContract;
-use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\CountryServiceContract;
 use App\Contracts\Repositories\Services\DocTypeServiceContract;
 use App\Contracts\Repositories\Services\GenderServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\ConmfigurationException;
 use App\Services\Repositories\AddressTypeService;
@@ -20,17 +20,30 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
 {
     use TransformBooleanTrait, DateFormatTrait;
 
+    protected $docTypeService;
+    protected $genderService;
+    protected $countryService;
+    protected $addressTypeService;
+
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         RequestProcessServiceContract $requestProcessService,
-        PolicyRepositoryContract $policyRepository
+        PolicyServiceContract $policyService,
+	    DocTypeServiceContract $docTypeService,
+        GenderServiceContract $genderService,
+        CountryServiceContract $countryService,
+        AddressTypeService $addressTypeService
     )
     {
+        $this->docTypeService = $docTypeService;
+        $this->genderService = $genderService;
+        $this->countryService = $countryService;
+        $this->addressTypeService = $addressTypeService;
         $this->apiWsdlUrl = config('api_sk.soglasie.scoringWsdlUrl');
         if (!($this->apiWsdlUrl)) {
             throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
-        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+        parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
     public function run($company, $attributes): array
@@ -83,10 +96,6 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
 
     protected function prepareData($company, $attributes)
     {
-        $countryService = app(CountryServiceContract::class);
-        $docTypeService = app(DocTypeServiceContract::class);
-        $genderService = app(GenderServiceContract::class);
-        $addressTypeService = app(AddressTypeService::class);
         $data = [
             'request' => [
                 'private' => [],
@@ -107,12 +116,12 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
                 'addresses' => [
                     'address' => [],
                 ],
-                "sex" => $genderService->getCompanyGender($owner['gender'], $company->id),
+                "sex" => $this->genderService->getCompanyGender($owner['gender'], $company->id),
                 "note" => '',
             ];
             foreach ($owner['documents'] as $iDocument => $document) {
                 $pDocument = [
-                    'doctype' => $docTypeService->getCompanyDocTypeByRelation2($document['document']['documentType'], $document['document']['isRussian'], $company->id),
+                    'doctype' => $this->docTypeService->getCompanyDocTypeByRelation2($document['document']['documentType'], $document['document']['isRussian'], $company->id),
                     'docseria' => isset($document['document']['documentType']) ? $document['document']['documentType'] : '',
                 ];
                 $this->setValuesByArray($pDocument, [
@@ -124,8 +133,8 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
             }
             foreach ($owner['addresses'] as $iAddress => $address) {
                 $pAddress = [
-                    'type' => $addressTypeService->getCompanyAddressType($address['address']['addressType'], $company->code),
-                    'address' => $countryService->getCountryById($address['address']['country'])['name'] . ', ' .
+                    'type' => $this->addressTypeService->getCompanyAddressType($address['address']['addressType'], $company->code),
+                    'address' => $this->countryService->getCountryById($address['address']['country'])['name'] . ', ' .
                         $address['address']['region'] . ', ' .
                         $address['address']['district'] . ', ' .
                         (isset($address['address']['city']) ? $address['address']['city'] : $address['address']['populatedCenter']) . ', ' .

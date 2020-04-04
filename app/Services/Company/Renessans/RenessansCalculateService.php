@@ -5,13 +5,13 @@ namespace App\Services\Company\Renessans;
 
 
 use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
-use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\CarMarkServiceContract;
 use App\Contracts\Repositories\Services\CarModelServiceContract;
 use App\Contracts\Repositories\Services\DocTypeServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Contracts\Repositories\Services\UsageTargetServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Traits\TransformBooleanTrait;
 
@@ -20,15 +20,27 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
     use TransformBooleanTrait;
 
     protected $apiPath = '/calculate/?fullInformation=true';
+    protected $usageTargetService;
+    protected $carModelService;
+    protected $docTypeService;
+    protected $carMarkService;
 
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         RequestProcessServiceContract $requestProcessService,
-        PolicyRepositoryContract $policyRepository
+        PolicyServiceContract $policyService,
+        UsageTargetServiceContract $usageTargetService,
+        CarModelServiceContract $carModelService,
+        DocTypeServiceContract $docTypeService,
+        CarMarkServiceContract $carMarkService
     )
     {
+        $this->usageTargetService = $usageTargetService;
+        $this->carModelService = $carModelService;
+        $this->docTypeService = $docTypeService;
+        $this->carMarkService = $carMarkService;
         $this->init();
-        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+        parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
     public function run($company, $attributes): array
@@ -61,11 +73,8 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
 
     protected function prepareData($company, $attributes)
     {
-        $usageTargetService = app(UsageTargetServiceContract::class);
-        $carMarkService = app(CarMarkServiceContract::class);
-        $carModelService = app(CarModelServiceContract::class);
-        $docTypeService = app(DocTypeServiceContract::class);
-        $carModel = $carModelService->getCompanyModelByName(
+
+        $carModel = $this->carModelService->getCompanyModelByName(
             $attributes['car']['maker'],
             $attributes['car']['category'],
             $attributes['car']['model'],
@@ -74,7 +83,7 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             'key' => $attributes['key'],
             'dateStart' => $attributes['policy']['beginDate'],
             'period' => 12,
-            'purpose' => $usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id),
+            'purpose' => $this->usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id),
             'limitDrivers' => $this->transformBooleanToInteger(!$attributes['policy']['isMultidrive']),
             'trailer' => $this->transformBooleanToInteger($attributes['car']['isUsedWithTrailer']),
             'isJuridical' => 0,
@@ -82,9 +91,9 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
                 'document' => []
             ],
             'car' => [
-                'make' => $carMarkService->getCompanyMark($attributes['car']['maker'], $company->id),
+                'make' => $this->carMarkService->getCompanyMark($attributes['car']['maker'], $company->id),
                 'model' => $carModel['model'] ? $carModel['model'] : $carModel['otherModel'],
-                'MarkAndModelString' => $carMarkService->getCarMarkName($attributes['car']['maker']) .
+                'MarkAndModelString' => $this->carMarkService->getCarMarkName($attributes['car']['maker']) .
                     ' ' . $attributes['car']['model'],
                 'category' => $carModel['category'],
                 'power' => $attributes['car']['enginePower'],
@@ -113,7 +122,7 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
         }
         $ownerPassport = $this->searchDocumentByType($owner, 'passport');
         $data['owner']['document'] = [
-            'typeofdocument' => $docTypeService->getCompanyPassportDocType($ownerPassport['isRussian'], $company->id),
+            'typeofdocument' => $this->docTypeService->getCompanyPassportDocType($ownerPassport['isRussian'], $company->id),
         ];
         $this->setValuesByArray($data['owner']['document'], [
             "series" => 'series',

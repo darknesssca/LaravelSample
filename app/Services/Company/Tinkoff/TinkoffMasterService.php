@@ -51,6 +51,7 @@ class TinkoffMasterService extends TinkoffService implements TinkoffMasterServic
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
+        $attributes['number'] = $createData['number'];
         $policyService = app(PolicyServiceContract::class);
         $policyService->createPolicyFromCustomData($company, $attributes);
         $logger = app(LogMicroserviceContract::class);
@@ -74,11 +75,11 @@ class TinkoffMasterService extends TinkoffService implements TinkoffMasterServic
             isset($attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber']) &&
             $attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber']
         ) {
-            $policy = $this->policyRepository->getNotPaidPolicyByPaymentNumber($attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber']);
+            $policy = $this->policyService->getNotPaidPolicyByPaymentNumber($attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber']);
             if (!$policy) {
                 throw new PolicyNotFoundException('Нет полиса с таким номером');
             }
-            $this->policyRepository->update($policy->id, [
+            $this->policyService->update($policy->id, [
                 'paid' => true,
             ]);
         } else {
