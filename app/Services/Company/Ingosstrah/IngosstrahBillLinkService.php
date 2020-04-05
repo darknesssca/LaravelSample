@@ -46,12 +46,12 @@ class IngosstrahBillLinkService extends IngosstrahService implements IngosstrahB
         ];
     }
 
-    public function prepareData($data, $processData)
+    public function prepareData($processData)
     {
         return [
-            'SessionToken' => $data['data']['sessionToken'],
+            'SessionToken' => $processData['data']['sessionToken'],
             'Bill' => [
-                'BillISN' => $data['data']['billIsn'],
+                'BillISN' => $processData['data']['billIsn'],
                 'Client' => [
                     'Email' => $processData['data']['insurerEmail'],
                     'SendByEmail' => $this->transformBooleanToChar(true),

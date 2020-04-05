@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Http\Requests\FormSendRequest;
@@ -78,8 +79,6 @@ class InsuranceController extends Controller
         $method = 'payment';
         return Response::success($this->runService($company, $request->toArray(), $method));
     }
-
-    // FIXME требуется рефакторинг
 
     /**
      * artisan команда обновления справочников

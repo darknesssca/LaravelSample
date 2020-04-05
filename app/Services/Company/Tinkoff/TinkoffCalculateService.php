@@ -5,7 +5,17 @@ namespace App\Services\Company\Tinkoff;
 
 
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
+use App\Contracts\Repositories\Services\CarModelServiceContract;
+use App\Contracts\Repositories\Services\CountryServiceContract;
+use App\Contracts\Repositories\Services\DocTypeServiceContract;
+use App\Contracts\Repositories\Services\GenderServiceContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Contracts\Repositories\Services\SourceAcquisitionServiceContract;
+use App\Contracts\Repositories\Services\UsageTargetServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
+use App\Services\Repositories\AddressTypeService;
 use App\Traits\DateFormatTrait;
 use App\Traits\TransformBooleanTrait;
 
@@ -13,9 +23,40 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
 {
     use TransformBooleanTrait, DateFormatTrait;
 
+    protected $usageTargetService;
+    protected $carModelService;
+    protected $docTypeService;
+    protected $genderService;
+    protected $countryService;
+    protected $addressTypeService;
+    protected $sourceAcquisitionService;
+
+    public function __construct(
+        IntermediateDataServiceContract $intermediateDataService,
+        RequestProcessServiceContract $requestProcessService,
+        PolicyServiceContract $policyService,
+        UsageTargetServiceContract $usageTargetService,
+        CarModelServiceContract $carModelService,
+        DocTypeServiceContract $docTypeService,
+        GenderServiceContract $genderService,
+        CountryServiceContract $countryService,
+        AddressTypeService $addressTypeService,
+        SourceAcquisitionServiceContract $sourceAcquisitionService
+    )
+    {
+        $this->usageTargetService = $usageTargetService;
+        $this->carModelService = $carModelService;
+        $this->docTypeService = $docTypeService;
+        $this->genderService = $genderService;
+        $this->countryService = $countryService;
+        $this->addressTypeService = $addressTypeService;
+        $this->sourceAcquisitionService = $sourceAcquisitionService;
+        parent::__construct($intermediateDataService, $requestProcessService, $policyService);
+    }
+
     public function run($company, $attributes): array
     {
-        $data = $this->prepareData($attributes);
+        $data = $this->prepareData($company, $attributes);
         $response = $this->requestBySoap($this->apiWsdlUrl, 'calcPartnerFQuote', $data);
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(
@@ -41,8 +82,13 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
         return $data;
     }
 
-    protected function prepareData($attributes)
+    protected function prepareData($company, $attributes)
     {
+        $carModel = $this->carModelService->getCompanyModelByName(
+            $attributes['car']['maker'],
+            $attributes['car']['category'],
+            $attributes['car']['model'],
+            $company->id);
         $data = [];
         $this->setHeader($data);
         //subjectInfo
@@ -55,8 +101,8 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     "middleName" => $subject['fields']['middleName'],
                     "birthdate" => $subject['fields']['birthdate'],
                     "email" => $subject['fields']['email'],
-                    "gender" => $subject['fields']['gender'], // TODO: справочник
-                    "citizenship" => $subject['fields']['citizenship'], // TODO: справочник
+                    "gender" => $this->genderService->getCompanyGender($subject['fields']['gender'], $company->id),
+                    "citizenship" => $this->countryService->getCountryById($subject['fields']['citizenship'])['alpha2'],
                     'document' => [],
                 ],
             ];
@@ -65,9 +111,9 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
             ], $subject['fields']['middleName']);
             foreach ($subject['fields']['addresses'] as $iAddress => $address) {
                 $pAddress = [
-                    'addressType' => $address['address']['addressType'],  // TODO: справочник
-                    'country' => $address['address']['country'],  // TODO: справочник
-                    'region' => $address['address']['region'],  // TODO: справочник
+                    'addressType' => $this->addressTypeService->getCompanyAddressType($address['address']['addressType'], $company->code),
+                    'country' => $this->countryService->getCountryById($address['address']['country'])['alpha2'],
+                    'region' => $address['address']['region'],
                 ];
                 $this->setValuesByArray($pAddress, [
                     "postCode" => 'postCode',
@@ -88,7 +134,11 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
             }
             foreach ($subject['fields']['documents'] as $document) {
                 $pDocument = [
-                    "documentType" => $document['document']['documentType'], // TODO: справочник
+                    "documentType" => $this->docTypeService->getCompanyDocTypeByRelation(
+                        $document['document']['documentType'],
+                        $document['document']['isRussian'],
+                        $company
+                    ),
                 ];
                 $this->setValuesByArray($pDocument, [
                     "series" => 'series',
@@ -110,19 +160,19 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
             'vehicleDetails' => [
                 'vehicleReferenceInfo' => [
                     'vehicleReferenceDetails' => [
-                        'modelID' => $attributes['car']['model'], // TODO: справочник
+                        'modelID' => $carModel['model'] ? $carModel['model'] : $carModel['otherModel'],
                         'engPwrHP' => $attributes['car']['enginePower'],
                     ],
                 ],
-                'isChangeNumAgg' => false,
+                'isChangeNumAgg' => false, // заглушка
                 'countryOfRegistration' => [
                     'isNoCountryOfRegistration' => false,
-                    'countryOfRegistration' => $attributes['car']['countryOfRegistration']
+                    'countryOfRegistration' => $this->countryService->getCountryById($attributes['car']['countryOfRegistration'])['alpha2'],
                 ],
                 'chassis' => [
                     'isChassisMissing' => true,
                 ],
-                'isKeyless' => false, // TODO: понять будет ли поле или заглушка
+                'isKeyless' => false, // заглушка
                 'isUsedWithTrailer' => $this->transformAnyToBoolean($attributes['car']['isUsedWithTrailer']),
                 'kuzovNumber' => [
                     'isKuzovMissing' => true,
@@ -132,24 +182,28 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 'registrationNumber' => [
                     'isNoRegistrationNumber' => true,
                 ],
-                'sourceAcquisition' => $attributes['car']['sourceAcquisition'], // TODO: справочник
+                'sourceAcquisition' => $this->sourceAcquisitionService->getCompanySourceAcquisitions($attributes['car']['sourceAcquisition'], $company->id),
                 'vehicleCost' => $attributes['car']['vehicleCost'],
-                'vehicleUsage' => $attributes['car']['vehicleUsage'], // TODO: справочник
-                'vehicleUseRegion' => $attributes['car']['vehicleUseRegion'], // TODO: справочник
+                'vehicleUsage' => $this->usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id),
                 'VIN' => [
                     'isVINMissing' => false,
                     'isIrregularVIN' => $this->transformAnyToBoolean($attributes['car']['isIrregularVIN']),
                     'VIN' => $attributes['car']['vin'],
                 ],
                 'year' => $attributes['car']['year'],
-                'isRightHandDrive' => false, // TODO: понять будет ли поле или заглушка
+                'isRightHandDrive' => false, // заглушка
                 'numberOfKeys' => [
                     'IsUnknownNumberOfKeys' => true,
                 ],
             ],
         ];
+        $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
+        $insurerRegAddress = $this->searchAddressByType($insurer, 'registration');
+        if (isset($insurerRegAddress['regionKladr'])) {
+            $data['vehicleInfo']['vehicleDetails']['vehicleUseRegion'] = substr($insurerRegAddress['regionKladr'], 0, 2);
+        }
+        $data['vehicleInfo']['vehicleDetails']['vehicleDocument']['documentType'] = $this->docTypeService->getCompanyCarDocType($attributes['car']['document']['documentType'], $company->id);
         $this->setValuesByArray($data['vehicleInfo']['vehicleDetails']['vehicleDocument'], [
-            'documentType' => 'documentType',
             'documentSeries' => 'series',
             'documentNumber' => 'number',
             'documentIssued' => 'dateIssue',

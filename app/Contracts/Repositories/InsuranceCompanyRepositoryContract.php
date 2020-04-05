@@ -14,4 +14,6 @@ interface InsuranceCompanyRepositoryContract
      * @return mixed
      */
     public function getCompany($code);
+
+    public function getInsuranceCompanyList();
 }

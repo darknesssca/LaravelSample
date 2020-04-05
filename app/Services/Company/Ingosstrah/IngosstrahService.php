@@ -3,9 +3,9 @@
 namespace App\Services\Company\Ingosstrah;
 
 
-use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ConmfigurationException;
 use App\Services\Company\CompanyService;
 
@@ -20,7 +20,7 @@ abstract class IngosstrahService extends CompanyService
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         RequestProcessServiceContract $requestProcessService,
-        PolicyRepositoryContract $policyRepository
+        PolicyServiceContract $policyService
     )
     {
         $this->apiWsdlUrl = config('api_sk.ingosstrah.wsdlUrl');
@@ -29,6 +29,6 @@ abstract class IngosstrahService extends CompanyService
         if (!($this->apiWsdlUrl && $this->apiUser && $this->apiPassword)) {
             throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
-        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+        parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 }

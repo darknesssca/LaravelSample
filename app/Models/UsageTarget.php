@@ -12,9 +12,9 @@ class UsageTarget extends Model
     ];
     protected $table = 'usage_targets';
 
-    public function insuranceCodes()
+    public function codes()
     {
-        return $this->belongsToMany('App\Models\UsageTargetInsurance');
+        return $this->hasMany('App\Models\UsageTargetInsurance', 'target_id', 'id');
     }
 
 }

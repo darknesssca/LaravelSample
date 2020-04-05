@@ -4,9 +4,9 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieCheckCreateServiceContract;
-use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\ConmfigurationException;
 
@@ -15,7 +15,7 @@ class SoglasieCheckCreateService extends SoglasieService implements SoglasieChec
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         RequestProcessServiceContract $requestProcessService,
-        PolicyRepositoryContract $policyRepository
+        PolicyServiceContract $policyService
     )
     {
         $this->apiRestUrl = config('api_sk.soglasie.checkCreateUrl');
@@ -23,7 +23,7 @@ class SoglasieCheckCreateService extends SoglasieService implements SoglasieChec
             throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
         $this->init();
-        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+        parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
     public function run($company, $processData): array

@@ -21,11 +21,11 @@ class CarModel extends Model
 
     public function category()
     {
-        return $this->belongsTo('App\Models\CarCategory');
+        return $this->hasOne('App\Models\CarCategory', 'id', 'category_id');
     }
 
-    public function company()
+    public function codes()
     {
-        return $this->belongsToMany('App\Models\CarModelInsurance');
+        return $this->hasMany('App\Models\InsuranceModel','model_id', 'id');
     }
 }

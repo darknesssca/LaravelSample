@@ -5,9 +5,13 @@ namespace App\Services\Company\Renessans;
 
 
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
-use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\CarMarkServiceContract;
+use App\Contracts\Repositories\Services\CountryServiceContract;
+use App\Contracts\Repositories\Services\DocTypeServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Contracts\Repositories\Services\UsageTargetServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Traits\TransformBooleanTrait;
 
@@ -16,15 +20,27 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
     use TransformBooleanTrait;
 
     protected $apiPath = '/create/';
+    protected $usageTargetService;
+    protected $docTypeService;
+    protected $countryService;
+    protected $carMarkService;
 
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         RequestProcessServiceContract $requestProcessService,
-        PolicyRepositoryContract $policyRepository
+        PolicyServiceContract $policyService,
+        UsageTargetServiceContract $usageTargetService,
+        DocTypeServiceContract $docTypeService,
+        CountryServiceContract $countryService,
+        CarMarkServiceContract $carMarkService
     )
     {
+        $this->usageTargetService = $usageTargetService;
+        $this->docTypeService = $docTypeService;
+        $this->countryService = $countryService;
+        $this->carMarkService = $carMarkService;
         $this->init();
-        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+        parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
     protected function setAdditionalFields(&$attributes) {
@@ -36,7 +52,7 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
         $this->setAdditionalFields($attributes);
         $this->setAuth($attributes);
         $url = $this->getUrl();
-        $data = $this->prepareData($attributes);
+        $data = $this->prepareData($company, $attributes);
         $response = $this->postRequest($url, $data, [], false);
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');
@@ -58,7 +74,7 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
         ];
     }
 
-    protected function prepareData($attributes): array
+    protected function prepareData($company, $attributes): array
     {
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $owner = $this->searchSubjectById($attributes, $attributes['policy']['ownerId']);
@@ -66,17 +82,18 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
             'key' => $attributes['key'],
             'CheckSegment' => $this->transformBooleanToInteger($attributes['CheckSegment']),
             'calculationId' => $attributes['calcId'],
-            'purpose' => $attributes['car']['vehicleUsage'],
+            'purpose' => $this->usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id),
             'cabinet' => [
                 'email' => $insurer['email'],
             ],
             'isInsurerJuridical' => $this->transformBooleanToInteger(false),
             'car' => [
                 'year' => $attributes['car']['year'],
-                'MarkAndModelString' => $attributes['car']['maker'] . ' ' . $attributes['car']['model'], //todo справочник
+                'MarkAndModelString' =>  $this->carMarkService->getCarMarkName($attributes['car']['maker']) .
+                    ' ' . $attributes['car']['model'],
             ],
         ];
-        if ($attributes['car']['document']['documentType'] == 'PTS') { //todo справочник
+        if ($attributes['car']['document']['documentType'] == 'pts') {
             $data['car']['pts'] = [];
             $this->setValuesByArray($data['car']['pts'], [
                 'serie' => 'series',
@@ -84,12 +101,13 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
                 'dateIssue' => 'dateIssue',
             ], $attributes['car']['document']);
         } else {
-            $data['car']['sts'] = [];
+            $data['car']['sts'] = [
+                'docType' => $this->docTypeService->getCompanyCarDocType($attributes['car']['document']['documentType'], $company->id)
+            ];
             $this->setValuesByArray($data['car']['sts'], [
                 'serie' => 'series',
                 'number' => 'number',
                 'dateIssue' => 'dateIssue',
-                'docType' => 'documentType',
             ], $attributes['car']['document']);
         }
         $data['car']['diagnostic'] = [];
@@ -97,13 +115,14 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
             'number' => 'number',
             'validDate' => 'dateEnd',
         ], $attributes['car']['inspection']);
-        $data['insurer'] = $this->getSubjectData($insurer);
-        $data['owner'] = $this->getSubjectData($owner);
+        $data['insurer'] = $this->getSubjectData($company, $insurer);
+        $data['owner'] = $this->getSubjectData($company, $owner);
         return $data;
     }
 
-    protected function getSubjectData($subject)
+    protected function getSubjectData($company, $subject)
     {
+
         $subjectData = [];
         $this->setValuesByArray($subjectData, [
             'email' => 'email',
@@ -113,11 +132,12 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
             'middlename' => 'middleName',
             'birthday' => 'birthdate',
         ], $subject);
-        $document = $this->searchDocumentByType($subject, 'RussianPassport'); //todo справочник
+        $document = $this->searchDocumentByType($subject, 'passport');
         if ($document) {
-            $subjectData['document'] = [];
+            $subjectData['document'] = [
+                'typeofdocument' => $this->docTypeService->getCompanyPassportDocType($document['isRussian'], $company->id),
+            ];
             $this->setValuesByArray($subjectData['document'], [
-                'typeofdocument' => 'documentType',
                 'series' => 'series',
                 'number' => 'number',
                 'dateIssue' => 'dateIssue',
@@ -125,11 +145,11 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
                 'codeDivision' => 'subdivisionCode',
             ], $document);
         }
-        $regAddress = $this->searchAddressByType($subject, 'registration'); //todo справочник
+        $regAddress = $this->searchAddressByType($subject, 'registration');
         if ($regAddress) {
             $subjectData['addressJuridical'] = $this->getAddressData($regAddress);
         }
-        $factAddress = $this->searchAddressByType($subject, 'home'); //todo справочник
+        $factAddress = $this->searchAddressByType($subject, 'home');
         if ($factAddress) {
             $subjectData['addressFact'] = $this->getAddressData($factAddress);
         }
@@ -138,9 +158,10 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
 
     protected function getAddressData($address)
     {
-        $addressData = [];
+        $addressData = [
+            'country' => $this->countryService->getCountryById($address['country'])['name'],
+        ];
         $this->setValuesByArray($addressData, [
-            'country' => 'country',
             'zip' => 'postCode',
             'city' => 'city',
             'settlement' => 'populatedCenter',

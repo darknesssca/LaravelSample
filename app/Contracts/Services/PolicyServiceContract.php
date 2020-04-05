@@ -9,4 +9,14 @@ interface PolicyServiceContract
     public function statistic(array $filter = []);
 
     public function create(array $fields, int $draftId = null);
+
+    public function createPolicyFromCustomData($company, $attributes);
+
+    public function update($id, $data);
+
+    public function getNotPaidPolicyByPaymentNumber($policyNumber);
+
+    public function getNotPaidPolicies($limit);
+
+    public function searchOldPolicyByPolicyNumber($companyId, $attributes);
 }

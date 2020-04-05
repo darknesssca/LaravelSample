@@ -4,9 +4,9 @@
 namespace App\Services\Company;
 
 
-use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
 use App\Traits\TokenTrait;
 use App\Traits\ValueSetterTrait;
 use Benfin\Api\Contracts\NotifyMicroserviceContract;
@@ -22,18 +22,18 @@ abstract class CompanyService
 
     protected $intermediateDataService;
     protected $requestProcessService;
-    protected $policyRepository;
+    protected $policyService;
 
 
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         RequestProcessServiceContract $requestProcessService,
-        PolicyRepositoryContract $policyRepository
+        PolicyServiceContract $policyService
     )
     {
         $this->intermediateDataService = $intermediateDataService;
         $this->requestProcessService = $requestProcessService;
-        $this->policyRepository = $policyRepository;
+        $this->policyService = $policyService;
     }
 
     /**отправка ссылки на оплату на почту

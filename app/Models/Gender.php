@@ -12,9 +12,9 @@ class Gender extends Model
     ];
     protected $table = 'genders';
 
-    public function insuranceCodes()
+    public function codes()
     {
-        return $this->belongsTo('App\Models\GenderInsurance');
+        return $this->hasMany('App\Models\GenderInsurance','gender_id', 'id');
     }
 
 }

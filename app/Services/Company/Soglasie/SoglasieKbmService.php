@@ -4,9 +4,10 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieKbmServiceContract;
-use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\DocTypeServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\ConmfigurationException;
 use App\Traits\DateFormatTrait;
@@ -19,19 +20,19 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         RequestProcessServiceContract $requestProcessService,
-        PolicyRepositoryContract $policyRepository
+        PolicyServiceContract $policyService
     )
     {
         $this->apiWsdlUrl = config('api_sk.soglasie.kbmWsdlUrl');
         if (!$this->apiWsdlUrl) {
             throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
         }
-        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+        parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
     public function run($company, $attributes): array
     {
-        $data = $this->prepareData($attributes);
+        $data = $this->prepareData($company, $attributes);
         $headers = $this->getHeaders();
         $auth = $this->getAuth();
         $response = $this->requestBySoap($this->apiWsdlUrl, 'getKbm', $data, $auth, $headers);
@@ -68,8 +69,9 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
         ];
     }
 
-    protected function prepareData($attributes)
+    protected function prepareData($company, $attributes)
     {
+        $docTypeService = app(DocTypeServiceContract::class);
         $data = [
             'request' => [
                 'CalcRequestValue' => [
@@ -92,26 +94,23 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
         $pSubject = [];
         foreach ($owner['documents'] as $iDocument => $document) {
             $pDocument = [];
-            if ($document['document']['documentType'] != 'driverLicense') {
-                $pDocument['DocPerson'] = 20; //$document['document']['documentType'];  // TODO: справочник, ВАЖНО тут передается тоже driveLicense
+            if ($document['document']['documentType'] == 'passport') {
+                $pDocument['DocPerson'] = $docTypeService->getCompanyPassportDocType2($document['document']['isRussian'], $company->id);
             }
             $this->setValuesByArray($pDocument, [
                 "Serial" => 'series',
                 "Number" => 'number',
             ], $document['document']);
-            $targetName = '';
             switch ($document['document']['documentType']) {
-                case 'driverLicense': // TODO: справочник
-                    $targetName = 'DriverDocument';
+                case 'license':
+                    $pSubject['DriverDocument'] = $pDocument;
                     break;
-                case 'passport': // TODO: справочник
-                    $targetName = 'PersonDocument';
+                case 'passport':
+                    $pSubject['PersonDocument'] = $pDocument;
                     break;
                 default:
-                    $targetName = 'PersonDocumentAdd';
                     break;
             }
-            $pSubject[$targetName] = $pDocument;
             $pSubject['PersonNameBirthHash'] = '### '.
                 $owner['lastName'] . '|'.
                 $owner['firstName'] . '|'.

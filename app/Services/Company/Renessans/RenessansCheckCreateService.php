@@ -4,9 +4,9 @@
 namespace App\Services\Company\Renessans;
 
 use App\Contracts\Company\Renessans\RenessansCheckCreateServiceContract;
-use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 
 class RenessansCheckCreateService extends RenessansService implements RenessansCheckCreateServiceContract
@@ -16,11 +16,11 @@ class RenessansCheckCreateService extends RenessansService implements RenessansC
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         RequestProcessServiceContract $requestProcessService,
-        PolicyRepositoryContract $policyRepository
+        PolicyServiceContract $policyService
     )
     {
         $this->init();
-        parent::__construct($intermediateDataService, $requestProcessService, $policyRepository);
+        parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
     public function run($company, $attributes): array
@@ -34,10 +34,10 @@ class RenessansCheckCreateService extends RenessansService implements RenessansC
         }
         if (!isset($response['data']['Status']) || ($response['data']['Status'] != 'ok')) {
             if (isset($response['data']['return']['Status']) && ($response['data']['return']['Status'] == 'wait')) {
-                throw new ApiRequestsException(
+                throw new ApiRequestsException([
                     'API страховой компании не вернуло ответ',
                     isset($response['message']) ? $response['message'] : 'нет данных об ошибке'
-                );
+                ]);
             } else {
                 return [
                     'result' => true,

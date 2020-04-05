@@ -3,6 +3,7 @@
 
 use App\Providers\RepositoryServiceProvider;
 use Benfin\Api\BenfinMicroserviceProvider;
+use Benfin\Cache\BenfinObserverProvider;
 use Benfin\Requests\BenfinMacroProvider;
 use Benfin\Requests\BenfinRequestProvider;
 
@@ -66,6 +67,7 @@ $app->singleton(
 $app->configure('app');
 $app->configure('api_sk');
 $app->configure('queue');
+$app->configure('api');
 
 /*
 |--------------------------------------------------------------------------
@@ -100,11 +102,14 @@ $app->routeMiddleware(['auth' => Benfin\Auth\Http\Middleware\Authenticate::class
 $app->register(App\Providers\AppServiceProvider::class);
 $app->register(App\Providers\CompanyServiceProvider::class);
 $app->register(App\Providers\RepositoryServiceProvider::class);
+$app->register(BenfinObserverProvider::class);
 $app->register(BenfinMicroserviceProvider::class);
 $app->register(BenfinMacroProvider::class);
 $app->register(BenfinRequestProvider::class);
 $app->register(App\Providers\MinIOStorageServiceProvider::class);
 $app->register(RepositoryServiceProvider::class);
+$app->register(Illuminate\Redis\RedisServiceProvider::class);
+
 /*
 |--------------------------------------------------------------------------
 | Load The Application Routes
