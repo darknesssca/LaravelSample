@@ -12,7 +12,7 @@ use App\Services\Company\CompanyService;
 
 abstract class TinkoffService extends CompanyService
 {
-    const companyCode = 'tinkoff';
+    public const companyCode = 'tinkoff';
 
     protected $apiWsdlUrl;
     protected $apiUser;

@@ -17,7 +17,7 @@ abstract class CompanyService
 {
     use HttpRequest, SoapRequest, TokenTrait, ValueSetterTrait;
 
-    const companyCode = '';
+    public const companyCode = '';
     protected $companyId;
 
     protected $intermediateDataService;
@@ -34,6 +34,7 @@ abstract class CompanyService
         $this->intermediateDataService = $intermediateDataService;
         $this->requestProcessService = $requestProcessService;
         $this->policyService = $policyService;
+        $this->init();
     }
 
     /**отправка ссылки на оплату на почту

@@ -12,7 +12,7 @@ use App\Services\Company\CompanyService;
 
 abstract class SoglasieService extends CompanyService
 {
-    const companyCode = 'soglasie';
+    public  const companyCode = 'soglasie';
 
     protected $apiWsdlUrl; // wsdl url прописывается в дочерних классах
     protected $apiRestUrl;

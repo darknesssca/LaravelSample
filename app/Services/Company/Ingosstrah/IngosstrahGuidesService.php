@@ -4,16 +4,15 @@
 namespace App\Services\Company\Ingosstrah;
 
 
+use App\Contracts\Company\Ingosstrah\IngosstrahGuidesSourceContract;
 use App\Contracts\Company\Ingosstrah\IngosstrahLoginServiceContract;
-use App\Http\Controllers\RestController;
-use App\Http\Controllers\SoapController;
-use App\Services\Company\GuidesSourceInterface;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
+use App\Models\InsuranceCompany;
 use App\Services\Company\GuidesSourceTrait;
-use App\Services\Company\Soglasie\SoglasieService;
-use Illuminate\Support\Facades\File;
-use Laravel\Lumen\Application;
 
-class IngosstrahGuidesService extends IngosstrahService implements GuidesSourceInterface
+class IngosstrahGuidesService extends IngosstrahService implements IngosstrahGuidesSourceContract
 {
     use GuidesSourceTrait;
     private $baseUrl;
@@ -31,16 +30,19 @@ class IngosstrahGuidesService extends IngosstrahService implements GuidesSourceI
         762039700 => "троллейбус",//ТРОЛЛЕЙБУСЫ
     ];
 
-    public function __construct()
+    public function __construct(IntermediateDataServiceContract $intermediateDataService,
+                                RequestProcessServiceContract $requestProcessService,
+                                PolicyServiceContract $policyService)
     {
-        parent::__construct();
+        parent::__construct($intermediateDataService,$requestProcessService,$policyService);
+        $this->companyId = InsuranceCompany::where('code',self::companyCode)->first()['id'];
     }
 
 
     public function updateCarModelsGuides(): bool
     {
         try {
-            $token = $this->getToken();
+            $token = $this->getTokenIngosstrah();
             $data = [
                 'SessionToken' => $token,
                 "Product" => '753518300', //todo из справочника, вероятно статика
@@ -58,6 +60,7 @@ class IngosstrahGuidesService extends IngosstrahService implements GuidesSourceI
             }
             return true;
         } catch (\Exception $e) {
+            dd($e);
             return false;
         }
     }
@@ -65,7 +68,7 @@ class IngosstrahGuidesService extends IngosstrahService implements GuidesSourceI
     /**получение токена
      * @return string
      */
-    private function getToken(): string
+    private function getTokenIngosstrah(): string
     {
         $serviceLogin = app(IngosstrahLoginServiceContract::class);
         $loginData = $serviceLogin->run(null, null);
