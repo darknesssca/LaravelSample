@@ -4,26 +4,27 @@
 namespace App\Services\Company\Soglasie;
 
 
-use App\Http\Controllers\RestController;
-use App\Http\Controllers\SoapController;
-use App\Models\CarCategory;
-use App\Models\CarMark;
-use App\Models\CarModel;
-use App\Models\InsuranceMark;
-use App\Models\InsuranceModel;
-use App\Services\Company\GuidesSourceInterface;
+use App\Contracts\Company\Soglasie\SoglasieGuidesSourceContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
+use App\Models\InsuranceCompany;
 use App\Services\Company\GuidesSourceTrait;
 
-class SoglasieGuidesService extends SoglasieService implements GuidesSourceInterface
+class SoglasieGuidesService extends SoglasieService implements SoglasieGuidesSourceContract
 {
     use GuidesSourceTrait;
 
     private $baseUrl;
 
-    public function __construct()
+    public function __construct(IntermediateDataServiceContract $intermediateDataService,
+                                RequestProcessServiceContract $requestProcessService,
+                                PolicyServiceContract $policyService
+    )
     {
-        parent::__construct();
-        $this->baseUrl = env("SOGLASIE_API_CARS");;
+        parent::__construct($intermediateDataService,$requestProcessService,$policyService);
+        $this->baseUrl = env("SOGLASIE_API_CARS");
+        $this->companyId = InsuranceCompany::where('code',self::companyCode)->first()['id'];
     }
 
 
@@ -31,7 +32,7 @@ class SoglasieGuidesService extends SoglasieService implements GuidesSourceInter
     {
         try {
             $headers = $this->generateHeaders();
-            $response = $this->getRequest($this->baseUrl, [], $headers);
+            $response = $this->getRequest($this->baseUrl, [], $headers,false);
 
             foreach ($response as $mark) {
                 $val = $this->prepareMark($mark);
@@ -70,7 +71,7 @@ class SoglasieGuidesService extends SoglasieService implements GuidesSourceInter
         ];
         //МОДЕЛИ
         $headers = $this->generateHeaders();
-        $response = $this->getRequest($this->baseUrl . "/" . $mark['id'], [], $headers);
+        $response = $this->getRequest($this->baseUrl . "/" . $mark['id'], [], $headers,false);
 
         foreach ($response as $model) {
             $model = [

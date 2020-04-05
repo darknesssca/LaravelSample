@@ -4,25 +4,25 @@
 namespace App\Services\Company\Renessans;
 
 
-use App\Http\Controllers\RestController;
-use App\Models\CarCategory;
-use App\Models\CarMark;
-use App\Models\CarModel;
-use App\Models\InsuranceMark;
-use App\Models\InsuranceModel;
-use App\Services\Company\GuidesSourceInterface;
+use App\Contracts\Company\Renessans\RenessansGuidesSourceContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
+use App\Models\InsuranceCompany;
 use App\Services\Company\GuidesSourceTrait;
-use App\Services\Company\Soglasie\SoglasieService;
 
-class RenessansGuidesService extends RenessansService implements GuidesSourceInterface
+class RenessansGuidesService extends RenessansService implements RenessansGuidesSourceContract
 {
     use GuidesSourceTrait;
     private $baseUrl;
 
-    public function __construct()
+    public function __construct(IntermediateDataServiceContract $intermediateDataService,
+                                RequestProcessServiceContract $requestProcessService,
+                                PolicyServiceContract $policyService)
     {
-        parent::__construct();
+        parent::__construct($intermediateDataService,$requestProcessService,$policyService);
         $this->baseUrl = env("RENESSANS_API_CARS");;
+        $this->companyId = InsuranceCompany::where('code',self::companyCode)->first()['id'];
     }
 
 
@@ -31,7 +31,7 @@ class RenessansGuidesService extends RenessansService implements GuidesSourceInt
         try {
             $params = [];
             $this->setAuth($params);
-            $response = $this->getRequest($this->baseUrl, $params);
+            $response = $this->getRequest($this->baseUrl, $params,[],false);
             if (!$response['result']) {
                 return false;
             }

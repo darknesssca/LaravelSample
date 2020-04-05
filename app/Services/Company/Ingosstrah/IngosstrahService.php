@@ -11,7 +11,7 @@ use App\Services\Company\CompanyService;
 
 abstract class IngosstrahService extends CompanyService
 {
-    const companyCode = 'ingosstrah';
+    public  const companyCode = 'ingosstrah';
 
     protected $apiWsdlUrl;
     protected $apiUser;

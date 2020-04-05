@@ -4,14 +4,17 @@
 namespace App\Services\Company\Tinkoff;
 
 
-use App\Services\Company\GuidesSourceInterface;
+use App\Contracts\Company\Tinkoff\TinkoffGuidesSourceContract;
+use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\RequestProcessServiceContract;
+use App\Contracts\Services\PolicyServiceContract;
+use App\Models\InsuranceCompany;
 use App\Services\Company\GuidesSourceTrait;
 use Laravel\Lumen\Application;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Reader\Exception;
-use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 
-class TinkoffGuidesService extends TinkoffService implements GuidesSourceInterface
+class TinkoffGuidesService extends TinkoffService implements TinkoffGuidesSourceContract
 {
     /**массив марок машин, которые состоят более чем из одного слова
      * @var array
@@ -29,9 +32,13 @@ class TinkoffGuidesService extends TinkoffService implements GuidesSourceInterfa
 
     use GuidesSourceTrait;
 
-    public function __construct()
+    public function __construct(IntermediateDataServiceContract $intermediateDataService,
+                                RequestProcessServiceContract $requestProcessService,
+                                PolicyServiceContract $policyService
+    )
     {
-        parent::__construct();
+        parent::__construct($intermediateDataService,$requestProcessService,$policyService);
+        $this->companyId = InsuranceCompany::where('code',self::companyCode)->first()['id'];
     }
 
 
