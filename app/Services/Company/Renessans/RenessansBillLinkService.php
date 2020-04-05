@@ -35,10 +35,10 @@ class RenessansBillLinkService extends RenessansService implements RenessansBill
             throw new ApiRequestsException('API страховой компании не вернуло ответ');
         }
         if (!$response['result'] || !(isset($response['data']['url']) && $response['data']['url'])) {
-            throw new ApiRequestsException(
+            throw new ApiRequestsException([
                 'API страховой компании не вернуло ответ',
                 isset($response['message']) ? $response['message'] : 'нет данных об ошибке'
-            );
+            ]);
         }
         return [
             'billUrl' => $response['data']['url'],

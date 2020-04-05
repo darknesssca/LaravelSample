@@ -34,10 +34,10 @@ class RenessansCheckCreateService extends RenessansService implements RenessansC
         }
         if (!isset($response['data']['Status']) || ($response['data']['Status'] != 'ok')) {
             if (isset($response['data']['return']['Status']) && ($response['data']['return']['Status'] == 'wait')) {
-                throw new ApiRequestsException(
+                throw new ApiRequestsException([
                     'API страховой компании не вернуло ответ',
                     isset($response['message']) ? $response['message'] : 'нет данных об ошибке'
-                );
+                ]);
             } else {
                 return [
                     'result' => true,

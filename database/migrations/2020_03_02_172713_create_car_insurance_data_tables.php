@@ -420,46 +420,46 @@ class CreateCarInsuranceDataTables extends Migration
             $table->integerIncrements('id');
             $table->unsignedInteger('agent_id');
             $table->string('number')->nullable();
-            $table->unsignedInteger('insurance_company_id')->nullable();
+            $table->unsignedInteger('insurance_company_id');
             $table->unsignedInteger('status_id');
             $table->unsignedInteger('type_id')->nullable();
             $table->unsignedInteger('region_id')->nullable();
             $table->unsignedInteger('premium')->nullable();
             $table->unsignedInteger('commission_id')->nullable();
             $table->boolean('commission_paid')->default(false);
-            $table->date('registration_date')->nullable();
+            $table->date('registration_date');
             $table->boolean('paid')->default(false);
-            $table->date('start_date')->nullable();
-            $table->date('end_date')->nullable();
+            $table->date('start_date');
+            $table->date('end_date');
             $table->boolean('is_multi_drive')->default(false);
             // subject
-            $table->unsignedInteger('client_id')->nullable();
-            $table->unsignedInteger('insurant_id')->nullable();
+            $table->unsignedInteger('client_id');
+            $table->unsignedInteger('insurant_id');
             // car
-            $table->unsignedInteger('vehicle_model_id')->nullable();
-            $table->unsignedInteger('vehicle_engine_power')->nullable();
-            $table->string('vehicle_vin')->nullable();
-            $table->string('vehicle_reg_number')->nullable();
-            $table->unsignedInteger('vehicle_reg_country')->nullable();
-            $table->unsignedInteger('vehicle_made_year')->nullable();
+            $table->unsignedInteger('vehicle_model_id');
+            $table->unsignedInteger('vehicle_engine_power');
+            $table->string('vehicle_vin');
+            $table->string('vehicle_reg_number');
+            $table->unsignedInteger('vehicle_reg_country');
+            $table->unsignedInteger('vehicle_made_year');
             $table->unsignedInteger('vehicle_unladen_mass')->nullable();
             $table->unsignedInteger('vehicle_loaded_mass')->nullable();
             $table->unsignedInteger('vehicle_count_seats')->nullable();
-            $table->unsignedInteger('vehicle_mileage')->nullable();
-            $table->unsignedInteger('vehicle_cost')->nullable();
-            $table->unsignedInteger('vehicle_acquisition')->nullable();
-            $table->unsignedInteger('vehicle_usage_target')->nullable();
+            $table->unsignedInteger('vehicle_mileage');
+            $table->unsignedInteger('vehicle_cost');
+            $table->unsignedInteger('vehicle_acquisition');
+            $table->unsignedInteger('vehicle_usage_target');
             $table->boolean('vehicle_with_trailer')->default(false);
             // car.document
-            $table->unsignedInteger('vehicle_reg_doc_type_id')->nullable();
-            $table->string('vehicle_doc_series')->nullable();
-            $table->string('vehicle_doc_number')->nullable();
-            $table->date('vehicle_doc_issued')->nullable();
+            $table->unsignedInteger('vehicle_reg_doc_type_id');
+            $table->string('vehicle_doc_series');
+            $table->string('vehicle_doc_number');
+            $table->date('vehicle_doc_issued');
             // car.inspection
-            $table->string('vehicle_inspection_doc_series')->nullable();
-            $table->string('vehicle_inspection_doc_number')->nullable();
-            $table->date('vehicle_inspection_issued_date')->nullable();
-            $table->date('vehicle_inspection_end_date')->nullable();
+            $table->string('vehicle_inspection_doc_series');
+            $table->string('vehicle_inspection_doc_number');
+            $table->date('vehicle_inspection_issued_date');
+            $table->date('vehicle_inspection_end_date');
 
             $table->timestamps();
 

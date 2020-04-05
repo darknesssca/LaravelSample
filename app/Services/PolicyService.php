@@ -7,6 +7,7 @@ use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Traits\ValueSetterTrait;
 use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
+use Benfin\Api\GlobalStorage;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -87,6 +88,7 @@ class PolicyService implements PolicyServiceContract
     public function createPolicyFromCustomData($company, $attributes)
     {
         $fields = [
+            'agent_id' => GlobalStorage::getUserId(),
             'insurance_company_id' => $company->id,
             'subjects' => [],
             'car' => [],
@@ -110,12 +112,12 @@ class PolicyService implements PolicyServiceContract
                 'citizenship' => 'citizenship',
                 'phone' => 'phone',
             ], $subject['fields']);
-            foreach ($subject['addresses'] as $address) {
+            foreach ($subject['fields']['addresses'] as $address) {
                 if ($address['address']['addressType'] == 'registration') {
                     $pSubject['fields']['address'] = $address['address'];
                 }
             }
-            foreach ($subject['documents'] as $document) {
+            foreach ($subject['fields']['documents'] as $document) {
                 if ($document['document']['documentType'] == 'passport') {
                     $pSubject['fields']['passport'] = $document['document'];
                 }
@@ -153,7 +155,7 @@ class PolicyService implements PolicyServiceContract
                     $this->setValuesByArray($pDriver, [
                         'drivingLicenseIssueDateOriginal' => 'drivingLicenseIssueDateOriginal',
                     ], $driver['driver']);
-                    foreach ($subject['documents'] as $document) {
+                    foreach ($subject['fields']['documents'] as $document) {
                         if ($document['document']['documentType'] == 'license') {
                             $this->setValuesByArray($pDriver, [
                                 'license_series' => 'series',
