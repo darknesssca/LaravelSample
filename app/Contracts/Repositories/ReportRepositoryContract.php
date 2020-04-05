@@ -4,9 +4,15 @@
 namespace App\Contracts\Repositories;
 
 
-use Illuminate\Database\Eloquent\Model;
+use App\Models\Report;
 
 interface ReportRepositoryContract
 {
-    public function getById(int $id): Model;
+    public function getById(int $id): Report;
+
+    public function getAll(): Report;
+
+    public function getByCreatorId(int $creator_id): Report;
+
+    public function create(array $fields): Report;
 }

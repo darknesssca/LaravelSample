@@ -5,28 +5,68 @@ namespace App\Repositories;
 
 
 use App\Contracts\Repositories\ReportRepositoryContract;
+use App\Exceptions\ReportNotFoundException;
 use App\Models\Report;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use InvalidArgumentException;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 class ReportRepository implements ReportRepositoryContract
 {
-    public function getById($id): Model
+    /**
+     * @param int $id
+     * @return Report|Builder
+     * @throws ReportNotFoundException
+     */
+    public function getById($id): Report
     {
-        $id = intval($id);
-
-        if ($id <= 0) {
-
-            throw new InvalidArgumentException('Передан некорректный id');
-        }
-
         $report = Report::with('policies')->find($id);
 
-        if (empty($report)) {
-            throw new ModelNotFoundException(sprintf('Не найден отчет с id %s', $id));
-        }
+        $this->checkReport($report);
 
         return $report;
+    }
+
+    /**
+     * @return Report|Builder|Collection
+     * @throws ReportNotFoundException
+     */
+    public function getAll(): Report
+    {
+        $reports = Report::with('policies file')->get();
+
+        $this->checkReport($reports);
+
+        return $reports;
+    }
+
+    /**
+     * @param int $creator_id
+     * @return Report|Builder|Collection
+     * @throws ReportNotFoundException
+     */
+    public function getByCreatorId(int $creator_id): Report
+    {
+        $reports = Report::with('policies file')->where('creator_id', '=', $creator_id)->get();
+
+        $this->checkReport($reports);
+
+        return $reports;
+    }
+
+    public function create(array $fields): Report
+    {
+        $report = new Report();
+        $report->fill($fields)->save();
+        return $report;
+    }
+
+    /**
+     * @param $report
+     * @throws ReportNotFoundException
+     */
+    private function checkReport($report){
+        if (empty($report)) {
+            throw new ReportNotFoundException();
+        }
     }
 }
