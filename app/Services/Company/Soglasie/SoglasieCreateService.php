@@ -160,18 +160,21 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
                     ],
                 ],
             ],
-            'Drivers' => [
-                'Driver' => [],
-            ],
             'IKP1l' => ' ',
         ];
         $prolongationPolicyNumber = $this->policyService->searchOldPolicyByPolicyNumber($company->id, $attributes);
         if ($prolongationPolicyNumber) {
             $serialNumber = explode(' ', $prolongationPolicyNumber);
-            $data['PrevPolicy'] = [
-                'Serial' => $serialNumber[0],
-                'Number' => $serialNumber[1],
-            ];
+            if (
+                isset($serialNumber[0]) && $serialNumber[0] &&
+                isset($serialNumber[1]) && $serialNumber[1]
+            )
+            {
+                $data['PrevPolicy'] = [
+                    'Serial' => $serialNumber[0],
+                    'Number' => $serialNumber[1],
+                ];
+            }
         }
         $this->setValuesByArray($data['CarInfo'], [
             "MaxMass" => 'maxWeight',
@@ -201,16 +204,18 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         $data['Insurer']['Phisical']['Addresses']["Address"] = $this->prepareSubjectAddress($company, $insurer);
         // drivers
         if (count($attributes['drivers'])) {
-            $data['Drivers'] = [];
+            $data['Drivers'] = [
+                'Driver' => [],
+            ];
             foreach ($attributes['drivers'] as $driverRef) {
                 $driver = $this->searchSubjectById($attributes, $driverRef['driver']['driverId']);
-                $data['Drivers'][] = $this->prepareDriver($company, $driver, $driverRef);
+                $data['Drivers']['Driver'][] = $this->prepareDriver($company, $driver, $driverRef);
             }
-        } else {
-            $data['Insurer']['Phisical']['Addresses'] = [];
-            $driverRef = array_shift($attributes['drivers']);
-            $driver = $this->searchSubjectById($attributes, $driverRef['driver']['driverId']);
-            $data['Driver'] = $this->prepareDriver($company, $driver, $driverRef);
+//        } else {
+//            $data['Insurer']['Phisical']['Addresses'] = [];
+//            $driverRef = array_shift($attributes['drivers']);
+//            $driver = $this->searchSubjectById($attributes, $driverRef['driver']['driverId']);
+//            $data['Driver'] = $this->prepareDriver($company, $driver, $driverRef);
         }
         return $data;
     }
