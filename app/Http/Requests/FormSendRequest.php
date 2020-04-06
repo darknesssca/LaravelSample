@@ -12,6 +12,7 @@ class FormSendRequest extends AbstractRequest
     {
         return [
             'draftId' => "integer",
+            'number' => "string",
             'subjects' => "required|array",
             "subjects.*.id" => "required|integer",
             "subjects.*.fields.lastName" => "required|string",
@@ -84,7 +85,7 @@ class FormSendRequest extends AbstractRequest
             'policy.insurantId' => "required|integer",
             'policy.ownerId' => "required|integer",
             'policy.isMultidrive' => "required|boolean",
-            'drivers' => "required|array",
+            'drivers' => "array|required_if:policy.isMultidrive,false",
             'drivers.*.driver' => "required",
             'drivers.*.driver.driverId' => "required|integer",
             'drivers.*.driver.drivingLicenseIssueDateOriginal' => "required|date|date_format:Y-m-d",

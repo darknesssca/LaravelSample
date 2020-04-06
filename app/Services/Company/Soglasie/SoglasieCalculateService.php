@@ -186,17 +186,26 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         ];
         // пролонгация
         $prolongationPolicyNumber = $this->policyService->searchOldPolicyByPolicyNumber($company->id, $attributes);
+        $isProlongation = false;
         if ($prolongationPolicyNumber) {
             $serialNumber = explode(' ', $prolongationPolicyNumber);
-            $data['contract']['param'][] = [
-                'id' => 981,
-                'val' => $serialNumber[1],
-            ];
-            $data['contract']['param'][] = [
-                'id' => 722,
-                'val' => $this->transformBooleanToInteger(true),
-            ];
-        } else {
+            if (
+                isset($serialNumber[0]) && $serialNumber[0] &&
+                isset($serialNumber[1]) && $serialNumber[1]
+            )
+            {
+                $isProlongation = true;
+                $data['contract']['param'][] = [
+                    'id' => 981,
+                    'val' => $serialNumber[1],
+                ];
+                $data['contract']['param'][] = [
+                    'id' => 722,
+                    'val' => $this->transformBooleanToInteger(true),
+                ];
+            }
+        }
+        if (!$isProlongation) {
             $data['contract']['param'][] = [
                 'id' => 722,
                 'val' => $this->transformBooleanToInteger(false),
