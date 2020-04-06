@@ -85,7 +85,7 @@ class FormSendRequest extends AbstractRequest
             'policy.insurantId' => "required|integer",
             'policy.ownerId' => "required|integer",
             'policy.isMultidrive' => "required|boolean",
-            'drivers' => "array",
+            'drivers' => "array|required_if:policy.isMultidrive,false",
             'drivers.*.driver' => "required",
             'drivers.*.driver.driverId' => "required|integer",
             'drivers.*.driver.drivingLicenseIssueDateOriginal' => "required|date|date_format:Y-m-d",
