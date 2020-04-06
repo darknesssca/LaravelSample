@@ -74,21 +74,21 @@ class GuidesController extends Controller
     public function usageTargets()
     {
         $service = app(UsageTargetServiceContract::class);
-        $data = $service->getDocTypesList();
+        $data = $service->getUsageTargetList();
         return Response::success($data);
     }
 
     public function insuranceCompanies()
     {
         $service = app(InsuranceCompanyServiceContract::class);
-        $data = $service->getDocTypesList();
+        $data = $service->getInsuranceCompanyList();
         return Response::success($data);
     }
 
     public function sourceAcquisitions()
     {
         $service = app(SourceAcquisitionServiceContract::class);
-        $data = $service->getDocTypesList();
+        $data = $service->getSourceAcquisitionsList();
         return Response::success($data);
     }
 
