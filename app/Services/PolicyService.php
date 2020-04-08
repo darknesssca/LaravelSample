@@ -10,6 +10,7 @@ use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Arr;
 
 class PolicyService implements PolicyServiceContract
 {
@@ -43,6 +44,25 @@ class PolicyService implements PolicyServiceContract
 
         $policy = $this->policyRepository->create($fields);
 
+        /**
+         * @var CommissionCalculationMicroserviceContract $mks
+         */
+        $mks = app(CommissionCalculationMicroserviceContract::class);
+
+        if (!$draftId) {
+            $owner = $fields['subjects'][$policy->client_id];
+            $owner_id = $mks->createClient($owner);
+            $policy->client_id = Arr::get($owner_id, 'response.content.id');
+
+            if (count($fields['subjects']) > 1) {
+                $insurant = $fields['subjects'][$policy->insurant_id];
+                $insurant_id = $mks->createClient($insurant);
+                $policy->insurant_id = Arr::get($insurant_id, 'response.content.id');;
+            }
+
+            $policy->save();
+        }
+
         if ($drivers = $fields['drivers']) {
             foreach ($drivers as &$driver) {
                 if (isset($driver['birthdate']) && $driver['birthdate']) {
@@ -59,6 +79,16 @@ class PolicyService implements PolicyServiceContract
         }
 
         if ($draftId && $draft) {
+            $owner = $draft->owner;
+            $owner_id = $mks->createClient($owner);
+            $policy->client_id = Arr::get($owner_id, 'response.content.id');
+
+            if ($draft->client_id !== $draft->insurant_id) {
+                $insurant = $draft->insurer;
+                $insurant_id = $mks->createClient($insurant);
+                $policy->insurant_id = Arr::get($insurant_id, 'response.content.id');
+            }
+
             foreach ($draft->drivers as $driver) {
                 $policy->drivers()->attach($driver->id);
             }
@@ -67,7 +97,7 @@ class PolicyService implements PolicyServiceContract
             $draft->delete();
         }
 
-        app(CommissionCalculationMicroserviceContract::class)->createRewards($policy->id, $policy->registration_date, $policy->region_kladr, GlobalStorage::getUserId());
+        $mks->createRewards($policy->id, $policy->registration_date, $policy->region_kladr, GlobalStorage::getUserId());
 
         return $policy->id;
     }
@@ -122,7 +152,7 @@ class PolicyService implements PolicyServiceContract
                     $pSubject['fields']['passport'] = $document['document'];
                 }
             }
-            $fields['subjects'] = $pSubject;
+            $fields['subjects'][$pSubject['id']] = $pSubject;
         }
         $this->setValuesByArray($fields['car'], [
             'model' => 'model',
