@@ -3,7 +3,9 @@
 
 namespace App\Http\Controllers;
 
-
+use App\Contracts\Services\ReportServiceContract;
+use App\Http\Requests\Reports\CreateReportRequest;
+use App\Http\Requests\Reports\GetListReportsRequest;
 use App\Models\File;
 use App\Models\Policy;
 use App\Models\Report;
@@ -69,33 +71,15 @@ class ReportController extends Controller
     }
 
     /**
-     * @param Request $request
+     * @param GetListReportsRequest $request
      * @return JsonResponse
      */
-    public function index(Request $request)
+    public function index(GetListReportsRequest $request)
     {
         try {
-            $validation_result = $this->validate(
-                $request,
-                ['agent_id' => 'required'],
-                ['agent.required' => 'Пользователь не авторизован']
-            );
-            $reports = [];
-            $agent_id = $this->getUserId($validation_result['agent_id']);
-            $report_collection = Report::where('creator_id', $agent_id)->get();
-
-            if (count($report_collection) > 0) {
-                $creator = $this->getCreator($agent_id);
-                foreach ($report_collection as $report) {
-                    $reports[] = $this->getReportInfo($report, $creator);
-                }
-                return response()->json($reports, 200);
-            } else {
-                $this->httpErrorCode = 404;
-                throw new Exception('Отчеты не найдены');
-            }
-
-
+            $fields = $request->validated();
+            $reports = $this->reportService->getReportsInfo($fields);
+            return Response::success($reports);
         } catch (Exception $exception) {
             return $this->error($exception->getMessage(), $this->httpErrorCode);
         }
