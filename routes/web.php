@@ -28,6 +28,7 @@ $router->group(
                 'prefix' => 'car-insurance',
             ],
             function () use ($router) {
+                $router->get('test', 'TestController@index');
                 // drafts
                 $router->get('/drafts', 'DraftController@index');
                 $router->post('/drafts', 'DraftController@store');
