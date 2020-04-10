@@ -9,11 +9,9 @@ class UpdatePoliciesTable extends Migration
     public function up()
     {
         Schema::table('policies', function (Blueprint $table) {
-            $table->dropForeign([
-                'policies_client_id_foreign',
-                'policies_inusrant_id_foreign',
-                'policies_model_id_foreign',
-            ]);
+            $table->dropForeign('policies_client_id_foreign');
+            $table->dropForeign('policies_insurant_id_foreign');
+            $table->dropForeign('policies_vehicle_model_id_foreign');
             $table->dropColumn(['region_id', 'vehicle_model_id']);
             $table->string('vehicle_model');
         });
