@@ -120,7 +120,7 @@ class PolicyService implements PolicyServiceContract
             ], $subject['fields']);
             foreach ($subject['fields']['addresses'] as $address) {
                 if ($address['address']['addressType'] == 'registration') {
-                    $pSubject['fields']['address'] = $address['address']['city'] . ' ' . $address['address']['street'] .
+                    $pSubject['address'] = $address['address']['city'] . ' ' . $address['address']['street'] .
                         ' ' . $address['address']['building'] . $address['address']['flat'];
 
                     $pSubject['region_kladr'] = $address['address']['regionKladr'];
