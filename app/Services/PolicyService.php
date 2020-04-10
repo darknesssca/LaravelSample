@@ -112,7 +112,7 @@ class PolicyService implements PolicyServiceContract
                 'last_name' => 'lastName',
                 'first_name' => 'firstName',
                 'birth_date' => 'birthdate',
-                'patronymic' => 'patronymic',
+                'patronymic' => 'middleName',
                 'email' => 'email',
                 'gender' => 'gender',
                 'citizenship' => 'citizenship',
