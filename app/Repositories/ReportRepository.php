@@ -27,30 +27,52 @@ class ReportRepository implements ReportRepositoryContract
     }
 
     /**
-     * @return Report|Builder|Collection
+     * @param array $filter
+     * @return Report|\Illuminate\Contracts\Pagination\LengthAwarePaginator|Builder|Collection
      * @throws ReportNotFoundException
      */
-    public function getAll(): Report
+    public function getAll(array $filter)
     {
-        $reports = Report::with('policies file')->get();
+        $query = Report::with(['policies', 'file']);
 
-        $this->checkReport($reports);
+        if (!empty($filter['search'])) {
+            $query->where('name', 'like', '%' . $filter['search'] . '%');
+        }
 
-        return $reports;
+
+        $count = !empty($filter['count']) ? $filter['count'] : 10;
+        $page = !empty($filter['page']) ? $filter['page'] : 1;
+        return $query->paginate(
+            $count,
+            ['*'],
+            'Страницы',
+            $page
+        );
     }
 
     /**
      * @param int $creator_id
-     * @return Report|Builder|Collection
-     * @throws ReportNotFoundException
+     * @param array $filter
+     * @return Report|\Illuminate\Contracts\Pagination\LengthAwarePaginator|Builder|Collection
      */
-    public function getByCreatorId(int $creator_id): Report
+    public function getByCreatorId(int $creator_id, array $filter)
     {
-        $reports = Report::with('policies file')->where('creator_id', '=', $creator_id)->get();
+        $query = Report::with(['policies', 'file'])
+            ->where('creator_id', '=', $creator_id);
 
-        $this->checkReport($reports);
+        if (!empty($filter['search'])) {
+            $query->where('name', 'like', '%' . $filter['search'] . '%');
+        }
 
-        return $reports;
+
+        $count = !empty($filter['page']) ? $filter['page'] : 10;
+        $page = !empty($filter['page']) ? $filter['page'] : 1;
+        return $query->paginate(
+            $count,
+            ['*'],
+            'Страницы',
+            $page
+        );
     }
 
     public function create(array $fields): Report
@@ -64,7 +86,8 @@ class ReportRepository implements ReportRepositoryContract
      * @param $report
      * @throws ReportNotFoundException
      */
-    private function checkReport($report){
+    private function checkReport($report)
+    {
         if (empty($report)) {
             throw new ReportNotFoundException();
         }

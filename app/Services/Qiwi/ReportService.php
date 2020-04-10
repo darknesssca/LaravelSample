@@ -73,12 +73,12 @@ class ReportService implements ReportServiceContract
         return $report_info;
     }
 
-    public function getReportsInfo(): array
+    public function getReportsInfo($fields)
     {
         if (GlobalStorage::userIsAdmin()) {
-            $reports = $this->reportRepository->getAll()->toArray();
+            $reports = $this->reportRepository->getAll($fields);
         } else {
-            $reports = $this->reportRepository->getByCreatorId(GlobalStorage::getUserId())->toArray();
+            $reports = $this->reportRepository->getByCreatorId(GlobalStorage::getUserId(), $fields);
         }
 
         return $reports;

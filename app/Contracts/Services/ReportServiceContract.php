@@ -13,7 +13,7 @@ interface ReportServiceContract
 
     public function getReportInfo($id): array;
 
-    public function getReportsInfo(): array;
+    public function getReportsInfo(array $fields);
 
     public function createReport(array $fields);
 }
