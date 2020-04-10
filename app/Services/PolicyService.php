@@ -28,7 +28,7 @@ class PolicyService implements PolicyServiceContract
         $policies =  $this->policyRepository->getList($filter);
 
         return $policies->map(function ($policy) {
-            $policy['rewards'] = app(CommissionCalculationMicroserviceContract::class)->getRewards($policy->id);
+            $policy['rewards'] = Arr::get(app(CommissionCalculationMicroserviceContract::class)->getRewards($policy->id), 'content');
         });
     }
 
