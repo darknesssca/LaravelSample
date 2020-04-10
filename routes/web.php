@@ -30,6 +30,7 @@ $router->group(
             function () use ($router) {
                 // drafts
                 $router->get('/drafts', 'DraftController@index');
+                $router->get('/drafts/filter', 'DraftController@filter');
                 $router->post('/drafts', 'DraftController@store');
                 $router->get('/drafts/{draftId}', 'DraftController@show');
                 $router->patch('/drafts/{draftId}', 'DraftController@update');
