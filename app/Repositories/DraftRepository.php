@@ -105,8 +105,8 @@ class DraftRepository implements DraftRepositoryContract
         }
 
         //Сортировка
-        if (!empty($filter['orderColumn']) && !empty($filter['orderDirrection'])) {
-            $query->orderBy($filter['orderColumn'], $filter['orderDirrection']);
+        if (!empty($filter['orderColumn']) && !empty($filter['orderDirection'])) {
+            $query->orderBy($filter['orderColumn'], $filter['orderDirection']);
         } else {
             $query->orderBy('id', 'asc');
         }

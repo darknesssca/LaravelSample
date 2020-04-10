@@ -15,7 +15,7 @@ class FilterDraftRequest extends AbstractRequest
             'count'=>'required',
             'page'=>'required',
             'orderColumn'=>'sometimes',
-            'orderDirrection'=>'sometimes',
+            'orderDirection'=>'sometimes',
         ];
     }
 }
