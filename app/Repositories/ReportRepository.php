@@ -39,6 +39,10 @@ class ReportRepository implements ReportRepositoryContract
             $query->where('name', 'like', '%' . $filter['search'] . '%');
         }
 
+        if (!empty($filter['orderBy']) && !empty($filter['orderDirection'])){
+            $query->orderBy($filter['orderBy'], $filter['orderDirection']);
+        }
+
 
         $count = !empty($filter['count']) ? $filter['count'] : 10;
         $page = !empty($filter['page']) ? $filter['page'] : 1;
@@ -62,6 +66,10 @@ class ReportRepository implements ReportRepositoryContract
 
         if (!empty($filter['search'])) {
             $query->where('name', 'like', '%' . $filter['search'] . '%');
+        }
+
+        if (!empty($filter['orderBy']) && !empty($filter['orderDirection'])){
+            $query->orderBy($filter['orderBy'], $filter['orderDirection']);
         }
 
 

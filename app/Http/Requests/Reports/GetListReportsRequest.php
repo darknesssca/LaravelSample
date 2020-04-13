@@ -13,7 +13,7 @@ class GetListReportsRequest extends AbstractRequest
         return [
             'orderBy' => 'sometimes|required|string',
             'orderDirection' => 'sometimes|required|string|in:asc,desc',
-            'search' => 'sometimes|required|string',
+            'search' => 'string',
             'page' => 'sometimes|required|numeric|min:1',
             'count' => 'sometimes|required|numeric|min:1'
         ];
