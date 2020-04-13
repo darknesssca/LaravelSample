@@ -25,7 +25,7 @@ class PolicyService implements PolicyServiceContract
 
     public function getList(array $filter = [])
     {
-        $policies =  $this->policyRepository->getList($filter);
+        $policies = $this->policyRepository->getList($filter);
 
         return $policies->map(function ($policy) {
             $policy['rewards'] = Arr::get(app(CommissionCalculationMicroserviceContract::class)->getRewards($policy->id), 'content');
@@ -82,15 +82,105 @@ class PolicyService implements PolicyServiceContract
 
     public function statistic(array $filter = [])
     {
+        $userId = GlobalStorage::getUserId();
+        $userGroups = GlobalStorage::getUserGroup();
+        $isAdmin = in_array('admin', $userGroups);
+
+        if (!$isAdmin) {
+            $filter['agent_ids'] = [$userId];
+        }
+
         /**
          * @var Collection $policies
          */
-        $policies =  $this->policyRepository->getList($filter);
+        $policies = $this->policyRepository->getList($filter)->sortBy('registration_date');
 
-        return [
-            'count' => $policies->count(),
-            'sum' => $policies->sum('premium')
+        if ($policies->isNotEmpty()) {
+            $startDate = Carbon::parse($filter["from"]);
+            $endDate = Carbon::parse($filter["to"]);
+            $needSortByMonth = $startDate->diffInMonths($endDate) > 0;
+            $organizedPolicies = $this->organizePolicies($policies);
+            $organizedStatistics = $this->makeStatistic($organizedPolicies, $needSortByMonth);
+        }
+
+        return $organizedStatistics ?? [];
+    }
+
+    /**
+     * @param $policies
+     * сортировка массива по своим/агентским продажам
+     */
+    private function organizePolicies($policies)
+    {
+        $organized = [];
+        $userId = GlobalStorage::getUserId();
+
+        foreach ($policies as $policy) {
+            if ($policy->agent_id == $userId) {
+                $organized["self"][] = $policy;
+            } else {
+                $organized["network"][] = $policy;
+            }
+            $organized["all"][] = $policy;
+        }
+
+        return $organized;
+    }
+
+    /**
+     * @param array $organizedArray
+     * @param bool $needSortByMonth
+     *
+     */
+    private function makeStatistic($organizedArray, $needSortByMonth)
+    {
+        $statistics = [];
+        foreach ($organizedArray as $key => $policies) {
+            $statistics[$key] = $this->makeStatisticFromPoliciesList($policies, $needSortByMonth);
+        }
+        return $statistics;
+    }
+
+    /**
+     * @param Collection $policiesList
+     * @param bool $needSortByMonth
+     * @return array
+     * Группировка статистики продаж по датам
+     */
+    private function makeStatisticFromPoliciesList($policiesList, $needSortByMonth): array
+    {
+        $policiesList = collect($policiesList);
+        $result = [
+            "count" => $policiesList->count(),
+            "sum" => $policiesList->sum('premium')
         ];
+
+        if ($needSortByMonth) {
+            $result["detail"] = $policiesList
+                ->groupBy(function ($item, $index) {
+                    return Carbon::parse($item['registration_date'])->locale('ru')->getTranslatedMonthName('MMMM YYYY');
+                })
+                ->map(function ($list, $index) {
+                    $tmp = collect($list);
+
+                    return [
+                        "count" => $tmp->count(),
+                        "sum"   => $tmp->sum("premium")
+                    ];
+                });
+        } else {
+            $result["detail"] = $policiesList
+                ->groupBy('registration_date')
+                ->map(function($list, $index) {
+                    $tmp = collect($list);
+
+                    return [
+                        "count" => $tmp->count(),
+                        "sum"   => $tmp->sum("premium")
+                    ];
+                });
+        }
+        return $result;
     }
 
     public function createPolicyFromCustomData($companyId, $attributes)
