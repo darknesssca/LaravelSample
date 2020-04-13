@@ -7,6 +7,7 @@ namespace App\Repositories;
 use App\Contracts\Repositories\ReportRepositoryContract;
 use App\Exceptions\ReportNotFoundException;
 use App\Models\Report;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -28,8 +29,7 @@ class ReportRepository implements ReportRepositoryContract
 
     /**
      * @param array $filter
-     * @return Report|\Illuminate\Contracts\Pagination\LengthAwarePaginator|Builder|Collection
-     * @throws ReportNotFoundException
+     * @return Report|LengthAwarePaginator|Builder|Collection
      */
     public function getAll(array $filter)
     {
@@ -57,7 +57,7 @@ class ReportRepository implements ReportRepositoryContract
     /**
      * @param int $creator_id
      * @param array $filter
-     * @return Report|\Illuminate\Contracts\Pagination\LengthAwarePaginator|Builder|Collection
+     * @return Report|LengthAwarePaginator|Builder|Collection
      */
     public function getByCreatorId(int $creator_id, array $filter)
     {

@@ -137,22 +137,16 @@ class ReportService implements ReportServiceContract
             throw new Exception('Отсутсвтуют некоторые полисы');
         }
 
+        $filter = [
 
-        if (env('APP_DEBUG') == true) {
-            return 1000;
+        ];
+
+        $rewards = $this->commission_mks->getRewards($filter);
+
+        if (empty($rewards)) {
+            throw new Exception('Ошибка получения доступных наград');
         }
-//        $url = 'api/v1/commission-calculation/rewards';
-//        $params = ['user_id' => $user_id];
-//        $response = $this->sendRequest('GET', $url, $params);
-//
-//        if (empty($response['content'])) {
-//            throw new Exception('Ошибка получения данных');
-//        }
-//
-//        $content = json_decode($response['content'], true, 512, JSON_OBJECT_AS_ARRAY);
-//
-//        $rewards = $this->indexRewards($content);
-//
+
 //        foreach ($policy_collection as $policy) {
 //            if ($policy->paid == false) {
 //                throw new Exception(sprintf('Полис %s не оплачен', $policy->number));
