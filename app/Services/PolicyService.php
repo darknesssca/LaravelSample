@@ -10,6 +10,7 @@ use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Arr;
 
 class PolicyService implements PolicyServiceContract
 {
@@ -24,24 +25,36 @@ class PolicyService implements PolicyServiceContract
 
     public function getList(array $filter = [])
     {
-        $policies =  $this->policyRepository->getList($filter);
+        $policies = $this->policyRepository->getList($filter);
 
         return $policies->map(function ($policy) {
-            $policy['rewards'] = app(CommissionCalculationMicroserviceContract::class)->getRewards($policy->id);
+            $policy['rewards'] = Arr::get(app(CommissionCalculationMicroserviceContract::class)->getRewards($policy->id), 'content');
         });
     }
 
     public function create(array $fields, int $draftId = null)
     {
-        if ($draftId) {
-            $draft = app(DraftRepositoryContract::class)->getById($draftId);
-            $fields = array_merge(
-                $draft->all(),
-                $fields
-            );
+        $fields['region_kladr'] = $fields['subjects'][$fields['insurant_id']]['region_kladr'];
+        $policy = $this->policyRepository->create($fields);
+
+        /**
+         * @var CommissionCalculationMicroserviceContract $mks
+         */
+        $mks = app(CommissionCalculationMicroserviceContract::class);
+
+        $owner = $fields['subjects'][$policy->client_id];
+        unset($owner['id']);
+        $owner_id = $mks->createClient($owner);
+        $policy->client_id = Arr::get($owner_id, 'content.id');
+
+        if (count($fields['subjects']) > 1) {
+            $insurant = $fields['subjects'][$policy->insurant_id];
+            unset($insurant['id']);
+            $insurant_id = $mks->createClient($insurant);
+            $policy->insurant_id = Arr::get($insurant_id, 'content.id');;
         }
 
-        $policy = $this->policyRepository->create($fields);
+        $policy->save();
 
         if ($drivers = $fields['drivers']) {
             foreach ($drivers as &$driver) {
@@ -58,40 +71,124 @@ class PolicyService implements PolicyServiceContract
             }
         }
 
-        if ($draftId && $draft) {
-            foreach ($draft->drivers as $driver) {
-                $policy->drivers()->attach($driver->id);
-            }
-
-            $draft->drivers()->detach();
-            $draft->delete();
+        if ($draftId) {
+            app(DraftRepositoryContract::class)->delete($draftId);
         }
 
-        app(CommissionCalculationMicroserviceContract::class)->createRewards($policy->id, $policy->registration_date, $policy->region_kladr, GlobalStorage::getUserId());
+        $mks->createRewards($policy->id, $policy->registration_date->format('Y.m.d'), $policy->region_kladr, GlobalStorage::getUserId());
 
         return $policy->id;
     }
 
     public function statistic(array $filter = [])
     {
+        $userId = GlobalStorage::getUserId();
+        $userGroups = GlobalStorage::getUserGroup();
+        $isAdmin = in_array('admin', $userGroups);
+
+        if (!$isAdmin) {
+            $filter['agent_ids'] = [$userId];
+        }
+
         /**
          * @var Collection $policies
          */
-        $policies =  $this->policyRepository->getList($filter);
+        $policies = $this->policyRepository->getList($filter)->sortBy('registration_date');
 
-        return [
-            'count' => $policies->count(),
-            'sum' => $policies->sum('premium')
-        ];
+        if ($policies->isNotEmpty()) {
+            $startDate = Carbon::parse($filter["from"]);
+            $endDate = Carbon::parse($filter["to"]);
+            $needSortByMonth = $startDate->diffInMonths($endDate) > 0;
+            $organizedPolicies = $this->organizePolicies($policies);
+            $organizedStatistics = $this->makeStatistic($organizedPolicies, $needSortByMonth);
+        }
+
+        return $organizedStatistics ?? [];
     }
 
-    public function createPolicyFromCustomData($company, $attributes)
+    /**
+     * @param $policies
+     * сортировка массива по своим/агентским продажам
+     */
+    private function organizePolicies($policies)
+    {
+        $organized = [];
+        $userId = GlobalStorage::getUserId();
+
+        foreach ($policies as $policy) {
+            if ($policy->agent_id == $userId) {
+                $organized["self"][] = $policy;
+            } else {
+                $organized["network"][] = $policy;
+            }
+            $organized["all"][] = $policy;
+        }
+
+        return $organized;
+    }
+
+    /**
+     * @param array $organizedArray
+     * @param bool $needSortByMonth
+     *
+     */
+    private function makeStatistic($organizedArray, $needSortByMonth)
+    {
+        $statistics = [];
+        foreach ($organizedArray as $key => $policies) {
+            $statistics[$key] = $this->makeStatisticFromPoliciesList($policies, $needSortByMonth);
+        }
+        return $statistics;
+    }
+
+    /**
+     * @param Collection $policiesList
+     * @param bool $needSortByMonth
+     * @return array
+     * Группировка статистики продаж по датам
+     */
+    private function makeStatisticFromPoliciesList($policiesList, $needSortByMonth): array
+    {
+        $policiesList = collect($policiesList);
+        $result = [
+            "count" => $policiesList->count(),
+            "sum" => $policiesList->sum('premium')
+        ];
+
+        if ($needSortByMonth) {
+            $result["detail"] = $policiesList
+                ->groupBy(function ($item, $index) {
+                    return Carbon::parse($item['registration_date'])->locale('ru')->getTranslatedMonthName('MMMM YYYY');
+                })
+                ->map(function ($list, $index) {
+                    $tmp = collect($list);
+
+                    return [
+                        "count" => $tmp->count(),
+                        "sum"   => $tmp->sum("premium")
+                    ];
+                });
+        } else {
+            $result["detail"] = $policiesList
+                ->groupBy('registration_date')
+                ->map(function($list, $index) {
+                    $tmp = collect($list);
+
+                    return [
+                        "count" => $tmp->count(),
+                        "sum"   => $tmp->sum("premium")
+                    ];
+                });
+        }
+        return $result;
+    }
+
+    public function createPolicyFromCustomData($companyId, $attributes)
     {
         $fields = [
             'agent_id' => GlobalStorage::getUserId(),
-            'insurance_company_id' => $company->id,
+            'insurance_company_id' => $companyId,
             'subjects' => [],
-            'car' => [],
             'drivers' => [],
         ];
         if (isset($attributes['number'])) {
@@ -100,13 +197,12 @@ class PolicyService implements PolicyServiceContract
         foreach ($attributes['subjects'] as $subject) {
             $pSubject = [
                 'id' => $subject['id'],
-                'fields' => [],
             ];
-            $this->setValuesByArray($pSubject['fields'], [
-                'lastName' => 'lastName',
-                'firstName' => 'firstName',
-                'birthdate' => 'birthdate',
-                'birthPlace' => 'birthPlace',
+            $this->setValuesByArray($pSubject, [
+                'last_name' => 'lastName',
+                'first_name' => 'firstName',
+                'birth_date' => 'birthdate',
+                'patronymic' => 'middleName',
                 'email' => 'email',
                 'gender' => 'gender',
                 'citizenship' => 'citizenship',
@@ -114,46 +210,74 @@ class PolicyService implements PolicyServiceContract
             ], $subject['fields']);
             foreach ($subject['fields']['addresses'] as $address) {
                 if ($address['address']['addressType'] == 'registration') {
-                    $pSubject['fields']['address'] = $address['address'];
+                    $pSubject['address'] = $address['address']['city'] . ' ' . $address['address']['street'] .
+                        ' ' . $address['address']['building'] . $address['address']['flat'];
+
+                    $pSubject['region_kladr'] = $address['address']['regionKladr'];
                 }
             }
             foreach ($subject['fields']['documents'] as $document) {
                 if ($document['document']['documentType'] == 'passport') {
-                    $pSubject['fields']['passport'] = $document['document'];
+                    $this->setValuesByArray($pSubject, [
+                        'is_russian' => 'isRussian',
+                        'passport_series' => 'series',
+                        'passport_number' => 'number',
+                        'passport_issuer' => 'issuedBy',
+                        'passport_date' => 'dateIssue',
+                    ], $document['document']);
                 }
             }
-            $fields['subjects'] = $pSubject;
+            $fields['subjects'][$pSubject['id']] = $pSubject;
         }
-        $this->setValuesByArray($fields['car'], [
-            'model' => 'model',
+        $this->setValuesByArray($fields, [
+            'vehicle_model' => 'model',
             'maker' => 'maker',
-            'countryOfRegistration' => 'countryOfRegistration',
+            'vehicle_reg_country' => 'countryOfRegistration',
             'isUsedWithTrailer' => 'isUsedWithTrailer',
             'mileage' => 'mileage',
             'sourceAcquisition' => 'sourceAcquisition',
             'vehicleCost' => 'vehicleCost',
             'vehicleUsage' => 'vehicleUsage',
-            'vin' => 'vin',
+            'vehicle_vin' => 'vin',
             'regNumber' => 'regNumber',
-            'year' => 'year',
+            'vehicle_made_year' => 'year',
             'minWeight' => 'minWeight',
             'maxWeight' => 'maxWeight',
-            'seats' => 'seats',
+            'vehicle_count_seats' => 'seats',
         ], $attributes['car']);
-        $fields['car']['document'] = $attributes['car']['document'];
-        $fields['car']['inspection'] = $attributes['car']['inspection'];
-        $fields['policy'] = $attributes['policy'];
+
+        $this->setValuesByArray($fields, [
+            'vehicle_doc_series' => 'series',
+            'vehicle_doc_number' => 'number',
+            'vehicle_doc_issued' => 'dateIssue',
+        ], $attributes['car']['document']);
+
+        $this->setValuesByArray($fields, [
+            'vehicle_inspection_doc_series' => 'series',
+            'vehicle_inspection_doc_number' => 'number',
+            'vehicle_inspection_issued_date' => 'dateIssue',
+            'vehicle_inspection_end_date' => 'dateEnd',
+        ], $attributes['car']['inspection']);
+
+        $this->setValuesByArray($fields, [
+            'start_date' => 'beginDate',
+            'end_date' => 'endDate',
+            'client_id' => 'ownerId',
+            'insurant_id' => 'insurantId',
+            'is_multi_drive' => 'isMultidrive'
+        ], $attributes['policy']);
+
         foreach ($attributes['drivers'] as $driver) {
             foreach ($attributes['subjects'] as $subject) {
                 if ($subject['id'] == $driver['driver']['driverId']) {
                     $pDriver = [];
                     $this->setValuesByArray($pDriver, [
-                        'lastName' => 'lastName',
-                        'firstName' => 'firstName',
-                        'birthdate' => 'birthdate',
+                        'last_name' => 'lastName',
+                        'first_name' => 'firstName',
+                        'birth_date' => 'birthdate',
                     ], $subject['fields']);
                     $this->setValuesByArray($pDriver, [
-                        'drivingLicenseIssueDateOriginal' => 'drivingLicenseIssueDateOriginal',
+                        'exp_start_date' => 'drivingLicenseIssueDateOriginal',
                     ], $driver['driver']);
                     foreach ($subject['fields']['documents'] as $document) {
                         if ($document['document']['documentType'] == 'license') {

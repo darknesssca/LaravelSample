@@ -16,6 +16,6 @@ class PoliciesController extends Controller
 
     public function statistic(PolicyStatisticRequest $request)
     {
-        return Response::success(app(PolicyServiceContract::class)->statistic($request->all()));
+        return Response::success(app(PolicyServiceContract::class)->statistic($request->validated()));
     }
 }
