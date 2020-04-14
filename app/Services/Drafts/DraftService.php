@@ -57,6 +57,12 @@ class DraftService implements DraftServiceContract
         return $draft;
     }
 
+    public function getByFilter(array $attributes)
+    {
+        $agentId = GlobalStorage::getUserId();
+        return $this->draftRepository->getByFilter($agentId, $attributes);
+    }
+
     public function create($attributes):int
     {
         $policyType = $this->policyTypeRepository->getByCode('osago');
@@ -335,4 +341,5 @@ class DraftService implements DraftServiceContract
             $driverData['exp_start_date'] = Carbon::createFromFormat('Y-m-d', $attributes['drivingLicenseIssueDateOriginal']);
         }
     }
+
 }

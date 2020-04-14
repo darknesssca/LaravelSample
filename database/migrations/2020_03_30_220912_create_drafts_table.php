@@ -20,6 +20,7 @@ class CreateDraftsTable extends Migration
             $table->unsignedInteger('insurant_id')->nullable();
             // car
             $table->unsignedInteger('vehicle_model_id')->nullable();
+            $table->unsignedInteger('vehicle_mark_id')->nullable();
             $table->unsignedInteger('vehicle_engine_power')->nullable();
             $table->string('vehicle_vin')->nullable();
             $table->string('vehicle_reg_number')->nullable();
@@ -47,6 +48,7 @@ class CreateDraftsTable extends Migration
             $table->timestamps();
 
             $table->foreign('vehicle_model_id')->references('id')->on('car_models');
+            $table->foreign('vehicle_mark_id')->references('id')->on('car_marks');
             $table->foreign('vehicle_reg_doc_type_id')->references('id')->on('doc_types');
             $table->foreign('type_id')->references('id')->on('policy_types');
             $table->foreign('client_id')->references('id')->on('draft_clients');
