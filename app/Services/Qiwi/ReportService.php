@@ -94,22 +94,22 @@ class ReportService implements ReportServiceContract
     public function createReport(array $fields)
     {
         $fields['creator_id'] = GlobalStorage::getUserId();
-        $fields['reward'] = $this->getReward($fields['policies'], $fields['creator_id']);
+        $fields['reward'] = $this->getReward($fields['policies']);
 
         $creator = $this->getCreator($fields['creator_id']);
 
         $report = $this->reportRepository->create($fields);
         $report->policies()->sync($fields['policies']);
         $report->save();
-
-        $this->createXls($report->id, $this->getPoliciesForXls());
-
-        $this->qiwi = new Qiwi($creator['requisites'], $creator['tax_status']['code']);
-        $this->qiwi->makePayout($fields['reward']);
-
-        $message = "Создан отчет на выплату {$report->id}";
-        $this->log_mks->sendLog($message, config('api_sk.logMicroserviceCode'), $fields['creator_id']);
-        return Response::success('Отчет успешно создан');
+//
+//        $this->createXls($report->id, $this->getPoliciesForXls());
+//
+//        $this->qiwi = new Qiwi($creator['requisites'], $creator['tax_status']['code']);
+//        $this->qiwi->makePayout($fields['reward']);
+//
+//        $message = "Создан отчет на выплату {$report->id}";
+//        $this->log_mks->sendLog($message, config('api_sk.logMicroserviceCode'), $fields['creator_id']);
+//        return Response::success('Отчет успешно создан');
     }
 
     /**
@@ -119,43 +119,44 @@ class ReportService implements ReportServiceContract
      */
     private function getCreator($user_id)
     {
-        return $this->auth_mks->userInfo($user_id);
+        return $this->auth_mks->userInfo($user_id)['content'];
     }
 
     /**
      * @param array $policies_ids
-     * @param $user_id
-     * @return float|int
+     * @return int
      * @throws Exception
      */
-    private function getReward(array $policies_ids, $user_id)
+    private function getReward(array $policies_ids)
     {
         $reward_sum = 0;
-        $policy_collection = $this->policyRepository->getList(['policy_ids' => $policies_ids]);
+
+        /**@var array $policy_collection */
+        $policy_collection = $this->policyRepository->getList(['policy_ids' => $policies_ids])->toArray();
 
         if (count($policy_collection) != count($policies_ids)) { //Найдены не все полисы
-            throw new Exception('Отсутсвтуют некоторые полисы');
+            throw new Exception('Переданы некорректные идентификаторы полисов');
         }
 
-        $filter = [
+        $policy_collection = $this->reIndexPolicies($policy_collection);
 
+        $filter = [
+            'policy_id' => array_keys($policy_collection)
         ];
 
-        $rewards = $this->commission_mks->getRewards($filter);
+        $rewards = $this->commission_mks->getRewards($filter)['content'];
 
         if (empty($rewards)) {
             throw new Exception('Ошибка получения доступных наград');
         }
 
-//        foreach ($policy_collection as $policy) {
-//            if ($policy->paid == false) {
-//                throw new Exception(sprintf('Полис %s не оплачен', $policy->number));
-//            }
-//
-//            $reward_sum += floatval($rewards[$policy->id]['value']);
-//        }
-//
-//        return $reward_sum;
+        foreach ($rewards as $reward) {
+            if ($reward['paid'] == false && $policy_collection[$reward['policy_id']]['paid'] == true){
+                $reward_sum += floatval($reward['value']);
+            }
+        }
+
+        return $reward_sum;
     }
 
     /**
@@ -285,5 +286,16 @@ class ReportService implements ReportServiceContract
             ];
             return $policies;
         }
+    }
+
+    private function reIndexPolicies($policies)
+    {
+        $newPolicies = [];
+
+        foreach ($policies as $policy) {
+            $newPolicies[$policy['id']] = $policy;
+        }
+
+        return $newPolicies;
     }
 }

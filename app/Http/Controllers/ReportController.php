@@ -6,20 +6,13 @@ namespace App\Http\Controllers;
 use App\Contracts\Services\ReportServiceContract;
 use App\Http\Requests\Reports\CreateReportRequest;
 use App\Http\Requests\Reports\GetListReportsRequest;
-use App\Models\File;
-use App\Models\Policy;
-use App\Models\Report;
 use Benfin\Requests\Exceptions\AbstractException;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Storage;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xls;
 
 class ReportController extends Controller
 {
-    private $httpErrorCode = 400;
     private $reportService;
 
     public function __construct(ReportServiceContract $reportService)
@@ -69,7 +62,8 @@ class ReportController extends Controller
             $fields = $request->validated();
             return $this->reportService->createReport($fields);
         } catch (Exception $exception) {
-            return Response::error($exception->getMessage(), $this->httpErrorCode);
+            $httpCode = ($exception instanceof AbstractException) ? $exception->getHttpCode() : 400;
+            return Response::error($exception->getMessage(), $httpCode);
         }
     }
 }

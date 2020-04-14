@@ -11,7 +11,7 @@ class CreateReportRequest extends AbstractRequest
     {
         return [
             'name' => 'required',
-            'policies' => 'required',
+            'policies' => 'required|array',
         ];
     }
 
