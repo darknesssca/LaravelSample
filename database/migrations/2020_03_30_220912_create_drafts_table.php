@@ -56,7 +56,7 @@ class CreateDraftsTable extends Migration
             $table->foreign('vehicle_usage_target')->references('id')->on('usage_targets');
         });
 
-        Schema::create('driver_draft', function (Blueprint $table) {
+        Schema::create('draft_driver', function (Blueprint $table) {
             $table->unsignedInteger('driver_id');
             $table->unsignedInteger('draft_id');
             $table->timestamps();
