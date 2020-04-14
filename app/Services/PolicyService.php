@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Contracts\Repositories\DraftRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Services\PolicyServiceContract;
+use App\Exceptions\StatisticsNotFoundException;
 use App\Traits\ValueSetterTrait;
+use Benfin\Api\Contracts\AuthMicroserviceContract;
 use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 use Carbon\Carbon;
@@ -83,11 +85,18 @@ class PolicyService implements PolicyServiceContract
     public function statistic(array $filter = [])
     {
         $userId = GlobalStorage::getUserId();
-        $userGroups = GlobalStorage::getUserGroup();
-        $isAdmin = in_array('admin', $userGroups);
+        $subagentIds = [];
 
-        if (!$isAdmin) {
+        //Если не админ, то заполняем фильтр по id пользователя и субагентов(если они есть)
+        if (!GlobalStorage::userIsAdmin()) {
+            $userWithSubagents = Arr::get(app(AuthMicroserviceContract::class)->getSubagents(), 'content');
             $filter['agent_ids'] = [$userId];
+            if (isset($userWithSubagents["subagents"]) && !empty($userWithSubagents["subagents"])) {
+                foreach ($userWithSubagents["subagents"] as $subagent) {
+                    $subagentIds[] = $subagent["id"];
+                }
+                $filter['agent_ids'] = array_merge($filter['agent_ids'], $subagentIds);
+            }
         }
 
         /**
@@ -99,26 +108,29 @@ class PolicyService implements PolicyServiceContract
             $startDate = Carbon::parse($filter["from"]);
             $endDate = Carbon::parse($filter["to"]);
             $needSortByMonth = $startDate->diffInMonths($endDate) > 0;
-            $organizedPolicies = $this->organizePolicies($policies);
+
+            $organizedPolicies = $this->organizePolicies($policies, $userId, $subagentIds);
             $organizedStatistics = $this->makeStatistic($organizedPolicies, $needSortByMonth);
         }
 
-        return $organizedStatistics ?? [];
+        if (empty($organizedStatistics)) {
+            throw new StatisticsNotFoundException('За выбранный период не продано ни одного полиса');
+        }
+        return $organizedStatistics;
     }
 
     /**
      * @param $policies
      * сортировка массива по своим/агентским продажам
      */
-    private function organizePolicies($policies)
+    private function organizePolicies($policies, $userId, $subagent_ids = [])
     {
         $organized = [];
-        $userId = GlobalStorage::getUserId();
 
         foreach ($policies as $policy) {
             if ($policy->agent_id == $userId) {
                 $organized["self"][] = $policy;
-            } else {
+            } else if (!empty($subagent_ids) && in_array($policy->agent_id, $subagent_ids)) {
                 $organized["network"][] = $policy;
             }
             $organized["all"][] = $policy;
@@ -150,9 +162,20 @@ class PolicyService implements PolicyServiceContract
     private function makeStatisticFromPoliciesList($policiesList, $needSortByMonth): array
     {
         $policiesList = collect($policiesList);
+        $byInsuranceCompany = $policiesList
+            ->groupBy('insurance_company_id')
+            ->map(function($item, $index){
+                $tmp = collect($item);
+
+                return [
+                    "count" => $tmp->count(),
+                    "sum"   => $tmp->sum("premium")
+                ];
+            });
         $result = [
             "count" => $policiesList->count(),
-            "sum" => $policiesList->sum('premium')
+            "sum" => $policiesList->sum('premium'),
+            "by_insurance_company" => $byInsuranceCompany
         ];
 
         if ($needSortByMonth) {
