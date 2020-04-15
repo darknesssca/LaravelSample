@@ -113,7 +113,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 $pAddress = [
                     'addressType' => $this->addressTypeService->getCompanyAddressType($address['address']['addressType'], $company->code),
                     'country' => $this->countryService->getCountryById($address['address']['country'])['alpha2'],
-                    'region' => $address['address']['region'],
+                    //'region' => $address['address']['region'],
                 ];
                 $this->setValuesByArray($pAddress, [
                     "postCode" => 'postCode',
@@ -130,6 +130,9 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     "KLADR6" => 'buildingKladr',
                     "flat" => 'flat',
                 ], $address['address']);
+                if (isset($address['address']['regionKladr'])) {
+                    $pAddress['region'] = substr($address['address']['regionKladr'], 0, 2);
+                }
                 $pSubject['subjectDetails']['address'][] = $pAddress;
             }
             foreach ($subject['fields']['documents'] as $document) {
