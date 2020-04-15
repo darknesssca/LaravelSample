@@ -1,12 +1,12 @@
 <?php
 
-//TODO Переписать методы получения наград и полисов после реализации api полисов
-//TODO Переписать xls после реализации полисов
+//TODO Сделать логику с киви чтобы можно было перезапустить запрос на выплату
 //TODO Сделать получение пользователей из кэша
 
 namespace App\Services\Qiwi;
 
 
+use App\Contracts\Repositories\InsuranceCompanyRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\ReportRepositoryContract;
 use App\Contracts\Services\ReportServiceContract;
@@ -29,6 +29,7 @@ class ReportService implements ReportServiceContract
 {
     private $reportRepository;
     private $policyRepository;
+    private $insuranceCompanyRepository;
     private $qiwi;
 
     /** @var AuthMicroserviceContract $auth_mks */
@@ -40,13 +41,20 @@ class ReportService implements ReportServiceContract
     /** @var CommissionCalculationMicroserviceContract $commission_mks */
     private $commission_mks;
 
+    private $policies;
+    private $creator;
+    private $rewards;
+    private $clients;
+
 
     public function __construct(
         ReportRepositoryContract $reportRepository,
-        PolicyRepositoryContract $policyRepository
+        PolicyRepositoryContract $policyRepository,
+        InsuranceCompanyRepositoryContract $insuranceCompanyRepository
     ) {
         $this->reportRepository = $reportRepository;
         $this->policyRepository = $policyRepository;
+        $this->insuranceCompanyRepository = $insuranceCompanyRepository;
 
         $this->auth_mks = app(AuthMicroserviceContract::class);
         $this->notify_mks = app(NotifyMicroserviceContract::class);
@@ -90,26 +98,28 @@ class ReportService implements ReportServiceContract
      * @throws TaxStatusNotServiceException
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
+     * @throws Exception
      */
     public function createReport(array $fields)
     {
         $fields['creator_id'] = GlobalStorage::getUserId();
         $fields['reward'] = $this->getReward($fields['policies']);
 
-        $creator = $this->getCreator($fields['creator_id']);
+        $this->creator = $this->getCreator($fields['creator_id']);
+        $this->clients = $this->getClients($this->clients);
 
         $report = $this->reportRepository->create($fields);
         $report->policies()->sync($fields['policies']);
         $report->save();
-//
-//        $this->createXls($report->id, $this->getPoliciesForXls());
-//
-//        $this->qiwi = new Qiwi($creator['requisites'], $creator['tax_status']['code']);
+
+        $this->createXls($report->id);
+
+//        $this->qiwi = new Qiwi($this->creator['requisite'], $this->creator['tax_status']['code']);
 //        $this->qiwi->makePayout($fields['reward']);
-//
-//        $message = "Создан отчет на выплату {$report->id}";
-//        $this->log_mks->sendLog($message, config('api_sk.logMicroserviceCode'), $fields['creator_id']);
-//        return Response::success('Отчет успешно создан');
+
+        $message = "Создан отчет на выплату {$report->id}";
+        $this->log_mks->sendLog($message, config('api_sk.logMicroserviceCode'), $fields['creator_id']);
+        return Response::success('Отчет успешно создан');
     }
 
     /**
@@ -132,16 +142,16 @@ class ReportService implements ReportServiceContract
         $reward_sum = 0;
 
         /**@var array $policy_collection */
-        $policy_collection = $this->policyRepository->getList(['policy_ids' => $policies_ids])->toArray();
+        $policy_collection = $this->policyRepository->getList(['policy_ids' => $policies_ids]);
 
         if (count($policy_collection) != count($policies_ids)) { //Найдены не все полисы
             throw new Exception('Переданы некорректные идентификаторы полисов');
         }
 
-        $policy_collection = $this->reIndexPolicies($policy_collection);
+        $this->policies = $this->reIndexPolicies($policy_collection);
 
         $filter = [
-            'policy_id' => array_keys($policy_collection)
+            'policy_id' => array_keys($this->policies)
         ];
 
         $rewards = $this->commission_mks->getRewards($filter)['content'];
@@ -151,23 +161,38 @@ class ReportService implements ReportServiceContract
         }
 
         foreach ($rewards as $reward) {
-            if ($reward['paid'] == false && $policy_collection[$reward['policy_id']]['paid'] == true){
+            if ($reward['paid'] == false && $this->policies[$reward['policy_id']]->paid == true) {
                 $reward_sum += floatval($reward['value']);
+                $this->rewards[$reward['policy_id']] = $reward;
             }
         }
 
         return $reward_sum;
     }
 
+    private function getClients(array $clients_ids)
+    {
+        $new_clients = [];
+        $clients = $this->commission_mks->getClients(['client_id' => $clients_ids])['content'];
+
+        foreach ($clients as $client) {
+            $new_clients[$client['id']] = $client;
+        }
+
+        return $new_clients;
+    }
+
     /**
      * @param int $report_id
-     * @param array $policies
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      * @throws Exception
      */
-    private function createXls($report_id, $policies)
+    private function createXls($report_id)
     {
+        $n_str = 0;
+        $policies = $this->preparePoliciesForXls();
+
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Отчет');
@@ -176,16 +201,15 @@ class ReportService implements ReportServiceContract
         $sheet->setCellValue('A1', '№');
         $sheet->setCellValue('B1', 'Тип продукта');
         $sheet->setCellValue('C1', 'Номер договора');
-        $sheet->setCellValue('D1', 'Номер БСО');
+        $sheet->setCellValue('D1', 'Страховая компания');
         $sheet->setCellValue('E1', 'Страхователь');
         $sheet->setCellValue('F1', 'Дата оформления');
         $sheet->setCellValue('G1', 'Сумма премии в рублях');
         $sheet->setCellValue('H1', 'КВ, %');
         $sheet->setCellValue('I1', 'КВ, руб.');
-        $sheet->setCellValue('J1', 'Статус оплаты в ИГС');
-        $sheet->setCellValue('K1', 'Адрес точки продаж');
-        $sheet->setCellValue('L1', 'Продавец(ФИО)');
-        $sheet->setCellValue('M1', 'Продавец(email)');
+        $sheet->setCellValue('J1', 'Статус оплаты в СК');
+        $sheet->setCellValue('K1', 'Продавец(ФИО)');
+        $sheet->setCellValue('L1', 'Продавец(email)');
 
         //Автосайзинг ширины колонок
         $sheet->getColumnDimension('A')->setAutoSize(true);
@@ -200,91 +224,46 @@ class ReportService implements ReportServiceContract
         $sheet->getColumnDimension('J')->setAutoSize(true);
         $sheet->getColumnDimension('K')->setAutoSize(true);
         $sheet->getColumnDimension('L')->setAutoSize(true);
-        $sheet->getColumnDimension('M')->setAutoSize(true);
 
-        foreach ($policies as $key => $policy) {
-            $n_str = intval($key) + 1;
-            $sheet->setCellValue('A' . $n_str, $policy['number']);
+        foreach ($policies as $policy) {
+            $n_str++;
+            $sheet->setCellValue('A' . $n_str, $n_str);
             $sheet->setCellValue('B' . $n_str, $policy['product_type']);
             $sheet->setCellValue('C' . $n_str, $policy['dogovor_number']);
-            $sheet->setCellValue('D' . $n_str, $policy['bco_number']);
+            $sheet->setCellValue('D' . $n_str, $policy['sk']);
             $sheet->setCellValue('E' . $n_str, $policy['strahovatel']);
-            $sheet->setCellValue('F' . $n_str, $policy['crete_date']);
+            $sheet->setCellValue('F' . $n_str, $policy['create_date']);
             $sheet->setCellValue('G' . $n_str, $policy['premia']);
             $sheet->setCellValue('H' . $n_str, $policy['kv_percent']);
             $sheet->setCellValue('I' . $n_str, $policy['kv_rub']);
-            $sheet->setCellValue('J' . $n_str, $policy['status_igs']);
-            $sheet->setCellValue('K' . $n_str, $policy['address']);
-            $sheet->setCellValue('L' . $n_str, $policy['prodavec_fio']);
-            $sheet->setCellValue('M' . $n_str, $policy['prodavec_email']);
+            $sheet->setCellValue('J' . $n_str, $policy['status_sk']);
+            $sheet->setCellValue('K' . $n_str, $policy['prodavec_fio']);
+            $sheet->setCellValue('L' . $n_str, $policy['prodavec_email']);
         }
 
 
         $file_name = sprintf('report_%s.xls', $report_id);
-        $file_path = '/tmp/' . $file_name;
+        $tmp_file_path = '/tmp/' . $file_name;
+        $cloud_file_path = 'reports/' . $file_name;
 
         $writer = new Xls($spreadsheet);
-        $writer->save($file_path);
-
-        $result = Storage::cloud()->put('reports/' . $file_name, file_get_contents($file_path));
-        $size = filesize($file_path);
-        $content_type = mime_content_type($file_path);
-        $cloud_file_path = Storage::cloud()->url('reports/' . $file_name);
-        unlink($file_path);
+        $writer->save($tmp_file_path);
+        $result = Storage::cloud()->put($cloud_file_path, file_get_contents($tmp_file_path));
 
         if ($result != '1') {
             throw new Exception('Не удалось сохранить файл');
         } else {
-            $file = File::create([
+            $file_params = [
                 'name' => $file_name,
-                'dir' => $cloud_file_path,
-                'content_type' => $content_type,
-                'size' => $size,
-            ]);
+                'dir' => Storage::cloud()->url($cloud_file_path),
+                'content_type' => mime_content_type($tmp_file_path),
+                'size' => filesize($tmp_file_path),
+            ];
+
+            $file = File::create($file_params);
 
             Report::find($report_id)->file()->associate($file->id)->save();
-        }
-    }
-
-    /**
-     * @return array
-     */
-    private function getPoliciesForXls()
-    {
-        if (env("APP_DEBUG")) {
-            $policies = [
-                0 => [
-                    'number' => '1',
-                    'product_type' => 'Осаго',
-                    'dogovor_number' => 'CL123549132',
-                    'bco_number' => 'ХХХ 110500609',
-                    'strahovatel' => 'Белоцветов С.А.',
-                    'crete_date' => '05.02.2020',
-                    'premia' => '1106.92',
-                    'kv_percent' => '30%',
-                    'kv_rub' => '332.08',
-                    'status_igs' => 'Оплачен',
-                    'address' => 'Москва',
-                    'prodavec_fio' => 'Иванов И.И.',
-                    'prodavec_email' => 'test@test.ru',
-                ],
-                1 => [
-                    'number' => '2',
-                    'product_type' => 'Осаго',
-                    'dogovor_number' => 'CL123549132',
-                    'bco_number' => 'ХХХ 110500609',
-                    'strahovatel' => 'Белоцветов С.А.',
-                    'crete_date' => '05.02.2020',
-                    'premia' => '1106.92',
-                    'kv_percent' => '30%',
-                    'kv_rub' => '332.08',
-                    'status_igs' => 'Оплачен',
-                    'address' => 'Москва',
-                    'prodavec_fio' => 'Иванов И.И.',
-                    'prodavec_email' => 'test@test.ru',
-                ]
-            ];
-            return $policies;
+            unlink($tmp_file_path);
         }
     }
 
@@ -293,9 +272,60 @@ class ReportService implements ReportServiceContract
         $newPolicies = [];
 
         foreach ($policies as $policy) {
-            $newPolicies[$policy['id']] = $policy;
+            $newPolicies[$policy->id] = $policy;
+            $this->clients[] = $policy->client_id;
         }
 
         return $newPolicies;
+    }
+
+    private function preparePoliciesForXls()
+    {
+        $xls_policies = [];
+
+        foreach ($this->policies as $policy) {
+
+            $xls_policy['product_type'] = 'Осаго';
+
+            if ($policy->agent_id == $this->creator['id']) {
+                $xls_policy['dogovor_number'] = $policy->number;
+            } else {
+                $xls_policy['dogovor_number'] = '-';
+            }
+
+            $xls_policy['sk'] = $this->insuranceCompanyRepository->getById($policy->insurance_company_id)->name;
+
+            $xls_policy['strahovatel'] = $this->clients[$policy->client_id]['full_name'];
+
+            $xls_policy['create_date'] = $policy->registration_date;
+
+            $xls_policy['premia'] = $policy->premium;
+
+            if ($policy->agent_id == $this->creator['id']) {
+                $xls_policy['kv_percent'] = $this->rewards[$policy->id]['commission']['agent_reward'];
+            } else {
+                $xls_policy['kv_percent'] = $this->rewards[$policy->id]['commission']['subagent_reward'];
+            }
+
+            $xls_policy['kv_rub'] = $this->rewards[$policy->id]['value'];
+
+            $xls_policy['status_sk'] = ($policy->paid == true ? 'Оплачен' : 'Не оплачен');
+
+            if ($policy->agent_id == $this->creator['id']){
+                $xls_policy['prodavec_fio'] = $this->creator['full_name'];
+            } else {
+                $xls_policy['prodavec_fio'] = '-';
+            }
+
+            if ($policy->agent_id == $this->creator['id']){
+                $xls_policy['prodavec_email'] = $this->creator['email'];
+            } else {
+                $xls_policy['prodavec_email'] = '-';
+            }
+            
+            $xls_policies[] = $xls_policy;
+        }
+
+        return $xls_policies;
     }
 }

@@ -6,6 +6,7 @@ namespace App\Services\Qiwi;
 
 use App\Exceptions\TaxStatusNotServiceException;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 
 class Qiwi
 {
@@ -66,18 +67,22 @@ class Qiwi
      */
     private function createPayout($amount)
     {
-        $this->setPayoutParams($amount);
         $this->setPayoutRecipientParams();
+        $this->setPayoutParams($amount);
         $this->commonParams['payout_id'] = $this->getGUID();
         $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/payments/{$this->commonParams['payout_id']}";
-        $this->sendRequest('PUT', $url, json_encode($this->payoutParams));
+        $response = $this->sendRequest('PUT', $url, $this->payoutParams);
+
+        echo '<pre>';
+        print_r($response);
+        echo '</pre>';
 
     }
 
     private function executePayout()
     {
         $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/payments/{$this->commonParams['payout_id']}/execute";
-        $this->sendRequest('POST', $url, json_encode($this->payoutParams));
+        $this->sendRequest('POST', $url, $this->payoutParams);
     }
 
 
@@ -107,16 +112,17 @@ class Qiwi
     {
         switch ($this->commonParams['tax_status']) {
             case 'individual':
-                return [
+                $this->payoutRecipient = [
                     'providerCode' => 'bank-card-russia',
                     'fields' => [
                         'sinap-form-version' => 'payout::bank-card-russia, 1',
                         'pan' => $this->commonParams['requisites']['card_number']
                     ]
                 ];
+                break;
 
             case 'self_employed':
-                return [
+                $this->payoutRecipient = [
                     'providerCode' => 'self-employed-bank-card',
                     'fields' => [
                         'sinap-form-version' => 'payout::self-employed-bank-card, 1',
@@ -127,6 +133,7 @@ class Qiwi
                         'fio_optional' => ''
                     ]
                 ];
+                break;
 
             default:
                 throw new TaxStatusNotServiceException();
@@ -140,14 +147,14 @@ class Qiwi
      * метод запроса
      * @param string $url
      * адрес
-     * @param string $data
+     * @param array $data
      * данные
      * @param bool $async
      * если истина, то запрос выполняется асинхронно и без результата
      * @return array|bool
      * если запрос прошел успешно, то true
      */
-    private function sendRequest(string $method, string $url, string $data = '', bool $async = false)
+    private function sendRequest(string $method, string $url, array $data, bool $async = false)
     {
         $method = strtoupper($method);
         $headers = [
@@ -158,21 +165,19 @@ class Qiwi
 
         $client = new Client([
             'base_uri' => $this->connectionParams['endpoint'],
-            'timeout' => 1.0,
+            'timeout' => 0
         ]);
-        if (!$async) {
-            $response = $client->request($method, $url, ["json" => $data, "headers" => $headers]);
-            $code = $response->getStatusCode();
-            $content = $response->getBody()->getContents();
 
-            return [
-                'success' => $code == 200,
-                'content' => $content
-            ];
-        } else {
-            $client->requestAsync($method, $url, ["form_params" => $data, "headers" => $headers]);
-            return true;
-        }
+        $response = $client->request($method, $url, ["json" => $data, "headers" => $headers]);
+
+        $code = $response->getStatusCode();
+        $content = $response->getBody()->getContents();
+
+
+        return [
+            'success' => $code == 200,
+            'content' => $content
+        ];
     }
 
     private function getGUID()
@@ -180,13 +185,11 @@ class Qiwi
         mt_srand((double)microtime() * 10000);
         $charid = strtoupper(md5(uniqid(rand(), true)));
         $hyphen = chr(45);// "-"
-        $uuid = chr(123)// "{"
-            . substr($charid, 0, 8) . $hyphen
+        $uuid = substr($charid, 0, 8) . $hyphen
             . substr($charid, 8, 4) . $hyphen
             . substr($charid, 12, 4) . $hyphen
             . substr($charid, 16, 4) . $hyphen
-            . substr($charid, 20, 12)
-            . chr(125);// "}"
+            . substr($charid, 20, 12);
         return $uuid;
     }
 }
