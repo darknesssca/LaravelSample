@@ -73,7 +73,7 @@ class PolicyService implements PolicyServiceContract
 
     private function getSearchAgentIds(string $search)
     {
-        $mks = app(CommissionCalculationMicroserviceContract::class);
+        $mks = app(AuthMicroserviceContract::class);
 
         $result = $mks->search($search);
 
@@ -82,7 +82,7 @@ class PolicyService implements PolicyServiceContract
 
     private function getSearchClientIds(string $search)
     {
-        $mks = app(AuthMicroserviceContract::class);
+        $mks = app(CommissionCalculationMicroserviceContract::class);
 
         $result = $mks->search($search);
 
