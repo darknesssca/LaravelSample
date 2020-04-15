@@ -44,8 +44,9 @@ $router->group(
                 $router->group(['prefix' => 'policies'] , function () use ($router) {
                     $router->get('/', 'PoliciesController@list');
                     $router->get('statistic', 'PoliciesController@statistic');
-                    $router->get('/{id}', 'PoliciesController@getById');
+                    $router->get('/{id:\d+}', 'PoliciesController@getById');
                     $router->post('/', 'PoliciesController@create');
+                    $router->get('/with-rewards', 'PoliciesController@listWithRewards');
                 });
 
 

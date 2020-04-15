@@ -20,6 +20,10 @@ class PolicyRepository implements PolicyRepositoryContract
             $query = $query->whereIn('agent_id', $agentIds);
         }
 
+        if ($policeIds = $filter['ids'] ?? null) {
+            $query = $query->whereIn('id', $policeIds);
+        }
+
         if ($clientIds = $filter['client_ids'] ?? null) {
             $query = $query->whereIn('client_id', $clientIds);
         }

@@ -5,11 +5,14 @@ namespace App\Services;
 use App\Contracts\Repositories\DraftRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Services\PolicyServiceContract;
+use App\Exceptions\ApiRequestsException;
 use App\Exceptions\StatisticsNotFoundException;
 use App\Traits\ValueSetterTrait;
 use Benfin\Api\Contracts\AuthMicroserviceContract;
 use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
 use Benfin\Api\GlobalStorage;
+use Benfin\Api\Services\AuthMicroservice;
+use Benfin\Api\Services\CommissionCalculationMicroservice;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
@@ -19,10 +22,16 @@ class PolicyService implements PolicyServiceContract
     use ValueSetterTrait;
 
     private $policyRepository;
+    /** @var CommissionCalculationMicroservice */
+    private $commissionCalculationService;
+    /** @var AuthMicroservice */
+    private $authService;
 
     public function __construct(PolicyRepositoryContract $policyRepository)
     {
         $this->policyRepository = $policyRepository;
+        $this->commissionCalculationService = app(CommissionCalculationMicroserviceContract::class);
+        $this->authService = app(AuthMicroserviceContract::class);
     }
 
     public function getList(array $filter = [], string $sort = 'id', string $order = 'asc', int $page = 1, int $perPage = 20, string $search = null)
@@ -70,6 +79,71 @@ class PolicyService implements PolicyServiceContract
         }
 
         return $policies->forPage($page, $perPage);
+    }
+
+    /**возвращает список полисов и вознаграждений по фильтру
+     * @param array $filter
+     * @return array
+     * @throws ApiRequestsException
+     */
+    public function listWithRewards(array $filter)
+    {
+        $page = $filter['page'] ?? 1;
+        $per_page = $filter['per_page'] ?? 10;
+        $sort = $filter['sort'] ?? 'id';
+        $order = $filter['order'] ?? 'asc';
+
+        //получаем вознаграждения
+        $rewards = $this->commissionCalculationService->getRewards(['paid' => $filter['reward_paid'], 'user_id' => $filter['agent_id']]);
+        if ($rewards['error'])
+            throw new ApiRequestsException($rewards['errors']);
+        $rewards = $rewards['content'];
+        $policies_ids = [];
+        foreach ($rewards as $reward)
+            $policies_ids[] = $reward['policy_id'];
+
+        //получаем полисы по вознаграждениям
+        /** @var Collection $policies */
+        $policies = $this->policyRepository->getList(['paid' => true, 'ids' => $policies_ids, 'agent_ids' => [$filter['agent_id']]]);
+        $clients_ids = [];
+        foreach ($policies as $police)
+            $clients_ids[] = $police['client_id'];
+
+        //получаем пользователей
+        $clients = $this->commissionCalculationService->getClients(['client_id' => array_unique($clients_ids)]);
+        if ($clients['error'])
+            throw new ApiRequestsException($clients['errors']);
+        $clients = $clients['content'];
+
+        //объединяем результат
+        $result = [];
+        foreach ($policies as $police) {
+            $item = $police->toArray();
+            foreach ($clients as $client)
+                if ($client['id'] == $item['client_id'])
+                    $item['client'] = $client;
+            foreach ($rewards as $reward)
+                if ($item['id'] == $reward['policy_id'])
+                    $item['rewards'][] = $reward;
+            $result[] = $item;
+        }
+
+        //обработка результата
+        $collection = new Collection($result);
+
+        //сортировка
+        if ($order === 'desc')
+            $collection = $collection->sortByDesc($sort);
+        else
+            $collection = $collection->sortBy($sort);
+
+        //пагинация
+        return [
+            'page' => $page,
+            'per_page' => $per_page,
+            'total_pages' => ceil(($collection->count() / $per_page)),
+            'data' => $collection->forPage($page, $per_page),
+        ];
     }
 
     private function getSearchAgentIds(string $search)
@@ -242,12 +316,12 @@ class PolicyService implements PolicyServiceContract
         $policiesList = collect($policiesList);
         $byInsuranceCompany = $policiesList
             ->groupBy('insurance_company_id')
-            ->map(function($item, $index){
+            ->map(function ($item, $index) {
                 $tmp = collect($item);
 
                 return [
                     "count" => $tmp->count(),
-                    "sum"   => $tmp->sum("premium")
+                    "sum" => $tmp->sum("premium")
                 ];
             });
         $result = [
@@ -266,18 +340,18 @@ class PolicyService implements PolicyServiceContract
 
                     return [
                         "count" => $tmp->count(),
-                        "sum"   => $tmp->sum("premium")
+                        "sum" => $tmp->sum("premium")
                     ];
                 });
         } else {
             $result["detail"] = $policiesList
                 ->groupBy('registration_date')
-                ->map(function($list, $index) {
+                ->map(function ($list, $index) {
                     $tmp = collect($list);
 
                     return [
                         "count" => $tmp->count(),
-                        "sum"   => $tmp->sum("premium")
+                        "sum" => $tmp->sum("premium")
                     ];
                 });
         }
