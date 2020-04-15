@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "aws/aws-sdk-php",
-            "version": "3.134.1",
+            "version": "3.134.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "aefab57896b558634d24342bdc3c6814e8e533f6"
+                "reference": "3ebf1d8b24dc38339d93d943971d7d3e1102327b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/aefab57896b558634d24342bdc3c6814e8e533f6",
-                "reference": "aefab57896b558634d24342bdc3c6814e8e533f6",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/3ebf1d8b24dc38339d93d943971d7d3e1102327b",
+                "reference": "3ebf1d8b24dc38339d93d943971d7d3e1102327b",
                 "shasum": ""
             },
             "require": {
@@ -88,7 +88,7 @@
                 "s3",
                 "sdk"
             ],
-            "time": "2020-04-01T18:14:23+00:00"
+            "time": "2020-04-08T18:27:07+00:00"
         },
         {
             "name": "benfin/packages/api-communication",
@@ -163,11 +163,11 @@
         },
         {
             "name": "benfin/packages/cache",
-            "version": "v1.0.1",
+            "version": "v1.0.2",
             "source": {
                 "type": "git",
                 "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/cache.git",
-                "reference": "c87970579fbb511f4e09e3f6ca11172aa0c24e72"
+                "reference": "f9c7883a1a665b4e83cd5755e9dfcc2cdf36b0e9"
             },
             "require": {
                 "laravel/lumen-framework": ">=6.0",
@@ -191,7 +191,7 @@
                 }
             ],
             "description": "BENFIN cache",
-            "time": "2020-04-02T11:54:51+00:00"
+            "time": "2020-04-02T12:23:13+00:00"
         },
         {
             "name": "benfin/packages/requests",
@@ -706,7 +706,7 @@
         },
         {
             "name": "illuminate/auth",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/auth.git",
@@ -757,7 +757,7 @@
         },
         {
             "name": "illuminate/broadcasting",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/broadcasting.git",
@@ -808,7 +808,7 @@
         },
         {
             "name": "illuminate/bus",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/bus.git",
@@ -853,7 +853,7 @@
         },
         {
             "name": "illuminate/cache",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/cache.git",
@@ -904,7 +904,7 @@
         },
         {
             "name": "illuminate/config",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/config.git",
@@ -948,7 +948,7 @@
         },
         {
             "name": "illuminate/console",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/console.git",
@@ -1002,7 +1002,7 @@
         },
         {
             "name": "illuminate/container",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/container.git",
@@ -1046,7 +1046,7 @@
         },
         {
             "name": "illuminate/contracts",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/contracts.git",
@@ -1090,7 +1090,7 @@
         },
         {
             "name": "illuminate/database",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/database.git",
@@ -1151,7 +1151,7 @@
         },
         {
             "name": "illuminate/encryption",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/encryption.git",
@@ -1198,7 +1198,7 @@
         },
         {
             "name": "illuminate/events",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/events.git",
@@ -1243,7 +1243,7 @@
         },
         {
             "name": "illuminate/filesystem",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/filesystem.git",
@@ -1295,7 +1295,7 @@
         },
         {
             "name": "illuminate/hashing",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/hashing.git",
@@ -1339,7 +1339,7 @@
         },
         {
             "name": "illuminate/http",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/http.git",
@@ -1389,7 +1389,7 @@
         },
         {
             "name": "illuminate/log",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/log.git",
@@ -1434,7 +1434,7 @@
         },
         {
             "name": "illuminate/pagination",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/pagination.git",
@@ -1479,7 +1479,7 @@
         },
         {
             "name": "illuminate/pipeline",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/pipeline.git",
@@ -1524,7 +1524,7 @@
         },
         {
             "name": "illuminate/queue",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/queue.git",
@@ -1632,7 +1632,7 @@
         },
         {
             "name": "illuminate/session",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/session.git",
@@ -1683,16 +1683,16 @@
         },
         {
             "name": "illuminate/support",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/support.git",
-                "reference": "526acedfae9d1112ec82797a0d40dbae40ca709a"
+                "reference": "6955d0c254ae55ede96be71309b5fb09693441cd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/illuminate/support/zipball/526acedfae9d1112ec82797a0d40dbae40ca709a",
-                "reference": "526acedfae9d1112ec82797a0d40dbae40ca709a",
+                "url": "https://api.github.com/repos/illuminate/support/zipball/6955d0c254ae55ede96be71309b5fb09693441cd",
+                "reference": "6955d0c254ae55ede96be71309b5fb09693441cd",
                 "shasum": ""
             },
             "require": {
@@ -1740,20 +1740,20 @@
             ],
             "description": "The Illuminate Support package.",
             "homepage": "https://laravel.com",
-            "time": "2020-03-13T19:52:35+00:00"
+            "time": "2020-03-24T20:01:29+00:00"
         },
         {
             "name": "illuminate/translation",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/translation.git",
-                "reference": "577237df0680ecf9f939d5a88d1e373bb07c0022"
+                "reference": "3e5fd62979d64344bc2c593ee780904503afd0ed"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/illuminate/translation/zipball/577237df0680ecf9f939d5a88d1e373bb07c0022",
-                "reference": "577237df0680ecf9f939d5a88d1e373bb07c0022",
+                "url": "https://api.github.com/repos/illuminate/translation/zipball/3e5fd62979d64344bc2c593ee780904503afd0ed",
+                "reference": "3e5fd62979d64344bc2c593ee780904503afd0ed",
                 "shasum": ""
             },
             "require": {
@@ -1786,11 +1786,11 @@
             ],
             "description": "The Illuminate Translation package.",
             "homepage": "https://laravel.com",
-            "time": "2020-01-07T13:47:03+00:00"
+            "time": "2020-04-08T15:50:25+00:00"
         },
         {
             "name": "illuminate/validation",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/validation.git",
@@ -1842,7 +1842,7 @@
         },
         {
             "name": "illuminate/view",
-            "version": "v6.18.3",
+            "version": "v6.18.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/view.git",
