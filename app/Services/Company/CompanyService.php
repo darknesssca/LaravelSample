@@ -112,7 +112,7 @@ abstract class CompanyService
     protected function createPolicy($company, $attributes)
     {
         $policyService = app(PolicyServiceContract::class);
-        return $policyService->createPolicyFromCustomData($company, $attributes);
+        return $policyService->createPolicyFromCustomData($company->id, $attributes);
     }
 
 }

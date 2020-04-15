@@ -89,7 +89,7 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
             'isInsurerJuridical' => $this->transformBooleanToInteger(false),
             'car' => [
                 'year' => $attributes['car']['year'],
-                'MarkAndModelString' =>  $this->carMarkService->getCarMarkName($attributes['car']['maker']) .
+                'MarkAndModelString' =>  $this->carMarkService->getCompanyMark($attributes['car']['maker'], $company->id) .
                     ' ' . $attributes['car']['model'],
             ],
         ];
@@ -110,8 +110,8 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
                 'dateIssue' => 'dateIssue',
             ], $attributes['car']['document']);
         }
-        $data['car']['diagnostic'] = [];
-        $this->setValuesByArray($data['car']['diagnostic'], [
+        $data['diagnostic'] = [];
+        $this->setValuesByArray($data['diagnostic'], [
             'number' => 'number',
             'validDate' => 'dateEnd',
         ], $attributes['car']['inspection']);
@@ -170,7 +170,7 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
             'flat' => 'flat',
             'area' => 'district',
             'region' => 'region',
-            'kladr' => 'streetKladr',
+            'kladr' => 'regionKladr',
         ], $address);
         return $addressData;
     }

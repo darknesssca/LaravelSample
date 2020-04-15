@@ -56,6 +56,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
+        $user = GlobalStorage::getUser();
         $this->requestProcessService->create([
             'token' => $attributes['token'],
             'state' => 50,
@@ -63,6 +64,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
             'data' => json_encode([
                 'policyId' => $dataCreate['policyId'],
                 'status' => 'processing',
+                'user' => $user,
             ])
         ]);
         $logger = app(LogMicroserviceContract::class);
@@ -244,6 +246,9 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
             }
             $this->pushForm($attributes);
             $attributes['number'] = $attributes['policyId'];
+            $tokenData = $this->getTokenDataByCompany($processData['token'], $company->code);
+            $attributes['number'] = $tokenData['premium'];
+            GlobalStorage::setUser($processData['data']['user']);
             $this->createPolicy($company, $attributes); // if this move to hold we create policy for lk
             $this->requestProcessService->update($processData['token'], [
                 'state' => 75,
@@ -262,6 +267,9 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $attributes['token'] = $processData['token'];
         $this->pushForm($attributes);
         $attributes['number'] = $attributes['policyId'];
+        $tokenData = $this->getTokenDataByCompany($processData['token'], $company->code);
+        $attributes['premium'] = $tokenData['finalPremium'];
+        GlobalStorage::setUser($processData['data']['user']);
         $this->createPolicy($company, $attributes);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $this->sendBillUrl($insurer['email'], $dataBill['billUrl']);

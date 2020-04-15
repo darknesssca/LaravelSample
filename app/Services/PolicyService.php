@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Contracts\Repositories\DraftRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\DocTypeServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\StatisticsNotFoundException;
 use App\Traits\ValueSetterTrait;
@@ -99,15 +100,16 @@ class PolicyService implements PolicyServiceContract
          * @var CommissionCalculationMicroserviceContract $mks
          */
         $mks = app(CommissionCalculationMicroserviceContract::class);
-
         $owner = $fields['subjects'][$policy->client_id];
         unset($owner['id']);
+        $owner['agent_id'] = GlobalStorage::getUserId();
         $owner_id = $mks->createClient($owner);
         $policy->client_id = Arr::get($owner_id, 'content.id');
 
         if (count($fields['subjects']) > 1) {
             $insurant = $fields['subjects'][$policy->insurant_id];
             unset($insurant['id']);
+            $insurant['agent_id'] = GlobalStorage::getUserId();
             $insurant_id = $mks->createClient($insurant);
             $policy->insurant_id = Arr::get($insurant_id, 'content.id');;
         }
@@ -295,6 +297,7 @@ class PolicyService implements PolicyServiceContract
         if (isset($attributes['number'])) {
             $fields['number'] = $attributes['number'];
         }
+        $fields['premium'] = $attributes['premium'];
         foreach ($attributes['subjects'] as $subject) {
             $pSubject = [
                 'id' => $subject['id'],
@@ -334,19 +337,22 @@ class PolicyService implements PolicyServiceContract
             'vehicle_model' => 'model',
             'maker' => 'maker',
             'vehicle_reg_country' => 'countryOfRegistration',
-            'isUsedWithTrailer' => 'isUsedWithTrailer',
-            'mileage' => 'mileage',
-            'sourceAcquisition' => 'sourceAcquisition',
-            'vehicleCost' => 'vehicleCost',
-            'vehicleUsage' => 'vehicleUsage',
+            'vehicle_with_trailer' => 'isUsedWithTrailer',
+            'vehicle_mileage' => 'mileage',
+            'vehicle_acquisition' => 'sourceAcquisition',
+            'vehicle_cost' => 'vehicleCost',
+            'vehicle_usage_target' => 'vehicleUsage',
             'vehicle_vin' => 'vin',
-            'regNumber' => 'regNumber',
+            'vehicle_engine_power' => 'enginePower',
+            'vehicle_reg_number' => 'regNumber',
             'vehicle_made_year' => 'year',
-            'minWeight' => 'minWeight',
-            'maxWeight' => 'maxWeight',
+            'vehicle_unladen_mass' => 'minWeight',
+            'vehicle_loaded_mass' => 'maxWeight',
             'vehicle_count_seats' => 'seats',
         ], $attributes['car']);
-
+        $docTypeService = app(DocTypeServiceContract::class);
+        $docTypeId = $docTypeService->getDocTypeByCode($attributes['car']['document']['documentType']);
+        $fields['vehicle_reg_doc_type_id'] = $docTypeId;
         $this->setValuesByArray($fields, [
             'vehicle_doc_series' => 'series',
             'vehicle_doc_number' => 'number',
@@ -368,28 +374,30 @@ class PolicyService implements PolicyServiceContract
             'is_multi_drive' => 'isMultidrive'
         ], $attributes['policy']);
 
-        foreach ($attributes['drivers'] as $driver) {
-            foreach ($attributes['subjects'] as $subject) {
-                if ($subject['id'] == $driver['driver']['driverId']) {
-                    $pDriver = [];
-                    $this->setValuesByArray($pDriver, [
-                        'last_name' => 'lastName',
-                        'first_name' => 'firstName',
-                        'birth_date' => 'birthdate',
-                    ], $subject['fields']);
-                    $this->setValuesByArray($pDriver, [
-                        'exp_start_date' => 'drivingLicenseIssueDateOriginal',
-                    ], $driver['driver']);
-                    foreach ($subject['fields']['documents'] as $document) {
-                        if ($document['document']['documentType'] == 'license') {
-                            $this->setValuesByArray($pDriver, [
-                                'license_series' => 'series',
-                                'license_number' => 'number',
-                                'license_date' => 'dateIssue',
-                            ], $document['document']);
+        if (isset($attributes['drivers']) && $attributes['drivers']) {
+            foreach ($attributes['drivers'] as $driver) {
+                foreach ($attributes['subjects'] as $subject) {
+                    if ($subject['id'] == $driver['driver']['driverId']) {
+                        $pDriver = [];
+                        $this->setValuesByArray($pDriver, [
+                            'last_name' => 'lastName',
+                            'first_name' => 'firstName',
+                            'birth_date' => 'birthdate',
+                        ], $subject['fields']);
+                        $this->setValuesByArray($pDriver, [
+                            'exp_start_date' => 'drivingLicenseIssueDateOriginal',
+                        ], $driver['driver']);
+                        foreach ($subject['fields']['documents'] as $document) {
+                            if ($document['document']['documentType'] == 'license') {
+                                $this->setValuesByArray($pDriver, [
+                                    'license_series' => 'series',
+                                    'license_number' => 'number',
+                                    'license_date' => 'dateIssue',
+                                ], $document['document']);
+                            }
                         }
+                        $fields['drivers'][] = $pDriver;
                     }
-                    $fields['drivers'][] = $pDriver;
                 }
             }
         }
