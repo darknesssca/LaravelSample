@@ -24,7 +24,7 @@ class PolicyService implements PolicyServiceContract
         $this->policyRepository = $policyRepository;
     }
 
-    public function getList(array $filter = [], string $sort = 'id', string $order = 'asc', int $page = 1, int $perPage = 20)
+    public function getList(array $filter = [], string $sort = 'id', string $order = 'asc', int $page = 1, int $perPage = 20, string $search = null)
     {
         $isAdmin = in_array('admin', GlobalStorage::getUserGroup());
         if (!$isAdmin) {
@@ -36,7 +36,21 @@ class PolicyService implements PolicyServiceContract
             }
         }
 
-        $policies = $this->policyRepository->getList($filter)->forPage($page, $perPage);
+        $policies = $this->policyRepository->getList($filter);
+
+        if ($search) {
+            $agentIds = $this->getSearchAgentIds($search);
+            $agentPolicies = $policies->filter(function ($policy) use ($agentIds) {
+                return in_array($policy->agent_id, $agentIds);
+            });
+
+            $clientIds = $this->getSearchClientIds($search);
+            $clientPolicies = $policies->filter(function ($policy) use ($clientIds) {
+                return in_array($policy->client_id, $clientIds) || in_array($policy->insurant_id, $clientIds);
+            });
+
+            $policies = $agentPolicies->merge($clientPolicies);
+        }
 
         $policies = $policies->map(function ($policy) {
             $policy['type'] = $policy->type->name;
@@ -54,7 +68,25 @@ class PolicyService implements PolicyServiceContract
             $policies = $policies->sortBy($sort);
         }
 
-        return $policies;
+        return $policies->forPage($page, $perPage);
+    }
+
+    private function getSearchAgentIds(string $search)
+    {
+        $mks = app(CommissionCalculationMicroserviceContract::class);
+
+        $result = $mks->search($search);
+
+        return array_values(Arr::get($result, 'content'));
+    }
+
+    private function getSearchClientIds(string $search)
+    {
+        $mks = app(AuthMicroserviceContract::class);
+
+        $result = $mks->search($search);
+
+        return array_values(Arr::get($result, 'content'));
     }
 
     public function create(array $fields, int $draftId = null)
