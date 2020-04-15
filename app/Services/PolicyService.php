@@ -25,13 +25,69 @@ class PolicyService implements PolicyServiceContract
         $this->policyRepository = $policyRepository;
     }
 
-    public function getList(array $filter = [])
+    public function getList(array $filter = [], string $sort = 'id', string $order = 'asc', int $page = 1, int $perPage = 20, string $search = null)
     {
+        $isAdmin = in_array('admin', GlobalStorage::getUserGroup());
+        if (!$isAdmin) {
+            $filter['agent_ids'] = [GlobalStorage::getUserId()];
+
+            $subagents = Arr::get(app(AuthMicroserviceContract::class)->getSubagents(GlobalStorage::getUserId()), 'content.subagents');
+            foreach ($subagents as $subagent) {
+                $filter['agent_ids'][] = $subagent['id'];
+            }
+        }
+
         $policies = $this->policyRepository->getList($filter);
 
-        return $policies->map(function ($policy) {
+        if ($search) {
+            $agentIds = $this->getSearchAgentIds($search);
+            $agentPolicies = $policies->filter(function ($policy) use ($agentIds) {
+                return in_array($policy->agent_id, $agentIds);
+            });
+
+            $clientIds = $this->getSearchClientIds($search);
+            $clientPolicies = $policies->filter(function ($policy) use ($clientIds) {
+                return in_array($policy->client_id, $clientIds) || in_array($policy->insurant_id, $clientIds);
+            });
+
+            $policies = $agentPolicies->merge($clientPolicies);
+        }
+
+        $policies = $policies->map(function ($policy) {
+            $policy['type'] = $policy->type->name;
+            $policy['company'] = $policy->company->name;
+            $policy['referer'] = $policy->agent_id !== GlobalStorage::getUserId();
+            $policy['agent'] = $this->getAgent($policy->agent_id);
+            $policy['client'] = $this->getClient($policy->client_id);
+            $policy['insurant'] = $this->getClient($policy->insurant_id);
             $policy['rewards'] = Arr::get(app(CommissionCalculationMicroserviceContract::class)->getRewards($policy->id), 'content');
         });
+
+        if ($order === 'desc') {
+            $policies = $policies->sortByDesc($sort);
+        } else {
+            $policies = $policies->sortBy($sort);
+        }
+
+        return $policies->forPage($page, $perPage);
+    }
+
+    private function getSearchAgentIds(string $search)
+    {
+        $mks = app(AuthMicroserviceContract::class);
+
+        $result = $mks->search($search);
+
+        return array_values(Arr::get($result, 'content'));
+    }
+
+    private function getSearchClientIds(string $search)
+    {
+        $mks = app(CommissionCalculationMicroserviceContract::class);
+
+        $result = $mks->search($search);
+
+        return array_values(Arr::get($result, 'content'));
     }
 
     public function create(array $fields, int $draftId = null)
@@ -137,6 +193,28 @@ class PolicyService implements PolicyServiceContract
         }
 
         return $organized;
+    }
+
+    private function getAgent(int $id)
+    {
+        /**
+         * @var AuthMicroserviceContract $mks
+         */
+        $mks = app(AuthMicroserviceContract::class);
+
+        $user = Arr::get($mks->userInfo($id), 'content');
+        return $user['last_name'] . ' ' . $user['first_name'] . ' ' . $user['patronymic'];
+    }
+
+    private function getClient(int $id)
+    {
+        /**
+         * @var AuthMicroserviceContract $mks
+         */
+        $mks = app(CommissionCalculationMicroserviceContract::class);
+
+        $client = Arr::get($mks->clientInfo($id), 'content');
+        return $client['last_name'] . ' ' . $client['first_name'] . ' ' . $client['patronymic'];
     }
 
     /**
