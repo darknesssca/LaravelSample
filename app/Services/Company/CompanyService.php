@@ -109,4 +109,10 @@ abstract class CompanyService
         return $driversList;
     }
 
+    protected function createPolicy($company, $attributes)
+    {
+        $policyService = app(PolicyServiceContract::class);
+        return $policyService->createPolicyFromCustomData($company, $attributes);
+    }
+
 }

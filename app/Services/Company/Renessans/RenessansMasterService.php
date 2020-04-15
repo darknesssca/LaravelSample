@@ -65,8 +65,6 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
                 'status' => 'processing',
             ])
         ]);
-        $policyService = app(PolicyServiceContract::class);
-        $policyService->createPolicyFromCustomData($company, $attributes);
         $logger = app(LogMicroserviceContract::class);
         $logger->sendLog(
             'пользователь отправил запрос на создание заявки в компанию ' . $company->name,
@@ -244,6 +242,9 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
                 ]);
                 return;
             }
+            $this->pushForm($attributes);
+            $attributes['number'] = $attributes['policyId'];
+            $this->createPolicy($company, $attributes); // if this move to hold we create policy for lk
             $this->requestProcessService->update($processData['token'], [
                 'state' => 75,
                 'data' => json_encode($processData['data']),
@@ -260,6 +261,8 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $dataBill = $serviceBill->run($company, $attributes);
         $attributes['token'] = $processData['token'];
         $this->pushForm($attributes);
+        $attributes['number'] = $attributes['policyId'];
+        $this->createPolicy($company, $attributes);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $this->sendBillUrl($insurer['email'], $dataBill['billUrl']);
         $this->requestProcessService->delete($processData['token']);

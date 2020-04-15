@@ -81,8 +81,6 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
-        $policyService = app(PolicyServiceContract::class);
-        $policyService->createPolicyFromCustomData($company, $attributes);
         $this->requestProcessService->create([
             'token' => $attributes['token'],
             'company' => $company->code,
@@ -213,7 +211,9 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         switch ($checkData['state']) {
             case 'аннулирован':
             case 'прекращен страхователем':
+            case 'прекращён страхователем':
             case 'прекращен страховщиком':
+            case 'прекращён страховщиком':
             case 'выпущен':
                 $this->requestProcessService->delete($processData['token']);
                 $this->dropCreate($company, $processData['token'], [
@@ -223,6 +223,13 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
                 break;
             case 'заявление':
                 $processData['data']['policyIsn'] = $checkData['isn'];
+                $attributes = [
+                    'token' => $processData['token'],
+                ];
+                $this->pushForm($attributes);
+                $attributes['number'] = $attributes['policyId'];
+                $dbPolicyId = $this->createPolicy($company, $attributes);
+                $processData['data']['dbPolicyId'] = $dbPolicyId;
                 $eosagoService = app(IngosstrahEosagoServiceContract::class);
                 $eosagoData = $eosagoService->run($company, $processData);
                 if (!$eosagoData['isEosago'] && $eosagoData['hold']) {
@@ -305,6 +312,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         $form = [
             'token' => $processData['token'],
         ];
+        $this->billPolicyRepository->create($processData['data']['dbPolicyId'], $processData['data']['billIsn']);
         $this->pushForm($form);
         $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
         $processData['data']['insurerEmail'] = $insurer['email'];

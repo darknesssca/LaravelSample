@@ -97,8 +97,6 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
                 'company' => $company->code,
             ]),
         ]);
-        $policyService = app(PolicyServiceContract::class);
-        $policyService->createPolicyFromCustomData($company, $attributes);
         $logger = app(LogMicroserviceContract::class);
         $logger->sendLog(
             'пользователь отправил запрос на создание заявки в компанию ' . $company->name,
@@ -156,6 +154,8 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
                             'token' => $processData['token'],
                         ];
                         $this->pushForm($form);
+                        $dbPolicyId = $this->createPolicy($company, $form);
+                        $this->billPolicyRepository->create($dbPolicyId, $processData['data']['policyId']);
                         $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
                         $tokenData = $this->getTokenData($processData['token'], true);
                         $tokenData[$company->code]['status'] = 'done';

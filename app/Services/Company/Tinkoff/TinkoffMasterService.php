@@ -52,8 +52,7 @@ class TinkoffMasterService extends TinkoffService implements TinkoffMasterServic
             'data' => json_encode($tokenData),
         ]);
         $attributes['number'] = $createData['number'];
-        $policyService = app(PolicyServiceContract::class);
-        $policyService->createPolicyFromCustomData($company, $attributes);
+        $this->createPolicy($company, $attributes);
         $logger = app(LogMicroserviceContract::class);
         $logger->sendLog(
             'пользователь отправил запрос на создание заявки в компанию ' . $company->name,
