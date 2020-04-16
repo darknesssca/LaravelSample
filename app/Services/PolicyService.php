@@ -104,7 +104,7 @@ class PolicyService implements PolicyServiceContract
 
         //получаем полисы по вознаграждениям
         /** @var Collection $policies */
-        $policies = $this->policyRepository->getList(['paid' => true, 'ids' => $policies_ids, 'agent_ids' => [$filter['agent_id']]]);
+        $policies = $this->policyRepository->getList(['paid' => $filter['police_paid'], 'ids' => $policies_ids, 'agent_ids' => [$filter['agent_id']]]);
         $clients_ids = [];
         foreach ($policies as $police)
             $clients_ids[] = $police['client_id'];
