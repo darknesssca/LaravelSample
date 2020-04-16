@@ -12,6 +12,7 @@ use App\Traits\ValueSetterTrait;
 use Benfin\Api\Contracts\AuthMicroserviceContract;
 use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
 use Benfin\Api\GlobalStorage;
+use Benfin\Api\Services\CommissionCalculationMicroservice;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
@@ -98,7 +99,7 @@ class PolicyService implements PolicyServiceContract
         $policy = $this->policyRepository->create($fields);
 
         /**
-         * @var CommissionCalculationMicroserviceContract $mks
+         * @var CommissionCalculationMicroservice $mks
          */
         $mks = app(CommissionCalculationMicroserviceContract::class);
         $owner = $fields['subjects'][$policy->client_id];
@@ -135,7 +136,7 @@ class PolicyService implements PolicyServiceContract
         if ($draftId) {
             app(DraftRepositoryContract::class)->delete($draftId);
         }
-        $reward = $mks->createRewards($policy->id, $policy->registration_date->format('Y-m-d'), $policy->region_kladr, GlobalStorage::getUserId());
+        $reward = $mks->createRewards($policy->id, $policy->premium, $policy->registration_date->format('Y-m-d'), $policy->region_kladr, GlobalStorage::getUserId());
         if (
             (isset($reward['error']) && !$reward['error']) &&
             (isset($reward['content']) && isset($reward['content']['reward_id']))
@@ -251,12 +252,12 @@ class PolicyService implements PolicyServiceContract
         $policiesList = collect($policiesList);
         $byInsuranceCompany = $policiesList
             ->groupBy('insurance_company_id')
-            ->map(function($item, $index){
+            ->map(function ($item, $index) {
                 $tmp = collect($item);
 
                 return [
                     "count" => $tmp->count(),
-                    "sum"   => $tmp->sum("premium")
+                    "sum" => $tmp->sum("premium")
                 ];
             });
         $result = [
@@ -275,18 +276,18 @@ class PolicyService implements PolicyServiceContract
 
                     return [
                         "count" => $tmp->count(),
-                        "sum"   => $tmp->sum("premium")
+                        "sum" => $tmp->sum("premium")
                     ];
                 });
         } else {
             $result["detail"] = $policiesList
                 ->groupBy('registration_date')
-                ->map(function($list, $index) {
+                ->map(function ($list, $index) {
                     $tmp = collect($list);
 
                     return [
                         "count" => $tmp->count(),
-                        "sum"   => $tmp->sum("premium")
+                        "sum" => $tmp->sum("premium")
                     ];
                 });
         }
