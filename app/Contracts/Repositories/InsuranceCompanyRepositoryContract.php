@@ -15,5 +15,7 @@ interface InsuranceCompanyRepositoryContract
      */
     public function getCompany($code);
 
+    public function getCompanyById($id);
+
     public function getInsuranceCompanyList();
 }

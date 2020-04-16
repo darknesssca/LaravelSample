@@ -11,6 +11,7 @@ use App\Contracts\Company\Renessans\RenessansCheckCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansGetStatusServiceContract;
 use App\Contracts\Company\Renessans\RenessansMasterServiceContract;
+use App\Contracts\Repositories\Services\PolicyTypeServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\MethodForbiddenException;
@@ -113,6 +114,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
                     'status' => 'processing',
                 ];
             case 'done':
+                $this->destroyToken($attributes['token']);
                 return [
                     'status' => 'done',
                     'billUrl' => $tokenData['billUrl'],
@@ -312,12 +314,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $this->sendBillUrl($insurer['email'], $dataBill['billUrl']);
         $this->requestProcessService->delete($processData['token']);
-        $tokenData = $this->getTokenData($processData['token'], true);
-        $tokenData[$company->code]['status'] = 'done';
-        $tokenData[$company->code]['billUrl'] = $dataBill['billUrl'];
-        $this->intermediateDataService->update($processData['token'], [
-            'data' => json_encode($tokenData),
-        ]);
+        $this->destroyToken($attributes['token']);
     }
 
     public function getPayment($company, $processData): void

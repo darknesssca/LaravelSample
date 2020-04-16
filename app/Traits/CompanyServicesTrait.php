@@ -18,6 +18,15 @@ trait CompanyServicesTrait
         return $company;
     }
 
+    protected function getCompanyById($id)
+    {
+        $company = $this->insuranceCompanyService->getCompanyById($id);
+        if (!$company) {
+            throw new CompanyException('Компания id=' . $id . ' не найдена или не доступна');
+        }
+        return $company;
+    }
+
     protected function runService($company, $attributes, $serviceMethod)
     {
         $service = $this->getCompanyService($company);

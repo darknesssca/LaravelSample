@@ -76,4 +76,9 @@ trait TokenTrait
         $form = $this->getTokenForm($attributes['token']);
         $attributes = array_merge($attributes, $form);
     }
+
+    protected function destroyToken($token)
+    {
+        $this->intermediateDataService->delete($token);
+    }
 }

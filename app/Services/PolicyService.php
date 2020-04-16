@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\Repositories\DraftRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\DocTypeServiceContract;
+use App\Contracts\Repositories\Services\PolicyTypeServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\StatisticsNotFoundException;
 use App\Traits\ValueSetterTrait;
@@ -134,8 +135,14 @@ class PolicyService implements PolicyServiceContract
         if ($draftId) {
             app(DraftRepositoryContract::class)->delete($draftId);
         }
-
-        $mks->createRewards($policy->id, $policy->registration_date->format('Y.m.d'), $policy->region_kladr, GlobalStorage::getUserId());
+        $reward = $mks->createRewards($policy->id, $policy->registration_date->format('Y-m-d'), $policy->region_kladr, GlobalStorage::getUserId());
+        if (
+            (isset($reward['error']) && !$reward['error']) &&
+            (isset($reward['content']) && isset($reward['content']['reward_id']))
+        ) {
+            $policy->commission_id = $reward['content']['reward_id'];
+            $policy->save();
+        }
 
         return $policy->id;
     }
@@ -294,6 +301,8 @@ class PolicyService implements PolicyServiceContract
             'subjects' => [],
             'drivers' => [],
         ];
+        $policyTypeService = app(PolicyTypeServiceContract::class);
+        $fields['type_id'] = $policyTypeService->getByCode('osago')->id; // this field should be received from form, but this feature not realised at 1st step of development
         if (isset($attributes['number'])) {
             $fields['number'] = $attributes['number'];
         }
