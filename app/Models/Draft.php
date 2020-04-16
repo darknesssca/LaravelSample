@@ -52,6 +52,11 @@ class Draft extends Model
         return $this->belongsTo('App\Models\CarModel', 'vehicle_model_id', 'id');
     }
 
+    public function mark()
+    {
+        return $this->belongsTo('App\Models\CarMark', 'vehicle_mark_id', 'id');
+    }
+
     public function doctype()
     {
         return $this->belongsTo('App\Models\DocType', 'vehicle_reg_doc_type_id', 'id');

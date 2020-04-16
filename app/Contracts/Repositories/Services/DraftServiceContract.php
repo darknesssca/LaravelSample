@@ -11,4 +11,5 @@ interface DraftServiceContract
     public function create($attributes):int;
     public function update($draftId, $attributes):void;
     public function delete($draftId):void;
+    public function getByFilter(array $attributes);
 }

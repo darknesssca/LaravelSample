@@ -4,7 +4,7 @@ namespace App\Contracts\Services;
 
 interface PolicyServiceContract
 {
-    public function getList(array $filter = []);
+    public function getList(array $filter = [], string $sort = 'id', string $order = 'asc', int $page = 1, int $perPage = 20, string $search = null);
 
     public function statistic(array $filter = []);
 
