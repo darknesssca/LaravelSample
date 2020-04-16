@@ -5,7 +5,6 @@ namespace App\Contracts\Services;
 
 
 use App\Contracts\Repositories\ReportRepositoryContract;
-use App\Models\Report;
 
 interface ReportServiceContract
 {
@@ -16,4 +15,6 @@ interface ReportServiceContract
     public function getReportsInfo(array $fields);
 
     public function createReport(array $fields);
+
+    public function initQiwi($user_requisites, $tax_status_code, $description = 'Перевод');
 }

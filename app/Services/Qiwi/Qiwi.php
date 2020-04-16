@@ -5,8 +5,8 @@ namespace App\Services\Qiwi;
 
 
 use App\Exceptions\TaxStatusNotServiceException;
+use Exception;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
 
 class Qiwi
 {
@@ -15,6 +15,12 @@ class Qiwi
     private $payoutRecipient;
     private $commonParams;
 
+    /**
+     * Qiwi constructor.
+     * @param array $user_requisites
+     * @param string $tax_status_code
+     * @param string $description
+     */
     public function __construct($user_requisites, $tax_status_code, $description = 'Перевод')
     {
         $this->connectionParams = [
@@ -53,36 +59,44 @@ class Qiwi
      * @param $amount
      * @return string
      * @throws TaxStatusNotServiceException
+     * @throws Exception
      */
-    public function makePayout($amount)
-    {
-        $this->createPayout($amount);
-        $this->executePayout();
-        return $this->commonParams['payout_id'];
-    }
-
-    /**
-     * @param $amount
-     * @throws TaxStatusNotServiceException
-     */
-    private function createPayout($amount)
+    public function createPayout($amount)
     {
         $this->setPayoutRecipientParams();
         $this->setPayoutParams($amount);
         $this->commonParams['payout_id'] = $this->getGUID();
+
+
         $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/payments/{$this->commonParams['payout_id']}";
         $response = $this->sendRequest('PUT', $url, $this->payoutParams);
 
-        echo '<pre>';
-        print_r($response);
-        echo '</pre>';
+        $response = json_decode($response['content'], true);
 
+        if ($response['status']['value'] != 'READY') {
+            throw new Exception('Не удалось создать выплату');
+        }
+
+        return $this->commonParams['payout_id'];
     }
 
-    private function executePayout()
+    /**
+     * @param $payout_id
+     * @return bool
+     * @throws Exception
+     */
+    public function executePayout($payout_id)
     {
-        $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/payments/{$this->commonParams['payout_id']}/execute";
-        $this->sendRequest('POST', $url, $this->payoutParams);
+        $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/payments/{$payout_id}/execute";
+        $response = $this->sendRequest('POST', $url);
+
+        $response = json_decode($response['content'], true);
+
+        if ($response['status']['value'] != 'COMPLETED') {
+            throw new Exception('Не удалось исполнить выплату');
+        }
+
+        return true;
     }
 
 
@@ -105,7 +119,7 @@ class Qiwi
     }
 
     /**
-     * @return array
+     * @return void
      * @throws TaxStatusNotServiceException
      */
     private function setPayoutRecipientParams()
@@ -149,12 +163,10 @@ class Qiwi
      * адрес
      * @param array $data
      * данные
-     * @param bool $async
-     * если истина, то запрос выполняется асинхронно и без результата
      * @return array|bool
      * если запрос прошел успешно, то true
      */
-    private function sendRequest(string $method, string $url, array $data, bool $async = false)
+    private function sendRequest(string $method, string $url, array $data = [])
     {
         $method = strtoupper($method);
         $headers = [

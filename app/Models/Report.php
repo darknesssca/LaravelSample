@@ -17,11 +17,16 @@ class Report extends Model
         'reward',
         'is_payed'
     ];
-    protected  $hidden = [
+    protected $hidden = [
         'created_at',
         'updated_at',
         'file_id',
         'creator_id'
+    ];
+
+    protected $appends = [
+        'create_payout_link',
+        'execute_payout_link'
     ];
 
     public function policies()
@@ -42,5 +47,19 @@ class Report extends Model
             $model->creator_id = GlobalStorage::getUserId();
             $model->is_payed = false;
         });
+    }
+
+    //Accessors
+
+    //TODO Реализовать ссылки
+
+    public function getCreatePayoutLink()
+    {
+        return "{$this->last_name} {$this->first_name} {$this->patronymic}";
+    }
+
+    public function getExecutePayoutLink()
+    {
+        return "{$this->last_name} {$this->first_name} {$this->patronymic}";
     }
 }

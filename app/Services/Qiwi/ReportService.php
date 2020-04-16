@@ -30,6 +30,8 @@ class ReportService implements ReportServiceContract
     private $reportRepository;
     private $policyRepository;
     private $insuranceCompanyRepository;
+
+    /** @var  Qiwi $qiwi */
     private $qiwi;
 
     /** @var AuthMicroserviceContract $auth_mks */
@@ -114,8 +116,8 @@ class ReportService implements ReportServiceContract
 
         $this->createXls($report->id);
 
-//        $this->qiwi = new Qiwi($this->creator['requisite'], $this->creator['tax_status']['code']);
-//        $this->qiwi->makePayout($fields['reward']);
+        $this->createPayout($report, $fields['reward'], $this->creator['requisite'],
+            $this->creator['tax_status']['code']);
 
         $message = "Создан отчет на выплату {$report->id}";
         $this->log_mks->sendLog($message, config('api_sk.logMicroserviceCode'), $fields['creator_id']);
@@ -130,6 +132,15 @@ class ReportService implements ReportServiceContract
     private function getCreator($user_id)
     {
         return $this->auth_mks->userInfo($user_id)['content'];
+    }
+
+    private function getRewardsList(array $policies_ids)
+    {
+        $filter = [
+            'policy_id' => $policies_ids
+        ];
+
+        return $this->commission_mks->getRewards($filter)['content'];
     }
 
     /**
@@ -150,11 +161,7 @@ class ReportService implements ReportServiceContract
 
         $this->policies = $this->reIndexPolicies($policy_collection);
 
-        $filter = [
-            'policy_id' => array_keys($this->policies)
-        ];
-
-        $rewards = $this->commission_mks->getRewards($filter)['content'];
+        $rewards = $this->getRewardsList(array_keys($this->policies));
 
         if (empty($rewards)) {
             throw new Exception('Ошибка получения доступных наград');
@@ -311,21 +318,108 @@ class ReportService implements ReportServiceContract
 
             $xls_policy['status_sk'] = ($policy->paid == true ? 'Оплачен' : 'Не оплачен');
 
-            if ($policy->agent_id == $this->creator['id']){
+            if ($policy->agent_id == $this->creator['id']) {
                 $xls_policy['prodavec_fio'] = $this->creator['full_name'];
             } else {
                 $xls_policy['prodavec_fio'] = '-';
             }
 
-            if ($policy->agent_id == $this->creator['id']){
+            if ($policy->agent_id == $this->creator['id']) {
                 $xls_policy['prodavec_email'] = $this->creator['email'];
             } else {
                 $xls_policy['prodavec_email'] = '-';
             }
-            
+
             $xls_policies[] = $xls_policy;
         }
 
         return $xls_policies;
+    }
+
+    public function initQiwi($user_requisites, $tax_status_code, $description = 'Перевод')
+    {
+        if (empty($this->qiwi)) {
+            $this->qiwi = new Qiwi($user_requisites, $tax_status_code, $description);
+        }
+
+        return $this->qiwi;
+    }
+
+    /**
+     * @param $report
+     * @param $amount
+     * @param $user_requisites
+     * @param $tax_status_code
+     * @param string $description
+     * @throws TaxStatusNotServiceException
+     * @throws Exception
+     */
+    public function createPayout($report, $amount, $user_requisites, $tax_status_code, $description = 'Перевод')
+    {
+        if (is_integer($report)) {
+            $report = $this->reportRepository->getById($report);
+        }
+
+        $this->initQiwi($user_requisites, $tax_status_code, $description);
+
+        $payout_id = $this->qiwi->createPayout($amount);
+
+        if (!empty($payout_id)) {
+            $report->payout_id = $payout_id;
+            $report->requested = true;
+            $report->save();
+
+            if (empty($this->rewards)) {
+                $policies_ids = array_column($report->policies()->get(['id'])->toArray(), 'id');
+                $this->rewards = $this->getRewardsList($policies_ids);
+            }
+
+            $fields = [
+                'reward_id' => array_column($this->rewards, 'id'),
+                'requested' => true
+            ];
+
+            $this->commission_mks->massUpdateRewards($fields);
+        }
+
+        $this->executePayout($report);
+    }
+
+    /**
+     * @param $report
+     * @throws Exception
+     */
+    public function executePayout($report)
+    {
+        if (is_integer($report)) {
+            $report = $this->reportRepository->getById($report);
+        }
+
+        if ($this->qiwi) {
+            $this->initQiwi([], '');
+        }
+
+        $execute_status = $this->qiwi->executePayout($report->payout_id);
+
+        if ($execute_status == true) {
+            $report->is_payed = true;
+            $report->save();
+
+            if (empty($this->rewards)) {
+                $policies_ids = array_column($report->policies()->get(['id'])->toArray(), 'id');
+                $this->rewards = $this->getRewardsList($policies_ids);
+            }
+
+            $fields = [
+                'reward_id' => array_column($this->rewards, 'id'),
+                'paid' => true
+            ];
+
+            echo '<pre>';
+            print_r($fields);
+            echo '</pre>';
+
+            $this->commission_mks->massUpdateRewards($fields);
+        }
     }
 }
