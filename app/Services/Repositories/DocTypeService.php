@@ -133,7 +133,7 @@ class DocTypeService implements DocTypeServiceContract
         if (!$code) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
-        return $this->docTypeRepository->getCompanyDocTypeByCode($code, $companyId);
+        return $this->getCompanyDocTypeByCode($code, $companyId);
     }
 
     public function getCompanyLicenseDocType2($isRussian, $companyId)
@@ -234,7 +234,7 @@ class DocTypeService implements DocTypeServiceContract
             case 'car':
                 return $this->getCompanyCarDocType2($type, $companyId);
             case 'inspection':
-                return $this->getCompanyInspectionDocType2($companyId);
+                return $this->getCompanyInspectionDocType2($type,$companyId);
             default:
                 throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }

@@ -155,11 +155,11 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                 "CountryCode" => $this->countryService->getCountryById($subject['fields']['citizenship'])['code'],
             ];
             $regAddress = $this->searchAddressByType($subject['fields'], 'registration');
-            if (isset($regAddress['StreetCode']) && $regAddress['StreetCode']) {
-                $this->cutStreetKladr($regAddress['StreetCode']);
+            if (isset($regAddress['streetKladr']) && $regAddress['streetKladr']) {
+                $this->cutStreetKladr($regAddress['streetKladr']);
             }
-            if (isset($regAddress['CityCode']) && $regAddress['CityCode']) {
-                $this->cutCityKladr($regAddress['CityCode']);
+            if (isset($regAddress['cityKladr']) && $regAddress['cityKladr']) {
+                $this->cutCityKladr($regAddress['cityKladr']);
             }
             $pAddress = [
                 "CountryCode" => $this->countryService->getCountryById($subject['fields']['citizenship'])['code']

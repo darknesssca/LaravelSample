@@ -249,7 +249,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
             $this->pushForm($attributes);
             $attributes['number'] = $attributes['policyId'];
             $tokenData = $this->getTokenDataByCompany($processData['token'], $company->code);
-            $attributes['number'] = $tokenData['premium'];
+            $attributes['premium'] = $tokenData['finalPremium'];
             GlobalStorage::setUser($processData['data']['user']);
             $this->createPolicy($company, $attributes); // if this move to hold we create policy for lk
             $this->requestProcessService->update($processData['token'], [

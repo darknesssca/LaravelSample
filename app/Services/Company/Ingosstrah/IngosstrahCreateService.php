@@ -141,7 +141,7 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
             ],
         ];
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
-        $this->setValuesByArray($data['TariffParameters']['Agreement']['Insurer'], [
+        $this->setValuesByArray($data['Agreement']['Insurer'], [
             'MobilePhone' => 'phone',
             'Email' => 'email',
         ], $insurer);
@@ -165,11 +165,11 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
                 "CountryCode" => $this->countryService->getCountryById($subject['fields']['citizenship'])['code'],
             ];
             $regAddress = $this->searchAddressByType($subject['fields'], 'registration');
-            if (isset($regAddress['StreetCode']) && $regAddress['StreetCode']) {
-                $this->cutStreetKladr($regAddress['StreetCode']);
+            if (isset($regAddress['streetKladr']) && $regAddress['streetKladr']) {
+                $this->cutStreetKladr($regAddress['streetKladr']);
             }
-            if (isset($regAddress['CityCode']) && $regAddress['CityCode']) {
-                $this->cutCityKladr($regAddress['CityCode']);
+            if (isset($regAddress['cityKladr']) && $regAddress['cityKladr']) {
+                $this->cutCityKladr($regAddress['cityKladr']);
             }
             $pAddress = [
                 "CountryCode" => $this->countryService->getCountryById($subject['fields']['citizenship'])['code']
@@ -201,7 +201,7 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
             $data['Agreement']['SubjectList']['Subject'][] = $pSubject;
         }
         //Vehicle
-        $this->setValuesByArray($data['TariffParameters']['Agreement']['Vehicle'], [
+        $this->setValuesByArray($data['Agreement']['Vehicle'], [
             'RegNum' => 'regNumber',
         ], $attributes['car']);
         $data['Agreement']['Vehicle']['Document'] = [

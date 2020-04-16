@@ -12,6 +12,7 @@ class BillPolicy extends Model
     ];
     protected $table = 'bill_policy';
     protected $primaryKey = null;
+    public $incrementing = false;
 
     public function policy()
     {

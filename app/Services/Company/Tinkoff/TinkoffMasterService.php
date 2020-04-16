@@ -45,14 +45,16 @@ class TinkoffMasterService extends TinkoffService implements TinkoffMasterServic
         $this->pushForm($attributes);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $this->sendBillUrl($insurer['email'], $billLinkData['billUrl']);
-        $tokenData = $this->getTokenData($attributes['token'], true);
-        $tokenData[$company->code]['status'] = $createData['status'];
-        $tokenData[$company->code]['billUrl'] = $billLinkData['billUrl'];
-        $this->intermediateDataService->update($attributes['token'], [
-            'data' => json_encode($tokenData),
-        ]);
+//        $tokenData = $this->getTokenData($attributes['token'], true);
+//        $tokenData[$company->code]['status'] = $createData['status'];
+//        $tokenData[$company->code]['billUrl'] = $billLinkData['billUrl'];
+//        $this->intermediateDataService->update($attributes['token'], [
+//            'data' => json_encode($tokenData),
+//        ]);
         $attributes['number'] = $createData['number'];
+        $attributes['premium'] = $tokenData['premium'];
         $this->createPolicy($company, $attributes);
+        $this->destroyToken($attributes['token']);
         $logger = app(LogMicroserviceContract::class);
         $logger->sendLog(
             'пользователь отправил запрос на создание заявки в компанию ' . $company->name,

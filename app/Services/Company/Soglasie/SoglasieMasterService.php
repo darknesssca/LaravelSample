@@ -60,6 +60,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
             'status' => 'calculated',
             'scoringId' => $dataScoring['scoringId'],
             'kbmId' => $dataKbm['kbmId'],
+            'premium' => $dataCalculate['premium'],
         ];
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
@@ -81,13 +82,12 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
         $serviceCreate = app(SoglasieCreateServiceContract::class);
         $dataCreate = $serviceCreate->run($company, $attributes);
         $tokenData = $this->getTokenData($attributes['token'], true);
-        $tokenData[$company->code] = [
-            'policyId' => $dataCreate['policyId'],
-            'status' => 'processing',
-        ];
+        $tokenData[$company->code]['policyId'] = $dataCreate['policyId'];
+        $tokenData[$company->code]['status'] = 'processing';
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
+        $user = GlobalStorage::getUser();
         $this->requestProcessService->create([
             'token' => $attributes['token'],
             'state' => 50,
@@ -95,6 +95,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
                 'policyId' => $dataCreate['policyId'],
                 'status' => 'processing',
                 'company' => $company->code,
+                'user' => $user,
             ]),
         ]);
         $logger = app(LogMicroserviceContract::class);
@@ -117,6 +118,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
                     'status' => 'processing',
                 ];
             case 'done':
+                $this->destroyToken($attributes['token']);
                 return [
                     'status' => 'done',
                     'billUrl' => $tokenData['billUrl'],
@@ -154,10 +156,12 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
                             'token' => $processData['token'],
                         ];
                         $this->pushForm($form);
+                        GlobalStorage::setUser($processData['data']['user']);
+                        $tokenData = $this->getTokenData($processData['token'], true);
+                        $attributes['premium'] = $tokenData[$company->code]['premium'];
                         $dbPolicyId = $this->createPolicy($company, $form);
                         $this->billPolicyRepository->create($dbPolicyId, $processData['data']['policyId']);
                         $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
-                        $tokenData = $this->getTokenData($processData['token'], true);
                         $tokenData[$company->code]['status'] = 'done';
                         $tokenData[$company->code]['billUrl'] = $billLinkData['billUrl'];
                         $this->sendBillUrl($insurer['email'], $billLinkData['PayUrl']);
