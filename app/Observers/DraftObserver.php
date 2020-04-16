@@ -3,31 +3,34 @@
 
 namespace App\Observers;
 
-use App\Models\Draft;
+use App\Cache\DraftCacheTags;
 use Benfin\Api\GlobalStorage;
+use Benfin\Cache\CacheKeysTrait;
+use Illuminate\Support\Facades\Cache;
 
 trait DraftObserver
 {
+    use DraftCacheTags, CacheKeysTrait;
+
     protected static function boot()
     {
         parent::boot();
 
-        Draft::updated(function ($draft) {
-            dd("updated -> $draft");
+        static::updated(function ($draft) {
+            if ($draft->isDirty()) {
+                $agentId = GlobalStorage::getUserId();
+                Cache::tags(self::getDraftAgentTag($agentId))->flush();
+            }
         });
 
-        Draft::updating(function ($draft) {
-            dd("updating -> $draft");
+        static::created(function ($draft) {
+            $agentId = GlobalStorage::getUserId();
+            Cache::tags(self::getDraftAgentTag($agentId))->flush();
         });
 
-        Draft::created(function ($draft) {
-            dd("created -> $draft");
+        static::deleted(function ($draft) {
+            $agentId = GlobalStorage::getUserId();
+            Cache::tags(self::getDraftAgentTag($agentId))->flush();
         });
-
-        Draft::creating(function ($draft) {
-            dd("creating -> $draft");
-        });
-
     }
-
 }

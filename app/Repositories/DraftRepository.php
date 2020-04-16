@@ -19,8 +19,8 @@ class DraftRepository implements DraftRepositoryContract
 
     public function getById(int $id, int $agentId)
     {
-        $tag = $this->getDraftTag();
-        $key = $this->getCacheKey($id, $agentId);
+        $tag = self::getDraftAgentTag($agentId);
+        $key = self::getCacheKey($id, $agentId);
 
         return Cache::tags($tag)->remember($key, $this->_DAY_TTL, function () use ($id, $agentId) {
             return Draft::with([
@@ -49,9 +49,10 @@ class DraftRepository implements DraftRepositoryContract
 
     public function getDraftsByAgentId($agentId)
     {
-        $cacheKey = $this->getCacheKey($agentId);
+        $cacheKey = self::getCacheKey($agentId);
+        $cacheTag = self::getDraftAgentTag($agentId);
 
-        return Cache::tags($this->getDraftTag())->remember($cacheKey, $this->_DAY_TTL, function () use ($agentId) {
+        return Cache::tags($cacheTag)->remember($cacheKey, $this->_DAY_TTL, function () use ($agentId) {
             return Draft::with([
                 'model',
                 'model.mark',
@@ -96,41 +97,45 @@ class DraftRepository implements DraftRepositoryContract
      */
     public function getByFilter(int $agentId, array $filter)
     {
-        $query = Draft::with(['owner', 'model','mark']);
+        $cacheTag = self::getDraftAgentTag($agentId);
+        $cacheKey = self::getCacheKey($agentId, $filter);
 
-        $query->where('agent_id', $agentId); //только для заданного агента
-        if (!empty($filter['query'])) {
-            $query->where(function (Builder $query) use ($filter) {
-                //Поиск по ФИО
-                $query->orWhereHas('owner', function (Builder $sub_query) use ($filter) {
-                    $sub_query->where('first_name', 'like', '%' . $filter['query'] . '%')
-                        ->orWhere('last_name', 'like', '%' . $filter['query'] . '%')
-                        ->orWhere('patronymic', 'like', '%' . $filter['query'] . '%');
+        return Cache::tags($cacheTag)->remember($cacheKey, $this->_DAY_TTL, function () use ($agentId, $filter) {
+            $query = Draft::with(['owner', 'model', 'mark']);
+
+            $query->where('agent_id', $agentId); //только для заданного агента
+            if (!empty($filter['query'])) {
+                $query->where(function (Builder $query) use ($filter) {
+                    //Поиск по ФИО
+                    $query->orWhereHas('owner', function (Builder $sub_query) use ($filter) {
+                        $sub_query->where('first_name', 'like', '%' . $filter['query'] . '%')
+                            ->orWhere('last_name', 'like', '%' . $filter['query'] . '%')
+                            ->orWhere('patronymic', 'like', '%' . $filter['query'] . '%');
+                    });
+                    //поиск по модели
+                    $query->orWhereHas('model', function (Builder $sub_query) use ($filter) {
+                        $sub_query->where('name', 'like', '%' . $filter['query'] . '%');
+                    });
+                    //поиск по модели
+                    $query->orWhereHas('mark', function (Builder $sub_query) use ($filter) {
+                        $sub_query->where('name', 'like', '%' . $filter['query'] . '%');
+                    });
                 });
-                //поиск по модели
-                $query->orWhereHas('model', function (Builder $sub_query) use ($filter) {
-                    $sub_query->where('name', 'like', '%' . $filter['query'] . '%');
-                });
-                //поиск по модели
-                $query->orWhereHas('mark', function (Builder $sub_query) use ($filter) {
-                    $sub_query->where('name', 'like', '%' . $filter['query'] . '%');
-                });
-            });
-        }
+            }
 
-        //Сортировка
-        if (!empty($filter['orderColumn']) && !empty($filter['orderDirection'])) {
-            $query->orderBy($filter['orderColumn'], $filter['orderDirection']);
-        } else {
-            $query->orderBy('id', 'asc');
-        }
+            //Сортировка
+            if (!empty($filter['orderColumn']) && !empty($filter['orderDirection'])) {
+                $query->orderBy($filter['orderColumn'], $filter['orderDirection']);
+            } else {
+                $query->orderBy('id', 'asc');
+            }
 
-        return $query->paginate(
-            $filter['count'],
-            ['*'],
-            'page',
-            $filter['page']
-        );
-
+            return $query->paginate(
+                $filter['count'],
+                ['*'],
+                'page',
+                $filter['page']
+            );
+        });
     }
 }
