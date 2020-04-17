@@ -362,7 +362,6 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         if (isset($dataStatus['paid']) && $dataStatus['paid']) {
             $this->policyService->update($processData['id'], [
                 'paid' => true,
-                'number' => $dataStatus['policyNumber'],
             ]);
             $this->billPolicyRepository->delete($processData['id']);
         }
