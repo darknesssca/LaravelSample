@@ -57,39 +57,39 @@ class PolicyService implements PolicyServiceContract
         }
 
         $policies = $this->policyRepository->getList($filter);
-        $policyIds = [];
-        $clientIds = [];
-        $agentIds = [];
+        if ($policies->isNotEmpty()) {
+            $policyIds = [];
+            $clientIds = [];
+            $agentIds = [];
 
-        foreach ($policies as $policy) {
-            $agentIds[] = $policy->agent_id;
-            $clientIds[] = $policy->client_id;
-            $clientIds[] = $policy->insurant_id;
-            $policyIds[] = $policy->id;
-        }
+            foreach ($policies as $policy) {
+                $agentIds[] = $policy->agent_id;
+                $clientIds[] = $policy->client_id;
+                $clientIds[] = $policy->insurant_id;
+                $policyIds[] = $policy->id;
+            }
 
-        $agents = app(AuthMicroserviceContract::class)->usersInfo($agentIds) ?? [];
-        $clients = app(CommissionCalculationMicroserviceContract::class)->clientsInfo($clientIds) ?? [];
-        $rewards = collect(app(CommissionCalculationMicroserviceContract::class)
-            ->getRewards(['policy_id' => $policyIds] ?? [])
-        )->mapToGroups(function ($reward) {
-            return [$reward['policy_id'] => $reward];
-        });
+            $agents = app(AuthMicroserviceContract::class)->usersInfo($agentIds) ?? [];
+            $clients = app(CommissionCalculationMicroserviceContract::class)->clientsInfo($clientIds) ?? [];
+            $rewards = collect(app(CommissionCalculationMicroserviceContract::class)->getRewards(['policy_id' => $policyIds] ?? []))->mapToGroups(function ($reward) {
+                return [$reward['policy_id'] => $reward];
+            });
 
-        $policies = $policies->map(function ($policy) use($agents, $clients, $rewards) {
-            $policy['type'] = $policy->type->name;
-            $policy['company'] = $policy->company->name;
-            $policy['referer'] = $policy->agent_id !== GlobalStorage::getUserId();
-            $policy['agent'] = $agents[$policy->agent_id]['full_name'] ?? '';
-            $policy['client'] = $clients[$policy->client_id]['full_name'] ?? '';
-            $policy['insurant'] = $clients[$policy->insurant_id]['full_name'] ?? '';
-            $policy['rewards'] = $rewards[$policy->id] ?? [];
-        });
+            $policies = $policies->map(function ($policy) use ($agents, $clients, $rewards) {
+                $policy['type'] = $policy->type->name;
+                $policy['company'] = $policy->company->name;
+                $policy['referer'] = $policy->agent_id !== GlobalStorage::getUserId();
+                $policy['agent'] = $agents[$policy->agent_id]['full_name'] ?? '';
+                $policy['client'] = $clients[$policy->client_id]['full_name'] ?? '';
+                $policy['insurant'] = $clients[$policy->insurant_id]['full_name'] ?? '';
+                $policy['rewards'] = $rewards[$policy->id] ?? [];
+            });
 
-        if ($order === 'desc') {
-            $policies = $policies->sortByDesc($sort);
-        } else {
-            $policies = $policies->sortBy($sort);
+            if ($order === 'desc') {
+                $policies = $policies->sortByDesc($sort);
+            } else {
+                $policies = $policies->sortBy($sort);
+            }
         }
 
         return $policies->forPage($page, $perPage);
