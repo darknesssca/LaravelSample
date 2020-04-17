@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "620423f842de71c644d7664b95090c3b",
+    "content-hash": "9495d277bc61580430bf07a29eb80bff",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -92,11 +92,11 @@
         },
         {
             "name": "benfin/packages/api-communication",
-            "version": "v1.4.15",
+            "version": "v1.4.16",
             "source": {
                 "type": "git",
                 "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/api-communication.git",
-                "reference": "58f23702e9a5b49ed28b4b3844e51df644615ae3"
+                "reference": "8d12a66e5cd2fd0fa7ebf7d2cab405813dcb1d74"
             },
             "require": {
                 "benfin/packages/requests": ">=1.1",
@@ -125,7 +125,7 @@
                 }
             ],
             "description": "BENFIN Api communication",
-            "time": "2020-04-16T12:47:07+00:00"
+            "time": "2020-04-16T17:36:10+00:00"
         },
         {
             "name": "benfin/packages/auth",
@@ -5936,6 +5936,7 @@
     "platform": {
         "php": "^7.2",
         "ext-gd": "*",
+        "ext-fileinfo": "*",
         "ext-json": "*",
         "ext-libxml": "*",
         "ext-simplexml": "*",

@@ -44,8 +44,9 @@ $router->group(
                 $router->group(['prefix' => 'policies'] , function () use ($router) {
                     $router->get('/', 'PoliciesController@list');
                     $router->get('statistic', 'PoliciesController@statistic');
-                    $router->get('/{id}', 'PoliciesController@getById');
+                    $router->get('/{id:\d+}', 'PoliciesController@getById');
                     $router->post('/', 'PoliciesController@create');
+                    $router->get('/with-rewards', 'PoliciesController@listWithRewards');
                 });
 
 
@@ -57,6 +58,8 @@ $router->group(
                 //reports
                 $router->post('/reports', 'ReportController@create');
                 $router->get('/reports', 'ReportController@index');
+                $router->patch('/reports/{id}/payout/create', 'ReportController@createPayout');
+                $router->patch('/reports/{id}/payout/execute', 'ReportController@executePayout');
                 $router->get('/reports/{id}', 'ReportController@show');
 
                 //guides

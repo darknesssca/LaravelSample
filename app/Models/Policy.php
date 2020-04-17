@@ -51,6 +51,10 @@ class Policy extends Model
         'is_multi_drive',
     ];
 
+    protected $hidden = [
+        'pivot'
+    ];
+
     public function company()
     {
         return $this->belongsTo('App\Models\InsuranceCompany', 'insurance_company_id', 'id');

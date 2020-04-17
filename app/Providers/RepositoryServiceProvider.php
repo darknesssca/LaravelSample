@@ -17,6 +17,7 @@ use App\Contracts\Repositories\InsuranceCompanyRepositoryContract;
 use App\Contracts\Repositories\IntermediateDataRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\PolicyTypeRepositoryContract;
+use App\Contracts\Repositories\ReportRepositoryContract;
 use App\Contracts\Repositories\RequestProcessRepositoryContract;
 use App\Contracts\Repositories\Services\AddressTypeServiceContract;
 use App\Contracts\Repositories\Services\CarCategoryServiceContract;
@@ -36,6 +37,7 @@ use App\Contracts\Repositories\SourceAcquisitionRepositoryContract;
 use App\Contracts\Repositories\UsageTargetRepositoryContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Repositories\AddressTypeRepository;
+use App\Contracts\Services\ReportServiceContract;
 use App\Repositories\BillPolicyRepository;
 use App\Repositories\CarCategoryRepository;
 use App\Repositories\CarMarkRepository;
@@ -49,6 +51,7 @@ use App\Repositories\InsuranceCompanyRepository;
 use App\Repositories\IntermediateDataRepository;
 use App\Repositories\PolicyRepository;
 use App\Repositories\PolicyTypeRepository;
+use App\Repositories\ReportRepository;
 use App\Repositories\RequestProcessRepository;
 use App\Repositories\SourceAcquisitionRepository;
 use App\Repositories\UsageTargetRepository;
@@ -61,6 +64,7 @@ use App\Services\Repositories\CarModelService;
 use App\Services\Repositories\CountryService;
 use App\Services\Repositories\DocTypeService;
 use App\Services\Repositories\GenderService;
+use App\Services\Qiwi\ReportService;
 use App\Services\Repositories\InsuranceCompanyService;
 use App\Services\Repositories\IntermediateDataService;
 use App\Services\Repositories\PolicyTypeService;
@@ -99,6 +103,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(UsageTargetRepositoryContract::class, UsageTargetRepository::class);
         $this->app->bind(SourceAcquisitionRepositoryContract::class, SourceAcquisitionRepository::class);
         $this->app->bind(AddressTypeRepositoryContract::class, AddressTypeRepository::class);
+        $this->app->bind(ReportRepositoryContract::class, ReportRepository::class);
     }
 
     protected function registerRepositoryServiceProviders()
@@ -118,5 +123,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(SourceAcquisitionServiceContract::class, SourceAcquisitionService::class);
         $this->app->bind(AddressTypeServiceContract::class, AddressTypeService::class);
         $this->app->bind(PolicyTypeServiceContract::class, PolicyTypeService::class);
+        $this->app->bind(ReportServiceContract::class, ReportService::class);
     }
 }

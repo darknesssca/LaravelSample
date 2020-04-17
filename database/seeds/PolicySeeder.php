@@ -6,10 +6,28 @@ class PolicySeeder extends Seeder
 {
     protected static $files = [
         [
-            'name' => 1,
-            'dir' => 1,
-            'content_type' => 1,
-            'size' => 1,
+            'name' => 'renessans.svg',
+            'dir' => '/insurance-companies_logo/renessans.svg',
+            'content_type' => 'image/svg+xml',
+            'size' => 1619,
+        ],
+        [
+            'name' => 'ingosstrah.svg',
+            'dir' => '/insurance-companies_logo/ingosstrah.svg',
+            'content_type' => 'image/svg+xml',
+            'size' => 358,
+        ],
+        [
+            'name' => 'soglasie.svg',
+            'dir' => '/insurance-companies_logo/soglasie.svg',
+            'content_type' => 'image/svg+xml',
+            'size' => 1348,
+        ],
+        [
+            'name' => 'tinkoff.svg',
+            'dir' => '/insurance-companies_logo/tinkoff.svg',
+            'content_type' => 'image/svg+xml',
+            'size' => 3728,
         ],
     ];
 
@@ -23,19 +41,19 @@ class PolicySeeder extends Seeder
         ],
         [
             'active' => true,
-            'logo_id' => 1,
+            'logo_id' => 2,
             'code' => 'ingosstrah',
             'name' => 'Ингосстрах',
         ],
         [
             'active' => true,
-            'logo_id' => 1,
+            'logo_id' => 3,
             'code' => 'soglasie',
             'name' => 'Согласие',
         ],
         [
             'active' => true,
-            'logo_id' => 1,
+            'logo_id' => 4,
             'code' => 'tinkoff',
             'name' => 'Тинькофф',
         ],
@@ -800,6 +818,13 @@ class PolicySeeder extends Seeder
 
     public function run()
     {
+        $minio_path_to_file = env('MINIO_ENDPOINT', 'http://172.27.1.121:9000/') .
+        env('MINIO_BUCKET', 'test');
+
+       foreach (self::$files as &$file){
+           $file['dir'] = $minio_path_to_file . $file['dir'];
+       }
+
         \App\Models\File::insert(self::$files);
         \App\Models\InsuranceCompany::insert(self::$insuranceCompanies);
         \App\Models\PolicyType::insert(self::$policyTypes);
