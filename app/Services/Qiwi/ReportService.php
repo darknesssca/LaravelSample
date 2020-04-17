@@ -1,6 +1,5 @@
 <?php
 
-//TODO Сделать логику с киви чтобы можно было перезапустить запрос на выплату
 //TODO Сделать получение пользователей из кэша
 
 namespace App\Services\Qiwi;
@@ -47,6 +46,7 @@ class ReportService implements ReportServiceContract
     private $creator;
     private $rewards;
     private $clients;
+    private $available_reward;
 
 
     public function __construct(
@@ -104,6 +104,12 @@ class ReportService implements ReportServiceContract
      */
     public function createReport(array $fields)
     {
+        $this->available_reward = $this->commission_mks->getAvailableReward();
+
+        if (isset($this->available_reward['available']) && $this->available_reward['available'] <= 0) {
+            throw new Exception('Исчерпан лимит наград');
+        }
+
         $fields['creator_id'] = GlobalStorage::getUserId();
         $fields['reward'] = $this->getReward($fields['policies']);
 
@@ -116,8 +122,7 @@ class ReportService implements ReportServiceContract
 
         $this->createXls($report->id);
 
-        $this->createPayout($report, $fields['reward'], $this->creator['requisite'],
-            $this->creator['tax_status']['code']);
+        $this->createPayout($report);
 
         $message = "Создан отчет на выплату {$report->id}";
         $this->log_mks->sendLog($message, config('api_sk.logMicroserviceCode'), $fields['creator_id']);
@@ -168,10 +173,18 @@ class ReportService implements ReportServiceContract
         }
 
         foreach ($rewards as $reward) {
-            if ($reward['paid'] == false && $this->policies[$reward['policy_id']]->paid == true) {
+            if ($reward['paid'] == false && $reward['requested'] == false && $this->policies[$reward['policy_id']]->paid == true) {
                 $reward_sum += floatval($reward['value']);
                 $this->rewards[$reward['policy_id']] = $reward;
             }
+        }
+
+        if ($reward_sum <= 0) {
+            throw new Exception('Отстутствуют доступные для вывода награды');
+        }
+
+        if (isset($this->available_reward['available']) && $reward_sum > $this->available_reward['available']) {
+            throw new Exception('Размер награды превышает допустимое значение');
         }
 
         return $reward_sum;
@@ -347,22 +360,22 @@ class ReportService implements ReportServiceContract
 
     /**
      * @param $report
-     * @param $amount
-     * @param $user_requisites
-     * @param $tax_status_code
-     * @param string $description
      * @throws TaxStatusNotServiceException
      * @throws Exception
      */
-    public function createPayout($report, $amount, $user_requisites, $tax_status_code, $description = 'Перевод')
+    public function createPayout($report)
     {
         if (is_integer($report)) {
             $report = $this->reportRepository->getById($report);
         }
 
-        $this->initQiwi($user_requisites, $tax_status_code, $description);
+        if (empty($this->creator)) {
+            $this->creator = $this->getCreator(GlobalStorage::getUserId());
+        }
 
-        $payout_id = $this->qiwi->createPayout($amount);
+        $this->initQiwi($this->creator['requisite'], $this->creator['tax_status']['code']);
+
+        $payout_id = $this->qiwi->createPayout($report->reward);
 
         if (!empty($payout_id)) {
             $report->payout_id = $payout_id;
@@ -414,10 +427,6 @@ class ReportService implements ReportServiceContract
                 'reward_id' => array_column($this->rewards, 'id'),
                 'paid' => true
             ];
-
-            echo '<pre>';
-            print_r($fields);
-            echo '</pre>';
 
             $this->commission_mks->massUpdateRewards($fields);
         }
