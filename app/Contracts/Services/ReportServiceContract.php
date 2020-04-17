@@ -16,5 +16,7 @@ interface ReportServiceContract
 
     public function createReport(array $fields);
 
-    public function initQiwi($user_requisites, $tax_status_code, $description = 'Перевод');
+    public function createPayout($report);
+
+    public function executePayout($report);
 }

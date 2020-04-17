@@ -66,4 +66,26 @@ class ReportController extends Controller
             return Response::error($exception->getMessage(), $httpCode);
         }
     }
+
+    public function createPayout(int $id)
+    {
+        try {
+            return $this->reportService->createPayout($id);
+        } catch (Exception $exception) {
+            echo $exception->getFile();
+            echo $exception->getLine();
+            $httpCode = ($exception instanceof AbstractException) ? $exception->getHttpCode() : 400;
+            return Response::error($exception->getMessage(), $httpCode);
+        }
+    }
+
+    public function executePayout(int $id)
+    {
+        try {
+            return $this->reportService->executePayout($id);
+        } catch (Exception $exception) {
+            $httpCode = ($exception instanceof AbstractException) ? $exception->getHttpCode() : 400;
+            return Response::error($exception->getMessage(), $httpCode);
+        }
+    }
 }
