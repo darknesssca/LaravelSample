@@ -90,34 +90,36 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
             ],
         ];
         //PhysicalPerson
-        $owner = $this->searchSubjectById($attributes, $attributes['policy']['ownerId']);
-        $pSubject = [];
-        foreach ($owner['documents'] as $iDocument => $document) {
-            $pDocument = [];
-            if ($document['document']['documentType'] == 'passport') {
-                $pDocument['DocPerson'] = $docTypeService->getCompanyPassportDocType2($document['document']['isRussian'], $company->id);
+        $drivers = $this->searchDrivers($attributes);
+        foreach ($drivers as $driver) {
+            $pSubject = [];
+            foreach ($driver['documents'] as $iDocument => $document) {
+                $pDocument = [];
+//                if ($document['document']['documentType'] == 'passport') {
+//                    $pDocument['DocPerson'] = $docTypeService->getCompanyPassportDocType2($document['document']['isRussian'], $company->id);
+//                }
+                $this->setValuesByArray($pDocument, [
+                    "Serial" => 'series',
+                    "Number" => 'number',
+                ], $document['document']);
+                switch ($document['document']['documentType']) {
+                    case 'license':
+                        $pSubject['DriverDocument'] = $pDocument;
+                        break;
+//                    case 'passport':
+//                        $pSubject['PersonDocument'] = $pDocument;
+//                        break;
+                    default:
+                        break;
+                }
+                $pSubject['PersonNameBirthHash'] = '### '.
+                    $driver['lastName'] . '|'.
+                    $driver['firstName'] . '|'.
+                    (isset($driver['middleName']) ? $driver['middleName'] : '') . '|' .
+                    $this->formatToRuDate($driver['birthdate']);
             }
-            $this->setValuesByArray($pDocument, [
-                "Serial" => 'series',
-                "Number" => 'number',
-            ], $document['document']);
-            switch ($document['document']['documentType']) {
-                case 'license':
-                    $pSubject['DriverDocument'] = $pDocument;
-                    break;
-                case 'passport':
-                    $pSubject['PersonDocument'] = $pDocument;
-                    break;
-                default:
-                    break;
-            }
-            $pSubject['PersonNameBirthHash'] = '### '.
-                $owner['lastName'] . '|'.
-                $owner['firstName'] . '|'.
-                (isset($owner['middleName']) ? $owner['middleName'] : '') . '|' .
-                $this->formatToRuDate($owner['birthdate']);
+            $data['request']['CalcRequestValue']['CalcKBMRequest']['PhysicalPersons']['PhysicalPerson'][] = $pSubject;
         }
-        $data['request']['CalcRequestValue']['CalcKBMRequest']['PhysicalPersons']['PhysicalPerson'][] = $pSubject;
         return $data;
     }
 

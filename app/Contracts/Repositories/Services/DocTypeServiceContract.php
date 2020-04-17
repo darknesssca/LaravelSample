@@ -7,6 +7,7 @@ namespace App\Contracts\Repositories\Services;
 interface DocTypeServiceContract
 {
     public function getDocTypesList();
+    public function getDocTypeByCode($code);
     public function getCompanyDocTypeByCode($code, $companyId);
     public function getCompanyDocTypeByCode2($code, $companyId);
     public function getCompanyDocTypeByCode3($code, $companyId);

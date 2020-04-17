@@ -60,6 +60,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
             'status' => 'calculated',
             'scoringId' => $dataScoring['scoringId'],
             'kbmId' => $dataKbm['kbmId'],
+            'premium' => $dataCalculate['premium'],
         ];
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
@@ -81,24 +82,23 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
         $serviceCreate = app(SoglasieCreateServiceContract::class);
         $dataCreate = $serviceCreate->run($company, $attributes);
         $tokenData = $this->getTokenData($attributes['token'], true);
-        $tokenData[$company->code] = [
-            'policyId' => $dataCreate['policyId'],
-            'status' => 'processing',
-        ];
+        $tokenData[$company->code]['policyId'] = $dataCreate['policyId'];
+        $tokenData[$company->code]['status'] = 'processing';
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
+        $user = GlobalStorage::getUser();
         $this->requestProcessService->create([
             'token' => $attributes['token'],
+            'company' => $company->code,
             'state' => 50,
             'data' => json_encode([
                 'policyId' => $dataCreate['policyId'],
                 'status' => 'processing',
                 'company' => $company->code,
+                'user' => $user,
             ]),
         ]);
-        $policyService = app(PolicyServiceContract::class);
-        $policyService->createPolicyFromCustomData($company, $attributes);
         $logger = app(LogMicroserviceContract::class);
         $logger->sendLog(
             'пользователь отправил запрос на создание заявки в компанию ' . $company->name,
@@ -113,18 +113,19 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
     public function processing($company, $attributes):array
     {
         $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);
-        switch ($tokenData['tokenData']['status']) {
+        switch ($tokenData['status']) {
             case 'processing':
                 return [
                     'status' => 'processing',
                 ];
             case 'done':
+                $this->destroyToken($attributes['token']);
                 return [
                     'status' => 'done',
                     'billUrl' => $tokenData['billUrl'],
                 ];
             case 'error':
-                throw new ApiRequestsException($tokenData['errorMessage']);
+                throw new ApiRequestsException($tokenData['errorMessages']);
             default:
                 throw new TokenException('Статус рассчета не валиден');
         }
@@ -140,7 +141,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
                 $this->dropCreate($company, $processData['token'], $checkData['messages']);
                 break;
             case 'complete':
-                switch ($checkData['policy']['status']) {
+                switch ($checkData['policyStatus']) {
                     case 'RSA_SIGN_FAIL':
                     case 'RSA_CHECK_FAIL':
                     case 'SK_CHECK_FAIL':
@@ -149,6 +150,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
                         $this->dropCreate($company, $processData['token'], $checkData['messages']);
                         break;
                     case 'SK_CHECK_OK':
+                    case 'RSA_CHECK_OK':
                         $this->requestProcessService->delete($processData['token']);
                         $billLinkService = app(SoglasieBillLinkServiceContract::class);
                         $billLinkData = $billLinkService->run($company, $processData);
@@ -156,11 +158,15 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
                             'token' => $processData['token'],
                         ];
                         $this->pushForm($form);
-                        $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
+                        GlobalStorage::setUser($processData['data']['user']);
                         $tokenData = $this->getTokenData($processData['token'], true);
+                        $form['premium'] = $tokenData[$company->code]['premium'];
+                        $dbPolicyId = $this->createPolicy($company, $form);
+                        $this->billPolicyRepository->create($dbPolicyId, $processData['data']['policyId']);
+                        $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
                         $tokenData[$company->code]['status'] = 'done';
                         $tokenData[$company->code]['billUrl'] = $billLinkData['billUrl'];
-                        $this->sendBillUrl($insurer['email'], $billLinkData['PayUrl']);
+                        $this->sendBillUrl($insurer['email'], $billLinkData['billUrl']);
                         $this->intermediateDataService->update($processData['token'], [
                             'data' => json_encode($tokenData),
                         ]);

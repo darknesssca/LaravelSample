@@ -122,7 +122,7 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
             foreach ($owner['documents'] as $iDocument => $document) {
                 $pDocument = [
                     'doctype' => $this->docTypeService->getCompanyDocTypeByRelation2($document['document']['documentType'], $document['document']['isRussian'], $company->id),
-                    'docseria' => isset($document['document']['documentType']) ? $document['document']['documentType'] : '',
+                    'docseria' => isset($document['document']['series']) ? $document['document']['series'] : '',
                 ];
                 $this->setValuesByArray($pDocument, [
                     "docnumber" => 'number',
@@ -135,12 +135,12 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
                 $pAddress = [
                     'type' => $this->addressTypeService->getCompanyAddressType($address['address']['addressType'], $company->code),
                     'address' => $this->countryService->getCountryById($address['address']['country'])['name'] . ', ' .
-                        $address['address']['region'] . ', ' .
-                        $address['address']['district'] . ', ' .
+                        (isset($address['address']['region']) ? $address['address']['region'] . ', ' : '') .
+                        (isset($address['address']['district']) ? $address['address']['district'] . ', ' : '') .
                         (isset($address['address']['city']) ? $address['address']['city'] : $address['address']['populatedCenter']) . ', ' .
                         $address['address']['street'] . ', ' .
-                        $address['address']['building'] . ', ' .
-                        $address['address']['flat'],
+                        (isset($address['address']['building']) ? $address['address']['building'] . ', ' : '') .
+                        (isset($address['address']['flat']) ? $address['address']['flat'] : ''),
                     'city' => isset($address['address']['city']) ? $address['address']['city'] : $address['address']['populatedCenter'],
                     'street' => $address['address']['street'],
                 ];

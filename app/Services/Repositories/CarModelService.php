@@ -80,9 +80,9 @@ class CarModelService implements CarModelServiceContract
     public function getCompanyModelByName($mark_id, $categoryId, $name, $companyId)
     {
         $tag = $this->getGuidesModelsTag();
-        $key = $this->getCacheKey($tag, $name, $companyId);
-        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($mark_id, $name, $companyId){
-            return $this->carModelRepository->getCompanyModelByName($mark_id, $name, $companyId);
+        $key = $this->getCacheKey($tag, $name, $companyId, $categoryId);
+        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($mark_id, $categoryId, $name, $companyId){
+            return $this->carModelRepository->getCompanyModelByName($mark_id, $categoryId, $name, $companyId);
         });
         if (!$data) {
             $key = $this->getCacheKey($tag, $name, $categoryId, 'other', $companyId);
@@ -108,12 +108,7 @@ class CarModelService implements CarModelServiceContract
                         $result['category'] = $categoryData->name;
                     }
                 } else {
-                    $result['otherModel'] = '';
-                    $categoryData = $this->carCategoryRepository->getCategoryById($categoryId);
-                    if (!$categoryData) {
-                        throw new GuidesNotFoundException('Не найдены данные в справочнике');
-                    }
-                    $result['category'] = $categoryData->name;
+                    throw new GuidesNotFoundException('Выбранная страховая компания не позволяет страховать указанную модель автомобиля.');
                 }
                 return $result;
             });

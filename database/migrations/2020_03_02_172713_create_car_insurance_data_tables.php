@@ -424,7 +424,7 @@ class CreateCarInsuranceDataTables extends Migration
             $table->unsignedInteger('status_id');
             $table->unsignedInteger('type_id')->nullable();
             $table->unsignedInteger('region_id')->nullable();
-            $table->unsignedInteger('premium')->nullable();
+            $table->double('premium')->nullable();
             $table->unsignedInteger('commission_id')->nullable();
             $table->boolean('commission_paid')->default(false);
             $table->date('registration_date');
@@ -452,11 +452,11 @@ class CreateCarInsuranceDataTables extends Migration
             $table->boolean('vehicle_with_trailer')->default(false);
             // car.document
             $table->unsignedInteger('vehicle_reg_doc_type_id');
-            $table->string('vehicle_doc_series');
+            $table->string('vehicle_doc_series')->nullable();
             $table->string('vehicle_doc_number');
             $table->date('vehicle_doc_issued');
             // car.inspection
-            $table->string('vehicle_inspection_doc_series');
+            $table->string('vehicle_inspection_doc_series')->nullable();
             $table->string('vehicle_inspection_doc_number');
             $table->date('vehicle_inspection_issued_date');
             $table->date('vehicle_inspection_end_date');

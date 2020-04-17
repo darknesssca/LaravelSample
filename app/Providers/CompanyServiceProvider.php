@@ -23,6 +23,7 @@ use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansGetStatusServiceContract;
 use App\Contracts\Company\Renessans\RenessansGuidesSourceContract;
 use App\Contracts\Company\Renessans\RenessansMasterServiceContract;
+use App\Contracts\Company\Soglasie\SoglasieBillLinkServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieCalculateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieCancelCreateServiceContract;
 use App\Contracts\Company\Soglasie\SoglasieCheckCreateServiceContract;
@@ -55,6 +56,7 @@ use App\Services\Company\Renessans\RenessansCreateService;
 use App\Services\Company\Renessans\RenessansGetStatusService;
 use App\Services\Company\Renessans\RenessansGuidesService;
 use App\Services\Company\Renessans\RenessansMasterService;
+use App\Services\Company\Soglasie\SoglasieBillLinkService;
 use App\Services\Company\Soglasie\SoglasieCalculateService;
 use App\Services\Company\Soglasie\SoglasieCancelCreateService;
 use App\Services\Company\Soglasie\SoglasieCheckCreateService;
@@ -150,6 +152,7 @@ class CompanyServiceProvider extends ServiceProvider
         $this->app->singleton(SoglasieCreateServiceContract::class, SoglasieCreateService::class);
         $this->app->singleton(SoglasieCheckCreateServiceContract::class, SoglasieCheckCreateService::class);
         $this->app->singleton(SoglasieCancelCreateServiceContract::class, SoglasieCancelCreateService::class);
+        $this->app->singleton(SoglasieBillLinkServiceContract::class, SoglasieBillLinkService::class);
         //guides
         $this->app->singleton(SoglasieGuidesSourceContract::class, SoglasieGuidesService::class);
     }

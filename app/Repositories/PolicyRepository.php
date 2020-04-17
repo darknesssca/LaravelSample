@@ -81,7 +81,7 @@ class PolicyRepository implements PolicyRepositoryContract
             ->where('paid', 0)
             ->whereDate('registration_date', '>', (new Carbon)->subDays(2)->format('Y-m-d'))
             ->limit($limit)
-            ->first();
+            ->get();
     }
 
     public function update($id, $data)

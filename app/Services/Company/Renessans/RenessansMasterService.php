@@ -11,6 +11,7 @@ use App\Contracts\Company\Renessans\RenessansCheckCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansGetStatusServiceContract;
 use App\Contracts\Company\Renessans\RenessansMasterServiceContract;
+use App\Contracts\Repositories\Services\PolicyTypeServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\MethodForbiddenException;
@@ -56,6 +57,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
+        $user = GlobalStorage::getUser();
         $this->requestProcessService->create([
             'token' => $attributes['token'],
             'state' => 50,
@@ -63,10 +65,9 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
             'data' => json_encode([
                 'policyId' => $dataCreate['policyId'],
                 'status' => 'processing',
+                'user' => $user,
             ])
         ]);
-        $policyService = app(PolicyServiceContract::class);
-        $policyService->createPolicyFromCustomData($company, $attributes);
         $logger = app(LogMicroserviceContract::class);
         $logger->sendLog(
             'пользователь отправил запрос на создание заявки в компанию ' . $company->name,
@@ -113,6 +114,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
                     'status' => 'processing',
                 ];
             case 'done':
+                $this->destroyToken($attributes['token']);
                 return [
                     'status' => 'done',
                     'billUrl' => $tokenData['billUrl'],
@@ -244,6 +246,12 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
                 ]);
                 return;
             }
+            $this->pushForm($attributes);
+            $attributes['number'] = $attributes['policyId'];
+            $tokenData = $this->getTokenDataByCompany($processData['token'], $company->code);
+            $attributes['premium'] = $tokenData['finalPremium'];
+            GlobalStorage::setUser($processData['data']['user']);
+            $this->createPolicy($company, $attributes); // if this move to hold we create policy for lk
             $this->requestProcessService->update($processData['token'], [
                 'state' => 75,
                 'data' => json_encode($processData['data']),
@@ -260,6 +268,11 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $dataBill = $serviceBill->run($company, $attributes);
         $attributes['token'] = $processData['token'];
         $this->pushForm($attributes);
+        $attributes['number'] = $attributes['policyId'];
+        $tokenData = $this->getTokenDataByCompany($processData['token'], $company->code);
+        $attributes['premium'] = $tokenData['finalPremium'];
+        GlobalStorage::setUser($processData['data']['user']);
+        $this->createPolicy($company, $attributes);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $this->sendBillUrl($insurer['email'], $dataBill['billUrl']);
         $this->requestProcessService->delete($processData['token']);
@@ -301,12 +314,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $this->sendBillUrl($insurer['email'], $dataBill['billUrl']);
         $this->requestProcessService->delete($processData['token']);
-        $tokenData = $this->getTokenData($processData['token'], true);
-        $tokenData[$company->code]['status'] = 'done';
-        $tokenData[$company->code]['billUrl'] = $dataBill['billUrl'];
-        $this->intermediateDataService->update($processData['token'], [
-            'data' => json_encode($tokenData),
-        ]);
+        $this->destroyToken($attributes['token']);
     }
 
     public function getPayment($company, $processData): void

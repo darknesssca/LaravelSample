@@ -184,6 +184,12 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                 ],
             ],
         ];
+        if (isset($attributes['car']['regNumber'])) {
+            $data['contract']['param'][] = [
+                'id' => 761,
+                'val' => $attributes['car']['regNumber'],
+            ];
+        }
         // пролонгация
         $prolongationPolicyNumber = $this->policyService->searchOldPolicyByPolicyNumber($company->id, $attributes);
         $isProlongation = false;
@@ -294,7 +300,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         if ($regAddress) {
             $data['contract']['param'][] = [
                 'id' => 1122,
-                'val' => isset($address['address']['cityKladr']) ? $regAddress['cityKladr'] :
+                'val' => isset($regAddress['cityKladr']) ? $regAddress['cityKladr'] :
                     isset($regAddress['populatedCenterKladr']) ? $regAddress['populatedCenterKladr'] :
                     '',
             ];
@@ -302,10 +308,12 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         //insurer
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $insurerPassport = $this->searchDocumentByType($insurer, 'passport');
-        $data['contract']['param'][] = [
-            'id' => 3157,
-            'val' => (isset($insurerPassport['series']) ? $insurerPassport['series'] : '') . $insurerPassport['number'],
-        ];
+        if (isset($insurerPassport['series'])) {
+            $data['contract']['param'][] = [
+                'id' => 3157,
+                'val' => (isset($insurerPassport['series']) ? $insurerPassport['series'] : ''), // . $insurerPassport['number'],
+            ];
+        }
         $data['contract']['param'][] = [
             'id' => 2363,
             'val' => $insurer['birthdate'],

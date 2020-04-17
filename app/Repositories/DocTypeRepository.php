@@ -14,6 +14,11 @@ class DocTypeRepository implements DocTypeRepositoryContract
         return DocType::select(["id", "code", "name"])->get();
     }
 
+    public function getDocTypeByCode($code)
+    {
+        return DocType::where('code', $code)->first();
+    }
+
     public function getCompanyDocTypeByCode($code, $companyId)
     {
         return DocType::with([

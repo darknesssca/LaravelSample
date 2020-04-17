@@ -109,11 +109,20 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
             $this->setValuesByArray($pSubject['subjectDetails'], [
                 'middleName' => 'middleName'
             ], $subject['fields']['middleName']);
+            $regAddress = $this->searchAddressByType($subject['fields'], 'registration');
+            $homeAddress = $this->searchAddressByType($subject['fields'], 'home');
+            if ($regAddress && !$homeAddress) {
+                $homeAddress = [
+                    'address' => $regAddress,
+                ];
+                $homeAddress['address']['addressType'] = 'home';
+                $subject['fields']['addresses'][] = $homeAddress;
+            }
             foreach ($subject['fields']['addresses'] as $iAddress => $address) {
                 $pAddress = [
                     'addressType' => $this->addressTypeService->getCompanyAddressType($address['address']['addressType'], $company->code),
                     'country' => $this->countryService->getCountryById($address['address']['country'])['alpha2'],
-                    'region' => $address['address']['region'],
+                    //'region' => $address['address']['region'],
                 ];
                 $this->setValuesByArray($pAddress, [
                     "postCode" => 'postCode',
@@ -130,6 +139,9 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     "KLADR6" => 'buildingKladr',
                     "flat" => 'flat',
                 ], $address['address']);
+                if (isset($address['address']['regionKladr'])) {
+                    $pAddress['region'] = substr($address['address']['regionKladr'], 0, 2);
+                }
                 $pSubject['subjectDetails']['address'][] = $pAddress;
             }
             foreach ($subject['fields']['documents'] as $document) {
@@ -137,7 +149,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     "documentType" => $this->docTypeService->getCompanyDocTypeByRelation(
                         $document['document']['documentType'],
                         $document['document']['isRussian'],
-                        $company
+                        $company->id
                     ),
                 ];
                 $this->setValuesByArray($pDocument, [
@@ -191,6 +203,10 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     'VIN' => $attributes['car']['vin'],
                 ],
                 'year' => $attributes['car']['year'],
+                'techInspectionInfo' => [
+                    'sourceInfo' => 'CUSTOMER',
+                    'techDocumentType' => $this->docTypeService->getCompanyInspectionDocType(true, $company->id),
+                ],
                 'isRightHandDrive' => false, // заглушка
                 'numberOfKeys' => [
                     'IsUnknownNumberOfKeys' => true,
@@ -208,6 +224,12 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
             'documentNumber' => 'number',
             'documentIssued' => 'dateIssue',
         ], $attributes['car']['document']);
+        $this->setValuesByArray($data['vehicleInfo']['vehicleDetails']['techInspectionInfo'], [
+            'techInspSeries' => 'series',
+            'techInspNumber' => 'number',
+            'techInspIssuedDate' => 'dateIssue',
+            'techInspExpirationDate' => 'dateEnd',
+        ], $attributes['car']['inspection']);
         //OSAGOFQ
         $data['OSAGOFQ'] = [
             'effectiveDate' => $this->dateTimeZoneFromDate($attributes['policy']['beginDate']),
@@ -230,8 +252,6 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     'drivingLicenseIssueDateOriginal' => $driver['driver']['drivingLicenseIssueDateOriginal'],
                 ];
             }
-        } else {
-            $data['OSAGOFQ']['driversList']['namedList'] = "";
         }
         return $data;
     }
