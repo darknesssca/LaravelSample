@@ -7,6 +7,7 @@ use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\StatisticsNotFoundException;
+use App\Repositories\PolicyRepository;
 use App\Traits\ValueSetterTrait;
 use Benfin\Api\Contracts\AuthMicroserviceContract;
 use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
@@ -21,6 +22,7 @@ class PolicyService implements PolicyServiceContract
 {
     use ValueSetterTrait;
 
+    /** @var PolicyRepository $policyRepository */
     private $policyRepository;
     /** @var CommissionCalculationMicroservice */
     private $commissionCalculationService;
@@ -116,6 +118,8 @@ class PolicyService implements PolicyServiceContract
         //получаем полисы по вознаграждениям
         /** @var Collection $policies */
         $policies = $this->policyRepository->getList([
+            'from' => $filter['from'] ?? '',
+            'to' => $filter['to'] ?? '',
             'paid' => $filter['police_paid'] ?? true,
             'ids' => $policies_ids,
             'agent_ids' => array_merge($subagents_ids, [$filter['agent_id']]),
