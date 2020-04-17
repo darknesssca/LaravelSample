@@ -31,36 +31,48 @@ class PolicyService implements PolicyServiceContract
         if (!$isAdmin) {
             $filter['agent_ids'] = [GlobalStorage::getUserId()];
 
-            $subagents = Arr::get(app(AuthMicroserviceContract::class)->getSubagents(GlobalStorage::getUserId()), 'content.subagents');
+            $subagents = Arr::get(app(AuthMicroserviceContract::class)->getSubagents(GlobalStorage::getUserId()), 'content.subagents', []);
             foreach ($subagents as $subagent) {
                 $filter['agent_ids'][] = $subagent['id'];
             }
         }
 
-        $policies = $this->policyRepository->getList($filter);
-
         if ($search) {
-            $agentIds = $this->getSearchAgentIds($search);
-            $agentPolicies = $policies->filter(function ($policy) use ($agentIds) {
-                return in_array($policy->agent_id, $agentIds);
-            });
+            $agentIds = $this->getSearchAgentIds($search) ?? [];
+            $clientIds = $this->getSearchClientIds($search) ?? [];
+            $filter['agent_ids'] = array_merge($filter['agent_ids'] ?? [], $agentIds);
 
-            $clientIds = $this->getSearchClientIds($search);
-            $clientPolicies = $policies->filter(function ($policy) use ($clientIds) {
-                return in_array($policy->client_id, $clientIds) || in_array($policy->insurant_id, $clientIds);
-            });
-
-            $policies = $agentPolicies->merge($clientPolicies);
+            $filter['client_ids'] = $clientIds;
         }
 
-        $policies = $policies->map(function ($policy) {
+        $policies = $this->policyRepository->getList($filter);
+        $policyIds = [];
+        $clientIds = [];
+        $agentIds = [];
+
+        foreach ($policies as $policy) {
+            $agentIds[] = $policy->agent_id;
+            $clientIds[] = $policy->client_id;
+            $clientIds[] = $policy->insurant_id;
+            $policyIds[] = $policy->id;
+        }
+
+        $agents = app(AuthMicroserviceContract::class)->usersInfo($agentIds) ?? [];
+        $clients = app(CommissionCalculationMicroserviceContract::class)->clientsInfo($clientIds) ?? [];
+        $rewards = collect(app(CommissionCalculationMicroserviceContract::class)
+            ->getRewards(['policy_id' => $policyIds] ?? [])
+        )->mapToGroups(function ($reward) {
+            return [$reward['policy_id'] => $reward];
+        });
+
+        $policies = $policies->map(function ($policy) use($agents, $clients, $rewards) {
             $policy['type'] = $policy->type->name;
             $policy['company'] = $policy->company->name;
             $policy['referer'] = $policy->agent_id !== GlobalStorage::getUserId();
-            $policy['agent'] = $this->getAgent($policy->agent_id);
-            $policy['client'] = $this->getClient($policy->client_id);
-            $policy['insurant'] = $this->getClient($policy->insurant_id);
-            $policy['rewards'] = Arr::get(app(CommissionCalculationMicroserviceContract::class)->getRewards($policy->id), 'content');
+            $policy['agent'] = $agents[$policy->agent_id]['full_name'] ?? '';
+            $policy['client'] = $clients[$policy->client_id]['full_name'] ?? '';
+            $policy['insurant'] = $clients[$policy->insurant_id]['full_name'] ?? '';
+            $policy['rewards'] = $rewards[$policy->id] ?? [];
         });
 
         if ($order === 'desc') {
@@ -193,28 +205,6 @@ class PolicyService implements PolicyServiceContract
         }
 
         return $organized;
-    }
-
-    private function getAgent(int $id)
-    {
-        /**
-         * @var AuthMicroserviceContract $mks
-         */
-        $mks = app(AuthMicroserviceContract::class);
-
-        $user = Arr::get($mks->userInfo($id), 'content');
-        return $user['last_name'] . ' ' . $user['first_name'] . ' ' . $user['patronymic'];
-    }
-
-    private function getClient(int $id)
-    {
-        /**
-         * @var AuthMicroserviceContract $mks
-         */
-        $mks = app(CommissionCalculationMicroserviceContract::class);
-
-        $client = Arr::get($mks->clientInfo($id), 'content');
-        return $client['last_name'] . ' ' . $client['first_name'] . ' ' . $client['patronymic'];
     }
 
     /**
