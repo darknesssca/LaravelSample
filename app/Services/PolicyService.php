@@ -71,7 +71,9 @@ class PolicyService implements PolicyServiceContract
 
             $agents = app(AuthMicroserviceContract::class)->usersInfo($agentIds) ?? [];
             $clients = app(CommissionCalculationMicroserviceContract::class)->clientsInfo($clientIds) ?? [];
-            $rewards = collect(app(CommissionCalculationMicroserviceContract::class)->getRewards(['policy_id' => $policyIds] ?? []))->mapToGroups(function ($reward) {
+            $rewards = collect(
+                Arr::get(app(CommissionCalculationMicroserviceContract::class)->getRewards(['policy_id' => $policyIds] ?? []), 'content')
+            )->mapToGroups(function ($reward) {
                 return [$reward['policy_id'] => $reward];
             });
 
@@ -83,7 +85,10 @@ class PolicyService implements PolicyServiceContract
                 $policy['client'] = $clients[$policy->client_id]['full_name'] ?? '';
                 $policy['insurant'] = $clients[$policy->insurant_id]['full_name'] ?? '';
                 $policy['rewards'] = $rewards[$policy->id] ?? [];
+
+                return $policy;
             });
+
 
             if ($order === 'desc') {
                 $policies = $policies->sortByDesc($sort);
