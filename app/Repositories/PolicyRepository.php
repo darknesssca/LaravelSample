@@ -14,7 +14,7 @@ class PolicyRepository implements PolicyRepositoryContract
 
     public function getList(array $filter)
     {
-        $query = Policy::query();
+        $query = Policy::query()->with('type');
 
         if ($policyIds = $filter['policy_ids'] ?? null) {
             $query = $query->whereIn('id', $policyIds);
@@ -22,6 +22,10 @@ class PolicyRepository implements PolicyRepositoryContract
 
         if ($agentIds = $filter['agent_ids'] ?? null) {
             $query = $query->whereIn('agent_id', $agentIds);
+        }
+
+        if ($policeIds = $filter['ids'] ?? null) {
+            $query = $query->whereIn('id', $policeIds);
         }
 
         if ($clientIds = $filter['client_ids'] ?? null) {
@@ -39,7 +43,6 @@ class PolicyRepository implements PolicyRepositoryContract
         if (isset($filter['paid'])) {
             $query = $query->where('paid', $filter['paid']);
         }
-
         if ($from = $filter['from'] ?? null) {
             $query = $query->where('registration_date', '>=', Carbon::parse($from));
         }
