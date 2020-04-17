@@ -85,6 +85,7 @@ class PolicyService implements PolicyServiceContract
                 $policy['client'] = $clients[$policy->client_id]['full_name'] ?? '';
                 $policy['insurant'] = $clients[$policy->insurant_id]['full_name'] ?? '';
                 $policy['rewards'] = $rewards[$policy->id] ?? [];
+                $policy['commission_paid'] = $this->getCommissionPaid($rewards[$policy->id]) ?? false;
 
                 return $policy;
             });
@@ -98,6 +99,15 @@ class PolicyService implements PolicyServiceContract
         }
 
         return $policies->forPage($page, $perPage);
+    }
+
+    private function getCommissionPaid($rewards)
+    {
+        $reward = collect($rewards)->first(function ($reward) {
+            return $reward['user_id'] === GlobalStorage::getUserId();
+        });
+
+        return $reward['paid'] ?? false;
     }
 
     /**возвращает список полисов и вознаграждений по фильтру
