@@ -71,7 +71,9 @@ class PolicyService implements PolicyServiceContract
 
             $agents = app(AuthMicroserviceContract::class)->usersInfo($agentIds) ?? [];
             $clients = app(CommissionCalculationMicroserviceContract::class)->clientsInfo($clientIds) ?? [];
-            $rewards = collect(app(CommissionCalculationMicroserviceContract::class)->getRewards(['policy_id' => $policyIds] ?? []))->mapToGroups(function ($reward) {
+            $rewards = collect(
+                Arr::get(app(CommissionCalculationMicroserviceContract::class)->getRewards(['policy_id' => $policyIds] ?? []), 'content')
+            )->mapToGroups(function ($reward) {
                 return [$reward['policy_id'] => $reward];
             });
 
@@ -83,7 +85,11 @@ class PolicyService implements PolicyServiceContract
                 $policy['client'] = $clients[$policy->client_id]['full_name'] ?? '';
                 $policy['insurant'] = $clients[$policy->insurant_id]['full_name'] ?? '';
                 $policy['rewards'] = $rewards[$policy->id] ?? [];
+                $policy['commission_paid'] = $this->getCommissionPaid($rewards[$policy->id]) ?? false;
+
+                return $policy;
             });
+
 
             if ($order === 'desc') {
                 $policies = $policies->sortByDesc($sort);
@@ -93,6 +99,15 @@ class PolicyService implements PolicyServiceContract
         }
 
         return $policies->forPage($page, $perPage);
+    }
+
+    private function getCommissionPaid($rewards)
+    {
+        $reward = collect($rewards)->first(function ($reward) {
+            return $reward['user_id'] === GlobalStorage::getUserId();
+        });
+
+        return $reward['paid'] ?? false;
     }
 
     /**возвращает список полисов и вознаграждений по фильтру
