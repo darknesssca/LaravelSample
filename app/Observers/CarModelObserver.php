@@ -15,27 +15,17 @@ trait CarModelObserver
         parent::boot();
 
         static::created(function ($carModel) {
-            $cacheTag = self::getCarModelTag();
-            $cacheKey = self::getCarModelListKey();
-
-            Cache::tags($cacheTag)->forget($cacheKey);
+            Cache::tags(self::getCarModelTag())->flush();
         });
-    }
-    public function created($event)
-    {
-        $tag = $this->getGuidesModelsTag();
-        Cache::tags($tag)->flush();
-    }
 
-    public function updated($event)
-    {
-        $tag = $this->getGuidesModelsTag();
-        Cache::tags($tag)->flush();
-    }
+        static::updated(function ($carModel) {
+            if ($carModel->isDirty()) {
+                Cache::tags(self::getCarModelTag())->flush();
+            }
+        });
 
-    public function deleted($event)
-    {
-        $tag = $this->getGuidesModelsTag();
-        Cache::tags($tag)->flush();
+        static::deleted(function ($carModel) {
+            Cache::tags(self::getCarModelTag())->flush();
+        });
     }
 }
