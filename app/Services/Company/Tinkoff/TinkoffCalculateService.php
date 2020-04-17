@@ -114,8 +114,11 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
             $regAddress = $this->searchAddressByType($subject['fields'], 'registration');
             $homeAddress = $this->searchAddressByType($subject['fields'], 'home');
             if ($regAddress && !$homeAddress) {
-                $regAddress['addressType'] = 'home';
-                $subject['fields']['addresses'][] = $regAddress;
+                $homeAddress = [
+                    'address' => $regAddress,
+                ];
+                $homeAddress['address']['addressType'] = 'home';
+                $subject['fields']['addresses'][] = $homeAddress;
             }
             foreach ($subject['fields']['addresses'] as $iAddress => $address) {
                 $pAddress = [
@@ -251,8 +254,6 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     'drivingLicenseIssueDateOriginal' => $driver['driver']['drivingLicenseIssueDateOriginal'],
                 ];
             }
-        } else {
-            $data['OSAGOFQ']['driversList']['namedList'] = "";
         }
         return $data;
     }
