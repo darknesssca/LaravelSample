@@ -218,9 +218,9 @@ class PolicySeeder extends Seeder
         [
             'doctype_id' => 5,
             'insurance_company_id' => 4,
-            'reference_doctype_code' => "driver_license",
-            'reference_doctype_code2' => "driver_license",
-            'reference_doctype_code3' => "driver_license",
+            'reference_doctype_code' => "driver_license_russian_B",
+            'reference_doctype_code2' => "driver_license_russian_B",
+            'reference_doctype_code3' => "driver_license_russian_B",
         ],
         //Иностранное ВУ
         [
@@ -307,9 +307,9 @@ class PolicySeeder extends Seeder
         [
             'doctype_id' => 7,
             'insurance_company_id' => 4,
-            'reference_doctype_code' => "TO",
-            'reference_doctype_code2' => "TO",
-            'reference_doctype_code3' => "TO",
+            'reference_doctype_code' => "DIAGNOSTIC_CARD",
+            'reference_doctype_code2' => "DIAGNOSTIC_CARD",
+            'reference_doctype_code3' => "DIAGNOSTIC_CARD",
         ],
 
         //Иностранный талон ТО
@@ -337,9 +337,9 @@ class PolicySeeder extends Seeder
         [
             'doctype_id' => 8,
             'insurance_company_id' => 4,
-            'reference_doctype_code' => "TO",
-            'reference_doctype_code2' => "TO",
-            'reference_doctype_code3' => "TO",
+            'reference_doctype_code' => "DIAGNOSTIC_CARD",
+            'reference_doctype_code2' => "DIAGNOSTIC_CARD",
+            'reference_doctype_code3' => "DIAGNOSTIC_CARD",
         ],
     ];
 

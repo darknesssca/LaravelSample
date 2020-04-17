@@ -300,7 +300,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         if ($regAddress) {
             $data['contract']['param'][] = [
                 'id' => 1122,
-                'val' => isset($regAddress['address']['cityKladr']) ? $regAddress['cityKladr'] :
+                'val' => isset($regAddress['cityKladr']) ? $regAddress['cityKladr'] :
                     isset($regAddress['populatedCenterKladr']) ? $regAddress['populatedCenterKladr'] :
                     '',
             ];

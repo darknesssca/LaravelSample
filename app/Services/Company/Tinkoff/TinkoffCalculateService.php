@@ -111,6 +111,12 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
             $this->setValuesByArray($pSubject['subjectDetails'], [
                 'middleName' => 'middleName'
             ], $subject['fields']['middleName']);
+            $regAddress = $this->searchAddressByType($subject['fields'], 'registration');
+            $homeAddress = $this->searchAddressByType($subject['fields'], 'home');
+            if ($regAddress && !$homeAddress) {
+                $regAddress['addressType'] = 'home';
+                $subject['fields']['addresses'][] = $regAddress;
+            }
             foreach ($subject['fields']['addresses'] as $iAddress => $address) {
                 $pAddress = [
                     'addressType' => $this->addressTypeService->getCompanyAddressType($address['address']['addressType'], $company->code),
@@ -196,6 +202,10 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     'VIN' => $attributes['car']['vin'],
                 ],
                 'year' => $attributes['car']['year'],
+                'techInspectionInfo' => [
+                    'sourceInfo' => 'CUSTOMER',
+                    'techDocumentType' => $this->docTypeService->getCompanyInspectionDocType(true, $company->id),
+                ],
                 'isRightHandDrive' => false, // заглушка
                 'numberOfKeys' => [
                     'IsUnknownNumberOfKeys' => true,
@@ -213,6 +223,12 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
             'documentNumber' => 'number',
             'documentIssued' => 'dateIssue',
         ], $attributes['car']['document']);
+        $this->setValuesByArray($data['vehicleInfo']['vehicleDetails']['techInspectionInfo'], [
+            'techInspSeries' => 'series',
+            'techInspNumber' => 'number',
+            'techInspIssuedDate' => 'dateIssue',
+            'techInspExpirationDate' => 'dateEnd',
+        ], $attributes['car']['inspection']);
         //OSAGOFQ
         $data['OSAGOFQ'] = [
             'effectiveDate' => $this->dateTimeZoneFromDate($attributes['policy']['beginDate']),

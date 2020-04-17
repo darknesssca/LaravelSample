@@ -22,7 +22,13 @@ class AddressTypeRepository implements AddressTypeRepositoryContract
                 'ingosstrah' => 'Registered',
                 'tinkoff' => 'registration',
                 'soglasie' => 'Registered',
-            ]
+            ],
+            'home' => [
+                'renessans' => 'home', // not used
+                'ingosstrah' => 'home', // not used
+                'tinkoff' => 'home',
+                'soglasie' => 'home', // not used
+            ],
         ];
     }
 }
