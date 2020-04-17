@@ -88,10 +88,21 @@ class PolicyService implements PolicyServiceContract
      */
     public function listWithRewards(array $filter)
     {
+        $filter['agent_id'] = GlobalStorage::getUserId();
         $page = $filter['page'] ?? 1;
         $per_page = $filter['per_page'] ?? 10;
         $sort = $filter['sort'] ?? 'id';
         $order = $filter['order'] ?? 'asc';
+
+        //получаем субагентов
+        $subagents = $this->authService->getSubagents();
+        if ($subagents['error'])
+            throw new ApiRequestsException($subagents['errors']);
+        $subagents = $subagents['content']['subagents'];
+        $subagents_ids = [];
+        foreach ($subagents as $subagent) {
+            $subagents_ids[] = $subagent['id'];
+        }
 
         //получаем вознаграждения
         $rewards = $this->commissionCalculationService->getRewards(['paid' => $filter['reward_paid'], 'user_id' => $filter['agent_id']]);
@@ -104,7 +115,11 @@ class PolicyService implements PolicyServiceContract
 
         //получаем полисы по вознаграждениям
         /** @var Collection $policies */
-        $policies = $this->policyRepository->getList(['paid' => $filter['police_paid'], 'ids' => $policies_ids, 'agent_ids' => [$filter['agent_id']]]);
+        $policies = $this->policyRepository->getList([
+            'paid' => $filter['police_paid'] ?? true,
+            'ids' => $policies_ids,
+            'agent_ids' => array_merge($subagents_ids, [$filter['agent_id']]),
+        ]);
         $clients_ids = [];
         foreach ($policies as $police)
             $clients_ids[] = $police['client_id'];
