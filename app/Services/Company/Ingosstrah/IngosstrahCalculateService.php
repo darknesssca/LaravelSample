@@ -112,7 +112,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                     ],
                     "Condition" => [
                         "Liability" => [
-                            "RiskCtg" => "28966116",
+                            "RiskCtg" => $attributes['policy']['isMultidrive'] ? '28966316' : "28966116",
                             'UsageType' => '1381850903',
                             "UsageTarget" => [
                                 $this->usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id) =>
