@@ -25,6 +25,7 @@ class FormSendRequest extends AbstractRequest
             "subjects.*.fields.gender" => "required|integer",
             "subjects.*.fields.citizenship" => "required|integer|exists:countries,id",
             "subjects.*.fields.addresses" => "array",
+            "subjects.*.fields.addresses.*.address" => "required",
             "subjects.*.fields.addresses.*.address.addressType" => "required|string|in:registration,home",
             "subjects.*.fields.addresses.*.address.country" => "required|integer|exists:countries,id",
             "subjects.*.fields.addresses.*.address.postCode" => "string",
