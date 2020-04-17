@@ -57,6 +57,8 @@ $router->group(
                 //reports
                 $router->post('/reports', 'ReportController@create');
                 $router->get('/reports', 'ReportController@index');
+                $router->patch('/reports/{id}/payout/create', 'ReportController@createPayout');
+                $router->patch('/reports/{id}/payout/execute', 'ReportController@executePayout');
                 $router->get('/reports/{id}', 'ReportController@show');
 
                 //guides
