@@ -101,8 +101,6 @@ $app->routeMiddleware(['auth' => Benfin\Auth\Http\Middleware\Authenticate::class
 
 $app->register(App\Providers\AppServiceProvider::class);
 $app->register(App\Providers\CompanyServiceProvider::class);
-$app->register(App\Providers\RepositoryServiceProvider::class);
-$app->register(BenfinObserverProvider::class);
 $app->register(BenfinMicroserviceProvider::class);
 $app->register(BenfinMacroProvider::class);
 $app->register(BenfinRequestProvider::class);
