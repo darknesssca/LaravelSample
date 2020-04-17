@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Observers\SourceAcquisitionObserver;
 use Illuminate\Database\Eloquent\Model;
 
 class SourceAcquisition extends Model
 {
+    use SourceAcquisitionObserver;
+
     protected $fillable = [
         'code',
         'name',

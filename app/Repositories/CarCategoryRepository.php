@@ -4,19 +4,36 @@
 namespace App\Repositories;
 
 
+use App\Cache\Car\CarCategoryCacheTags;
 use App\Contracts\Repositories\CarCategoryRepositoryContract;
 use App\Models\CarCategory;
+use Benfin\Cache\CacheKeysTrait;
+use Illuminate\Support\Facades\Cache;
 
 class CarCategoryRepository implements CarCategoryRepositoryContract
 {
+    use CarCategoryCacheTags, CacheKeysTrait;
+
+    private $CACHE_DAY_TTL  = 24 * 60 * 60;
+
     public function getCategoryList()
     {
-        return CarCategory::select(["id", "code", "name"])->get();
+        $cacheTag = self::getCarCategoryTag();
+        $cacheKey = self::getCarCategoryListKey();
+
+        return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, function () {
+            return CarCategory::select(["id", "code", "name"])->get();
+        });
     }
 
     public function getCategoryById($id)
     {
-        return CarCategory::where('id', $id)->first();
+        $cacheTag = self::getCarCategoryTag();
+        $cacheKey = self::generateCacheKey($id);
+
+        return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, function () use ($id) {
+            return CarCategory::where('id', $id)->first();
+        });
     }
 
     public function getCompanyCategory($categoryCode, $companyCode)

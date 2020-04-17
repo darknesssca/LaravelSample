@@ -1,16 +1,26 @@
 <?php
 
-namespace App\Observers\Handlers;
+namespace App\Observers;
 
 
-use Benfin\Cache\CacheTrait;
+use App\Cache\Car\CarModelCacheTags;
 use Illuminate\Support\Facades\Cache;
-use Benfin\Cache\Observers\AbstractObserverHandler;
 
-class CarModelObserverHandler extends AbstractObserverHandler
+trait CarModelObserver
 {
-    use CacheTrait;
+    use CarModelCacheTags;
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($carModel) {
+            $cacheTag = self::getCarModelTag();
+            $cacheKey = self::getCarModelListKey();
+
+            Cache::tags($cacheTag)->forget($cacheKey);
+        });
+    }
     public function created($event)
     {
         $tag = $this->getGuidesModelsTag();

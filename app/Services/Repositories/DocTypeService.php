@@ -7,13 +7,9 @@ namespace App\Services\Repositories;
 use App\Contracts\Repositories\DocTypeRepositoryContract;
 use App\Contracts\Repositories\Services\DocTypeServiceContract;
 use App\Exceptions\GuidesNotFoundException;
-use Benfin\Cache\CacheTrait;
-use Illuminate\Support\Facades\Cache;
 
 class DocTypeService implements DocTypeServiceContract
 {
-    use CacheTrait;
-
     protected $docTypeRepository;
 
     public function __construct(
@@ -25,24 +21,19 @@ class DocTypeService implements DocTypeServiceContract
 
     public function getDocTypesList()
     {
-        $tag = $this->getGuidesDocTypesTag();
-        $key = $this->getCacheKey($tag, 'all');
-        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () {
-            return $this->docTypeRepository->getDocTypesList();
-        });
+        $data = $this->docTypeRepository->getDocTypesList();
+
         if (!$data || !$data->count()) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
+
         return $data->jsonSerialize();
     }
 
     public function getCompanyDocTypeByCode($code, $companyId)
     {
-        $tag = $this->getGuidesDocTypesTag();
-        $key = $this->getCacheKey($tag, $code, $companyId);
-        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($code, $companyId){
-            return $this->docTypeRepository->getCompanyDocTypeByCode($code, $companyId);
-        });
+        $data =  $this->docTypeRepository->getCompanyDocTypeByCode($code, $companyId);
+
         if (!$data) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
@@ -50,16 +41,14 @@ class DocTypeService implements DocTypeServiceContract
         if (!$codes || !$codes->count()) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
+
         return $data->codes->first()->reference_doctype_code;
     }
 
     public function getCompanyDocTypeByCode2($code, $companyId)
     {
-        $tag = $this->getGuidesDocTypesTag();
-        $key = $this->getCacheKey($tag, $code, 'alter' ,$companyId);
-        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($code, $companyId){
-            return $this->docTypeRepository->getCompanyDocTypeByCode($code, $companyId);
-        });
+        $data =  $this->docTypeRepository->getCompanyDocTypeByCode($code, $companyId);
+
         if (!$data) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
@@ -67,16 +56,14 @@ class DocTypeService implements DocTypeServiceContract
         if (!$codes || !$codes->count()) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
+
         return $data->codes->first()->reference_doctype_code2;
     }
 
     public function getCompanyDocTypeByCode3($code, $companyId)
     {
-        $tag = $this->getGuidesDocTypesTag();
-        $key = $this->getCacheKey($tag, $code, 'alter2' ,$companyId);
-        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($code, $companyId){
-            return $this->docTypeRepository->getCompanyDocTypeByCode($code, $companyId);
-        });
+        $data =  $this->docTypeRepository->getCompanyDocTypeByCode($code, $companyId);
+
         if (!$data) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
@@ -84,6 +71,7 @@ class DocTypeService implements DocTypeServiceContract
         if (!$codes || !$codes->count()) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
+
         return $data->codes->first()->reference_doctype_code3;
     }
 

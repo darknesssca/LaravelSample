@@ -25,25 +25,20 @@ class CarCategoryService implements CarCategoryServiceContract
 
     public function getCategoryList()
     {
-        $tag = $this->getGuidesCategoriesTag();
-        $key = $this->getCacheKey($tag, 'all');
-        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () {
-            return $this->carCategoryRepository->getCategoryList();
-        });
+        $data = $this->carCategoryRepository->getCategoryList();
+
         if (!$data || !$data->count()) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
+
         return $data->jsonSerialize();
     }
 
 
     public function getCompanyCategory($categoryId, $isUsedWithTrailer, $companyCode)
     {
-        $tag = $this->getGuidesCategoriesTag();
-        $key = $this->getCacheKey($tag, $categoryId);
-        $category = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($categoryId) {
-            return $this->carCategoryRepository->getCategoryById($categoryId);
-        });
+        $category = $this->carCategoryRepository->getCategoryById($categoryId);
+
         if (!$category) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }

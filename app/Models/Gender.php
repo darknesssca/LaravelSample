@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Observers\GenderObserver;
 use Illuminate\Database\Eloquent\Model;
 
 class Gender extends Model
 {
+    use GenderObserver;
+
     protected $fillable = [
         'code',
         'name',

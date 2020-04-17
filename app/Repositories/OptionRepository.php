@@ -4,13 +4,19 @@
 namespace App\Repositories;
 
 
+use App\Cache\OptionCacheTag;
 use App\Models\Option;
+use Benfin\Cache\CacheKeysTrait;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Cache;
 use InvalidArgumentException;
 
 class OptionRepository
 {
+    use OptionCacheTag, CacheKeysTrait;
+
+    private $CACHE_DAY_TTL = 24 * 60 * 60;
 
     /**
      * @param integer $id
@@ -24,7 +30,12 @@ class OptionRepository
             throw new InvalidArgumentException('Указан не корректный id');
         }
 
-        $option = Option::find($id);
+        $cacheTag = self::getOptionCacheTag();
+        $cacheKey = self::getCacheKey($id);
+
+        $option = Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, function () use ($id) {
+           return Option::find($id);
+        });
 
         if (empty($option)){
             throw new ModelNotFoundException(sprintf('Не найдены настройки с id %s', $id));
@@ -39,7 +50,12 @@ class OptionRepository
      */
     public function getByCode($code)
     {
-        $option = Option::where('code', $code)->first();
+        $cacheTag = self::getOptionCacheTag();
+        $cacheKey = self::getCacheKey("code", $code);
+
+        $option = Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, function () use ($code) {
+          return Option::where('code', $code)->first();
+        });
 
         if (empty($option)){
             throw new ModelNotFoundException(sprintf('Не найдены настройки с кодом %s', $code));
@@ -53,7 +69,12 @@ class OptionRepository
      */
     public function getAll()
     {
-        $option = Option::all();
+        $cacheTag = self::getOptionCacheTag();
+        $cacheKey = self::getOptionListKey();
+
+        $option = Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, function () {
+            return Option::all();
+        });
 
         if (empty($option)){
             throw new ModelNotFoundException('Настройки не найдены');

@@ -3,10 +3,13 @@
 namespace App\Models;
 
 
+use App\Observers\CarMarkObserver;
 use Illuminate\Database\Eloquent\Model;
 
 class CarMark extends Model
 {
+    use CarMarkObserver;
+
     protected $fillable = [
         'code',
         'name',

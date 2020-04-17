@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
+use App\Observers\InsuranceCompanyObserver;
 use Illuminate\Database\Eloquent\Model;
 
 class InsuranceCompany extends Model
 {
+    use InsuranceCompanyObserver;
 
     protected $fillable = [
         'active',
