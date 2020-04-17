@@ -90,6 +90,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
         $user = GlobalStorage::getUser();
         $this->requestProcessService->create([
             'token' => $attributes['token'],
+            'company' => $company->code,
             'state' => 50,
             'data' => json_encode([
                 'policyId' => $dataCreate['policyId'],
@@ -112,7 +113,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
     public function processing($company, $attributes):array
     {
         $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);
-        switch ($tokenData['tokenData']['status']) {
+        switch ($tokenData['status']) {
             case 'processing':
                 return [
                     'status' => 'processing',
@@ -124,7 +125,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
                     'billUrl' => $tokenData['billUrl'],
                 ];
             case 'error':
-                throw new ApiRequestsException($tokenData['errorMessage']);
+                throw new ApiRequestsException($tokenData['errorMessages']);
             default:
                 throw new TokenException('Статус рассчета не валиден');
         }
@@ -140,7 +141,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
                 $this->dropCreate($company, $processData['token'], $checkData['messages']);
                 break;
             case 'complete':
-                switch ($checkData['policy']['status']) {
+                switch ($checkData['policyStatus']) {
                     case 'RSA_SIGN_FAIL':
                     case 'RSA_CHECK_FAIL':
                     case 'SK_CHECK_FAIL':
@@ -149,6 +150,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
                         $this->dropCreate($company, $processData['token'], $checkData['messages']);
                         break;
                     case 'SK_CHECK_OK':
+                    case 'RSA_CHECK_OK':
                         $this->requestProcessService->delete($processData['token']);
                         $billLinkService = app(SoglasieBillLinkServiceContract::class);
                         $billLinkData = $billLinkService->run($company, $processData);
@@ -158,13 +160,13 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
                         $this->pushForm($form);
                         GlobalStorage::setUser($processData['data']['user']);
                         $tokenData = $this->getTokenData($processData['token'], true);
-                        $attributes['premium'] = $tokenData[$company->code]['premium'];
+                        $form['premium'] = $tokenData[$company->code]['premium'];
                         $dbPolicyId = $this->createPolicy($company, $form);
                         $this->billPolicyRepository->create($dbPolicyId, $processData['data']['policyId']);
                         $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
                         $tokenData[$company->code]['status'] = 'done';
                         $tokenData[$company->code]['billUrl'] = $billLinkData['billUrl'];
-                        $this->sendBillUrl($insurer['email'], $billLinkData['PayUrl']);
+                        $this->sendBillUrl($insurer['email'], $billLinkData['billUrl']);
                         $this->intermediateDataService->update($processData['token'], [
                             'data' => json_encode($tokenData),
                         ]);
