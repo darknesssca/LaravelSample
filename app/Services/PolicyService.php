@@ -152,12 +152,19 @@ class PolicyService implements PolicyServiceContract
         else
             $collection = $collection->sortBy($sort);
 
+        //собраем массив, чтоб не потерять сортировку при преобразовании в json
+        $data = [];
+        foreach ($collection as $item)
+            $data[] = $item;
+
         //пагинация
         return [
             'page' => $page,
             'per_page' => $per_page,
+            'order' => $order,
+            'sort' => $sort,
             'total_pages' => ceil(($collection->count() / $per_page)),
-            'data' => $collection->forPage($page, $per_page),
+            'data' => $data,
         ];
     }
 
