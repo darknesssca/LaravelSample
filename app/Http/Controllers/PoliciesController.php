@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\Services\PolicyServiceContract;
+use App\Http\Requests\Policies\PolicyListRequest;
 use App\Http\Requests\Policies\PolicyStatisticRequest;
 use App\Http\Requests\Policies\PolicyWithRewardsRequest;
 use App\Services\PolicyService;
@@ -20,9 +21,9 @@ class PoliciesController extends Controller
         $this->policyService = app(PolicyServiceContract::class);
     }
 
-    public function list(Request $request)
+    public function list(PolicyListRequest $request)
     {
-        return response()->json(app(PolicyServiceContract::class)->getList(
+        return Response::success(app(PolicyServiceContract::class)->getList(
             $request->only([
                 'agent_ids',
                 'client_ids',
@@ -31,10 +32,10 @@ class PoliciesController extends Controller
                 'from',
                 'to'
             ]),
-            $request->get('sort'),
-            $request->get('order'),
-            $request->get('page'),
-            $request->get('per_page'),
+            $request->get('sort') ?? 'id',
+            $request->get('order') ?? 'asc',
+            $request->get('page') ?? 1,
+            $request->get('per_page') ?? 20,
             $request->get('search')
         ));
     }
