@@ -10,9 +10,7 @@ class TinkoffCreateService extends TinkoffService implements TinkoffCreateServic
     public function run($company, $attributes): array
     {
         $data = $this->prepareData($attributes);
-        dump('TinkoffCreateService', '$data', $data);
         $response = $this->requestBySoap($this->apiWsdlUrl, 'issueQuoteSetPartner', $data);
-        dump('TinkoffCreateService', '$response', $response);
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(
                 'API страховой компании вернуло ошибку: ' .

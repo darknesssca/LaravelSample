@@ -34,7 +34,7 @@ class CarModelRepository implements CarModelRepositoryContract
             ->first();
     }
 
-    public function getCompanyModelByName($mark_id, $name, $companyId)
+    public function getCompanyModelByName($mark_id, $category_id, $name, $companyId)
     {
         return CarModel::with([
             'codes' => function ($query) use ($companyId) {
@@ -45,6 +45,7 @@ class CarModelRepository implements CarModelRepositoryContract
                 'category'
             ])
             ->where('mark_id', $mark_id)
+            ->where('category_id', $category_id)
             ->where('name', $name)
             ->first();
     }

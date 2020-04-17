@@ -10,9 +10,7 @@ class TinkoffBillLinkService extends TinkoffService implements TinkoffBillLinkSe
     public function run($company, $attributes): array
     {
         $data = $this->prepareData($attributes);
-        dump('TinkoffBillLinkService', '$data', $data);
         $response = $this->requestBySoap($this->apiWsdlUrl, 'getPaymentReferencePartner', $data);
-        dump('TinkoffBillLinkService', '$response', $response);
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(
                 'API страховой компании вернуло ошибку: ' .
