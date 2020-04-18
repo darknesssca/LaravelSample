@@ -127,8 +127,9 @@ class PolicyService implements PolicyServiceContract
 
         //получаем субагентов
         $subagents = $this->authService->getSubagents();
-        if ($subagents['error'])
+        if ($subagents['error']) {
             throw new ApiRequestsException($subagents['errors']);
+        }
         $subagents = $subagents['content']['subagents'];
         $subagents_ids = [];
         foreach ($subagents as $subagent) {
@@ -137,12 +138,14 @@ class PolicyService implements PolicyServiceContract
 
         //получаем вознаграждения
         $rewards = $this->commissionCalculationService->getRewards(['paid' => $filter['reward_paid'], 'user_id' => $filter['agent_id']]);
-        if ($rewards['error'])
+        if ($rewards['error']) {
             throw new ApiRequestsException($rewards['errors']);
+        }
         $rewards = $rewards['content'];
         $policies_ids = [];
-        foreach ($rewards as $reward)
+        foreach ($rewards as $reward) {
             $policies_ids[] = $reward['policy_id'];
+        }
 
         //получаем полисы по вознаграждениям
         /** @var Collection $policies */
@@ -154,25 +157,31 @@ class PolicyService implements PolicyServiceContract
             'agent_ids' => array_merge($subagents_ids, [$filter['agent_id']]),
         ]);
         $clients_ids = [];
-        foreach ($policies as $police)
+        foreach ($policies as $police) {
             $clients_ids[] = $police['client_id'];
+        }
 
         //получаем пользователей
         $clients = $this->commissionCalculationService->getClients(['client_id' => array_unique($clients_ids)]);
-        if ($clients['error'])
+        if ($clients['error']) {
             throw new ApiRequestsException($clients['errors']);
+        }
         $clients = $clients['content'];
 
         //объединяем результат
         $result = [];
         foreach ($policies as $police) {
             $item = $police->toArray();
-            foreach ($clients as $client)
-                if ($client['id'] == $item['client_id'])
+            foreach ($clients as $client) {
+                if ($client['id'] == $item['client_id']) {
                     $item['client'] = $client;
-            foreach ($rewards as $reward)
-                if ($item['id'] == $reward['policy_id'])
+                }
+            }
+            foreach ($rewards as $reward) {
+                if ($item['id'] == $reward['policy_id']) {
                     $item['rewards'][] = $reward;
+                }
+            }
             $result[] = $item;
         }
 
@@ -180,15 +189,17 @@ class PolicyService implements PolicyServiceContract
         $collection = new Collection($result);
 
         //сортировка
-        if ($order === 'desc')
+        if ($order === 'desc') {
             $collection = $collection->sortByDesc($sort);
-        else
+        } else {
             $collection = $collection->sortBy($sort);
+        }
 
         //собраем массив, чтоб не потерять сортировку при преобразовании в json
         $data = [];
-        foreach ($collection as $item)
+        foreach ($collection as $item) {
             $data[] = $item;
+        }
 
         //пагинация
         return [
@@ -225,7 +236,7 @@ class PolicyService implements PolicyServiceContract
         $policy = $this->policyRepository->create($fields);
 
         /**
-         * @var CommissionCalculationMicroserviceContract $mks
+         * @var CommissionCalculationMicroservice $mks
          */
         $mks = app(CommissionCalculationMicroserviceContract::class);
         $owner = $fields['subjects'][$policy->client_id];
@@ -262,7 +273,7 @@ class PolicyService implements PolicyServiceContract
         if ($draftId) {
             app(DraftRepositoryContract::class)->delete($draftId);
         }
-        $reward = $mks->createRewards($policy->id, $policy->registration_date->format('Y-m-d'), $policy->region_kladr, GlobalStorage::getUserId());
+        $reward = $mks->createRewards($policy->id, $policy->premium, $policy->registration_date->format('Y-m-d'), $policy->region_kladr, GlobalStorage::getUserId());
         if (
             (isset($reward['error']) && !$reward['error']) &&
             (isset($reward['content']) && isset($reward['content']['reward_id']))
@@ -322,8 +333,10 @@ class PolicyService implements PolicyServiceContract
         foreach ($policies as $policy) {
             if ($policy->agent_id == $userId) {
                 $organized["self"][] = $policy;
-            } else if (!empty($subagent_ids) && in_array($policy->agent_id, $subagent_ids)) {
-                $organized["network"][] = $policy;
+            } else {
+                if (!empty($subagent_ids) && in_array($policy->agent_id, $subagent_ids)) {
+                    $organized["network"][] = $policy;
+                }
             }
             $organized["all"][] = $policy;
         }

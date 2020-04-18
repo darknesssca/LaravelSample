@@ -54,7 +54,12 @@ class PolicyRepository implements PolicyRepositoryContract
         return $query->get();
     }
 
-    public function create(array $data)
+    /**Создает и сохраняет новый полис в БД
+     * @param array $data
+     * @return Policy
+     * @throws \Throwable
+     */
+    public function create(array $data):Policy
     {
         $policy = new Policy();
         $policy->fill($data);
