@@ -12,10 +12,10 @@ class FilterDraftRequest extends AbstractRequest
     {
         return [
             'query' => 'sometimes',
-            'count'=>'required',
-            'page'=>'required',
-            'orderColumn'=>'sometimes',
-            'orderDirection'=>'sometimes',
+            'count' => 'sometimes|integer',
+            'page' => 'sometimes|integer',
+            'orderColumn' => 'sometimes|string',
+            'orderDirection' => 'in:asc,desc|required_with:orderColumn',
         ];
     }
 }
