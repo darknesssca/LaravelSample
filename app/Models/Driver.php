@@ -13,10 +13,18 @@ class Driver extends Model
         'birth_date',
         'license_series',
         'license_number',
+        'license_is_russian',
         'license_date',
         'exp_start_date',
+        'address',
+        'address_json'
     ];
+
     protected $table = 'drivers';
+
+    protected $casts = [
+        'address_json' => 'array'
+    ];
 
     public function policy()
     {

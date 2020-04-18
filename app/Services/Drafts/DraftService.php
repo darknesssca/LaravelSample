@@ -11,6 +11,7 @@ use App\Contracts\Repositories\PolicyTypeRepositoryContract;
 use App\Contracts\Repositories\Services\DraftServiceContract;
 use App\Exceptions\DraftNotFoundException;
 use App\Exceptions\GuidesNotFoundException;
+use App\Models\DocType;
 use App\Traits\ValueSetterTrait;
 use Benfin\Api\GlobalStorage;
 use Carbon\Carbon;
@@ -44,6 +45,7 @@ class DraftService implements DraftServiceContract
         if (!$draftList || !$draftList->count()) {
             throw new DraftNotFoundException('Не найдены черновики для текущего агента');
         }
+
         return $draftList;
     }
 
@@ -59,11 +61,14 @@ class DraftService implements DraftServiceContract
 
     public function getByFilter(array $attributes)
     {
+        $attributes["page"] = isset($attributes["page"]) && $attributes["page"] > 0 ? $attributes["page"] : '1';
+        $attributes["count"] = isset($attributes["count"]) && $attributes["count"] > 0 ? $attributes["count"] : '20';
+
         $agentId = GlobalStorage::getUserId();
         return $this->draftRepository->getByFilter($agentId, $attributes);
     }
 
-    public function create($attributes):int
+    public function create($attributes): int
     {
         $policyType = $this->policyTypeRepository->getByCode('osago');
         if (!$policyType) {
@@ -107,18 +112,35 @@ class DraftService implements DraftServiceContract
         }
         //car
         $this->prepareCarData($policyData, $attributes);
+
         $draft = $this->draftRepository->create($policyData);
-        if (isset($attributes['drivers']) && $attributes['drivers']) {
+
+        //drivers
+        if (
+            isset($attributes['drivers']) &&
+            $attributes['drivers'] &&
+            is_array($attributes['drivers']) &&
+            isset($attributes['policy']['isMultidrive']) &&
+            !$attributes['policy']['isMultidrive']
+        ) {
             foreach ($attributes['drivers'] as $driver) {
+                $driverSubject = collect($attributes["subjects"])
+                    ->filter(function ($item) use ($driver) {
+                        return $item["id"] == $driver["driver"]["driverId"];
+                    })
+                    ->first();
+
+                $driverSubject["fields"]["drivingLicenseIssueDateOriginal"] = isset($driver["driver"]["drivingLicenseIssueDateOriginal"]) ? $driver["driver"]["drivingLicenseIssueDateOriginal"] : null;
                 $driverData = [];
-                $this->prepareDriver($driverData, $driver);
+                $this->prepareDriver($driverData, $driverSubject["fields"]);
                 $draft->drivers()->create($driverData);
             }
         }
+
         return $draft->id;
     }
 
-    public function update($draftId, $attributes):void
+    public function update($draftId, $attributes): void
     {
         $draftId = (int)$draftId;
         if (!$draftId) {
@@ -197,16 +219,26 @@ class DraftService implements DraftServiceContract
         //car
         $this->prepareCarData($policyData, $attributes);
         $draft = $this->draftRepository->update($oldDraft->id, $policyData);
-        if (isset($attributes['drivers']) && $attributes['drivers']) {
+        if (isset($attributes['drivers']) && $attributes['drivers'] && is_array($attributes['drivers'])) {
             $driverDataUpdate = [];
-            foreach ($attributes['drivers'] as $driver) {
-                $driverData = [];
-                $this->prepareDriver($driverData, $driver);
-                $driverDataUpdate[] = $driverData;
+            if (isset($attributes["policy"]["isMultidrive"]) && !$attributes["policy"]["isMultidrive"]) {
+                foreach ($attributes['drivers'] as $driver) {
+                    $driverSubject = collect($attributes["subjects"])
+                        ->filter(function ($item) use ($driver) {
+                            return $item["id"] == $driver["driver"]["driverId"];
+                        })
+                        ->first();
+                    $driverData = [];
+                    $driverSubject["fields"]["drivingLicenseIssueDateOriginal"] = isset($driver["driver"]["drivingLicenseIssueDateOriginal"]) ? $driver["driver"]["drivingLicenseIssueDateOriginal"] : null;
+
+                    $this->prepareDriver($driverData, $driverSubject['fields']);
+                    $driverDataUpdate[] = $driverData;
+                }
             }
             $iterator = 0;
             foreach ($driverDataUpdate as $driverData) {
-                if (isset($oldPolicy->drivers[$iterator])) {
+
+                if (isset($oldDraft->drivers[$iterator])) {
                     $this->driverRepository->update($oldDraft->drivers[$iterator]->id, $driverDataUpdate[$iterator]);
                 } else {
                     $oldDraft->drivers()->create($driverDataUpdate[$iterator]);
@@ -227,7 +259,7 @@ class DraftService implements DraftServiceContract
         }
     }
 
-    public function delete($draftId):void
+    public function delete($draftId): void
     {
         $draftId = (int)$draftId;
         if (!$draftId) {
@@ -264,23 +296,36 @@ class DraftService implements DraftServiceContract
             'patronymic' => 'middleName',
             'birth_place' => 'birthPlace',
             'gender_id' => 'gender',
-            'address' => 'address',
+            'address' => 'addressString',
             'phone' => 'phone',
             'email' => 'email',
             'citizenship_id' => 'citizenship',
             'is_russian' => 'isResident',
         ], $subject['fields']);
-        if (isset($subject['fields']['passport']) && $subject['fields']['passport']) {
-            $this->setValuesByArray($subjectData, [
-                'passport_series' => 'series',
-                'passport_number' => 'number',
-                'passport_date' => 'dateIssue',
-                'passport_issuer' => 'issuedBy',
-                'passport_unit_code' => 'subdivisionCode',
-            ], $subject['fields']['passport']);
+
+        if (isset($subject['fields']['documents']) && $subject['fields']['documents'] && is_array($subject['fields']['documents'])) {
+            foreach ($subject['fields']['documents'] as $document) {
+                if (isset($document['document']['documentType']) && $document['document']['documentType'] == 'passport') {
+                    $this->setValuesByArray($subjectData, [
+                        'passport_series' => 'series',
+                        'passport_number' => 'number',
+                        'passport_date' => 'dateIssue',
+                        'passport_issuer' => 'issuedBy',
+                        'passport_unit_code' => 'subdivisionCode',
+                    ], $document['document']);
+                } else {
+                    continue;
+                }
+            }
+
         }
+
         if (isset($subject['fields']['birthdate']) && $subject['fields']['birthdate']) {
             $subjectData['birth_date'] = Carbon::createFromFormat('Y-m-d', $subject['fields']['birthdate']);
+        }
+
+        if (isset($subject['fields']['addresses'][0]['address']) && $subject['fields']['addresses'][0]['address']) {
+            $subjectData['address_json'] = $subject['fields']['addresses'][0]['address'];
         }
     }
 
@@ -288,9 +333,12 @@ class DraftService implements DraftServiceContract
     {
         if (isset($attributes['car']) && $attributes['car']) {
             $this->setValuesByArray($policyData, [
-                'vehicle_model_id' => 'model',
+                'vehicle_model' => 'model',
+                'vehicle_category_id' => 'category',
+                'vehicle_mark_id' => 'maker',
                 'vehicle_engine_power' => 'enginePower',
                 'vehicle_vin' => 'vin',
+                'irregular_vin' => 'isIrregularVIN',
                 'vehicle_reg_number' => 'regNumber',
                 'vehicle_reg_country' => 'countryOfRegistration',
                 'vehicle_made_year' => 'year',
@@ -303,6 +351,7 @@ class DraftService implements DraftServiceContract
                 'vehicle_usage_target' => 'vehicleUsage',
                 'vehicle_with_trailer' => 'isUsedWithTrailer',
             ], $attributes['car']);
+
             if (isset($attributes['car']['document']) && $attributes['car']['document']) {
                 $this->setValuesByArray($policyData, [
                     'vehicle_reg_doc_type_id' => 'documentType',
@@ -311,6 +360,10 @@ class DraftService implements DraftServiceContract
                     'vehicle_doc_issued' => 'dateIssue',
                 ], $attributes['car']['document']);
             }
+            if (isset($policyData["vehicle_reg_doc_type_id"]) && !empty($policyData["vehicle_reg_doc_type_id"])) {
+                $policyData["vehicle_reg_doc_type_id"] = DocType::query()->where('code', $policyData["vehicle_reg_doc_type_id"])->first()->id;
+            }
+
             if (isset($attributes['car']['inspection']) && $attributes['car']['inspection']) {
                 $this->setValuesByArray($policyData, [
                     'vehicle_inspection_doc_series' => 'series',
@@ -328,15 +381,36 @@ class DraftService implements DraftServiceContract
             'first_name' => 'firstName',
             'last_name' => 'lastName',
             'patronymic' => 'middleName',
-            'license_series' => 'license_series',
-            'license_number' => 'license_number',
+            'address' => 'addressString',
         ], $attributes);
+
+
         if (isset($attributes['birthdate']) && $attributes['birthdate']) {
             $driverData['birth_date'] = Carbon::createFromFormat('Y-m-d', $attributes['birthdate']);
         }
+
         if (isset($attributes['license_date']) && $attributes['license_date']) {
             $driverData['license_date'] = Carbon::createFromFormat('Y-m-d', $attributes['license_date']);
         }
+
+        if (isset($attributes['addresses'][0]['address']) && $attributes['addresses'][0]['address']) {
+            $driverData['address_json'] = $attributes['addresses'][0]['address'];
+        }
+
+        if (isset($attributes['documents']) && $attributes['documents'] && is_array($attributes['documents'])) {
+            foreach ($attributes['documents'] as $document) {
+                if ($document['document']['documentType'] == 'license') {
+                    $this->setValuesByArray($driverData, [
+                        'license_is_russian' => 'isRussian',
+                        'license_series' => 'series',
+                        'license_number' => 'number',
+                        'license_date' => 'dateIssue',
+                    ], $document['document']);
+                }
+            }
+
+        }
+
         if (isset($attributes['drivingLicenseIssueDateOriginal']) && $attributes['drivingLicenseIssueDateOriginal']) {
             $driverData['exp_start_date'] = Carbon::createFromFormat('Y-m-d', $attributes['drivingLicenseIssueDateOriginal']);
         }
