@@ -29,19 +29,26 @@ $router->group(
             ],
             function () use ($router) {
                 // drafts
-                $router->get('/drafts', 'DraftController@index');
-                $router->get('/drafts/filter', 'DraftController@filter');
-                $router->post('/drafts', 'DraftController@store');
-                $router->get('/drafts/{draftId}', 'DraftController@show');
-                $router->patch('/drafts/{draftId}', 'DraftController@update');
-                $router->delete('/drafts/{draftId}', 'DraftController@delete');
+                $router->group(['prefix' => 'drafts'], function () use ($router) {
+                        $router->get('/', 'DraftController@index');
+                        $router->get('filter', 'DraftController@filter');
+                        $router->post('/', 'DraftController@store');
+                        $router->get('{draftId}', 'DraftController@show');
+                        $router->patch('{draftId}', 'DraftController@update');
+                        $router->delete('{draftId}', 'DraftController@delete');
+                    }
+                );
+
                 // запросы в страховые компании
-                $router->post('/registration/send', 'InsuranceController@store');
-                $router->post('/registration/{code}/payment', 'InsuranceController@payment');
-                $router->post('/registration/{code}/{method}', 'InsuranceController@index');
+                $router->group(['prefix' => 'registration'], function () use ($router) {
+                        $router->post('send', 'InsuranceController@store'); //Запрос с формой, в ответе приходит токен формы
+                        $router->post('{code}/payment', 'InsuranceController@payment');
+                        $router->post('{code}/{method}', 'InsuranceController@index'); //Запросы с токеном формы, для получения предложений
+                    }
+                );
 
                 //policies
-                $router->group(['prefix' => 'policies'] , function () use ($router) {
+                $router->group(['prefix' => 'policies'], function () use ($router) {
                     $router->get('/', 'PoliciesController@list');
                     $router->get('statistic', 'PoliciesController@statistic');
                     $router->get('/{id:\d+}', 'PoliciesController@getById');
@@ -51,23 +58,25 @@ $router->group(
 
 
                 //autocod
-                $router->get('autocod/check-taxi', 'AutocodController@checkTaxi'); //проверка на такси
-                $router->get('autocod/{report_id}', 'AutocodController@readReport'); //если отчет уже готов
-                $router->post('autocod', 'AutocodController@requestReport'); //заказать отчет и сразу дождаться генерации
+                $router->group(['prefix' => 'autocod'], function () use ($router) {
+                        $router->get('check-taxi', 'AutocodController@checkTaxi'); //проверка на такси
+                        $router->get('{report_id}', 'AutocodController@readReport'); //если отчет уже готов
+                        $router->post('/', 'AutocodController@requestReport'); //заказать отчет и сразу дождаться генерации
+                    }
+                );
 
                 //reports
-                $router->post('/reports', 'ReportController@create');
-                $router->get('/reports', 'ReportController@index');
-                $router->patch('/reports/{id}/payout/create', 'ReportController@createPayout');
-                $router->patch('/reports/{id}/payout/execute', 'ReportController@executePayout');
-                $router->get('/reports/{id}', 'ReportController@show');
+                $router->group(['prefix' => 'reports'], function () use ($router) {
+                        $router->post('/', 'ReportController@create');
+                        $router->get('/', 'ReportController@index');
+                        $router->patch('{id}/payout/create', 'ReportController@createPayout');
+                        $router->patch('{id}/payout/execute', 'ReportController@executePayout');
+                        $router->get('{id}', 'ReportController@show');
+                    }
+                );
 
                 //guides
-                $router->group([
-                    'prefix' => 'guides',
-                ],
-                    function () use ($router) {
-
+                $router->group(['prefix' => 'guides'], function () use ($router) {
                         $router->get('/marks', 'GuidesController@marks');
                         $router->get('/models/{mark_id:\d+}', 'GuidesController@models');
                         $router->get('/models', 'GuidesController@modelsAll');
