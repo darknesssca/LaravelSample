@@ -99,6 +99,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
             $company->id);
         $owner = $this->searchSubjectById($attributes, $attributes['policy']['ownerId']);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
+        $usageTarget = $this->usageTargetService->getCompanyUsageTarget2($attributes['car']['vehicleUsage'], $company->id);
         $data = [
             'CodeInsurant' => '000',
             'BeginDate' => $this->dateTimeFromDate($attributes['policy']['beginDate']),
@@ -123,8 +124,8 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
                 'TicketCarMonth' => $this->getMonthFromDate($attributes['car']['inspection']['dateEnd']),
                 'TicketDiagnosticDate' => $attributes['car']['inspection']['dateIssue'],
                 'EngCap' => $attributes['car']['enginePower'],
-                'GoalUse' => $this->usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id),
-                'Rented' => $this->usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id) == 'Rent',
+                'GoalUse' => $usageTarget,
+                'Rented' => $this->transformAnyToBoolean($usageTarget == 'Rent'),
             ],
             'Insurer' => [
                 'Phisical' => [
@@ -270,14 +271,14 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
                 'Flat' => 'flat',
                 'Index' => 'postCode',
             ], $address['address']);
-            if (!$subject['isResident']) {
+            if ($this->countryService->getCountryById($subject['citizenship'])['alpha2'] != 'RU') {
                 $pAddress['AddressString'] = isset($address['address']['region']) ? $address['address']['region'] . ', ' : '' .
-                isset($address['address']['district']) ? $address['address']['district'] . ', ' : '' .
-                isset($address['address']['city']) ? $address['address']['city'] . ', ' : '' .
-                isset($address['address']['populatedCenter']) ? $address['address']['populatedCenter'] . ', ' : '' .
-                isset($address['address']['street']) ? $address['address']['street'] . ', ' : '' .
-                isset($address['address']['building']) ? $address['address']['building'] . ', ' : '' .
-                isset($address['address']['flat']) ? $address['address']['flat'] . ', ' : '';
+                (isset($address['address']['district']) ? $address['address']['district'] . ', ' : '') .
+                (isset($address['address']['city']) ? $address['address']['city'] . ', ' : '') .
+                (isset($address['address']['populatedCenter']) ? $address['address']['populatedCenter'] . ', ' : '') .
+                (isset($address['address']['street']) ? $address['address']['street'] . ', ' : '') .
+                (isset($address['address']['building']) ? $address['address']['building'] . ', ' : '') .
+                (isset($address['address']['flat']) ? $address['address']['flat'] . ', ' : '');
             }
             $addresses[] = $pAddress;
         }
@@ -306,7 +307,10 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
             'Patronymic' => 'middleName',
         ], $driver);
         $pDriver['Face']['Documents']['Document'] = $this->prepareDriverDocument($company, $driver);
-        $pDriver['Face']['Addresses']['Address'] = $this->prepareSubjectAddress($company, $driver);
+        $license = $this->searchDocumentByType($driver, 'license');
+        if (!$license['isRussian']) {
+            $pDriver['Face']['Addresses']['Address'] = $this->prepareSubjectAddress($company, $driver);
+        }
         return $pDriver;
     }
 

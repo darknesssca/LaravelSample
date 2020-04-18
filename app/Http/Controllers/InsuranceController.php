@@ -19,6 +19,7 @@ use App\Traits\CompanyServicesTrait;
 use App\Traits\TokenTrait;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
+use Benfin\Requests\Exceptions\ValidationException;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Laravel\Lumen\Application;
@@ -51,6 +52,7 @@ class InsuranceController extends Controller
         $data = [
             'form' => $request->validated(),
         ];
+        $this->checkRequiredAddresses($data['form']);
         $token = $this->createToken($data);
         $logger = app(LogMicroserviceContract::class);
         $logger->sendLog(
@@ -131,5 +133,30 @@ class InsuranceController extends Controller
             }
             Country::insert($models);
         });
+    }
+
+    private function checkRequiredAddresses($form)
+    {
+        foreach ($form['subjects'] as $subject) {
+            if (
+                $subject['id'] == $form['policy']['ownerId'] || $subject['id'] == $form['policy']['insurantId']
+            ) {
+                if (!isset($subject['fields']['addresses']) || !$subject['fields']['addresses']) {
+                    throw new ValidationException(['Поле addresses обязательно для заполнения для владельца автомобиля, страхователя и водителей с иностранными ВУ.']);
+                }
+            } else {
+                foreach ($subject['fields']['documents'] as $document) {
+                    if ($document['document']['documentType'] != 'license') {
+                        continue;
+                    }
+                    if (
+                        !$document['document']['isRussian'] &&
+                        (!isset($subject['fields']['addresses']) || !$subject['fields']['addresses'])
+                    ) {
+                        throw new ValidationException(['Поле addresses обязательно для заполнения для владельца автомобиля, страхователя и водителей с иностранными ВУ.']);
+                    }
+                }
+            }
+        }
     }
 }

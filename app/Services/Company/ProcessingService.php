@@ -151,15 +151,15 @@ class ProcessingService extends CompanyService implements ProcessingServiceContr
     protected function processingError($company, $processItem, $exception)
     {
         if ($exception instanceof AbstractException) {
-            $errorMessage = $exception->getMessageData();
+            $errorMessages = $exception->getMessageData();
         } else {
-            $errorMessage = $exception->getMessage();
+            $errorMessages = [$exception->getMessage()];
         }
         $isUpdated = $this->requestProcessService->updateCheckCount($processItem['token']);
         if ($isUpdated === false) {
             $tokenData = $this->getTokenData($processItem['token'], true);
             $tokenData[$company->code]['status'] = 'error';
-            $tokenData[$company->code]['errorMessages'] = $errorMessage;
+            $tokenData[$company->code]['errorMessages'] = $errorMessages;
             $this->intermediateDataService->update($processItem['token'], [
                 'data' => json_encode($tokenData),
             ]);

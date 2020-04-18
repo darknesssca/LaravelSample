@@ -6,10 +6,28 @@ class PolicySeeder extends Seeder
 {
     protected static $files = [
         [
-            'name' => 1,
-            'dir' => 1,
-            'content_type' => 1,
-            'size' => 1,
+            'name' => 'renessans.svg',
+            'dir' => '/insurance-companies_logo/renessans.svg',
+            'content_type' => 'image/svg+xml',
+            'size' => 1619,
+        ],
+        [
+            'name' => 'ingosstrah.svg',
+            'dir' => '/insurance-companies_logo/ingosstrah.svg',
+            'content_type' => 'image/svg+xml',
+            'size' => 358,
+        ],
+        [
+            'name' => 'soglasie.svg',
+            'dir' => '/insurance-companies_logo/soglasie.svg',
+            'content_type' => 'image/svg+xml',
+            'size' => 1348,
+        ],
+        [
+            'name' => 'tinkoff.svg',
+            'dir' => '/insurance-companies_logo/tinkoff.svg',
+            'content_type' => 'image/svg+xml',
+            'size' => 3728,
         ],
     ];
 
@@ -23,19 +41,19 @@ class PolicySeeder extends Seeder
         ],
         [
             'active' => true,
-            'logo_id' => 1,
+            'logo_id' => 2,
             'code' => 'ingosstrah',
             'name' => 'Ингосстрах',
         ],
         [
             'active' => true,
-            'logo_id' => 1,
+            'logo_id' => 3,
             'code' => 'soglasie',
             'name' => 'Согласие',
         ],
         [
             'active' => true,
-            'logo_id' => 1,
+            'logo_id' => 4,
             'code' => 'tinkoff',
             'name' => 'Тинькофф',
         ],
@@ -184,7 +202,7 @@ class PolicySeeder extends Seeder
             'insurance_company_id' => 3,
             'reference_doctype_code' => 12,
             'reference_doctype_code2' => 6,
-            'reference_doctype_code3' => 6,
+            'reference_doctype_code3' => 12,
         ],
         [
             'doctype_id' => 3,
@@ -213,14 +231,14 @@ class PolicySeeder extends Seeder
             'insurance_company_id' => 3,
             'reference_doctype_code' => 20,
             'reference_doctype_code2' => 15,
-            'reference_doctype_code3' => 15,
+            'reference_doctype_code3' => 20,
         ],
         [
             'doctype_id' => 5,
             'insurance_company_id' => 4,
-            'reference_doctype_code' => "driver_license",
-            'reference_doctype_code2' => "driver_license",
-            'reference_doctype_code3' => "driver_license",
+            'reference_doctype_code' => "driver_license_russian_B",
+            'reference_doctype_code2' => "driver_license_russian_B",
+            'reference_doctype_code3' => "driver_license_russian_B",
         ],
         //Иностранное ВУ
         [
@@ -242,7 +260,7 @@ class PolicySeeder extends Seeder
             'insurance_company_id' => 3,
             'reference_doctype_code' => 22,
             'reference_doctype_code2' => 35,
-            'reference_doctype_code3' => 35,
+            'reference_doctype_code3' => 22,
         ],
         [
             'doctype_id' => 6,
@@ -272,7 +290,7 @@ class PolicySeeder extends Seeder
             'insurance_company_id' => 3,
             'reference_doctype_code' => 7,
             'reference_doctype_code2' => 3,
-            'reference_doctype_code3' => 3,
+            'reference_doctype_code3' => 7,
         ],
         [
             'doctype_id' => 4,
@@ -307,9 +325,9 @@ class PolicySeeder extends Seeder
         [
             'doctype_id' => 7,
             'insurance_company_id' => 4,
-            'reference_doctype_code' => "TO",
-            'reference_doctype_code2' => "TO",
-            'reference_doctype_code3' => "TO",
+            'reference_doctype_code' => "DIAGNOSTIC_CARD",
+            'reference_doctype_code2' => "DIAGNOSTIC_CARD",
+            'reference_doctype_code3' => "DIAGNOSTIC_CARD",
         ],
 
         //Иностранный талон ТО
@@ -337,9 +355,9 @@ class PolicySeeder extends Seeder
         [
             'doctype_id' => 8,
             'insurance_company_id' => 4,
-            'reference_doctype_code' => "TO",
-            'reference_doctype_code2' => "TO",
-            'reference_doctype_code3' => "TO",
+            'reference_doctype_code' => "DIAGNOSTIC_CARD",
+            'reference_doctype_code2' => "DIAGNOSTIC_CARD",
+            'reference_doctype_code3' => "DIAGNOSTIC_CARD",
         ],
     ];
 
@@ -468,231 +486,275 @@ class PolicySeeder extends Seeder
             'target_id' => 1,
             'insurance_company_id' => 1,
             'reference_usage_target_code' => 'Личная',
+            'reference_usage_target_code2' => 'Личная',
         ],
         [
             'target_id' => 1,
             'insurance_company_id' => 2,
             'reference_usage_target_code' => 'Personal',
+            'reference_usage_target_code2' => 'Personal',
         ],
         [
             'target_id' => 1,
             'insurance_company_id' => 3,
             'reference_usage_target_code' => '1',
+            'reference_usage_target_code2' => 'Personal',
         ],
         [
             'target_id' => 1,
             'insurance_company_id' => 4,
             'reference_usage_target_code' => 'personal',
+            'reference_usage_target_code2' => 'personal',
         ],
         // Такси
         [
             'target_id' => 2,
             'insurance_company_id' => 1,
             'reference_usage_target_code' => 'Такси',
+            'reference_usage_target_code2' => 'Такси',
         ],
         [
             'target_id' => 2,
             'insurance_company_id' => 2,
             'reference_usage_target_code' => 'Taxi',
+            'reference_usage_target_code2' => 'Taxi',
         ],
         [
             'target_id' => 2,
             'insurance_company_id' => 3,
             'reference_usage_target_code' => '5',
+            'reference_usage_target_code2' => 'Taxi',
         ],
         [
             'target_id' => 2,
             'insurance_company_id' => 4,
             'reference_usage_target_code' => 'taxi',
+            'reference_usage_target_code2' => 'taxi',
         ],
         // Сдача в аренду
         [
             'target_id' => 3,
             'insurance_company_id' => 1,
             'reference_usage_target_code' => 'СдачаВАренду',
+            'reference_usage_target_code2' => 'СдачаВАренду',
         ],
         [
             'target_id' => 3,
             'insurance_company_id' => 2,
             'reference_usage_target_code' => 'Rent',
+            'reference_usage_target_code2' => 'Rent',
         ],
         [
             'target_id' => 3,
             'insurance_company_id' => 3,
             'reference_usage_target_code' => '11',
+            'reference_usage_target_code2' => 'Rent',
         ],
         [
             'target_id' => 3,
             'insurance_company_id' => 4,
             'reference_usage_target_code' => 'rental',
+            'reference_usage_target_code2' => 'rental',
         ],
         // Учебная езда
         [
             'target_id' => 4,
             'insurance_company_id' => 1,
             'reference_usage_target_code' => 'УчебнаяЕзда',
+            'reference_usage_target_code2' => 'УчебнаяЕзда',
         ],
         [
             'target_id' => 4,
             'insurance_company_id' => 2,
             'reference_usage_target_code' => 'RidingTraining',
+            'reference_usage_target_code2' => 'RidingTraining',
         ],
         [
             'target_id' => 4,
             'insurance_company_id' => 3,
             'reference_usage_target_code' => '2',
+            'reference_usage_target_code2' => 'RidingTraining',
         ],
         [
             'target_id' => 4,
             'insurance_company_id' => 4,
             'reference_usage_target_code' => 'training_driving',
+            'reference_usage_target_code2' => 'training_driving',
         ],
         // Перевозка опасных и легковоспламеняющихся грузов
         [
             'target_id' => 5,
             'insurance_company_id' => 1,
             'reference_usage_target_code' => 'ОпасныйГруз',
+            'reference_usage_target_code2' => 'ОпасныйГруз',
         ],
         [
             'target_id' => 5,
             'insurance_company_id' => 2,
             'reference_usage_target_code' => 'DangerousCargo',
+            'reference_usage_target_code2' => 'DangerousCargo',
         ],
         [
             'target_id' => 5,
             'insurance_company_id' => 3,
             'reference_usage_target_code' => '10',
+            'reference_usage_target_code2' => 'DangerousAndFlammable',
         ],
         [
             'target_id' => 5,
             'insurance_company_id' => 4,
             'reference_usage_target_code' => 'dangerous_goods',
+            'reference_usage_target_code2' => 'dangerous_goods',
         ],
         // Пассажирские перевозки
         [
             'target_id' => 6,
             'insurance_company_id' => 1,
             'reference_usage_target_code' => 'ПассажирскиеПеревозки',
+            'reference_usage_target_code2' => 'ПассажирскиеПеревозки',
         ],
         [
             'target_id' => 6,
             'insurance_company_id' => 2,
             'reference_usage_target_code' => 'PassengerService',
+            'reference_usage_target_code2' => 'PassengerService',
         ],
         [
             'target_id' => 6,
             'insurance_company_id' => 3,
             'reference_usage_target_code' => '12',
+            'reference_usage_target_code2' => 'RegularPassengers',
         ],
         [
             'target_id' => 6,
             'insurance_company_id' => 4,
             'reference_usage_target_code' => 'passenger_transportation',
+            'reference_usage_target_code2' => 'passenger_transportation',
         ],
         // Экстренные и коммунальные службы
         [
             'target_id' => 7,
             'insurance_company_id' => 1,
             'reference_usage_target_code' => 'ЭкстренныеИКоммСлужбы',
+            'reference_usage_target_code2' => 'ЭкстренныеИКоммСлужбы',
         ],
         [
             'target_id' => 7,
             'insurance_company_id' => 2,
             'reference_usage_target_code' => 'Emergency',
+            'reference_usage_target_code2' => 'Emergency',
         ],
         [
             'target_id' => 7,
             'insurance_company_id' => 3,
             'reference_usage_target_code' => '13',
+            'reference_usage_target_code2' => 'EmergencyAndMunicipal',
         ],
         [
             'target_id' => 7,
             'insurance_company_id' => 4,
             'reference_usage_target_code' => 'emergency_services',
+            'reference_usage_target_code2' => 'emergency_services',
         ],
         // Дорожные и специальные ТС
         [
             'target_id' => 8,
             'insurance_company_id' => 1,
             'reference_usage_target_code' => 'ДорожныеИСпециальныеТС',
+            'reference_usage_target_code2' => 'ДорожныеИСпециальныеТС',
         ],
         [
             'target_id' => 8,
             'insurance_company_id' => 2,
             'reference_usage_target_code' => 'RoadVehicles',
+            'reference_usage_target_code2' => 'RoadVehicles',
         ],
         [
             'target_id' => 8,
             'insurance_company_id' => 3,
             'reference_usage_target_code' => '6',
+            'reference_usage_target_code2' => 'TrafficAndSpecial',
         ],
         [
             'target_id' => 8,
             'insurance_company_id' => 4,
             'reference_usage_target_code' => 'road_and_special_vehicles',
+            'reference_usage_target_code2' => 'road_and_special_vehicles',
         ],
         // Инкассация
         [
             'target_id' => 9,
             'insurance_company_id' => 1,
             'reference_usage_target_code' => 'Прочее',
+            'reference_usage_target_code2' => 'Прочее',
         ],
         [
             'target_id' => 9,
             'insurance_company_id' => 2,
             'reference_usage_target_code' => 'Others',
+            'reference_usage_target_code2' => 'Others',
         ],
         [
             'target_id' => 9,
             'insurance_company_id' => 3,
             'reference_usage_target_code' => '3',
+            'reference_usage_target_code2' => 'Collection',
         ],
         [
             'target_id' => 9,
             'insurance_company_id' => 4,
             'reference_usage_target_code' => 'other',
+            'reference_usage_target_code2' => 'other',
         ],
         // Скорая помощь
         [
             'target_id' => 10,
             'insurance_company_id' => 1,
             'reference_usage_target_code' => 'ЭкстренныеИКоммСлужбы',
+            'reference_usage_target_code2' => 'ЭкстренныеИКоммСлужбы',
         ],
         [
             'target_id' => 10,
             'insurance_company_id' => 2,
             'reference_usage_target_code' => 'Emergency',
+            'reference_usage_target_code2' => 'Emergency',
         ],
         [
             'target_id' => 10,
             'insurance_company_id' => 3,
             'reference_usage_target_code' => '4',
+            'reference_usage_target_code2' => 'Ambulance',
         ],
         [
             'target_id' => 10,
             'insurance_company_id' => 4,
             'reference_usage_target_code' => 'emergency_services',
+            'reference_usage_target_code2' => 'emergency_services',
         ],
         // Прочее
         [
             'target_id' => 11,
             'insurance_company_id' => 1,
             'reference_usage_target_code' => 'Прочее',
+            'reference_usage_target_code2' => 'Прочее',
         ],
         [
             'target_id' => 11,
             'insurance_company_id' => 2,
             'reference_usage_target_code' => 'Others',
+            'reference_usage_target_code2' => 'Others',
         ],
         [
             'target_id' => 11,
             'insurance_company_id' => 3,
             'reference_usage_target_code' => '9',
+            'reference_usage_target_code2' => 'Other',
         ],
         [
             'target_id' => 11,
             'insurance_company_id' => 4,
             'reference_usage_target_code' => 'other',
+            'reference_usage_target_code2' => 'other',
         ],
     ];
 
@@ -756,6 +818,13 @@ class PolicySeeder extends Seeder
 
     public function run()
     {
+        $minio_path_to_file = env('MINIO_ENDPOINT', 'http://172.27.1.121:9000/') .
+        env('MINIO_BUCKET', 'test');
+
+       foreach (self::$files as &$file){
+           $file['dir'] = $minio_path_to_file . $file['dir'];
+       }
+
         \App\Models\File::insert(self::$files);
         \App\Models\InsuranceCompany::insert(self::$insuranceCompanies);
         \App\Models\PolicyType::insert(self::$policyTypes);
