@@ -29,7 +29,9 @@ class CreateDraftRequest extends AbstractRequest
             "subjects.*.fields.passport.dateIssue" => "date|date_format:Y-m-d",
             "subjects.*.fields.passport.subdivisionCode" => "string",
             "subjects.*.fields.phone.numberPhone" => "string",
-            "car.model" => "string", // TODO: in справочник
+            "car.model" => "string",
+            "car.maker" => "integer",
+            "car.category" => "integer",
             "car.enginePower" => "integer",
             "car.countryOfRegistration" => "string", // TODO: in справочник
             "car.isUsedWithTrailer" => "boolean",
@@ -43,7 +45,7 @@ class CreateDraftRequest extends AbstractRequest
             "car.vin" => "string",
             "car.regNumber" => "string",
             "car.year" => "string|min:4|max:4",
-            "car.document.documentType" => "integer", // TODO: in справочник
+            "car.document.documentType" => "string", // TODO: in справочник
             "car.document.series" => "string",
             "car.document.number" => "string",
             "car.document.dateIssue" => "date|date_format:Y-m-d",
@@ -58,14 +60,8 @@ class CreateDraftRequest extends AbstractRequest
             'policy.isMultidrive' => "boolean",
             'policy.policyProcessingRegion' => "string",
             'drivers' => "array",
-            'drivers.*.lastName' => "string",
-            'drivers.*.firstName' => "string",
-            'drivers.*.middleName' => "string",
-            'drivers.*.birthdate' => "date|date_format:Y-m-d",
-            'drivers.*.license_series' => "string",
-            'drivers.*.license_number' => "string",
-            'drivers.*.license_date' => "date|date_format:Y-m-d",
             'drivers.*.driver.drivingLicenseIssueDateOriginal' => "date|date_format:Y-m-d",
         ];
     }
+
 }
