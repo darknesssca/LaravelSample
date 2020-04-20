@@ -95,11 +95,26 @@ class PolicyService implements PolicyServiceContract
                 $policy['client'] = $clients[$policy->client_id]['full_name'] ?? '';
                 $policy['insurant'] = $clients[$policy->insurant_id]['full_name'] ?? '';
                 $policy['rewards'] = $rewards[$policy->id] ?? [];
-                $policy['commission_paid'] = $this->getCommissionPaid($rewards[$policy->id]) ?? false;
+                $reward = $this->getCommission($rewards[$policy->id] ?? []);
+                $policy['commission_paid'] = $reward['paid'] ?? false;
+                $policy['commission_value'] = $reward['value'] ?? null;
 
                 return $policy;
             });
 
+            if (isset($filter['commission_paid'])) {
+                $paid = $filter['commission_paid'];
+                $policies = $policies->filter(function ($policy) use ($paid) {
+                    return $policy['commission_paid'] == $paid;
+                });
+            }
+
+            if (isset($filter['referer'])) {
+                $referer = $filter['referer'];
+                $policies = $policies->filter(function ($policy) use ($referer) {
+                    return $policy['referer'] == $referer;
+                });
+            }
 
             if ($order === 'desc') {
                 $policies = $policies->sortByDesc($sort);
@@ -121,13 +136,13 @@ class PolicyService implements PolicyServiceContract
         ];
     }
 
-    private function getCommissionPaid($rewards)
+    private function getCommission($rewards)
     {
         $reward = collect($rewards)->first(function ($reward) {
             return $reward['user_id'] === GlobalStorage::getUserId();
         });
 
-        return $reward['paid'] ?? false;
+        return $reward;
     }
 
     /**возвращает список полисов и вознаграждений по фильтру

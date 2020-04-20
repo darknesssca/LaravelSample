@@ -30,7 +30,9 @@ class PoliciesController extends Controller
                 'company_ids',
                 'paid',
                 'from',
-                'to'
+                'to',
+                'referer',
+                'commission_paid',
             ]),
             $request->get('sort') ?? 'id',
             $request->get('order') ?? 'asc',
