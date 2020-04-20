@@ -16,6 +16,8 @@ class PolicyListRequest extends AbstractRequest
             "page" => "integer",
             "per_page" => "integer",
             "order" => "in:asc,desc",
+            "commission_paid" => "boolean",
+            "referer" => "boolean",
         ];
     }
 
