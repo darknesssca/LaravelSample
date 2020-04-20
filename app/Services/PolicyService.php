@@ -53,6 +53,14 @@ class PolicyService implements PolicyServiceContract
         if ($search) {
             $agentIds = $this->getSearchAgentIds($search) ?? [];
             $clientIds = $this->getSearchClientIds($search) ?? [];
+            if (empty($agentIds) && empty($clientIds)) {
+                return [
+                    'policy' => [],
+                    'pagination' => [
+                        'pageCount' => 0
+                    ]
+                ];
+            }
             $filter['agent_ids'] = array_merge($filter['agent_ids'] ?? [], $agentIds);
 
             $filter['client_ids'] = $clientIds;
@@ -87,29 +95,54 @@ class PolicyService implements PolicyServiceContract
                 $policy['client'] = $clients[$policy->client_id]['full_name'] ?? '';
                 $policy['insurant'] = $clients[$policy->insurant_id]['full_name'] ?? '';
                 $policy['rewards'] = $rewards[$policy->id] ?? [];
-                $policy['commission_paid'] = $this->getCommissionPaid($rewards[$policy->id]) ?? false;
+                $reward = $this->getCommission($rewards[$policy->id] ?? []);
+                $policy['commission_paid'] = $reward['paid'] ?? false;
+                $policy['commission_value'] = $reward['value'] ?? null;
 
                 return $policy;
             });
 
+            if (isset($filter['commission_paid'])) {
+                $paid = $filter['commission_paid'];
+                $policies = $policies->filter(function ($policy) use ($paid) {
+                    return $policy['commission_paid'] == $paid;
+                });
+            }
+
+            if (isset($filter['referer'])) {
+                $referer = $filter['referer'];
+                $policies = $policies->filter(function ($policy) use ($referer) {
+                    return $policy['referer'] == $referer;
+                });
+            }
 
             if ($order === 'desc') {
                 $policies = $policies->sortByDesc($sort);
             } else {
                 $policies = $policies->sortBy($sort);
             }
+            /*
+             * костыль, что бы сохранить сортировку,
+             * так как sortBy не меняет ключи, а response->json() сортирует по ключам
+             */
+            $policies = collect($policies->values());
         }
 
-        return $policies->forPage($page, $perPage);
+        return [
+            'policy' => $policies->forPage($page, $perPage),
+            'pagination' => [
+                'pageCount' => ceil($policies->count() / $perPage)
+            ]
+        ];
     }
 
-    private function getCommissionPaid($rewards)
+    private function getCommission($rewards)
     {
         $reward = collect($rewards)->first(function ($reward) {
             return $reward['user_id'] === GlobalStorage::getUserId();
         });
 
-        return $reward['paid'] ?? false;
+        return $reward;
     }
 
     /**возвращает список полисов и вознаграждений по фильтру
@@ -218,7 +251,7 @@ class PolicyService implements PolicyServiceContract
 
         $result = $mks->search($search);
 
-        return array_values(Arr::get($result, 'content'));
+        return array_values(Arr::get($result, 'content', []));
     }
 
     private function getSearchClientIds(string $search)
@@ -227,7 +260,7 @@ class PolicyService implements PolicyServiceContract
 
         $result = $mks->search($search);
 
-        return array_values(Arr::get($result, 'content'));
+        return array_values(Arr::get($result, 'content', []));
     }
 
     public function create(array $fields, int $draftId = null)

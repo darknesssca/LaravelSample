@@ -46,7 +46,7 @@ class PolicyRepository implements PolicyRepositoryContract
             }
 
             if ($companyIds = $filter['company_ids'] ?? null) {
-                $query = $query->whereIn('company_id', $companyIds);
+                $query = $query->whereIn('insurance_company_id', $companyIds);
             }
 
             if (isset($filter['paid'])) {

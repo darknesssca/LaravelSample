@@ -54,15 +54,13 @@ class Report extends Model
 
     //Accessors
 
-    //TODO Реализовать ссылки
-
-    public function getCreatePayoutLink()
+    public function getCreatePayoutLinkAttribute()
     {
-        return "{$this->last_name} {$this->first_name} {$this->patronymic}";
+        return "/api/v1/car-insurance/reports/{$this->id}/payout/create";
     }
 
-    public function getExecutePayoutLink()
+    public function getExecutePayoutLinkAttribute()
     {
-        return "{$this->last_name} {$this->first_name} {$this->patronymic}";
+        return "/api/v1/car-insurance/reports/{$this->id}/payout/execute";
     }
 }
