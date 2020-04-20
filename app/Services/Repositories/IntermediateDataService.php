@@ -47,4 +47,10 @@ class IntermediateDataService implements IntermediateDataServiceContract
         $this->save($object->token, $object);
         return $object;
     }
+
+    public function delete($token)
+    {
+        $this->drop($token);
+        $this->repository->delete($token);
+    }
 }

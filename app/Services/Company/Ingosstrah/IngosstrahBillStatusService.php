@@ -40,7 +40,8 @@ class IngosstrahBillStatusService extends IngosstrahService implements Ingosstra
             ]);
         }
         return [
-            'paid' => $response['response']->ResponseData->Bill->Paid == 2,
+            'paid' => ($response['response']->ResponseData->Bill->Paid == 2) ||
+                (mb_strtolower($response['response']->ResponseData->Bill->Status) == 'в банке'),
         ];
     }
 

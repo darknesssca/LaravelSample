@@ -26,6 +26,11 @@ class DocTypeRepository implements DocTypeRepositoryContract
         });
     }
 
+    public function getDocTypeByCode($code)
+    {
+        return DocType::where('code', $code)->first();
+    }
+
     public function getCompanyDocTypeByCode($code, $companyId)
     {
         $cacheTag = self::getDocTypeTag();

@@ -73,7 +73,6 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
 
     protected function prepareData($company, $attributes)
     {
-
         $carModel = $this->carModelService->getCompanyModelByName(
             $attributes['car']['maker'],
             $attributes['car']['category'],
@@ -93,7 +92,7 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             'car' => [
                 'make' => $this->carMarkService->getCompanyMark($attributes['car']['maker'], $company->id),
                 'model' => $carModel['model'] ? $carModel['model'] : $carModel['otherModel'],
-                'MarkAndModelString' => $this->carMarkService->getCarMarkName($attributes['car']['maker']) .
+                'MarkAndModelString' => $this->carMarkService->getCompanyMark($attributes['car']['maker'], $company->id) .
                     ' ' . $attributes['car']['model'],
                 'category' => $carModel['category'],
                 'power' => $attributes['car']['enginePower'],

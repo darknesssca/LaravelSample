@@ -29,6 +29,15 @@ class InsuranceCompanyRepository implements InsuranceCompanyRepositoryContract
         });
     }
 
+    public function getCompanyById($id)
+    {
+        return InsuranceCompany::where([
+            'id' => $id,
+            'active' => true,
+        ])
+            ->first();
+    }
+
     public function getInsuranceCompanyList()
     {
         $cacheTag = self::getInsuranceCompanyTag();
@@ -42,5 +51,10 @@ class InsuranceCompanyRepository implements InsuranceCompanyRepositoryContract
     public function getList()
     {
         // TODO: Implement getList() method.
+    }
+
+    public function getById(int $id)
+    {
+        return InsuranceCompany::query()->find($id)->first();
     }
 }

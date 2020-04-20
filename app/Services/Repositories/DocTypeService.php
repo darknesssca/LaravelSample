@@ -30,6 +30,19 @@ class DocTypeService implements DocTypeServiceContract
         return $data->jsonSerialize();
     }
 
+    public function getDocTypeByCode($code)
+    {
+        $tag = $this->getGuidesDocTypesTag();
+        $key = $this->getCacheKey($tag, $code);
+        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($code){
+            return $this->docTypeRepository->getDocTypeByCode($code);
+        });
+        if (!$data) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        return $data->id;
+    }
+
     public function getCompanyDocTypeByCode($code, $companyId)
     {
         $data =  $this->docTypeRepository->getCompanyDocTypeByCode($code, $companyId);
@@ -108,7 +121,7 @@ class DocTypeService implements DocTypeServiceContract
         if (!$code) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
-        return $this->docTypeRepository->getCompanyDocTypeByCode($code, $companyId);
+        return $this->getCompanyDocTypeByCode($code, $companyId);
     }
 
     public function getCompanyLicenseDocType2($isRussian, $companyId)
@@ -209,7 +222,7 @@ class DocTypeService implements DocTypeServiceContract
             case 'car':
                 return $this->getCompanyCarDocType2($type, $companyId);
             case 'inspection':
-                return $this->getCompanyInspectionDocType2($companyId);
+                return $this->getCompanyInspectionDocType2($type,$companyId);
             default:
                 throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }

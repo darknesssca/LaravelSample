@@ -48,6 +48,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         $tokenData[$company->code] = [
             'status' => 'calculated',
             'sessionToken' => $loginData['sessionToken'],
+            'premium' => $dataCalculate['premium'],
         ];
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
@@ -73,16 +74,13 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
             $dataCreate = $serviceCreate->run($company, $attributes);
         }
         $tokenData = $this->getTokenData($attributes['token'], true);
-        $tokenData[$company->code] = [
-            'policyId' => $dataCreate['policyId'],
-            'status' => 'processing',
-            'sessionToken' => $newSessionToken,
-        ];
+        $tokenData[$company->code]['policyId'] = $dataCreate['policyId'];
+        $tokenData[$company->code]['status'] = 'processing';
+        $tokenData[$company->code]['sessionToken'] = $newSessionToken;
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
-        $policyService = app(PolicyServiceContract::class);
-        $policyService->createPolicyFromCustomData($company, $attributes);
+        $user = GlobalStorage::getUser();
         $this->requestProcessService->create([
             'token' => $attributes['token'],
             'company' => $company->code,
@@ -91,6 +89,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
                 'policyId' => $dataCreate['policyId'],
                 'status' => 'processing',
                 'sessionToken' => $newSessionToken,
+                'user' => $user,
             ]),
         ]);
         $logger = app(LogMicroserviceContract::class);
@@ -107,7 +106,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
     public function processing($company, $attributes): array
     {
         $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);
-        switch ($tokenData['tokenData']['status']) {
+        switch ($tokenData['status']) {
             case 'processing':
                 return [
                     'status' => 'processing',
@@ -117,6 +116,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
                     'status' => 'hold',
                 ];
             case 'done':
+                $this->destroyToken($attributes['token']);
                 return [
                     'status' => 'done',
                     'billUrl' => $tokenData['billUrl'],
@@ -213,7 +213,9 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         switch ($checkData['state']) {
             case 'аннулирован':
             case 'прекращен страхователем':
+            case 'прекращён страхователем':
             case 'прекращен страховщиком':
+            case 'прекращён страховщиком':
             case 'выпущен':
                 $this->requestProcessService->delete($processData['token']);
                 $this->dropCreate($company, $processData['token'], [
@@ -223,6 +225,16 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
                 break;
             case 'заявление':
                 $processData['data']['policyIsn'] = $checkData['isn'];
+                $attributes = [
+                    'token' => $processData['token'],
+                ];
+                $this->pushForm($attributes);
+                $attributes['number'] = $processData['data']['policyId'];
+                $tokenData = $this->getTokenDataByCompany($processData['token'], $company->code);
+                $attributes['premium'] = $tokenData['premium'];
+                GlobalStorage::setUser($processData['data']['user']);
+                $dbPolicyId = $this->createPolicy($company, $attributes);
+                $processData['data']['dbPolicyId'] = $dbPolicyId;
                 $eosagoService = app(IngosstrahEosagoServiceContract::class);
                 $eosagoData = $eosagoService->run($company, $processData);
                 if (!$eosagoData['isEosago'] && $eosagoData['hold']) {
@@ -281,7 +293,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
             isset($checkData['policyNumber']) && $checkData['policyNumber'] &&
             isset($checkData['isEosago']) && $checkData['isEosago']
         ) {
-            $this->createBill($company, $processData);
+            $this->createBill($company, $processData, true);
         } else {
             if ($isNeedUpdateToken) {
                 $processData['data']['sessionToken'] = $newSessionToken;
@@ -296,7 +308,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         }
     }
 
-    protected function createBill($company, $processData)
+    protected function createBill($company, $processData, $destroyToken = false)
     {
         $this->requestProcessService->delete($processData['token']);
         $billService = app(IngosstrahBillServiceContract::class);
@@ -305,19 +317,24 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         $form = [
             'token' => $processData['token'],
         ];
+        $this->billPolicyRepository->create($processData['data']['dbPolicyId'], $processData['data']['billIsn']);
         $this->pushForm($form);
         $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
         $processData['data']['insurerEmail'] = $insurer['email'];
         $billLinkService = app(IngosstrahBillLinkServiceContract::class);
         $billLinkData = $billLinkService->run($company, $processData);
-        $tokenData = $this->getTokenData($processData['token'], true);
-        $tokenData[$company->code]['status'] = 'done';
-        $tokenData[$company->code]['billIsn'] = $billData['billIsn'];
-        $tokenData[$company->code]['billUrl'] = $billLinkData['PayUrl'];
+        if ($destroyToken) {
+            $this->destroyToken($processData['token']);
+        } else {
+            $tokenData = $this->getTokenData($processData['token'], true);
+            $tokenData[$company->code]['status'] = 'done';
+            $tokenData[$company->code]['billIsn'] = $billData['billIsn'];
+            $tokenData[$company->code]['billUrl'] = $billLinkData['PayUrl'];
+            $this->intermediateDataService->update($processData['token'], [
+                'data' => json_encode($tokenData),
+            ]);
+        }
         $this->sendBillUrl($insurer['email'], $billLinkData['PayUrl']);
-        $this->intermediateDataService->update($processData['token'], [
-            'data' => json_encode($tokenData),
-        ]);
     }
 
     protected function dropCreate($company, $token, $error)
@@ -345,7 +362,6 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         if (isset($dataStatus['paid']) && $dataStatus['paid']) {
             $this->policyService->update($processData['id'], [
                 'paid' => true,
-                'number' => $dataStatus['policyNumber'],
             ]);
             $this->billPolicyRepository->delete($processData['id']);
         }

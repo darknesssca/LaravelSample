@@ -14,4 +14,8 @@ class File extends Model
     ];
     protected $table = 'files';
 
+    protected $visible = [
+        'name',
+        'dir'
+    ];
 }

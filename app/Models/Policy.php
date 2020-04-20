@@ -18,7 +18,7 @@ class Policy extends Model
         'status_id',
         'type_id',
         'region_kladr',
-        //'premium',
+        'premium',
         //'commission_id',
         //'commission_paid',
         //'registration_date',
@@ -26,6 +26,8 @@ class Policy extends Model
         'client_id',
         'insurant_id',
         'vehicle_model_id',
+        'vehicle_model',
+        'vehicle_reg_number',
         'vehicle_engine_power',
         'vehicle_vin',
         'vehicle_reg_country',
@@ -45,10 +47,15 @@ class Policy extends Model
         'vehicle_doc_issued',
         'vehicle_inspection_doc_series',
         'vehicle_inspection_doc_number',
-        'vehicle_inspection_doc_issued',
+        'vehicle_inspection_issued_date',
+        'vehicle_inspection_end_date',
         'start_date',
         'end_date',
         'is_multi_drive',
+    ];
+
+    protected $hidden = [
+        'pivot'
     ];
 
     public function company()

@@ -83,11 +83,7 @@ class CarModelService implements CarModelServiceContract
                 if ($category) {
                     $result['category'] = $otherModel->category->name;
                 } else {
-                    $categoryData = $this->carCategoryRepository->getCategoryById($categoryId);
-                    if (!$categoryData) {
-                        throw new GuidesNotFoundException('Не найдены данные в справочнике');
-                    }
-                    $result['category'] = $categoryData->name;
+                    throw new GuidesNotFoundException('Выбранная страховая компания не позволяет страховать указанную модель автомобиля.');
                 }
             } else {
                 $result['otherModel'] = '';

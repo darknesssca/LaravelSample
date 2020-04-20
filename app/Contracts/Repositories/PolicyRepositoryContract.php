@@ -4,6 +4,8 @@
 namespace App\Contracts\Repositories;
 
 
+use App\Models\Policy;
+
 interface PolicyRepositoryContract
 {
     /**
@@ -27,7 +29,7 @@ interface PolicyRepositoryContract
 
     public function getList(array $filter);
 
-    public function create(array $data);
+    public function create(array $data):Policy;
 
     public function searchOldPolicyByPolicyNumber($companyId, $policyNumber);
 }

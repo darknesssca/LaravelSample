@@ -29,4 +29,6 @@ interface IntermediateDataRepositoryContract
      * @return mixed
      */
     public function create($data);
+
+    public function delete($token);
 }

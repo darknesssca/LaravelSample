@@ -4,12 +4,18 @@ namespace App\Services;
 
 use App\Contracts\Repositories\DraftRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
+use App\Contracts\Repositories\Services\DocTypeServiceContract;
+use App\Contracts\Repositories\Services\PolicyTypeServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
+use App\Exceptions\ApiRequestsException;
 use App\Exceptions\StatisticsNotFoundException;
+use App\Repositories\PolicyRepository;
 use App\Traits\ValueSetterTrait;
 use Benfin\Api\Contracts\AuthMicroserviceContract;
 use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
 use Benfin\Api\GlobalStorage;
+use Benfin\Api\Services\AuthMicroservice;
+use Benfin\Api\Services\CommissionCalculationMicroservice;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
@@ -18,11 +24,18 @@ class PolicyService implements PolicyServiceContract
 {
     use ValueSetterTrait;
 
+    /** @var PolicyRepository $policyRepository */
     private $policyRepository;
+    /** @var CommissionCalculationMicroservice */
+    private $commissionCalculationService;
+    /** @var AuthMicroservice */
+    private $authService;
 
     public function __construct(PolicyRepositoryContract $policyRepository)
     {
         $this->policyRepository = $policyRepository;
+        $this->commissionCalculationService = app(CommissionCalculationMicroserviceContract::class);
+        $this->authService = app(AuthMicroserviceContract::class);
     }
 
     public function getList(array $filter = [], string $sort = 'id', string $order = 'asc', int $page = 1, int $perPage = 20, string $search = null)
@@ -31,45 +44,172 @@ class PolicyService implements PolicyServiceContract
         if (!$isAdmin) {
             $filter['agent_ids'] = [GlobalStorage::getUserId()];
 
-            $subagents = Arr::get(app(AuthMicroserviceContract::class)->getSubagents(GlobalStorage::getUserId()), 'content.subagents');
+            $subagents = Arr::get(app(AuthMicroserviceContract::class)->getSubagents(GlobalStorage::getUserId()), 'content.subagents', []);
             foreach ($subagents as $subagent) {
                 $filter['agent_ids'][] = $subagent['id'];
             }
         }
 
-        $policies = $this->policyRepository->getList($filter);
-
         if ($search) {
-            $agentIds = $this->getSearchAgentIds($search);
-            $agentPolicies = $policies->filter(function ($policy) use ($agentIds) {
-                return in_array($policy->agent_id, $agentIds);
-            });
+            $agentIds = $this->getSearchAgentIds($search) ?? [];
+            $clientIds = $this->getSearchClientIds($search) ?? [];
+            $filter['agent_ids'] = array_merge($filter['agent_ids'] ?? [], $agentIds);
 
-            $clientIds = $this->getSearchClientIds($search);
-            $clientPolicies = $policies->filter(function ($policy) use ($clientIds) {
-                return in_array($policy->client_id, $clientIds) || in_array($policy->insurant_id, $clientIds);
-            });
-
-            $policies = $agentPolicies->merge($clientPolicies);
+            $filter['client_ids'] = $clientIds;
         }
 
-        $policies = $policies->map(function ($policy) {
-            $policy['type'] = $policy->type->name;
-            $policy['company'] = $policy->company->name;
-            $policy['referer'] = $policy->agent_id !== GlobalStorage::getUserId();
-            $policy['agent'] = $this->getAgent($policy->agent_id);
-            $policy['client'] = $this->getClient($policy->client_id);
-            $policy['insurant'] = $this->getClient($policy->insurant_id);
-            $policy['rewards'] = Arr::get(app(CommissionCalculationMicroserviceContract::class)->getRewards($policy->id), 'content');
-        });
+        $policies = $this->policyRepository->getList($filter);
+        if ($policies->isNotEmpty()) {
+            $policyIds = [];
+            $clientIds = [];
+            $agentIds = [];
 
-        if ($order === 'desc') {
-            $policies = $policies->sortByDesc($sort);
-        } else {
-            $policies = $policies->sortBy($sort);
+            foreach ($policies as $policy) {
+                $agentIds[] = $policy->agent_id;
+                $clientIds[] = $policy->client_id;
+                $clientIds[] = $policy->insurant_id;
+                $policyIds[] = $policy->id;
+            }
+
+            $agents = app(AuthMicroserviceContract::class)->usersInfo($agentIds) ?? [];
+            $clients = app(CommissionCalculationMicroserviceContract::class)->clientsInfo($clientIds) ?? [];
+            $rewards = collect(
+                Arr::get(app(CommissionCalculationMicroserviceContract::class)->getRewards(['policy_id' => $policyIds] ?? []), 'content')
+            )->mapToGroups(function ($reward) {
+                return [$reward['policy_id'] => $reward];
+            });
+
+            $policies = $policies->map(function ($policy) use ($agents, $clients, $rewards) {
+                $policy['type'] = $policy->type->name;
+                $policy['company'] = $policy->company->name;
+                $policy['referer'] = $policy->agent_id !== GlobalStorage::getUserId();
+                $policy['agent'] = $agents[$policy->agent_id]['full_name'] ?? '';
+                $policy['client'] = $clients[$policy->client_id]['full_name'] ?? '';
+                $policy['insurant'] = $clients[$policy->insurant_id]['full_name'] ?? '';
+                $policy['rewards'] = $rewards[$policy->id] ?? [];
+                $policy['commission_paid'] = $this->getCommissionPaid($rewards[$policy->id]) ?? false;
+
+                return $policy;
+            });
+
+
+            if ($order === 'desc') {
+                $policies = $policies->sortByDesc($sort);
+            } else {
+                $policies = $policies->sortBy($sort);
+            }
         }
 
         return $policies->forPage($page, $perPage);
+    }
+
+    private function getCommissionPaid($rewards)
+    {
+        $reward = collect($rewards)->first(function ($reward) {
+            return $reward['user_id'] === GlobalStorage::getUserId();
+        });
+
+        return $reward['paid'] ?? false;
+    }
+
+    /**возвращает список полисов и вознаграждений по фильтру
+     * @param array $filter
+     * @return array
+     * @throws ApiRequestsException
+     */
+    public function listWithRewards(array $filter)
+    {
+        $filter['agent_id'] = GlobalStorage::getUserId();
+        $page = $filter['page'] ?? 1;
+        $per_page = $filter['per_page'] ?? 10;
+        $sort = $filter['sort'] ?? 'id';
+        $order = $filter['order'] ?? 'asc';
+
+        //получаем субагентов
+        $subagents = $this->authService->getSubagents();
+        if ($subagents['error']) {
+            throw new ApiRequestsException($subagents['errors']);
+        }
+        $subagents = $subagents['content']['subagents'];
+        $subagents_ids = [];
+        foreach ($subagents as $subagent) {
+            $subagents_ids[] = $subagent['id'];
+        }
+
+        //получаем вознаграждения
+        $rewards = $this->commissionCalculationService->getRewards(['paid' => $filter['reward_paid'], 'user_id' => $filter['agent_id']]);
+        if ($rewards['error']) {
+            throw new ApiRequestsException($rewards['errors']);
+        }
+        $rewards = $rewards['content'];
+        $policies_ids = [];
+        foreach ($rewards as $reward) {
+            $policies_ids[] = $reward['policy_id'];
+        }
+
+        //получаем полисы по вознаграждениям
+        /** @var Collection $policies */
+        $policies = $this->policyRepository->getList([
+            'from' => $filter['from'] ?? '',
+            'to' => $filter['to'] ?? '',
+            'paid' => $filter['police_paid'] ?? true,
+            'ids' => $policies_ids,
+            'agent_ids' => array_merge($subagents_ids, [$filter['agent_id']]),
+        ]);
+        $clients_ids = [];
+        foreach ($policies as $police) {
+            $clients_ids[] = $police['client_id'];
+        }
+
+        //получаем пользователей
+        $clients = $this->commissionCalculationService->getClients(['client_id' => array_unique($clients_ids)]);
+        if ($clients['error']) {
+            throw new ApiRequestsException($clients['errors']);
+        }
+        $clients = $clients['content'];
+
+        //объединяем результат
+        $result = [];
+        foreach ($policies as $police) {
+            $item = $police->toArray();
+            foreach ($clients as $client) {
+                if ($client['id'] == $item['client_id']) {
+                    $item['client'] = $client;
+                }
+            }
+            foreach ($rewards as $reward) {
+                if ($item['id'] == $reward['policy_id']) {
+                    $item['rewards'][] = $reward;
+                }
+            }
+            $result[] = $item;
+        }
+
+        //обработка результата
+        $collection = new Collection($result);
+
+        //сортировка
+        if ($order === 'desc') {
+            $collection = $collection->sortByDesc($sort);
+        } else {
+            $collection = $collection->sortBy($sort);
+        }
+
+        //собраем массив, чтоб не потерять сортировку при преобразовании в json
+        $data = [];
+        foreach ($collection as $item) {
+            $data[] = $item;
+        }
+
+        //пагинация
+        return [
+            'page' => $page,
+            'per_page' => $per_page,
+            'order' => $order,
+            'sort' => $sort,
+            'total_pages' => ceil(($collection->count() / $per_page)),
+            'data' => $data,
+        ];
     }
 
     private function getSearchAgentIds(string $search)
@@ -96,18 +236,19 @@ class PolicyService implements PolicyServiceContract
         $policy = $this->policyRepository->create($fields);
 
         /**
-         * @var CommissionCalculationMicroserviceContract $mks
+         * @var CommissionCalculationMicroservice $mks
          */
         $mks = app(CommissionCalculationMicroserviceContract::class);
-
         $owner = $fields['subjects'][$policy->client_id];
         unset($owner['id']);
+        $owner['agent_id'] = GlobalStorage::getUserId();
         $owner_id = $mks->createClient($owner);
         $policy->client_id = Arr::get($owner_id, 'content.id');
 
         if (count($fields['subjects']) > 1) {
             $insurant = $fields['subjects'][$policy->insurant_id];
             unset($insurant['id']);
+            $insurant['agent_id'] = GlobalStorage::getUserId();
             $insurant_id = $mks->createClient($insurant);
             $policy->insurant_id = Arr::get($insurant_id, 'content.id');;
         }
@@ -132,8 +273,14 @@ class PolicyService implements PolicyServiceContract
         if ($draftId) {
             app(DraftRepositoryContract::class)->delete($draftId);
         }
-
-        $mks->createRewards($policy->id, $policy->registration_date->format('Y.m.d'), $policy->region_kladr, GlobalStorage::getUserId());
+        $reward = $mks->createRewards($policy->id, $policy->premium, $policy->registration_date->format('Y-m-d'), $policy->region_kladr, GlobalStorage::getUserId());
+        if (
+            (isset($reward['error']) && !$reward['error']) &&
+            (isset($reward['content']) && isset($reward['content']['reward_id']))
+        ) {
+            $policy->commission_id = $reward['content']['reward_id'];
+            $policy->save();
+        }
 
         return $policy->id;
     }
@@ -186,35 +333,15 @@ class PolicyService implements PolicyServiceContract
         foreach ($policies as $policy) {
             if ($policy->agent_id == $userId) {
                 $organized["self"][] = $policy;
-            } else if (!empty($subagent_ids) && in_array($policy->agent_id, $subagent_ids)) {
-                $organized["network"][] = $policy;
+            } else {
+                if (!empty($subagent_ids) && in_array($policy->agent_id, $subagent_ids)) {
+                    $organized["network"][] = $policy;
+                }
             }
             $organized["all"][] = $policy;
         }
 
         return $organized;
-    }
-
-    private function getAgent(int $id)
-    {
-        /**
-         * @var AuthMicroserviceContract $mks
-         */
-        $mks = app(AuthMicroserviceContract::class);
-
-        $user = Arr::get($mks->userInfo($id), 'content');
-        return $user['last_name'] . ' ' . $user['first_name'] . ' ' . $user['patronymic'];
-    }
-
-    private function getClient(int $id)
-    {
-        /**
-         * @var AuthMicroserviceContract $mks
-         */
-        $mks = app(CommissionCalculationMicroserviceContract::class);
-
-        $client = Arr::get($mks->clientInfo($id), 'content');
-        return $client['last_name'] . ' ' . $client['first_name'] . ' ' . $client['patronymic'];
     }
 
     /**
@@ -242,12 +369,12 @@ class PolicyService implements PolicyServiceContract
         $policiesList = collect($policiesList);
         $byInsuranceCompany = $policiesList
             ->groupBy('insurance_company_id')
-            ->map(function($item, $index){
+            ->map(function ($item, $index) {
                 $tmp = collect($item);
 
                 return [
                     "count" => $tmp->count(),
-                    "sum"   => $tmp->sum("premium")
+                    "sum" => $tmp->sum("premium")
                 ];
             });
         $result = [
@@ -266,18 +393,18 @@ class PolicyService implements PolicyServiceContract
 
                     return [
                         "count" => $tmp->count(),
-                        "sum"   => $tmp->sum("premium")
+                        "sum" => $tmp->sum("premium")
                     ];
                 });
         } else {
             $result["detail"] = $policiesList
                 ->groupBy('registration_date')
-                ->map(function($list, $index) {
+                ->map(function ($list, $index) {
                     $tmp = collect($list);
 
                     return [
                         "count" => $tmp->count(),
-                        "sum"   => $tmp->sum("premium")
+                        "sum" => $tmp->sum("premium")
                     ];
                 });
         }
@@ -292,9 +419,12 @@ class PolicyService implements PolicyServiceContract
             'subjects' => [],
             'drivers' => [],
         ];
+        $policyTypeService = app(PolicyTypeServiceContract::class);
+        $fields['type_id'] = $policyTypeService->getByCode('osago')->id; // this field should be received from form, but this feature not realised at 1st step of development
         if (isset($attributes['number'])) {
             $fields['number'] = $attributes['number'];
         }
+        $fields['premium'] = $attributes['premium'];
         foreach ($attributes['subjects'] as $subject) {
             $pSubject = [
                 'id' => $subject['id'],
@@ -334,19 +464,22 @@ class PolicyService implements PolicyServiceContract
             'vehicle_model' => 'model',
             'maker' => 'maker',
             'vehicle_reg_country' => 'countryOfRegistration',
-            'isUsedWithTrailer' => 'isUsedWithTrailer',
-            'mileage' => 'mileage',
-            'sourceAcquisition' => 'sourceAcquisition',
-            'vehicleCost' => 'vehicleCost',
-            'vehicleUsage' => 'vehicleUsage',
+            'vehicle_with_trailer' => 'isUsedWithTrailer',
+            'vehicle_mileage' => 'mileage',
+            'vehicle_acquisition' => 'sourceAcquisition',
+            'vehicle_cost' => 'vehicleCost',
+            'vehicle_usage_target' => 'vehicleUsage',
             'vehicle_vin' => 'vin',
-            'regNumber' => 'regNumber',
+            'vehicle_engine_power' => 'enginePower',
+            'vehicle_reg_number' => 'regNumber',
             'vehicle_made_year' => 'year',
-            'minWeight' => 'minWeight',
-            'maxWeight' => 'maxWeight',
+            'vehicle_unladen_mass' => 'minWeight',
+            'vehicle_loaded_mass' => 'maxWeight',
             'vehicle_count_seats' => 'seats',
         ], $attributes['car']);
-
+        $docTypeService = app(DocTypeServiceContract::class);
+        $docTypeId = $docTypeService->getDocTypeByCode($attributes['car']['document']['documentType']);
+        $fields['vehicle_reg_doc_type_id'] = $docTypeId;
         $this->setValuesByArray($fields, [
             'vehicle_doc_series' => 'series',
             'vehicle_doc_number' => 'number',
@@ -368,28 +501,30 @@ class PolicyService implements PolicyServiceContract
             'is_multi_drive' => 'isMultidrive'
         ], $attributes['policy']);
 
-        foreach ($attributes['drivers'] as $driver) {
-            foreach ($attributes['subjects'] as $subject) {
-                if ($subject['id'] == $driver['driver']['driverId']) {
-                    $pDriver = [];
-                    $this->setValuesByArray($pDriver, [
-                        'last_name' => 'lastName',
-                        'first_name' => 'firstName',
-                        'birth_date' => 'birthdate',
-                    ], $subject['fields']);
-                    $this->setValuesByArray($pDriver, [
-                        'exp_start_date' => 'drivingLicenseIssueDateOriginal',
-                    ], $driver['driver']);
-                    foreach ($subject['fields']['documents'] as $document) {
-                        if ($document['document']['documentType'] == 'license') {
-                            $this->setValuesByArray($pDriver, [
-                                'license_series' => 'series',
-                                'license_number' => 'number',
-                                'license_date' => 'dateIssue',
-                            ], $document['document']);
+        if (isset($attributes['drivers']) && $attributes['drivers']) {
+            foreach ($attributes['drivers'] as $driver) {
+                foreach ($attributes['subjects'] as $subject) {
+                    if ($subject['id'] == $driver['driver']['driverId']) {
+                        $pDriver = [];
+                        $this->setValuesByArray($pDriver, [
+                            'last_name' => 'lastName',
+                            'first_name' => 'firstName',
+                            'birth_date' => 'birthdate',
+                        ], $subject['fields']);
+                        $this->setValuesByArray($pDriver, [
+                            'exp_start_date' => 'drivingLicenseIssueDateOriginal',
+                        ], $driver['driver']);
+                        foreach ($subject['fields']['documents'] as $document) {
+                            if ($document['document']['documentType'] == 'license') {
+                                $this->setValuesByArray($pDriver, [
+                                    'license_series' => 'series',
+                                    'license_number' => 'number',
+                                    'license_date' => 'dateIssue',
+                                ], $document['document']);
+                            }
                         }
+                        $fields['drivers'][] = $pDriver;
                     }
-                    $fields['drivers'][] = $pDriver;
                 }
             }
         }

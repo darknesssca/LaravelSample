@@ -30,7 +30,7 @@ class SoglasieBillLinkService extends SoglasieService implements SoglasieBillLin
     public function run($company, $data, $additionalFields = []): array
     {
         $url = $this->getUrl([
-            'policyId' => $data->data['policyId'],
+            'policyId' => $data['data']['policyId'],
         ]);
         $headers = $this->getHeaders();
         $response = $this->getRequest($url, [], $headers, false);

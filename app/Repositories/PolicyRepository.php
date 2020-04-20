@@ -23,14 +23,26 @@ class PolicyRepository implements PolicyRepositoryContract
         $cacheKey = self::getCacheKey($filter);
 
         return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, function () use ($filter) {
-            $query = Policy::query();
+            $query = Policy::query()->with('type');
+
+            if ($policyIds = $filter['policy_ids'] ?? null) {
+                $query = $query->whereIn('id', $policyIds);
+            }
 
             if ($agentIds = $filter['agent_ids'] ?? null) {
                 $query = $query->whereIn('agent_id', $agentIds);
             }
 
+            if ($policeIds = $filter['ids'] ?? null) {
+                $query = $query->whereIn('id', $policeIds);
+            }
+
             if ($clientIds = $filter['client_ids'] ?? null) {
-                $query = $query->whereIn('client_id', $clientIds);
+                if (!empty($filter['agent_ids'])) {
+                    $query = $query->orWhereIn('client_id', $clientIds);
+                } else {
+                    $query = $query->whereIn('client_id', $clientIds);
+                }
             }
 
             if ($companyIds = $filter['company_ids'] ?? null) {
@@ -40,7 +52,6 @@ class PolicyRepository implements PolicyRepositoryContract
             if (isset($filter['paid'])) {
                 $query = $query->where('paid', $filter['paid']);
             }
-
             if ($from = $filter['from'] ?? null) {
                 $query = $query->where('registration_date', '>=', Carbon::parse($from));
             }
@@ -53,7 +64,12 @@ class PolicyRepository implements PolicyRepositoryContract
         });
     }
 
-    public function create(array $data)
+    /**Создает и сохраняет новый полис в БД
+     * @param array $data
+     * @return Policy
+     * @throws \Throwable
+     */
+    public function create(array $data):Policy
     {
         $policy = new Policy();
         $policy->fill($data);

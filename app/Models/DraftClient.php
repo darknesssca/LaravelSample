@@ -19,12 +19,18 @@ class DraftClient extends Model
         'passport_issuer',
         'passport_unit_code',
         'address',
+        'address_json',
         'phone',
         'email',
         'citizenship_id',
         'is_russian',
     ];
+
     protected $table = 'draft_clients';
+
+    protected $casts = [
+        'address_json' => 'array'
+    ];
 
     public function policy()
     {

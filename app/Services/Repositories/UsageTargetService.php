@@ -42,4 +42,21 @@ class UsageTargetService implements UsageTargetServiceContract
 
         return $data->codes->first()->reference_usage_target_code;
     }
+
+    public function getCompanyUsageTarget2($id, $companyId)
+    {
+        $tag = $this->getGuidesUsageTargetsTag();
+        $key = $this->getCacheKey($tag, $id, $companyId);
+        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($id, $companyId){
+            return $this->usageTargetRepository->getCompanyUsageTarget($id, $companyId);
+        });
+        if (!$data) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        $codes = $data->codes;
+        if (!$codes || !$codes->count()) {
+            throw new GuidesNotFoundException('Не найдены данные в справочнике');
+        }
+        return $data->codes->first()->reference_usage_target_code2;
+    }
 }

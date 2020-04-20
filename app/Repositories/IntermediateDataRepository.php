@@ -23,4 +23,9 @@ class IntermediateDataRepository implements IntermediateDataRepositoryContract
     {
         return IntermediateData::create($data);
     }
+
+    public function delete($token)
+    {
+        return IntermediateData::where('token', $token)->delete();
+    }
 }

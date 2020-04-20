@@ -24,9 +24,7 @@ class AutocodReportService extends AutocodService
      */
     public function getReport(string $vin, string $uid): array
     {
-        if (env('APP_DEBUG') && $uid == $this->uid_autocomplete) {
-            return ['report_id' => 'benfin_autocomplete_plus_report_Z94CB41AAGR322020@benfin', 'suggest_get' => '0'];
-        }
+
         if (env('APP_DEBUG') && $uid == $this->uid_taxi) {
             return ['report_id' => 'benfin_active_taxi_license_report_Z94CB41AAGR422720@benfin', 'suggest_get' => '0'];
         }
@@ -40,7 +38,11 @@ class AutocodReportService extends AutocodService
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
         ];
-        $res = $this->postRequest($this->baseurl . 'user/reports/' . $uid . '/_make', $data, $headers,false);
+        $res = $this->postRequest($this->baseurl . 'user/reports/' . $uid . '/_make', $data, $headers,false,false,true);
+        if(!empty($res['status']) && $res['status'] === 400)
+            throw new \Exception("Некорректный запрос");
+        if($res['state'] !== 'ok')
+            throw new \Exception($res['event']['message']);
         $this->logger->sendLog("Запрошен отчет autocod: vin=$vin, uid=$uid", env("LOG_MICROSERVICE_CODE"));
         return ['report_id' => $res['data'][0]['uid'], 'suggest_get' => $res['data'][0]['suggest_get']];
     }
@@ -62,7 +64,8 @@ class AutocodReportService extends AutocodService
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
         ];
-        return $this->getRequest($this->baseurl . 'user/reports/' . $report_id, $data, $headers,false);
+        $request = $this->getRequest($this->baseurl . 'user/reports/' . $report_id, $data, $headers, false);
+        return $request;
     }
 
     /**запросить генерацию отчета и вернуть готовый отчет
@@ -79,6 +82,8 @@ class AutocodReportService extends AutocodService
             $wait = intval($r2['data'][0]['progress_wait']); //количество ожидающих операций
             sleep(0.2);
         }
+        if(empty($r2['data'][0]['content']))
+            throw new \Exception("По заданному VIN ничего не найдено");
         return $r2;
     }
 

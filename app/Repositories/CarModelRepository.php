@@ -57,7 +57,7 @@ class CarModelRepository implements CarModelRepositoryContract
 
     }
 
-    public function getCompanyModelByName($mark_id, $name, $companyId)
+    public function getCompanyModelByName($mark_id, $category_id, $name, $companyId)
     {
         $cacheTag = self::getCarModelTag();
         $cacheKey = self::getCacheKey($mark_id, $name, $companyId);

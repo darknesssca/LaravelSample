@@ -112,7 +112,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                     ],
                     "Condition" => [
                         "Liability" => [
-                            "RiskCtg" => "28966116",
+                            "RiskCtg" => $attributes['policy']['isMultidrive'] ? '28966316' : "28966116",
                             'UsageType' => '1381850903',
                             "UsageTarget" => [
                                 $this->usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id) =>
@@ -155,11 +155,11 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                 "CountryCode" => $this->countryService->getCountryById($subject['fields']['citizenship'])['code'],
             ];
             $regAddress = $this->searchAddressByType($subject['fields'], 'registration');
-            if (isset($regAddress['StreetCode']) && $regAddress['StreetCode']) {
-                $this->cutStreetKladr($regAddress['StreetCode']);
+            if (isset($regAddress['streetKladr']) && $regAddress['streetKladr']) {
+                $this->cutStreetKladr($regAddress['streetKladr']);
             }
-            if (isset($regAddress['CityCode']) && $regAddress['CityCode']) {
-                $this->cutCityKladr($regAddress['CityCode']);
+            if (isset($regAddress['cityKladr']) && $regAddress['cityKladr']) {
+                $this->cutCityKladr($regAddress['cityKladr']);
             }
             $pAddress = [
                 "CountryCode" => $this->countryService->getCountryById($subject['fields']['citizenship'])['code']
