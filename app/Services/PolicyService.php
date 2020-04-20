@@ -53,6 +53,14 @@ class PolicyService implements PolicyServiceContract
         if ($search) {
             $agentIds = $this->getSearchAgentIds($search) ?? [];
             $clientIds = $this->getSearchClientIds($search) ?? [];
+            if (empty($agentIds) && empty($clientIds)) {
+                return [
+                    'policy' => [],
+                    'pagination' => [
+                        'pageCount' => 0
+                    ]
+                ];
+            }
             $filter['agent_ids'] = array_merge($filter['agent_ids'] ?? [], $agentIds);
 
             $filter['client_ids'] = $clientIds;
@@ -98,9 +106,19 @@ class PolicyService implements PolicyServiceContract
             } else {
                 $policies = $policies->sortBy($sort);
             }
+            /*
+             * костыль, что бы сохранить сортировку,
+             * так как sortBy не меняет ключи, а response->json() сортирует по ключам
+             */
+            $policies = collect($policies->values());
         }
 
-        return $policies->forPage($page, $perPage);
+        return [
+            'policy' => $policies->forPage($page, $perPage),
+            'pagination' => [
+                'pageCount' => ceil($policies->count() / $perPage)
+            ]
+        ];
     }
 
     private function getCommissionPaid($rewards)
@@ -218,7 +236,7 @@ class PolicyService implements PolicyServiceContract
 
         $result = $mks->search($search);
 
-        return array_values(Arr::get($result, 'content'));
+        return array_values(Arr::get($result, 'content', []));
     }
 
     private function getSearchClientIds(string $search)
@@ -227,7 +245,7 @@ class PolicyService implements PolicyServiceContract
 
         $result = $mks->search($search);
 
-        return array_values(Arr::get($result, 'content'));
+        return array_values(Arr::get($result, 'content', []));
     }
 
     public function create(array $fields, int $draftId = null)
