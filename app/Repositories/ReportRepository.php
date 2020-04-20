@@ -73,7 +73,7 @@ class ReportRepository implements ReportRepositoryContract
         }
 
 
-        $count = !empty($filter['page']) ? $filter['page'] : 10;
+        $count = !empty($filter['count']) ? $filter['count'] : 10;
         $page = !empty($filter['page']) ? $filter['page'] : 1;
         return $query->paginate(
             $count,
