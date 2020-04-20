@@ -4,15 +4,22 @@
 namespace App\Repositories;
 
 
+use App\Cache\ReportCacheTag;
 use App\Contracts\Repositories\ReportRepositoryContract;
 use App\Exceptions\ReportNotFoundException;
 use App\Models\Report;
+use Benfin\Cache\CacheKeysTrait;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class ReportRepository implements ReportRepositoryContract
 {
+    use ReportCacheTag, CacheKeysTrait;
+
+    private $_DAY_TTL = 24 * 60 * 60;
+
     /**
      * @param int $id
      * @return Report|Builder
@@ -20,7 +27,12 @@ class ReportRepository implements ReportRepositoryContract
      */
     public function getById($id): Report
     {
-        $report = Report::with('policies')->find($id);
+        $cacheTag = self::getReportCacheTag();
+        $cacheKey = self::getCacheKey('id', $id);
+
+        $report = Cache::tags($cacheTag)->remember($cacheKey, $this->_DAY_TTL, function () use ($id) {
+           return Report::with('policies')->find($id);
+        });
 
         $this->checkReport($report);
 
@@ -33,25 +45,30 @@ class ReportRepository implements ReportRepositoryContract
      */
     public function getAll(array $filter)
     {
-        $query = Report::with(['policies', 'file']);
+        $cacheTag = self::getReportCacheTagByAttribute("Filter");
+        $cacheKey = self::getCacheKey($filter);
 
-        if (!empty($filter['search'])) {
-            $query->where('name', 'like', '%' . $filter['search'] . '%');
-        }
+        return Cache::tags($cacheTag)->remember($cacheKey, $this->_DAY_TTL, function () use ($filter) {
+            $query = Report::with(['policies', 'file']);
 
-        if (!empty($filter['orderBy']) && !empty($filter['orderDirection'])){
-            $query->orderBy($filter['orderBy'], $filter['orderDirection']);
-        }
+            if (!empty($filter['search'])) {
+                $query->where('name', 'like', '%' . $filter['search'] . '%');
+            }
+
+            if (!empty($filter['orderBy']) && !empty($filter['orderDirection'])){
+                $query->orderBy($filter['orderBy'], $filter['orderDirection']);
+            }
 
 
-        $count = !empty($filter['count']) ? $filter['count'] : 10;
-        $page = !empty($filter['page']) ? $filter['page'] : 1;
-        return $query->paginate(
-            $count,
-            ['*'],
-            'Страницы',
-            $page
-        );
+            $count = !empty($filter['count']) ? $filter['count'] : 10;
+            $page = !empty($filter['page']) ? $filter['page'] : 1;
+            return $query->paginate(
+                $count,
+                ['*'],
+                'Страницы',
+                $page
+            );
+        });
     }
 
     /**
@@ -61,26 +78,31 @@ class ReportRepository implements ReportRepositoryContract
      */
     public function getByCreatorId(int $creator_id, array $filter)
     {
-        $query = Report::with(['policies', 'file'])
-            ->where('creator_id', '=', $creator_id);
+        $cacheTag = self::getReportCacheTagByAttribute("Creator|$creator_id");
+        $cacheKey = self::getCacheKey('Filter', $filter);
 
-        if (!empty($filter['search'])) {
-            $query->where('name', 'like', '%' . $filter['search'] . '%');
-        }
+        return Cache::tags($cacheTag)->remember($cacheKey, $this->_DAY_TTL, function () use ($creator_id, $filter) {
+            $query = Report::with(['policies', 'file'])
+                ->where('creator_id', '=', $creator_id);
 
-        if (!empty($filter['orderBy']) && !empty($filter['orderDirection'])){
-            $query->orderBy($filter['orderBy'], $filter['orderDirection']);
-        }
+            if (!empty($filter['search'])) {
+                $query->where('name', 'like', '%' . $filter['search'] . '%');
+            }
+
+            if (!empty($filter['orderBy']) && !empty($filter['orderDirection'])){
+                $query->orderBy($filter['orderBy'], $filter['orderDirection']);
+            }
 
 
-        $count = !empty($filter['page']) ? $filter['page'] : 10;
-        $page = !empty($filter['page']) ? $filter['page'] : 1;
-        return $query->paginate(
-            $count,
-            ['*'],
-            'Страницы',
-            $page
-        );
+            $count = !empty($filter['page']) ? $filter['page'] : 10;
+            $page = !empty($filter['page']) ? $filter['page'] : 1;
+            return $query->paginate(
+                $count,
+                ['*'],
+                'Страницы',
+                $page
+            );
+        });
     }
 
     public function create(array $fields): Report

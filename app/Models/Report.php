@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Observers\ReportObserver;
 use Benfin\Api\GlobalStorage;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Report extends Model
 {
+    use ReportObserver;
+
     protected $guarded = [];
     protected $table = 'reports';
     protected $fillable = [
