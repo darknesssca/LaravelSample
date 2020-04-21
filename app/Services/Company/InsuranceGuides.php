@@ -22,17 +22,17 @@ abstract class InsuranceGuides
     {
         //список объектов, реализующих интерфейс GuidesSourceContract
         $companies = [
-           // app(RenessansGuidesSourceContract::class),
-            //app(IngosstrahGuidesSourceContract::class),
-           // app(SoglasieGuidesSourceContract::class),
-           // app(TinkoffGuidesSourceContract::class),
+            app(RenessansGuidesSourceContract::class),
+            app(IngosstrahGuidesSourceContract::class),
+            app(SoglasieGuidesSourceContract::class),
+            app(TinkoffGuidesSourceContract::class),
         ];
 
         self::loadCountries();
 
         foreach ($companies as $company) {
             /** @var CompanyService $company */
-            echo "Импорт марок и моделей: " . $company::companyCode. "\n";
+            echo "Импорт марок и моделей: " . $company::companyCode . "\n";
 
             if (!$company->updateCarModelsGuides()) {
                 echo "!!!!!!!!!!!!!!!!!!!!!!!!ОШИБКА!!!!!!!!!!!!!!!!!!!!!!!!";
@@ -48,24 +48,27 @@ abstract class InsuranceGuides
      */
     private static function loadCountries()
     {
-        echo "Обновление списка стран\n";
         DB::transaction(function () {
+            echo "Обновление списка стран\n";
             $filename = Application::getInstance()->basePath() . "/storage/import/countries.json"; //todo: сделать импорт из minio
-            $arr = (array)json_decode(file_get_contents($filename));
-            $models = [];
-            Country::truncate();
+            $arr = json_decode(file_get_contents($filename), true);
+            $i = 0;
+            $count = count($arr);
             foreach ($arr as $item) {
-                $item = (array)$item;
-                $models[] = [
-                    "code" => $item["CODE"],
-                    "name" => array_key_exists("FULLNAME", $item) ? $item["FULLNAME"] : $item["SHORTNAME"],
-                    "short_name" => $item["SHORTNAME"],
+                $i++;
+                $name = array_key_exists("FULLNAME", $item) ? $item["FULLNAME"] : $item["SHORTNAME"];
+                $name = mb_convert_case($name, MB_CASE_TITLE, "UTF-8");
+                echo "Добавление страны $name, $i из $count\n";
+                Country::updateOrCreate([
+                    'code' => $item["CODE"],
+                ], [
+                    "name" => $name,
+                    "short_name" => mb_convert_case($item["SHORTNAME"], MB_CASE_TITLE, "UTF-8"),
                     "alpha2" => $item["ALFA2"],
                     "alpha3" => $item["ALFA3"],
-                ];
+                ]);
             }
-            Country::insert($models);
+            echo "Страны обновлены\n";
         });
-        echo "Страны обновлены\n";
     }
 }
