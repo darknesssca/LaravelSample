@@ -53,11 +53,11 @@ class Report extends Model
 
     public function getCreatePayoutLinkAttribute()
     {
-        return "/api/v1/car-insurance/reports/{$this->id}/payout/create";
+            return ($this->requested == false && $this->is_payed == false) ? "/api/v1/car-insurance/reports/{$this->id}/payout/create" : '';
     }
 
     public function getExecutePayoutLinkAttribute()
     {
-        return "/api/v1/car-insurance/reports/{$this->id}/payout/execute";
+        return ($this->is_payed == false && $this->requested == true) ? "/api/v1/car-insurance/reports/{$this->id}/payout/execute" : '';
     }
 }
