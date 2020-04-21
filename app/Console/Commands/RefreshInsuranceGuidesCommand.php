@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Http\Controllers\InsuranceController;
+use App\Services\Company\InsuranceGuides;
 use Illuminate\Console\Command;
 
 class RefreshInsuranceGuidesCommand extends Command
@@ -41,9 +41,8 @@ class RefreshInsuranceGuidesCommand extends Command
     public function handle()
     {
         echo "----Начало обновления справочников----\n";
-        //модели и марки машин
-       InsuranceController::refreshGuides();
-
+        //модели, страны и марки машин
+        InsuranceGuides::refreshGuides();
         echo "----Конец обновления справочников----\n";
     }
 }

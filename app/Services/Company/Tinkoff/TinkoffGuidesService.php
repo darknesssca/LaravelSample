@@ -57,8 +57,10 @@ class TinkoffGuidesService extends TinkoffService implements TinkoffGuidesSource
                 $cnt = $this->updateMark($val);
             }
         } catch (Exception $e) {
+            dump($e);
             return false;
         } catch (\PhpOffice\PhpSpreadsheet\Exception $e) {
+            dump($e);
             return false;
         }
         return true;

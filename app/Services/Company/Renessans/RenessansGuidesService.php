@@ -41,6 +41,7 @@ class RenessansGuidesService extends RenessansService implements RenessansGuides
             }
             return true;
         } catch (\Exception $ex) {
+            dump($ex);
             return false;
         }
     }

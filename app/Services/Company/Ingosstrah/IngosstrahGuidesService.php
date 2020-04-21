@@ -60,7 +60,7 @@ class IngosstrahGuidesService extends IngosstrahService implements IngosstrahGui
             }
             return true;
         } catch (\Exception $e) {
-            dd($e);
+            dump($e);
             return false;
         }
     }
