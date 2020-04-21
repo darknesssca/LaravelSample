@@ -192,9 +192,9 @@ trait GuidesSourceTrait
      * @param  $name
      * @return mixed
      */
-    private function getMarkName( $name)
+    private function getMarkName($name)
     {
-        if(empty($name))
+        if (empty($name))
             return false;
 
         //проверка надо ли добавлять марку
@@ -240,38 +240,31 @@ trait GuidesSourceTrait
 
             //МАРКИ
             //выбор всех марок машин, к которым привязано меньше $companies_count компаний
-            $select = DB::select("SELECT car_marks.id, COUNT(*) AS CarCount
-                                 FROM car_marks
-                                 JOIN insurance_marks ON insurance_marks.mark_id=car_marks.id
-                                 GROUP BY car_marks.id
-                                 HAVING COUNT(*) < $companies_count; ");
-
-            //id marks to delete
-            $ids = [];
+            $select = CarMark::selectRaw('id, COUNT(*) AS CarCount')
+                ->join('insurance_marks', 'insurance_marks.mark_id', '=', 'car_marks.id')
+                ->groupBy('id')
+                ->havingRaw("COUNT(*) < $companies_count")
+                ->get();
+            $ids_marks = [];
             foreach ($select as $item) {
-                $ids[] = ((array)$item)['id'];
+                $ids_marks[] = $item->id;
             }
-            if (count($ids) == 0) {
+            if (count($ids_marks) == 0) {
                 return;
             }
-            $listMarks = implode(',', $ids);
 
             //id models to delete
-            $select = DB::select("SELECT id FROM car_models WHERE mark_id IN ($listMarks)");
-            $ids = [];
+            $select = CarModel::select('id')->whereIn('mark_id', $ids_marks)->get();
+            $ids_models = [];
             foreach ($select as $item) {
-                $ids[] = ((array)$item)['id'];
+                $ids_models[] = $item->id;
             }
-            if (count($ids) == 0) {
-                return;
-            }
-            $listModels = implode(',', $ids);
 
-
-            DB::delete("DELETE FROM insurance_models WHERE model_id IN ($listModels)");
-            DB::delete("DELETE FROM insurance_marks WHERE mark_id IN ($listMarks)");
-            DB::delete("DELETE FROM car_models WHERE mark_id IN ($listMarks)");
-            $marks_cnt = DB::delete("DELETE FROM car_marks WHERE id IN ($listMarks)");
+            if (count($ids_models) == 0) return;
+            InsuranceModel::whereIn('model_id', $ids_models)->delete();
+            InsuranceMark::whereIn('mark_id', $ids_marks)->delete();
+            CarModel::whereIn('mark_id', $ids_marks)->delete();
+            $marks_cnt = CarMark::whereIn('id', $ids_marks)->delete();
             echo "Удалено $marks_cnt марок с моделями\n";
         });
     }
