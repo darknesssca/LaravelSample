@@ -468,7 +468,7 @@ class PolicyService implements PolicyServiceContract
                 'birth_date' => 'birthdate',
                 'patronymic' => 'middleName',
                 'email' => 'email',
-                'gender' => 'gender',
+                'gender_id' => 'gender',
                 'citizenship' => 'citizenship',
                 'phone' => 'phone',
             ], $subject['fields']);
