@@ -143,7 +143,7 @@ trait GuidesSourceTrait
                 );
             }
         } catch (\Exception $ex) {
-            dd($ex);
+            dump($ex);
             DB::rollBack(); //откат транзакции, если что-то случилось
             throw $ex;
         }
@@ -189,11 +189,14 @@ trait GuidesSourceTrait
     }
 
     /**проверяет марку по словарям и возвращает правильное имя или false, если эту марку не добавляем
-     * @param string $name
+     * @param  $name
      * @return mixed
      */
-    private function getMarkName(string $name)
+    private function getMarkName( $name)
     {
+        if(empty($name))
+            return false;
+
         //проверка надо ли добавлять марку
         foreach ($this->mark_dismiss as $item) {
             if (strpos(mb_strtolower($name), $item) === -1) {
@@ -242,6 +245,8 @@ trait GuidesSourceTrait
                                  JOIN insurance_marks ON insurance_marks.mark_id=car_marks.id
                                  GROUP BY car_marks.id
                                  HAVING COUNT(*) < $companies_count; ");
+
+            //id marks to delete
             $ids = [];
             foreach ($select as $item) {
                 $ids[] = ((array)$item)['id'];
@@ -249,8 +254,24 @@ trait GuidesSourceTrait
             if (count($ids) == 0) {
                 return;
             }
-            $list = implode(',', $ids);
-            $marks_cnt = DB::delete("DELETE FROM car_marks WHERE id IN ($list)");
+            $listMarks = implode(',', $ids);
+
+            //id models to delete
+            $select = DB::select("SELECT id FROM car_models WHERE mark_id IN ($listMarks)");
+            $ids = [];
+            foreach ($select as $item) {
+                $ids[] = ((array)$item)['id'];
+            }
+            if (count($ids) == 0) {
+                return;
+            }
+            $listModels = implode(',', $ids);
+
+
+            DB::delete("DELETE FROM insurance_models WHERE model_id IN ($listModels)");
+            DB::delete("DELETE FROM insurance_marks WHERE mark_id IN ($listMarks)");
+            DB::delete("DELETE FROM car_models WHERE mark_id IN ($listMarks)");
+            $marks_cnt = DB::delete("DELETE FROM car_marks WHERE id IN ($listMarks)");
             echo "Удалено $marks_cnt марок с моделями\n";
         });
     }
