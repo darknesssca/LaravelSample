@@ -7,15 +7,12 @@ namespace App\Services\Company;
 use App\Models\CarCategory;
 use App\Models\CarMark;
 use App\Models\CarModel;
-use App\Models\Country;
 use App\Models\CountryInsurance;
 use App\Models\InsuranceCompany;
 use App\Models\InsuranceMark;
 use App\Models\InsuranceModel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Reader\Exception;
 
 trait GuidesSourceTrait
 {
@@ -214,11 +211,13 @@ trait GuidesSourceTrait
     }
 
     /**проверяет модель по словарям и возвращает правильное имя или false, если эту модель не добавляем
-     * @param string $name
+     * @param  $name
      * @return mixed
      */
-    private function getModelName(string $name)
+    private function getModelName($name)
     {
+        if (empty($name))
+            return false;
         //проверка надо ли добавлять модель
         foreach ($this->model_dismiss as $item) {
             if (strpos(mb_strtolower($name), $item) === -1) {

@@ -22,9 +22,9 @@ class SoglasieGuidesService extends SoglasieService implements SoglasieGuidesSou
                                 PolicyServiceContract $policyService
     )
     {
-        parent::__construct($intermediateDataService,$requestProcessService,$policyService);
+        parent::__construct($intermediateDataService, $requestProcessService, $policyService);
         $this->baseUrl = env("SOGLASIE_API_CARS");
-        $this->companyId = InsuranceCompany::where('code',self::companyCode)->first()['id'];
+        $this->companyId = InsuranceCompany::where('code', self::companyCode)->first()['id'];
     }
 
 
@@ -32,14 +32,14 @@ class SoglasieGuidesService extends SoglasieService implements SoglasieGuidesSou
     {
         try {
             $headers = $this->generateHeaders();
-            $response = $this->getRequest($this->baseUrl, [], $headers,false);
-
+            $response = $this->getRequest($this->baseUrl, [], $headers, false, false);
             foreach ($response as $mark) {
                 $val = $this->prepareMark($mark);
                 $cnt = $this->updateMark($val);
             }
             return true;
         } catch (\Exception $ex) {
+            dump($ex);
             return false;
         }
     }
@@ -71,7 +71,7 @@ class SoglasieGuidesService extends SoglasieService implements SoglasieGuidesSou
         ];
         //МОДЕЛИ
         $headers = $this->generateHeaders();
-        $response = $this->getRequest($this->baseUrl . "/" . $mark['id'], [], $headers,false);
+        $response = $this->getRequest($this->baseUrl . "/" . $mark['id'], [], $headers, false);
 
         foreach ($response as $model) {
             $model = [
