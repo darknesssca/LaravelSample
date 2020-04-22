@@ -126,8 +126,8 @@ class ProcessingService extends CompanyService implements ProcessingServiceContr
             foreach ($processPool as $process) {
                 $processItem = $process->toArray();
                 $processItem['data'] = json_decode($processItem['data'], true);
-                $company = $this->getCompany($processItem['company']);
                 try {
+                    $company = $this->getCompany($processItem['company']);
                     $this->runService($company, $processItem, $method);
                 } catch (\Exception $exception) { // отлавливаем все эксепшены для обеспечения корректной работы механизма
                     $this->processingError($company, $processItem, $exception);
@@ -150,19 +150,23 @@ class ProcessingService extends CompanyService implements ProcessingServiceContr
      */
     protected function processingError($company, $processItem, $exception)
     {
-        if ($exception instanceof AbstractException) {
-            $errorMessages = $exception->getMessageData();
-        } else {
-            $errorMessages = [$exception->getMessage()];
-        }
-        $isUpdated = $this->requestProcessService->updateCheckCount($processItem['token']);
-        if ($isUpdated === false) {
-            $tokenData = $this->getTokenData($processItem['token'], true);
-            $tokenData[$company->code]['status'] = 'error';
-            $tokenData[$company->code]['errorMessages'] = $errorMessages;
-            $this->intermediateDataService->update($processItem['token'], [
-                'data' => json_encode($tokenData),
-            ]);
+        try {
+            if ($exception instanceof AbstractException) {
+                $errorMessages = $exception->getMessageData();
+            } else {
+                $errorMessages = [$exception->getMessage()];
+            }
+            $isUpdated = $this->requestProcessService->updateCheckCount($processItem['token']);
+            if ($isUpdated === false) {
+                $tokenData = $this->getTokenData($processItem['token'], true);
+                $tokenData[$company->code]['status'] = 'error';
+                $tokenData[$company->code]['errorMessages'] = $errorMessages;
+                $this->intermediateDataService->update($processItem['token'], [
+                    'data' => json_encode($tokenData),
+                ]);
+            }
+        } catch (\Exception $exception) {
+            // ignore
         }
     }
 

@@ -277,7 +277,6 @@ class PolicyService implements PolicyServiceContract
         $owner['agent_id'] = GlobalStorage::getUserId();
         $owner_id = $mks->createClient($owner);
         $policy->client_id = Arr::get($owner_id, 'content.id');
-
         if (count($fields['subjects']) > 1) {
             $insurant = $fields['subjects'][$policy->insurant_id];
             unset($insurant['id']);
@@ -285,7 +284,6 @@ class PolicyService implements PolicyServiceContract
             $insurant_id = $mks->createClient($insurant);
             $policy->insurant_id = Arr::get($insurant_id, 'content.id');;
         }
-
         $policy->save();
 
         if ($drivers = $fields['drivers']) {
@@ -468,7 +466,7 @@ class PolicyService implements PolicyServiceContract
                 'birth_date' => 'birthdate',
                 'patronymic' => 'middleName',
                 'email' => 'email',
-                'gender' => 'gender',
+                'gender_id' => 'gender',
                 'citizenship' => 'citizenship',
                 'phone' => 'phone',
             ], $subject['fields']);
