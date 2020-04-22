@@ -219,9 +219,9 @@ class DraftService implements DraftServiceContract
         //car
         $this->prepareCarData($policyData, $attributes);
         $draft = $this->draftRepository->update($oldDraft->id, $policyData);
-        if (isset($attributes['drivers']) && $attributes['drivers'] && is_array($attributes['drivers'])) {
+        if ( isset($attributes['drivers']) && isset($attributes["policy"]["isMultidrive"]) ) {
             $driverDataUpdate = [];
-            if (isset($attributes["policy"]["isMultidrive"]) && !$attributes["policy"]["isMultidrive"]) {
+            if ( !$attributes["policy"]["isMultidrive"] && isset($attributes['drivers']) && is_array($attributes['drivers'])) {
                 foreach ($attributes['drivers'] as $driver) {
                     $driverSubject = collect($attributes["subjects"])
                         ->filter(function ($item) use ($driver) {
@@ -277,7 +277,6 @@ class DraftService implements DraftServiceContract
     protected function preparePolicyData(&$policyData, $attributes)
     {
         $this->setValuesByArray($policyData, [
-            'region_id' => 'policyProcessingRegion',
             'is_multi_drive' => 'isMultidrive',
         ], $attributes['policy']);
         if (isset($attributes['policy']['beginDate']) && $attributes['policy']['beginDate']) {
