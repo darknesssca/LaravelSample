@@ -35,6 +35,9 @@ class RequestProcessService implements RequestProcessServiceContract
         } else {
             $object = $this->find($token);
         }
+        if (!$object) {
+            return false;
+        }
         $checkCount = ++$object->checkCount;
         if ($checkCount >= config('api_sk.maxCheckCount')) {
             $object->delete();
