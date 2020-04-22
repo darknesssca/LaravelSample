@@ -20,7 +20,7 @@ class CarModelRepository implements CarModelRepositoryContract
     public function getModelListByMarkId($mark_id)
     {
         $cacheTag = self::getCarModelTag();
-        $cacheKey = self::getCacheKey($mark_id);
+        $cacheKey = self::getCacheKey("ListById", $mark_id);
 
         return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, function () use ($mark_id) {
             return CarModel::select(["id", "code", "name", "category_id", "mark_id"])
@@ -41,7 +41,7 @@ class CarModelRepository implements CarModelRepositoryContract
     public function getCompanyModel($mark_id, $id, $companyId)
     {
         $cacheTag = self::getCarModelTag();
-        $cacheKey = self::getCacheKey($mark_id, $id, $companyId);
+        $cacheKey = self::getCacheKey("Company", $mark_id, $id, $companyId);
 
         return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL,
             function () use ($mark_id, $id, $companyId) {
@@ -60,7 +60,7 @@ class CarModelRepository implements CarModelRepositoryContract
     public function getCompanyModelByName($mark_id, $category_id, $name, $companyId)
     {
         $cacheTag = self::getCarModelTag();
-        $cacheKey = self::getCacheKey($mark_id, $name, $companyId);
+        $cacheKey = self::getCacheKey("Name", $mark_id, $name, $companyId);
 
         return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL,
             function () use ($mark_id, $name, $companyId) {
@@ -80,7 +80,7 @@ class CarModelRepository implements CarModelRepositoryContract
     public function getCompanyOtherModel($mark_id, $categoryId, $companyId)
     {
         $cacheTag = self::getCarModelTag();
-        $cacheKey = self::getCacheKey($mark_id, $categoryId, $companyId);
+        $cacheKey = self::getCacheKey("Other", $mark_id, $categoryId, $companyId);
 
         return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL,
             function () use ($mark_id, $categoryId, $companyId) {

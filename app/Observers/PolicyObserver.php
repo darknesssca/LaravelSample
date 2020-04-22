@@ -5,6 +5,8 @@ namespace App\Observers;
 
 
 use App\Cache\Policy\PolicyCacheTag;
+use Benfin\Api\Contracts\AuthMicroserviceContract;
+use Benfin\Api\GlobalStorage;
 use Illuminate\Support\Facades\Cache;
 
 trait PolicyObserver
@@ -16,17 +18,23 @@ trait PolicyObserver
         parent::boot();
 
         static::created(function ($model) {
-            Cache::tags(self::getPolicyCacheTag())->flush();
+            Cache::tags(self::getPolicyListCacheTagByUser())->flush();
+            $referId = app(AuthMicroserviceContract::class)->userInfo(GlobalStorage::getUserId())["referer_id"] ?? "";
+            Cache::tags(self::getPolicyListCacheTagByAttribute("List|$referId"))->flush();
         });
 
         static::updated(function ($model) {
             if ($model->isDirty()) {
-                Cache::tags(self::getPolicyCacheTag())->flush();
+                Cache::tags(self::getPolicyListCacheTagByUser())->flush();
+                $referId = app(AuthMicroserviceContract::class)->userInfo(GlobalStorage::getUserId())["referer_id"] ?? "";
+                Cache::tags(self::getPolicyListCacheTagByAttribute("List|$referId"))->flush();
             }
         });
 
         static::deleted(function ($model) {
-            Cache::tags(self::getPolicyCacheTag())->flush();
+            Cache::tags(self::getPolicyListCacheTagByUser())->flush();
+            $referId = app(AuthMicroserviceContract::class)->userInfo(GlobalStorage::getUserId())["referer_id"] ?? "";
+            Cache::tags(self::getPolicyListCacheTagByAttribute("List|$referId"))->flush();
         });
     }
 }

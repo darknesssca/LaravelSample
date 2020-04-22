@@ -11,6 +11,6 @@ trait DraftCacheTags
 
     protected static function getDraftAgentTag(int $agentId): string
     {
-        return self::getDraftTag() . "|$agentId";
+        return self::getDraftTag() . "|Agent|$agentId";
     }
 }

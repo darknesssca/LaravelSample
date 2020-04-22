@@ -20,7 +20,7 @@ class DraftRepository implements DraftRepositoryContract
     public function getById(int $id, int $agentId)
     {
         $tag = self::getDraftAgentTag($agentId);
-        $key = self::getCacheKey($id, $agentId);
+        $key = self::getCacheKey("ById", $id, $agentId);
 
         return Cache::tags($tag)->remember($key, $this->_DAY_TTL, function () use ($id, $agentId) {
             return Draft::with([
@@ -49,7 +49,7 @@ class DraftRepository implements DraftRepositoryContract
 
     public function getDraftsByAgentId($agentId)
     {
-        $cacheKey = self::getCacheKey($agentId);
+        $cacheKey = self::getCacheKey("Agent", $agentId);
         $cacheTag = self::getDraftAgentTag($agentId);
 
         return Cache::tags($cacheTag)->remember($cacheKey, $this->_DAY_TTL, function () use ($agentId) {
@@ -98,7 +98,7 @@ class DraftRepository implements DraftRepositoryContract
     public function getByFilter(int $agentId, array $filter)
     {
         $cacheTag = self::getDraftAgentTag($agentId);
-        $cacheKey = self::getCacheKey($agentId, $filter);
+        $cacheKey = self::getCacheKey("filter", $agentId, $filter);
 
         return Cache::tags($cacheTag)->remember($cacheKey, $this->_DAY_TTL, function () use ($agentId, $filter) {
             $query = Draft::with(['owner', 'mark', 'category']);

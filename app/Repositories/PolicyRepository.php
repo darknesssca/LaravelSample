@@ -7,6 +7,7 @@ namespace App\Repositories;
 use App\Cache\Policy\PolicyCacheTag;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Models\Policy;
+use Benfin\Api\GlobalStorage;
 use Benfin\Cache\CacheKeysTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -19,10 +20,8 @@ class PolicyRepository implements PolicyRepositoryContract
 
     public function getList(array $filter)
     {
-        $cacheTag = self::getPolicyCacheTag();
-        $cacheKey = self::getCacheKey($filter);
-
-        return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, function () use ($filter) {
+        //Оборачиваем запрос в аннонимную функцию, для кеша или для вызова по условию
+        $queryFunction = function () use ($filter) {
             $query = Policy::query()->with('type');
 
             if ($policyIds = $filter['policy_ids'] ?? null) {
@@ -61,7 +60,16 @@ class PolicyRepository implements PolicyRepositoryContract
             }
 
             return $query->get();
-        });
+        };
+        //Если пользователь  админ выдаем данные без кеша
+        if (GlobalStorage::userIsAdmin()) {
+            return $queryFunction();
+        }
+
+        $cacheTag = self::getPolicyListCacheTagByUser();
+        $cacheKey = self::getCacheKey($filter);
+
+        return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, $queryFunction);
     }
 
     /**Создает и сохраняет новый полис в БД
@@ -69,7 +77,7 @@ class PolicyRepository implements PolicyRepositoryContract
      * @return Policy
      * @throws \Throwable
      */
-    public function create(array $data):Policy
+    public function create(array $data): Policy
     {
         $policy = new Policy();
         $policy->fill($data);
@@ -82,31 +90,21 @@ class PolicyRepository implements PolicyRepositoryContract
 
     public function getNotPaidPolicyByPaymentNumber($policyNumber)
     {
-        $cacheTag = self::getPolicyCacheTag();
-        $cacheKey = self::getCacheKey($policyNumber);
-
-        return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, function () use ($policyNumber) {
-            return Policy::where('number', $policyNumber)
-                ->where('paid', 0)
-                ->first();
-        });
+        return Policy::where('number', $policyNumber)
+            ->where('paid', 0)
+            ->first();
     }
 
     public function getNotPaidPolicies($limit)
     {
-        $cacheTag = self::getPolicyCacheTag();
-        $cacheKey = self::getCacheKey($limit);
-
-        return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, function () use ($limit) {
-            return Policy::with([
-                'company',
-                'bill',
-            ])
-                ->where('paid', 0)
-                ->whereDate('registration_date', '>', (new Carbon)->subDays(2)->format('Y-m-d'))
-                ->limit($limit)
-                ->first();
-        });
+        return Policy::with([
+            'company',
+            'bill',
+        ])
+            ->where('paid', 0)
+            ->whereDate('registration_date', '>', (new Carbon)->subDays(2)->format('Y-m-d'))
+            ->limit($limit)
+            ->first();
     }
 
     public function update($id, $data)
@@ -116,17 +114,9 @@ class PolicyRepository implements PolicyRepositoryContract
 
     public function searchOldPolicyByPolicyNumber($companyId, $policyNumber)
     {
-        $cacheTag = self::getPolicyCacheTag();
-        $cacheKey = self::getCacheKey($companyId, $policyNumber);
-
-        return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL,
-            function () use ($policyNumber, $companyId) {
-                return Policy::where('paid', 1)
-                    ->where('insurance_company_id', $companyId)
-                    ->where('number', $policyNumber)
-                    ->first();
-            }
-        );
-
+        return Policy::where('paid', 1)
+            ->where('insurance_company_id', $companyId)
+            ->where('number', $policyNumber)
+            ->first();
     }
 }
