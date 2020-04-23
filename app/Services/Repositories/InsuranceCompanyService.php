@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Cache;
 
 class InsuranceCompanyService implements InsuranceCompanyServiceContract
 {
-    use LocalStorageTrait, CacheTrait;
+    use LocalStorageTrait;
 
     protected $insuranceCompanyRepository;
 
@@ -52,11 +52,8 @@ class InsuranceCompanyService implements InsuranceCompanyServiceContract
 
     public function getInsuranceCompanyList()
     {
-        $tag = $this->getGuidesInsuranceCompaniesTag();
-        $key = $this->getCacheKey($tag, 'all');
-        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () {
-            return $this->insuranceCompanyRepository->getInsuranceCompanyList();
-        });
+        $data = $this->insuranceCompanyRepository->getInsuranceCompanyList();
+
         if (!$data || !$data->count()) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }

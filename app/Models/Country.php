@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Observers\CountryObserver;
 use Illuminate\Database\Eloquent\Model;
 
 class Country extends Model
 {
+    use CountryObserver;
+
     protected $fillable = [
         'code',
         'name',

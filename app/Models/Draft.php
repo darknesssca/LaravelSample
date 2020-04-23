@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Observers\DraftObserver;
 use Illuminate\Database\Eloquent\Model;
 
 class Draft extends Model
 {
+    use DraftObserver;
+
     protected $table = 'drafts';
 
     protected $fillable = [
