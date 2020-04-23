@@ -24,9 +24,8 @@ class DraftRepository implements DraftRepositoryContract
 
         return Cache::tags($tag)->remember($key, $this->_DAY_TTL, function () use ($id, $agentId) {
             return Draft::with([
-                'model',
-                'model.mark',
-                'model.category',
+                'mark',
+                'category',
                 'doctype',
                 'type',
                 'owner',
@@ -38,7 +37,7 @@ class DraftRepository implements DraftRepositoryContract
                 'regcountry',
                 'acquisition',
                 'usagetarget',
-                'drivers',
+                'drivers'
             ])
                 ->where('id', $id)
                 ->where('agent_id', $agentId)
@@ -54,9 +53,8 @@ class DraftRepository implements DraftRepositoryContract
 
         return Cache::tags($cacheTag)->remember($cacheKey, $this->_DAY_TTL, function () use ($agentId) {
             return Draft::with([
-                'model',
-                'model.mark',
-                'model.category',
+                'mark',
+                'category',
                 'doctype',
                 'type',
                 'owner',
@@ -68,7 +66,7 @@ class DraftRepository implements DraftRepositoryContract
                 'regcountry',
                 'acquisition',
                 'usagetarget',
-                'drivers',
+                'drivers'
             ])
                 ->where('agent_id', $agentId)
                 ->get();
