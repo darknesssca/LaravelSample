@@ -17,6 +17,7 @@ use Benfin\Api\GlobalStorage;
 use Benfin\Api\Services\AuthMicroservice;
 use Benfin\Api\Services\CommissionCalculationMicroservice;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 
@@ -316,6 +317,11 @@ class PolicyService implements PolicyServiceContract
         return $policy->id;
     }
 
+    /**возарщает статистику полисов для агентов
+     * @param array $filter
+     * @return array
+     * @throws StatisticsNotFoundException
+     */
     public function statistic(array $filter = [])
     {
         $userId = GlobalStorage::getUserId();
@@ -333,9 +339,7 @@ class PolicyService implements PolicyServiceContract
             }
         }
 
-        /**
-         * @var Collection $policies
-         */
+        /** * @var Collection $policies */
         $policies = $this->policyRepository->getList($filter)->sortBy('registration_date');
 
         if ($policies->isNotEmpty()) {
@@ -344,7 +348,7 @@ class PolicyService implements PolicyServiceContract
             $needSortByMonth = $startDate->diffInMonths($endDate) > 0;
 
             $organizedPolicies = $this->organizePolicies($policies, $userId, $subagentIds);
-            $organizedStatistics = $this->makeStatistic($organizedPolicies, $needSortByMonth);
+            $organizedStatistics = $this->makeStatistic($organizedPolicies, $needSortByMonth, $filter['from'], $filter['to']);
         }
 
         if (empty($organizedStatistics)) {
@@ -356,6 +360,9 @@ class PolicyService implements PolicyServiceContract
     /**
      * @param $policies
      * сортировка массива по своим/агентским продажам
+     * @param $userId
+     * @param array $subagent_ids
+     * @return array
      */
     private function organizePolicies($policies, $userId, $subagent_ids = [])
     {
@@ -378,24 +385,28 @@ class PolicyService implements PolicyServiceContract
     /**
      * @param array $organizedArray
      * @param bool $needSortByMonth
-     *
+     * @param $from
+     * @param $to
+     * @return array
      */
-    private function makeStatistic($organizedArray, $needSortByMonth)
+    private function makeStatistic($organizedArray, $needSortByMonth, $from, $to)
     {
         $statistics = [];
         foreach ($organizedArray as $key => $policies) {
-            $statistics[$key] = $this->makeStatisticFromPoliciesList($policies, $needSortByMonth);
+            $statistics[$key] = $this->makeStatisticFromPoliciesList($policies, $needSortByMonth, $from, $to);
         }
         return $statistics;
     }
 
     /**
+     * Группировка статистики продаж по датам
      * @param Collection $policiesList
      * @param bool $needSortByMonth
+     * @param $from
+     * @param $to
      * @return array
-     * Группировка статистики продаж по датам
      */
-    private function makeStatisticFromPoliciesList($policiesList, $needSortByMonth): array
+    private function makeStatisticFromPoliciesList($policiesList, $needSortByMonth, $from, $to): array
     {
         $policiesList = collect($policiesList);
         $byInsuranceCompany = $policiesList
@@ -439,6 +450,18 @@ class PolicyService implements PolicyServiceContract
                     ];
                 });
         }
+
+        //добавление несуществующих в выборке дат
+        $period = CarbonPeriod::create($from, $to)->toArray();
+        foreach ($period as $date) {
+            $formatted = $date->format('Y-m-d');
+            if (!$result['detail']->has($formatted)) {
+                $result['detail']->put($formatted, ['count' => 0, 'sum' => 0]);
+            }
+        }
+
+        //сортировка по дате
+        $result['detail'] = $result['detail']->sortKeys();
         return $result;
     }
 
