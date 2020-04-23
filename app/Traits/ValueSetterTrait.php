@@ -20,4 +20,20 @@ trait ValueSetterTrait
             }
         }
     }
+
+    public function setValuesByArrayWithEmptyString(&$target, $dependencies, $source)
+    {
+        foreach ($dependencies as $targetName => $sourceName) {
+            if (isset($source[$sourceName])) {
+                if (gettype($source[$sourceName]) == 'array') {
+                    continue;
+                }
+                if ($source[$sourceName] || gettype($source[$sourceName]) === 'boolean') {
+                    $target[$targetName] = $source[$sourceName];
+                } else {
+                    $target[$targetName] = null;
+                }
+            }
+        }
+    }
 }

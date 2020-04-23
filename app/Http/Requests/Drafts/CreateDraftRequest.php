@@ -22,7 +22,8 @@ class CreateDraftRequest extends AbstractRequest
             "subjects.*.fields.gender" => "regex:/^\d$/", // TODO: in справочник
             "subjects.*.fields.citizenship" => "regex:/^\d+$/", // TODO: in справочник
             "subjects.*.fields.isResident" => "boolean", // TODO: in справочник
-            "subjects.*.fields.address" => "string",
+            "subjects.*.fields.addresses" => "array",
+            "subjects.*.fields.addresses.*.address" => "array",
             "subjects.*.fields.passport.series" => "string",
             "subjects.*.fields.passport.number" => "string",
             "subjects.*.fields.passport.issuedBy" => "string",
