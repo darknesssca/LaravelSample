@@ -66,7 +66,7 @@ class CarModelService implements CarModelServiceContract
 
     public function getCompanyModelByName($mark_id, $categoryId, $name, $companyId)
     {
-        $data = $this->carModelRepository->getCompanyModelByName($mark_id, $name, $companyId);
+        $data = $this->carModelRepository->getCompanyModelByName($mark_id, $categoryId, $name, $companyId);
 
         if (!$data) {
             $result = [

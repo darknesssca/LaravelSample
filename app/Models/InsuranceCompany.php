@@ -25,6 +25,6 @@ class InsuranceCompany extends Model
 
     public function logo()
     {
-        return $this->belongsTo('App\Models\Files');
+        return $this->belongsTo('App\Models\File', 'logo_id', 'id');
     }
 }
