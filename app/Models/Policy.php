@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Observers\PolicyObserver;
 use Illuminate\Database\Eloquent\Model;
 
 class Policy extends Model
 {
+    use PolicyObserver;
+
     protected $table = 'policies';
 
     protected $fillable = [

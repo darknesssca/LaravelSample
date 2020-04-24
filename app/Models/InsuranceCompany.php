@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
+use App\Observers\InsuranceCompanyObserver;
 use Illuminate\Database\Eloquent\Model;
 
 class InsuranceCompany extends Model
 {
+    use InsuranceCompanyObserver;
 
     protected $fillable = [
         'active',
@@ -24,6 +25,6 @@ class InsuranceCompany extends Model
 
     public function logo()
     {
-        return $this->belongsTo('App\Models\Files');
+        return $this->belongsTo('App\Models\File', 'logo_id', 'id');
     }
 }

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Observers\UsageTargetObserver;
 use Illuminate\Database\Eloquent\Model;
 
 class UsageTarget extends Model
 {
+    use UsageTargetObserver;
+
     protected $fillable = [
         'code',
         'name',

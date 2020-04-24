@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Observers\CarModelObserver;
 use Illuminate\Database\Eloquent\Model;
 
 class CarModel extends Model
 {
+    use CarModelObserver;
+
     protected $fillable = [
         'mark_id',
         'category_id',
