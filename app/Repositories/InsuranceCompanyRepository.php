@@ -42,9 +42,8 @@ class InsuranceCompanyRepository implements InsuranceCompanyRepositoryContract
     {
         $cacheTag = self::getInsuranceCompanyTag();
         $cacheKey = self::getInsuranceCompanyListKey();
-
         return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, function () {
-            return InsuranceCompany::select(["id", "code", "name"])->where("active", true)->get();
+            return InsuranceCompany::query()->with('logo')->where("active", true)->get();
         });
     }
 

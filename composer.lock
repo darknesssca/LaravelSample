@@ -1,7 +1,7 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
     "content-hash": "9495d277bc61580430bf07a29eb80bff",
@@ -163,11 +163,11 @@
         },
         {
             "name": "benfin/packages/cache",
-            "version": "v1.0.3",
+            "version": "v1.0.4",
             "source": {
                 "type": "git",
                 "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/cache.git",
-                "reference": "81e0a175ae4b791d5bf6ea979b975ac24d916c52"
+                "reference": "5c9f08fa075d2077d4dc954ca8ae77adaa33dab0"
             },
             "require": {
                 "laravel/lumen-framework": ">=6.0",
@@ -191,7 +191,7 @@
                 }
             ],
             "description": "BENFIN cache",
-            "time": "2020-04-16T10:49:11+00:00"
+            "time": "2020-04-16T15:24:14+00:00"
         },
         {
             "name": "benfin/packages/requests",
