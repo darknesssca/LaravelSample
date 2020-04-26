@@ -45,7 +45,7 @@ class CreateDraftRequest extends AbstractRequest
             "car.vehicleUsage" => "regex:/^\d+$/", // TODO: in справочник
             "car.vin" => "string",
             "car.regNumber" => "string",
-            "car.year" => "string|min:4|max:4",
+            "car.year" => "regex:/^\d+$/",
             "car.document.documentType" => "string", // TODO: in справочник
             "car.document.series" => "string",
             "car.document.number" => "string",
