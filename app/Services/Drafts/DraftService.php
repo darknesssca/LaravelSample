@@ -396,6 +396,8 @@ class DraftService implements DraftServiceContract
             'last_name' => 'lastName',
             'patronymic' => 'middleName',
             'address' => 'addressString',
+            'gender_id' => 'gender',
+            'citizenship_id' => 'citizenship'
         ], $attributes);
 
 

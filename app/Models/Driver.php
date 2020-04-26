@@ -17,7 +17,9 @@ class Driver extends Model
         'license_date',
         'exp_start_date',
         'address',
-        'address_json'
+        'address_json',
+        'gender_id',
+        'citizenship_id'
     ];
 
     protected $table = 'drivers';
@@ -29,5 +31,15 @@ class Driver extends Model
     public function policy()
     {
         return $this->belongsToMany('App\Models\Policy');
+    }
+
+    public function gender()
+    {
+        return $this->belongsTo('App\Models\Gender');
+    }
+
+    public function citizenship()
+    {
+        return $this->belongsTo('App\Models\Country');
     }
 }

@@ -25,11 +25,7 @@ class PolicyTypeService implements PolicyTypeServiceContract
 
     public function getByCode($code)
     {
-        $tag = $this->getGuidesPolicyTypeTag();
-        $key = $this->getCacheKey($tag, $code);
-        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($code) {
-            return $this->policyTypeRepository->getByCode($code);
-        });
+        $data = $this->policyTypeRepository->getByCode($code);
         if (!$data) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
