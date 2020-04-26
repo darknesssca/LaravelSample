@@ -32,11 +32,8 @@ class DocTypeService implements DocTypeServiceContract
 
     public function getDocTypeByCode($code)
     {
-        $tag = $this->getGuidesDocTypesTag();
-        $key = $this->getCacheKey($tag, $code);
-        $data = Cache::tags($tag)->remember($key, config('cache.guidesCacheTtl'), function () use ($code){
-            return $this->docTypeRepository->getDocTypeByCode($code);
-        });
+        $data = $this->docTypeRepository->getDocTypeByCode($code);
+
         if (!$data) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
         }
