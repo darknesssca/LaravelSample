@@ -17,6 +17,8 @@ use Benfin\Api\GlobalStorage;
 use Benfin\Api\Services\AuthMicroservice;
 use Benfin\Api\Services\CommissionCalculationMicroservice;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
+use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 
@@ -316,6 +318,11 @@ class PolicyService implements PolicyServiceContract
         return $policy->id;
     }
 
+    /**возарщает статистику полисов для агентов
+     * @param array $filter
+     * @return array
+     * @throws StatisticsNotFoundException
+     */
     public function statistic(array $filter = [])
     {
         $userId = GlobalStorage::getUserId();
@@ -333,9 +340,7 @@ class PolicyService implements PolicyServiceContract
             }
         }
 
-        /**
-         * @var Collection $policies
-         */
+        /** * @var Collection $policies */
         $policies = $this->policyRepository->getList($filter)->sortBy('registration_date');
 
         if ($policies->isNotEmpty()) {
@@ -344,7 +349,7 @@ class PolicyService implements PolicyServiceContract
             $needSortByMonth = $startDate->diffInMonths($endDate) > 0;
 
             $organizedPolicies = $this->organizePolicies($policies, $userId, $subagentIds);
-            $organizedStatistics = $this->makeStatistic($organizedPolicies, $needSortByMonth);
+            $organizedStatistics = $this->makeStatistic($organizedPolicies, $needSortByMonth, $filter['from'], $filter['to']);
         }
 
         if (empty($organizedStatistics)) {
@@ -356,6 +361,9 @@ class PolicyService implements PolicyServiceContract
     /**
      * @param $policies
      * сортировка массива по своим/агентским продажам
+     * @param $userId
+     * @param array $subagent_ids
+     * @return array
      */
     private function organizePolicies($policies, $userId, $subagent_ids = [])
     {
@@ -378,31 +386,35 @@ class PolicyService implements PolicyServiceContract
     /**
      * @param array $organizedArray
      * @param bool $needSortByMonth
-     *
+     * @param $from
+     * @param $to
+     * @return array
      */
-    private function makeStatistic($organizedArray, $needSortByMonth)
+    private function makeStatistic($organizedArray, $needSortByMonth, $from, $to)
     {
         $statistics = [];
         foreach ($organizedArray as $key => $policies) {
-            $statistics[$key] = $this->makeStatisticFromPoliciesList($policies, $needSortByMonth);
+            $statistics[$key] = $this->makeStatisticFromPoliciesList($policies, $needSortByMonth, $from, $to);
         }
         return $statistics;
     }
 
     /**
+     * Группировка статистики продаж по датам
      * @param Collection $policiesList
      * @param bool $needSortByMonth
+     * @param $from
+     * @param $to
      * @return array
-     * Группировка статистики продаж по датам
      */
-    private function makeStatisticFromPoliciesList($policiesList, $needSortByMonth): array
+    private function makeStatisticFromPoliciesList($policiesList, $needSortByMonth, $from, $to): array
     {
+        //группировка по страховым компаниям
         $policiesList = collect($policiesList);
         $byInsuranceCompany = $policiesList
             ->groupBy('insurance_company_id')
             ->map(function ($item, $index) {
                 $tmp = collect($item);
-
                 return [
                     "count" => $tmp->count(),
                     "sum" => $tmp->sum("premium")
@@ -414,30 +426,68 @@ class PolicyService implements PolicyServiceContract
             "by_insurance_company" => $byInsuranceCompany
         ];
 
+
         if ($needSortByMonth) {
             $result["detail"] = $policiesList
                 ->groupBy(function ($item, $index) {
-                    return Carbon::parse($item['registration_date'])->locale('ru')->getTranslatedMonthName('MMMM YYYY');
+                    $d = Carbon::parse($item['registration_date']);
+                    return $d->year . " " . $d->month;
                 })
                 ->map(function ($list, $index) {
                     $tmp = collect($list);
-
+                    $d = Carbon::parse($tmp->first()->registration_date);
                     return [
                         "count" => $tmp->count(),
-                        "sum" => $tmp->sum("premium")
+                        "sum" => $tmp->sum("premium"),
+                        "label" => mb_convert_case($d->locale('ru')->getTranslatedMonthName('F') . " " . $d->year, MB_CASE_TITLE),
                     ];
                 });
+
+            //добавление несуществующих в выборке дат
+            $period = CarbonPeriod::create($from, '1 months', $to)->locale('ru');
+            foreach ($period as $date) {
+                /** @var CarbonInterface $date */
+                $formatted = $date->year . " " . $date->month;
+                if (!$result['detail']->has($formatted)) {
+                    $result['detail']->put($formatted,
+                        [
+                            'count' => 0,
+                            'sum' => 0,
+                            'label' => mb_convert_case($date->locale('ru')->getTranslatedMonthName('F') . " " . $date->year, MB_CASE_TITLE),
+                        ]
+                    );
+                }
+            }
         } else {
             $result["detail"] = $policiesList
                 ->groupBy('registration_date')
                 ->map(function ($list, $index) {
                     $tmp = collect($list);
-
+                    $d = Carbon::parse($tmp->first()->registration_date);
                     return [
                         "count" => $tmp->count(),
-                        "sum" => $tmp->sum("premium")
+                        "sum" => $tmp->sum("premium"),
+                        'label' => $d->format('d.m.Y'),
                     ];
                 });
+            $period = CarbonPeriod::create($from, $to)->locale('ru');
+
+            //добавление несуществующих в выборке дат
+            foreach ($period as $date) {
+                /** @var CarbonInterface $date */
+                $formatted = $date->format("Y-m-d");
+                if (!$result['detail']->has($formatted)) {
+                    $result['detail']->put($formatted,
+                        [
+                            'count' => 0,
+                            'sum' => 0,
+                            'label' => $date->format('d.m.Y'),
+                        ]);
+                }
+            }
+
+            //сортировка по датам
+            $result['detail'] = $result['detail']->sortKeys();
         }
         return $result;
     }
