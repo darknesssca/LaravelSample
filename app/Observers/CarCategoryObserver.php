@@ -14,19 +14,19 @@ trait CarCategoryObserver
         parent::boot();
 
         static::created(function ($carCategory) {
-            $tag = self::getGuidesCategoriesTag();
+            $tag = self::getCarCategoryTag();
             Cache::tags($tag)->flush();
         });
 
         static::updated(function ($carCategory) {
             if ($carCategory->isDirty()) {
-                $tag = self::getGuidesCategoriesTag();
+                $tag = self::getCarCategoryTag();
                 Cache::tags($tag)->flush();
             }
         });
 
         static::deleted(function ($carCategory) {
-            $tag = self::getGuidesCategoriesTag();
+            $tag = self::getCarCategoryTag();
             Cache::tags($tag)->flush();
         });
     }
