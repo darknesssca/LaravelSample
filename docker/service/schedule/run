@@ -1,0 +1,6 @@
+#!/bin/bash
+exec 2>&1
+source /etc/envvars
+cd /var/www
+sleep 30
+exec chpst -u www-data php artisan schedule:run > /dev/stdout 2> /dev/stderr
