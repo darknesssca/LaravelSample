@@ -37,6 +37,7 @@ deploy_staging:
     - ssh-keyscan $STAGE_SSH_HOST >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
     - ssh $STAGE_SSH_USER@$STAGE_SSH_HOST -p $STAGE_SSH_PORT "KUBECONFIG=~/.kube/config kubectl -n benfin rollout restart deployment $DEPLOYMENT_NAME"
+    - ssh $STAGE_SSH_USER@$STAGE_SSH_HOST -p $STAGE_SSH_PORT "KUBECONFIG=~/.kube/config kubectl -n benfin rollout restart deployment $DEPLOYMENT_NAME-bg"
   only:
     - master
   tags:
