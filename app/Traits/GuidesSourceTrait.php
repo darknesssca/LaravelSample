@@ -1,13 +1,12 @@
 <?php
 
 
-namespace App\Services\Company;
+namespace App\Traits;
 
 
 use App\Models\CarCategory;
 use App\Models\CarMark;
 use App\Models\CarModel;
-use App\Models\CountryInsurance;
 use App\Models\InsuranceCompany;
 use App\Models\InsuranceMark;
 use App\Models\InsuranceModel;
@@ -105,6 +104,11 @@ trait GuidesSourceTrait
                 'insurance_company_id' => $this->companyId,
             ],
                 ['reference_mark_code' => $mark['REF_CODE'],]);
+
+            if($mark["REF_CODE"] == 4623)
+            {
+                dd($mark,$this->companyId,$mark_com);
+            }
 
             //МОДЕЛИ
             foreach ($mark["MODELS"] as $model) {

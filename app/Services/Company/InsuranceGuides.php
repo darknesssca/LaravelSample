@@ -9,6 +9,7 @@ use App\Contracts\Company\Renessans\RenessansGuidesSourceContract;
 use App\Contracts\Company\Soglasie\SoglasieGuidesSourceContract;
 use App\Contracts\Company\Tinkoff\TinkoffGuidesSourceContract;
 use App\Models\Country;
+use App\Traits\GuidesSourceTrait;
 use Illuminate\Support\Facades\DB;
 use Laravel\Lumen\Application;
 
@@ -23,12 +24,12 @@ abstract class InsuranceGuides
         //список объектов, реализующих интерфейс GuidesSourceContract
         $companies = [
             app(RenessansGuidesSourceContract::class),
-            app(IngosstrahGuidesSourceContract::class),
-            app(SoglasieGuidesSourceContract::class),
-            app(TinkoffGuidesSourceContract::class),
+            //app(IngosstrahGuidesSourceContract::class),
+           // app(SoglasieGuidesSourceContract::class),
+            //app(TinkoffGuidesSourceContract::class),
         ];
 
-        self::loadCountries();
+       // self::loadCountries();
 
         foreach ($companies as $company) {
             /** @var CompanyService $company */
@@ -40,7 +41,7 @@ abstract class InsuranceGuides
         }
 
         echo "Удаление лишних марок...\n";
-        GuidesSourceTrait::cleanDB();
+        //GuidesSourceTrait::cleanDB();
     }
 
     /**

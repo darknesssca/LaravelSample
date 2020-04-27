@@ -9,7 +9,7 @@ use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Models\InsuranceCompany;
-use App\Services\Company\GuidesSourceTrait;
+use App\Traits\GuidesSourceTrait;
 
 class RenessansGuidesService extends RenessansService implements RenessansGuidesSourceContract
 {
