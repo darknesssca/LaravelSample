@@ -11,4 +11,7 @@ class InsuranceModel extends Model
         'insurance_company_id',
         'reference_model_code',
     ];
+
+    protected $primaryKey = array('model_id','insurance_company_id');
+    public $incrementing = false;
 }

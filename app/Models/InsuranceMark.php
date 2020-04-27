@@ -11,4 +11,7 @@ class InsuranceMark extends Model
         'insurance_company_id',
         'reference_mark_code',
     ];
+
+    protected $primaryKey = array('mark_id','insurance_company_id');
+    public $incrementing = false;
 }
