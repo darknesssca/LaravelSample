@@ -11,5 +11,4 @@ class InsuranceModel extends Model
         'insurance_company_id',
         'reference_model_code',
     ];
-    protected $primaryKey = 'model_id';
 }

@@ -11,6 +11,4 @@ class InsuranceMark extends Model
         'insurance_company_id',
         'reference_mark_code',
     ];
-    protected $primaryKey = 'mark_id';
-
 }

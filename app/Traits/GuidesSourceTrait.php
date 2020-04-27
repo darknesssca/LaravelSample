@@ -105,10 +105,6 @@ trait GuidesSourceTrait
             ],
                 ['reference_mark_code' => $mark['REF_CODE'],]);
 
-            if($mark["REF_CODE"] == 4623)
-            {
-                dd($mark,$this->companyId,$mark_com);
-            }
 
             //МОДЕЛИ
             foreach ($mark["MODELS"] as $model) {
