@@ -150,8 +150,11 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
             $subjectData['addressJuridical'] = $this->getAddressData($regAddress);
         }
         $factAddress = $this->searchAddressByType($subject, 'home');
+
         if ($factAddress) {
             $subjectData['addressFact'] = $this->getAddressData($factAddress);
+        } else if ($regAddress) {
+            $subjectData['addressFact'] = $this->getAddressData($regAddress);
         }
         return $subjectData;
     }
