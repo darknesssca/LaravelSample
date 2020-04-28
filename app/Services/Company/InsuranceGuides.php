@@ -29,7 +29,7 @@ abstract class InsuranceGuides
             app(IngosstrahGuidesSourceContract::class),
         ];
 
-        //self::loadCountries();
+        self::loadCountries();
 
         foreach ($companies as $company) {
             /** @var CompanyService $company */

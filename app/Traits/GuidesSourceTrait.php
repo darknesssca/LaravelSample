@@ -133,6 +133,7 @@ trait GuidesSourceTrait
                     'category_id' => $cat->id,
                 ]);
 
+
                 //таблицы СК
                 $model_sk = InsuranceModel::updateOrCreate(
                     [
