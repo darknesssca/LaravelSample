@@ -87,11 +87,7 @@ class TinkoffGuidesService extends TinkoffService implements TinkoffGuidesSource
             ];
         }
         $marks = [];
-        $codes = [];
         foreach ($table as $item) {
-            if (in_array(Str::slug($item['name']), $codes))
-                continue;
-            $codes[] = Str::slug($item['name']);
             $mark_name = $this->parseMarkName($item['name']);
             $model_name = $this->parseModelName($item['name'], $mark_name);
             $marks[$mark_name]["NAME"] = $mark_name;
