@@ -2,8 +2,8 @@
 
 
 use App\Providers\RepositoryServiceProvider;
+use App\Providers\ValidationProvider;
 use Benfin\Api\BenfinMicroserviceProvider;
-use Benfin\Cache\BenfinObserverProvider;
 use Benfin\Requests\BenfinMacroProvider;
 use Benfin\Requests\BenfinRequestProvider;
 
@@ -99,8 +99,7 @@ $app->routeMiddleware(['auth' => Benfin\Auth\Http\Middleware\Authenticate::class
 |
 */
 
-$app->register(App\Providers\AppServiceProvider::class);
-$app->register(App\Providers\EventServiceProvider::class);
+$app->register(ValidationProvider::class);
 $app->register(App\Providers\CompanyServiceProvider::class);
 $app->register(App\Providers\RepositoryServiceProvider::class);
 $app->register(BenfinMicroserviceProvider::class);
@@ -126,8 +125,7 @@ $app->router->group([
     "middleware" => "auth",
     "uses" => 'UserController@show',
     'namespace' => 'App\Http\Controllers',
-], function ($router)
-{
+], function ($router) {
     require __DIR__ . '/../routes/web.php';
 });
 
