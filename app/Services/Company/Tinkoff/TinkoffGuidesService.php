@@ -9,7 +9,8 @@ use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Models\InsuranceCompany;
-use App\Services\Company\GuidesSourceTrait;
+use App\Traits\GuidesSourceTrait;
+use Illuminate\Support\Str;
 use Laravel\Lumen\Application;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Reader\Exception;
@@ -37,8 +38,8 @@ class TinkoffGuidesService extends TinkoffService implements TinkoffGuidesSource
                                 PolicyServiceContract $policyService
     )
     {
-        parent::__construct($intermediateDataService,$requestProcessService,$policyService);
-        $this->companyId = InsuranceCompany::where('code',self::companyCode)->first()['id'];
+        parent::__construct($intermediateDataService, $requestProcessService, $policyService);
+        $this->companyId = InsuranceCompany::where('code', self::companyCode)->first()['id'];
     }
 
 
@@ -48,7 +49,6 @@ class TinkoffGuidesService extends TinkoffService implements TinkoffGuidesSource
         try {
             $arr = $this->readDocument($filename);
 
-
             foreach ($arr as $mark) {
                 $val = $this->prepareMark($mark);
                 if (count($val) == 0) {
@@ -56,10 +56,10 @@ class TinkoffGuidesService extends TinkoffService implements TinkoffGuidesSource
                 }
                 $cnt = $this->updateMark($val);
             }
-        } catch (Exception $e) {
+        } catch (\PhpOffice\PhpSpreadsheet\Exception $e) {
             dump($e);
             return false;
-        } catch (\PhpOffice\PhpSpreadsheet\Exception $e) {
+        } catch (\Exception $e) {
             dump($e);
             return false;
         }

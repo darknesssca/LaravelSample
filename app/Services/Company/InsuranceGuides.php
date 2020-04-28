@@ -9,6 +9,7 @@ use App\Contracts\Company\Renessans\RenessansGuidesSourceContract;
 use App\Contracts\Company\Soglasie\SoglasieGuidesSourceContract;
 use App\Contracts\Company\Tinkoff\TinkoffGuidesSourceContract;
 use App\Models\Country;
+use App\Traits\GuidesSourceTrait;
 use Illuminate\Support\Facades\DB;
 use Laravel\Lumen\Application;
 
@@ -22,10 +23,10 @@ abstract class InsuranceGuides
     {
         //список объектов, реализующих интерфейс GuidesSourceContract
         $companies = [
+            app(TinkoffGuidesSourceContract::class),
+            app(SoglasieGuidesSourceContract::class),
             app(RenessansGuidesSourceContract::class),
             app(IngosstrahGuidesSourceContract::class),
-            app(SoglasieGuidesSourceContract::class),
-            app(TinkoffGuidesSourceContract::class),
         ];
 
         self::loadCountries();

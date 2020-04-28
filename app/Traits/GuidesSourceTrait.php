@@ -1,13 +1,12 @@
 <?php
 
 
-namespace App\Services\Company;
+namespace App\Traits;
 
 
 use App\Models\CarCategory;
 use App\Models\CarMark;
 use App\Models\CarModel;
-use App\Models\CountryInsurance;
 use App\Models\InsuranceCompany;
 use App\Models\InsuranceMark;
 use App\Models\InsuranceModel;
@@ -40,10 +39,18 @@ trait GuidesSourceTrait
         "minsk(минск)" => "Минск",
         "minsk" => "Минск",
         "general motors" => "GMC",
-        "МАН" => "MAN",
+        "ман" => "MAN",
         "dongfeng" => "DongFeng",
         "ютонг" => "Yutong",
-
+        "uaz"=>'УАЗ',
+        "gaz"=>"ГАЗ",
+        "тойота"=>"Toyota",
+        "ниссан"=>"Nissan",
+        "исузу"=>"Isuzu",
+        "tagaz"=>"ТагАЗ",
+        "вольво"=>"Volvo",
+        "maz"=>"МАЗ",
+        "сузуки"=>"Suzuki",
     ];
 
     /**массив названий марок в нижнем регистре, которые не добавляем вообще
@@ -106,6 +113,7 @@ trait GuidesSourceTrait
             ],
                 ['reference_mark_code' => $mark['REF_CODE'],]);
 
+
             //МОДЕЛИ
             foreach ($mark["MODELS"] as $model) {
                 //общие таблицы
@@ -132,6 +140,7 @@ trait GuidesSourceTrait
                     'name' => $model['NAME'],
                     'category_id' => $cat->id,
                 ]);
+
 
                 //таблицы СК
                 $model_sk = InsuranceModel::updateOrCreate(
