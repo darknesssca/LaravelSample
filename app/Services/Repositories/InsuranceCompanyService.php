@@ -44,9 +44,9 @@ class InsuranceCompanyService implements InsuranceCompanyServiceContract
         return $object;
     }
 
-    public function getInsuranceCompanyList()
+    public function getInsuranceCompanyList($checkActive = true)
     {
-        $data = $this->insuranceCompanyRepository->getInsuranceCompanyList();
+        $data = $this->insuranceCompanyRepository->getInsuranceCompanyList($checkActive);
 
         if (!$data || !$data->count()) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');

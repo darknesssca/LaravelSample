@@ -11,6 +11,8 @@ use App\Contracts\Repositories\Services\GenderServiceContract;
 use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
 use App\Contracts\Repositories\Services\SourceAcquisitionServiceContract;
 use App\Contracts\Repositories\Services\UsageTargetServiceContract;
+use App\Http\Requests\GuidesInsuranceCompaniesRequest;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class GuidesController extends Controller
@@ -78,10 +80,11 @@ class GuidesController extends Controller
         return Response::success($data);
     }
 
-    public function insuranceCompanies()
+    public function insuranceCompanies(GuidesInsuranceCompaniesRequest $request)
     {
+        $params = $request->validated();
         $service = app(InsuranceCompanyServiceContract::class);
-        $data = $service->getInsuranceCompanyList();
+        $data = $service->getInsuranceCompanyList(boolval($params['checkActive']));
         return Response::success($data);
     }
 

@@ -99,6 +99,7 @@ $router->group(
                         $router->post('/', 'OptionController@create');
                         $router->get('/', 'OptionController@index');
                         $router->get('/{id}', 'OptionController@show');
+                        $router->patch('/update-companies', 'OptionController@updateCompanies');
                         $router->patch('/{id}', 'OptionController@update');
                         $router->delete('/{id}', 'OptionController@delete');
                     }

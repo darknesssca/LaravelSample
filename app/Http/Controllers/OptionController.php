@@ -4,7 +4,10 @@
 namespace App\Http\Controllers;
 
 
+use App\Exceptions\ObjectNotFoundException;
+use App\Http\Requests\OptionsUpdateInsuranceCompaniesRequest;
 use App\Models\Option;
+use App\Repositories\InsuranceCompanyRepository;
 use App\Repositories\OptionRepository;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -14,10 +17,12 @@ use Illuminate\Http\Response;
 class OptionController extends Controller
 {
     private $optionRepository;
+    private $companyRepository;
 
     public function __construct()
     {
         $this->optionRepository = new OptionRepository();
+        $this->companyRepository = new InsuranceCompanyRepository();
     }
 
     public function index()
@@ -67,6 +72,28 @@ class OptionController extends Controller
         } catch
         (Exception $exception) {
             return Response::error($exception->getMessage(), 400);
+        }
+    }
+
+    /**обновляет активность у всех компаний
+     * @param OptionsUpdateInsuranceCompaniesRequest $request
+     * @return mixed
+     */
+    public function updateCompanies(OptionsUpdateInsuranceCompaniesRequest $request)
+    {
+        try {
+            $params = $request->validated();
+            $comps = $params['companies'] ?? [];
+            $list = $this->companyRepository->getInsuranceCompanyList(false);
+            foreach ($list as $company) {
+                if (!array_key_exists($company['code'], $comps))
+                    $comps[$company['code']] = false;
+                $comps[$company['code']] = boolval($comps[$company['code']]);
+            }
+            $result = $this->companyRepository->updateActivity($comps);
+            return Response::success($result);
+        } catch (ObjectNotFoundException $exception) {
+            return Response::error($exception->getMessageData(), 404);
         }
     }
 
