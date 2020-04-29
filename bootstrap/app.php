@@ -122,8 +122,6 @@ $app->register(Illuminate\Redis\RedisServiceProvider::class);
 
 $app->router->group([
     'prefix' => 'api',
-    "middleware" => "auth",
-    "uses" => 'UserController@show',
     'namespace' => 'App\Http\Controllers',
 ], function ($router) {
     require __DIR__ . '/../routes/web.php';
