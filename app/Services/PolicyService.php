@@ -304,7 +304,12 @@ class PolicyService implements PolicyServiceContract
         }
 
         if ($draftId) {
-            app(DraftRepositoryContract::class)->delete($draftId);
+            $draftRepository = app(DraftRepositoryContract::class);
+            $draft = $draftRepository->getById($draftId, GlobalStorage::getUserId());
+            if ($draft) {
+                $draft->drivers()->delete();
+                $draft->delete();
+            }
         }
         $reward = $mks->createRewards($policy->id, $policy->premium, $policy->registration_date->format('Y-m-d'), $policy->region_kladr, GlobalStorage::getUserId(), GlobalStorage::getUserRefererId());
         if (

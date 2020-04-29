@@ -129,6 +129,9 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
                     "docplace" => 'issuedBy',
                     "docdatebegin" => 'dateIssue',
                 ], $document['document']);
+                if (!isset($pDocument['docplace'])) {
+                    $pDocument['docplace'] = '';
+                }
                 $data['request']['private']['documents']['document'][] = $pDocument;
             }
             foreach ($owner['addresses'] as $iAddress => $address) {
