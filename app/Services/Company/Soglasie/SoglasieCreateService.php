@@ -229,7 +229,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
                 'TypeRSA' => $this->docTypeService->getCompanyDocTypeByRelation3($document['document']['documentType'], $document['document']['isRussian'], $company->id),
                 'Number' => $document['document']['number'],
                 'Date' => $document['document']['dateIssue'],
-                'Exit' => $document['document']['issuedBy'],
+                'Exit' => $document['document']['issuedBy'] ?? '',
                 'IsPrimary' => $document['document']['documentType'] == 'passport' ? true : false,
             ];
             $this->setValuesByArray($pDocument, [
