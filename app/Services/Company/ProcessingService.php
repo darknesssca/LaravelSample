@@ -130,6 +130,7 @@ class ProcessingService extends CompanyService implements ProcessingServiceContr
                     $company = $this->getCompany($processItem['company']);
                     $this->runService($company, $processItem, $method);
                 } catch (\Exception $exception) { // отлавливаем все эксепшены для обеспечения корректной работы механизма
+                    dump($exception);
                     $this->processingError($company, $processItem, $exception);
                 }
             }
