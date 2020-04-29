@@ -306,7 +306,7 @@ class PolicyService implements PolicyServiceContract
         if ($draftId) {
             app(DraftRepositoryContract::class)->delete($draftId);
         }
-        $reward = $mks->createRewards($policy->id, $policy->premium, $policy->registration_date->format('Y-m-d'), $policy->region_kladr, GlobalStorage::getUserId());
+        $reward = $mks->createRewards($policy->id, $policy->premium, $policy->registration_date->format('Y-m-d'), $policy->region_kladr, GlobalStorage::getUserId(), GlobalStorage::getUserRefererId());
         if (
             (isset($reward['error']) && !$reward['error']) &&
             (isset($reward['content']) && isset($reward['content']['reward_id']))
