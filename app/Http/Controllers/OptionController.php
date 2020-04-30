@@ -4,48 +4,53 @@
 namespace App\Http\Controllers;
 
 
+use App\Exceptions\ObjectNotFoundException;
+use App\Http\Requests\OptionsUpdateInsuranceCompaniesRequest;
 use App\Models\Option;
+use App\Repositories\InsuranceCompanyRepository;
 use App\Repositories\OptionRepository;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class OptionController extends Controller
 {
     private $optionRepository;
+    private $companyRepository;
 
     public function __construct()
     {
         $this->optionRepository = new OptionRepository();
+        $this->companyRepository = new InsuranceCompanyRepository();
     }
 
     public function index()
     {
         try {
             $options_info = $this->optionRepository->getAll()->toArray();
-            return response()->json($options_info, 200, [], JSON_UNESCAPED_UNICODE);
+            return Response::success($options_info);
         } catch (ModelNotFoundException $exception) {
-            return $this->error($exception->getMessage(), 404);
-        } catch
-        (Exception $exception) {
-            return $this->error($exception->getMessage(), 400);
+            return Response::error($exception->getMessage(), 404);
+        } catch (Exception $exception) {
+            return Response::error($exception->getMessage(), 400);
         }
     }
 
     public function show($id)
     {
         try {
-            if (intval($id) > 0){
+            if (intval($id) > 0) {
                 $option_info = $this->optionRepository->getById($id)->toArray();
             } else {
                 $option_info = $this->optionRepository->getByCode($id)->toArray();
             }
 
-            return response()->json($option_info, 200, [], JSON_UNESCAPED_UNICODE);
+            return Response::success($option_info);
         } catch (ModelNotFoundException $exception) {
-            return $this->error($exception->getMessage(), 404);
+            return Response::error($exception->getMessage(), 404);
         } catch (Exception $exception) {
-            return $this->error($exception->getMessage(), 400);
+            return Response::error($exception->getMessage(), 400);
         }
     }
 
@@ -61,12 +66,34 @@ class OptionController extends Controller
             $option = $this->optionRepository->getById($id);
             $option->forceFill($validation_result);
             $option->save();
-            return $this->success('Настройка успешно обновлена');
+            return Response::success('Настройка успешно обновлена');
         } catch (ModelNotFoundException $exception) {
-            return $this->error($exception->getMessage(), 404);
+            return Response::error($exception->getMessage(), 404);
         } catch
         (Exception $exception) {
-            return $this->error($exception->getMessage(), 400);
+            return Response::error($exception->getMessage(), 400);
+        }
+    }
+
+    /**обновляет активность у всех компаний
+     * @param OptionsUpdateInsuranceCompaniesRequest $request
+     * @return mixed
+     */
+    public function updateCompanies(OptionsUpdateInsuranceCompaniesRequest $request)
+    {
+        try {
+            $params = $request->validated();
+            $comps = $params['companies'] ?? [];
+            $list = $this->companyRepository->getInsuranceCompanyList(false);
+            foreach ($list as $company) {
+                if (!array_key_exists($company['code'], $comps))
+                    $comps[$company['code']] = false;
+                $comps[$company['code']] = boolval($comps[$company['code']]);
+            }
+            $result = $this->companyRepository->updateActivity($comps);
+            return Response::success($result);
+        } catch (ObjectNotFoundException $exception) {
+            return Response::error($exception->getMessageData(), 404);
         }
     }
 
@@ -82,12 +109,12 @@ class OptionController extends Controller
             $option = new Option;
             $option->forceFill($validation_result);
             $option->save();
-            return $this->success('Настройка успешно создана');
+            return Response::success('Настройка успешно создана');
         } catch (ModelNotFoundException $exception) {
-            return $this->error($exception->getMessage(), 404);
+            return Response::error($exception->getMessage(), 404);
         } catch
         (Exception $exception) {
-            return $this->error($exception->getMessage(), 400);
+            return Response::error($exception->getMessage(), 400);
         }
     }
 
@@ -96,12 +123,12 @@ class OptionController extends Controller
         try {
             $option = $this->optionRepository->getById($id);
             $option->forceDelete();
-            return $this->success('Настройка успешно удалена');
+            return Response::success('Настройка успешно удалена');
         } catch (ModelNotFoundException $exception) {
-            return $this->error($exception->getMessage(), 404);
+            return Response::error($exception->getMessage(), 404);
         } catch
         (Exception $exception) {
-            return $this->error($exception->getMessage(), 400);
+            return Response::error($exception->getMessage(), 400);
         }
     }
 
