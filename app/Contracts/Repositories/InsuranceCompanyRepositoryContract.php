@@ -17,7 +17,7 @@ interface InsuranceCompanyRepositoryContract
 
     public function getCompanyById($id);
 
-    public function getInsuranceCompanyList();
+    public function getInsuranceCompanyList($checkActive);
 
     public function getById(int $id);
 }
