@@ -278,6 +278,7 @@ class PolicyService implements PolicyServiceContract
         unset($owner['id']);
         $owner['agent_id'] = GlobalStorage::getUserId();
         $owner_id = $mks->createClient($owner);
+        dump($owner_id, $owner);
         $policy->client_id = Arr::get($owner_id, 'content.id');
         if (count($fields['subjects']) > 1) {
             $insurant = $fields['subjects'][$policy->insurant_id];
@@ -304,9 +305,14 @@ class PolicyService implements PolicyServiceContract
         }
 
         if ($draftId) {
-            app(DraftRepositoryContract::class)->delete($draftId);
+            $draftRepository = app(DraftRepositoryContract::class);
+            $draft = $draftRepository->getById($draftId, GlobalStorage::getUserId());
+            if ($draft) {
+                $draft->drivers()->delete();
+                $draft->delete();
+            }
         }
-        $reward = $mks->createRewards($policy->id, $policy->premium, $policy->registration_date->format('Y-m-d'), $policy->region_kladr, GlobalStorage::getUserId());
+        $reward = $mks->createRewards($policy->id, $policy->premium, $policy->registration_date->format('Y-m-d'), $policy->region_kladr, GlobalStorage::getUserId(), GlobalStorage::getUserRefererId());
         if (
             (isset($reward['error']) && !$reward['error']) &&
             (isset($reward['content']) && isset($reward['content']['reward_id']))

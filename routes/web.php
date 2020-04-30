@@ -87,6 +87,7 @@ $router->group(
                         $router->get('/doc-types', 'GuidesController@docTypes');
                         $router->get('/usage-targets', 'GuidesController@usageTargets');
                         $router->get('/insurance-companies', 'GuidesController@insuranceCompanies');
+                        $router->get('/insurance-companies/{id}', 'GuidesController@insuranceCompany');
                         $router->get('/source-acquisitions', 'GuidesController@sourceAcquisitions');
                     }
                 );
