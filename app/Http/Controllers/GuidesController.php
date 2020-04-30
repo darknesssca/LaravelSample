@@ -85,6 +85,14 @@ class GuidesController extends Controller
         return Response::success($data);
     }
 
+    public function insuranceCompany($id)
+    {
+        /** @var InsuranceCompanyServiceContract $service */
+        $service = app(InsuranceCompanyServiceContract::class);
+        $data = $service->getCompanyById($id);
+        return Response::success($data);
+    }
+
     public function sourceAcquisitions()
     {
         $service = app(SourceAcquisitionServiceContract::class);
