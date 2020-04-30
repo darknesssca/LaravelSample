@@ -44,9 +44,9 @@ class InsuranceCompanyRepository implements InsuranceCompanyRepositoryContract
         $cacheKey = self::getInsuranceCompanyListKey() . strval($checkActive);
         return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, function () use ($checkActive) {
             if ($checkActive)
-                return InsuranceCompany::query()->with('logo')->where("active", true)->get()->sortBy('code');
+                return InsuranceCompany::query()->with('logo')->where("active", true)->orderBy('code')->get();
             else
-                return InsuranceCompany::query()->with('logo')->get()->sortBy('code');
+                return InsuranceCompany::query()->with('logo')->orderBy('code')->get();
         });
     }
 
