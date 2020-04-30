@@ -84,7 +84,7 @@ class GuidesController extends Controller
     {
         $params = $request->validated();
         $service = app(InsuranceCompanyServiceContract::class);
-        $data = $service->getInsuranceCompanyList(boolval($params['checkActive']));
+        $data = $service->getInsuranceCompanyList(boolval($params['checkActive']??true));
         return Response::success($data);
     }
 
