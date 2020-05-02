@@ -45,9 +45,12 @@ abstract class CompanyService
      */
     public function sendBillUrl($email, $billUrl)
     {
-        return true; //fixme только для теста
         $notify = app(NotifyMicroserviceContract::class);
-        $notify->sendMail($email, $billUrl, config('api_sk.notifyMicroserviceCode'));
+        $status = $notify->sendMail($email, $billUrl, config('api_sk.notifyMicroserviceCode'));
+        if (isset($status["error"]) && !$status["error"]) {
+            return true;
+        }
+        return false;
     }
 
     protected function searchDocumentByTypeAndId($attributes, $subjectId, $type)
