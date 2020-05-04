@@ -17,15 +17,21 @@ trait PolicyObserver
     {
         parent::boot();
 
+        static::saved(function ($model) { 
+            Cache::tags(self::getPolicyListCacheTagByUser($model->agent_id))->flush();
+            $referId = app(AuthMicroserviceContract::class)->userInfo($model->agent_id)["referer_id"] ?? "";
+            Cache::tags(self::getPolicyListCacheTagByAttribute("List|$referId"))->flush();
+        });
+
         static::created(function ($model) {
-            Cache::tags(self::getPolicyListCacheTagByUser())->flush();
+            Cache::tags(self::getPolicyListCacheTagByUser($model->agent_id))->flush();
             $referId = app(AuthMicroserviceContract::class)->userInfo($model->agent_id)["referer_id"] ?? "";
             Cache::tags(self::getPolicyListCacheTagByAttribute("List|$referId"))->flush();
         });
 
         static::updated(function ($model) {
             if ($model->isDirty()) {
-                Cache::tags(self::getPolicyListCacheTagByUser())->flush();
+                Cache::tags(self::getPolicyListCacheTagByUser($model->agent_id))->flush();
                 $referId = app(AuthMicroserviceContract::class)->userInfo($model->agent_id)["referer_id"] ?? "";
                 Cache::tags(self::getPolicyListCacheTagByAttribute("List|$referId"))->flush();
             }
