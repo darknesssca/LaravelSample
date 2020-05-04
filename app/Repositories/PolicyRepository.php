@@ -81,8 +81,6 @@ class PolicyRepository implements PolicyRepositoryContract
     {
         $policy = new Policy();
         $policy->fill($data);
-        $policy->registration_date = Carbon::now();
-
         $policy->saveOrFail();
 
         return $policy;
