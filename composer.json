@@ -10,8 +10,8 @@
     "type": "project",
     "require": {
         "php": "^7.2",
-        "ext-gd": "*",
         "ext-fileinfo": "*",
+        "ext-gd": "*",
         "ext-json": "*",
         "ext-libxml": "*",
         "ext-simplexml": "*",
@@ -22,6 +22,7 @@
         "benfin/packages/cache": "^1.0",
         "benfin/packages/requests": ">=1.1",
         "coraxster/flysystem-aws-s3-v3-minio": "^1.0",
+        "doctrine/dbal": "^2.10",
         "guzzlehttp/guzzle": "^6.5",
         "illuminate/redis": "6.0",
         "laravel/lumen-framework": "^6.0",
