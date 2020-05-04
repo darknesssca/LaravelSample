@@ -13,6 +13,7 @@ use App\Repositories\PolicyRepository;
 use App\Traits\ValueSetterTrait;
 use Benfin\Api\Contracts\AuthMicroserviceContract;
 use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
+use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 use Benfin\Api\Services\AuthMicroservice;
 use Benfin\Api\Services\CommissionCalculationMicroservice;
@@ -268,30 +269,28 @@ class PolicyService implements PolicyServiceContract
     public function create(array $fields, int $draftId = null)
     {
         $fields['region_kladr'] = $fields['subjects'][$fields['insurant_id']]['region_kladr'];
-        $policy = $this->policyRepository->create($fields);
+
 
         /**
          * @var CommissionCalculationMicroservice $mks
          */
         $mks = app(CommissionCalculationMicroserviceContract::class);
-        $owner = $fields['subjects'][$policy->client_id];
-        unset($owner['id']);
+        $owner = $fields['subjects'][$fields['client_id']];
         $owner['agent_id'] = GlobalStorage::getUserId();
         $owner_id = $mks->createClient($owner);
-        $policy->client_id = Arr::get($owner_id, 'content.id');
-        if (count($fields['subjects']) > 1) {
-            $insurant = $fields['subjects'][$policy->insurant_id];
-            unset($insurant['id']);
-            $insurant['agent_id'] = GlobalStorage::getUserId();
-            $insurant_id = $mks->createClient($insurant);
-            $policy->insurant_id = Arr::get($insurant_id, 'content.id');;
-        }
-        $policy->save();
+        $fields['client_id'] = Arr::get($owner_id, 'content.id');
+
+        $insurant = $fields['subjects'][$fields["insurant_id"]];
+        $insurant['agent_id'] = GlobalStorage::getUserId();
+        $insurant_id = $mks->createClient($insurant);
+        $fields['insurant_id'] = Arr::get($insurant_id, 'content.id');
+
+        $policy = $this->policyRepository->create($fields);
 
         if ($drivers = $fields['drivers']) {
             foreach ($drivers as &$driver) {
-                if (isset($driver['birthdate']) && $driver['birthdate']) {
-                    $driver['birth_date'] = Carbon::createFromFormat('Y-m-d', $driver['birthdate']);
+                if (isset($driver['birth_date']) && $driver['birth_date']) {
+                    $driver['birth_date'] = Carbon::createFromFormat('Y-m-d', $driver['birth_date']);
                 }
                 if (isset($driver['license_date']) && $driver['license_date']) {
                     $driver['license_date'] = Carbon::createFromFormat('Y-m-d', $driver['license_date']);
@@ -311,15 +310,16 @@ class PolicyService implements PolicyServiceContract
                 $draft->delete();
             }
         }
-        $reward = $mks->createRewards($policy->id, $policy->premium, $policy->registration_date->format('Y-m-d'), $policy->region_kladr, GlobalStorage::getUserId(), GlobalStorage::getUserRefererId());
+
+        $reward = $mks->createRewards($policy->id, $policy->premium, $policy->registration_date, $policy->region_kladr, GlobalStorage::getUserId(), GlobalStorage::getUserRefererId());
         if (
             (isset($reward['error']) && !$reward['error']) &&
             (isset($reward['content']) && isset($reward['content']['reward_id']))
         ) {
             $policy->commission_id = $reward['content']['reward_id'];
-            $policy->save();
-        }
 
+        }
+        $policy->save();
         return $policy->id;
     }
 
@@ -511,6 +511,7 @@ class PolicyService implements PolicyServiceContract
             $fields['number'] = $attributes['number'];
         }
         $fields['premium'] = $attributes['premium'];
+        $fields["registration_date"] = Carbon::now()->format('Y-m-d');
         foreach ($attributes['subjects'] as $subject) {
             $pSubject = [
                 'id' => $subject['id'],
@@ -522,13 +523,25 @@ class PolicyService implements PolicyServiceContract
                 'patronymic' => 'middleName',
                 'email' => 'email',
                 'gender_id' => 'gender',
-                'citizenship' => 'citizenship',
+                'citizenship_id' => 'citizenship',
                 'phone' => 'phone',
+                'birth_place' => 'birthPlace'
             ], $subject['fields']);
             foreach ($subject['fields']['addresses'] as $address) {
                 if ($address['address']['addressType'] == 'registration') {
-                    $pSubject['address'] = $address['address']['city'] . ' ' . $address['address']['street'] .
-                        ' ' . $address['address']['building'] . $address['address']['flat'];
+                    $cAddress = $address["address"];
+                    $pSubject['address'] = '';
+                    if (isset($cAddress['city']) && !empty($cAddress['city'])) {
+                        $pSubject['address'] .= $cAddress['city'];
+                    } else if (isset($cAddress['populatedCenter']) && !empty($cAddress['populatedCenter'])) {
+                        $pSubject['address'] .= $cAddress['populatedCenter'];
+                    }
+
+                    $pSubject['address'] .= ', ' . $cAddress['street'] . ', д.' . $cAddress['building'];
+
+                    if (isset($cAddress['flat']) && !empty($cAddress['flat'])) {
+                        $pSubject['address'] .= ', кв.' . $cAddress['flat'];
+                    }
 
                     $pSubject['region_kladr'] = $address['address']['regionKladr'];
                 }
@@ -541,6 +554,7 @@ class PolicyService implements PolicyServiceContract
                         'passport_number' => 'number',
                         'passport_issuer' => 'issuedBy',
                         'passport_date' => 'dateIssue',
+                        'passport_unit_code' => 'subdivisionCode'
                     ], $document['document']);
                 }
             }
@@ -595,7 +609,10 @@ class PolicyService implements PolicyServiceContract
                         $this->setValuesByArray($pDriver, [
                             'last_name' => 'lastName',
                             'first_name' => 'firstName',
+                            'patronymic' => 'middleName',
                             'birth_date' => 'birthdate',
+                            'citizenship_id' => 'citizenship',
+                            'gender_id' => 'gender'
                         ], $subject['fields']);
                         $this->setValuesByArray($pDriver, [
                             'exp_start_date' => 'drivingLicenseIssueDateOriginal',
