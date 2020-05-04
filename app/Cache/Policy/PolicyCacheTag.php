@@ -13,9 +13,9 @@ trait PolicyCacheTag
         return "Policy";
     }
 
-    protected static function getPolicyListCacheTagByUser(): string
+    protected static function getPolicyListCacheTagByUser($userId = null): string
     {
-        $userId = GlobalStorage::getUserId() ?? "";
+        $userId = $userId ?? GlobalStorage::getUserId();
         return self::getPolicyCacheTag() . "|List|$userId";
     }
 
