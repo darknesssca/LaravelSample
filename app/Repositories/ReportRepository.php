@@ -31,7 +31,7 @@ class ReportRepository implements ReportRepositoryContract
         $cacheKey = self::getCacheKey('id', $id);
 
         $report = Cache::tags($cacheTag)->remember($cacheKey, $this->_DAY_TTL, function () use ($id) {
-           return Report::with('policies')->find($id);
+           return Report::with(['policies.type','policies.company'])->find($id);
         });
 
         $this->checkReport($report);
@@ -48,14 +48,14 @@ class ReportRepository implements ReportRepositoryContract
         $cacheTag = self::getReportCacheTagByAttribute("Filter");
         $cacheKey = self::getCacheKey($filter);
 
-        return Cache::tags($cacheTag)->remember($cacheKey, $this->_DAY_TTL, function () use ($filter) {
+        $remember = Cache::tags($cacheTag)->remember($cacheKey, $this->_DAY_TTL, function () use ($filter) {
             $query = Report::with(['policies', 'file']);
 
             if (!empty($filter['search'])) {
                 $query->where('name', 'like', '%' . $filter['search'] . '%');
             }
 
-            if (!empty($filter['orderBy']) && !empty($filter['orderDirection'])){
+            if (!empty($filter['orderBy']) && !empty($filter['orderDirection'])) {
                 $query->orderBy($filter['orderBy'], $filter['orderDirection']);
             }
 
@@ -65,10 +65,11 @@ class ReportRepository implements ReportRepositoryContract
             return $query->paginate(
                 $count,
                 ['*'],
-                'Страницы',
+                'page',
                 $page
             );
         });
+        return $remember;
     }
 
     /**

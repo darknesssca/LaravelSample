@@ -90,7 +90,6 @@ class ReportService implements ReportServiceContract
         } else {
             $reports = $this->reportRepository->getByCreatorId(GlobalStorage::getUserId(), $fields);
         }
-
         return $reports;
     }
 
