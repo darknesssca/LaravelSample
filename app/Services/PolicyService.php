@@ -134,7 +134,9 @@ class PolicyService implements PolicyServiceContract
         return [
             'policy' => $policies->forPage($page, $perPage),
             'pagination' => [
-                'pageCount' => ceil($policies->count() / $perPage)
+                'pageCount' => ceil($policies->count() / $perPage),
+                'page'=>$page,
+                'per_page'=>$perPage,
             ]
         ];
     }
