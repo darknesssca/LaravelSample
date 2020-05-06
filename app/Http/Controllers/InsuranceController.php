@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Exceptions\TokenException;
 use App\Http\Requests\FormSendRequest;
 use App\Http\Requests\PaymentRequest;
 use App\Http\Requests\ProcessRequest;
@@ -31,11 +32,26 @@ class InsuranceController extends Controller
         $this->insuranceCompanyService = $insuranceCompanyService;
     }
 
+    /**
+     * @param $code
+     * @param $method
+     * @param ProcessRequest $request
+     * @return mixed
+     * @throws TokenException
+     * @throws \App\Exceptions\CompanyException
+     * @throws \App\Exceptions\MethodNotFoundException
+     * @throws \App\Exceptions\NotAvailableCommissionException
+     */
     public function index($code, $method, ProcessRequest $request)
     {
+        $validatedRequest = $request->validated();
         $company = $this->getCompany($code);
+        if ($method == 'calculate') {
+            $formData = $this->getTokenData($validatedRequest['token']);
+            $this->checkCommissionAvailable($company->id, $formData['form']);
+        }
         $method = strtolower((string)$method);
-        return Response::success($this->runService($company, $request->validated(), $method));
+        return Response::success($this->runService($company, $validatedRequest, $method));
     }
 
     public function store(FormSendRequest $request)

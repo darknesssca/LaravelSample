@@ -92,11 +92,11 @@
         },
         {
             "name": "benfin/packages/api-communication",
-            "version": "v1.5.16",
+            "version": "v1.5.19",
             "source": {
                 "type": "git",
                 "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/api-communication.git",
-                "reference": "e2cc4ced43212a04f6d0f80a98753aaa2a9dbd21"
+                "reference": "37fafa08f95223d24e992101a1db4e50da489b2e"
             },
             "require": {
                 "benfin/packages/requests": ">=1.1",
@@ -125,7 +125,7 @@
                 }
             ],
             "description": "BENFIN Api communication",
-            "time": "2020-04-30T12:05:59+00:00"
+            "time": "2020-05-06T17:54:08+00:00"
         },
         {
             "name": "benfin/packages/auth",

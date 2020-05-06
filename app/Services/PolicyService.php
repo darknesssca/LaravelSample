@@ -311,13 +311,12 @@ class PolicyService implements PolicyServiceContract
             }
         }
 
-        $reward = $mks->createRewards($policy->id, $policy->premium, $policy->registration_date, $policy->region_kladr, GlobalStorage::getUserId(), GlobalStorage::getUserRefererId());
+        $reward = $mks->createRewards($policy->id, $policy->premium, $policy->insurance_company_id, $policy->registration_date, $policy->region_kladr, GlobalStorage::getUserId(), GlobalStorage::getUserRefererId());
         if (
             (isset($reward['error']) && !$reward['error']) &&
-            (isset($reward['content']) && isset($reward['content']['reward_id']))
+            (isset($reward['content']) && isset($reward['content']['commission_id']))
         ) {
-            $policy->commission_id = $reward['content']['reward_id'];
-
+            $policy->commission_id = $reward['content']['commission_id'];
         }
         $policy->save();
         return $policy->id;
