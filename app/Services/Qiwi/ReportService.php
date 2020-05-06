@@ -53,7 +53,8 @@ class ReportService implements ReportServiceContract
         ReportRepositoryContract $reportRepository,
         PolicyRepositoryContract $policyRepository,
         InsuranceCompanyRepositoryContract $insuranceCompanyRepository
-    ) {
+    )
+    {
         $this->reportRepository = $reportRepository;
         $this->policyRepository = $policyRepository;
         $this->insuranceCompanyRepository = $insuranceCompanyRepository;
@@ -209,7 +210,6 @@ class ReportService implements ReportServiceContract
      */
     private function createXls($report_id)
     {
-        $n_str = 0;
         $policies = $this->preparePoliciesForXls();
 
         $spreadsheet = new Spreadsheet();
@@ -244,6 +244,7 @@ class ReportService implements ReportServiceContract
         $sheet->getColumnDimension('K')->setAutoSize(true);
         $sheet->getColumnDimension('L')->setAutoSize(true);
 
+        $n_str = 1;
         foreach ($policies as $policy) {
             $n_str++;
             $sheet->setCellValue('A' . $n_str, $n_str);

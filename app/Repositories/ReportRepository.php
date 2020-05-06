@@ -31,7 +31,7 @@ class ReportRepository implements ReportRepositoryContract
         $cacheKey = self::getCacheKey('id', $id);
 
         $report = Cache::tags($cacheTag)->remember($cacheKey, $this->_DAY_TTL, function () use ($id) {
-           return Report::with(['policies.type','policies.company'])->find($id);
+            return Report::with(['file'])->find($id);
         });
 
         $this->checkReport($report);
@@ -90,7 +90,7 @@ class ReportRepository implements ReportRepositoryContract
                 $query->where('name', 'like', '%' . $filter['search'] . '%');
             }
 
-            if (!empty($filter['orderBy']) && !empty($filter['orderDirection'])){
+            if (!empty($filter['orderBy']) && !empty($filter['orderDirection'])) {
                 $query->orderBy($filter['orderBy'], $filter['orderDirection']);
             }
 
