@@ -13,7 +13,6 @@ use App\Repositories\PolicyRepository;
 use App\Traits\ValueSetterTrait;
 use Benfin\Api\Contracts\AuthMicroserviceContract;
 use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
-use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 use Benfin\Api\Services\AuthMicroservice;
 use Benfin\Api\Services\CommissionCalculationMicroservice;
@@ -422,12 +421,12 @@ class PolicyService implements PolicyServiceContract
                 $tmp = collect($item);
                 return [
                     "count" => $tmp->count(),
-                    "sum" => $tmp->sum("premium")
+                    "sum" => round($tmp->sum("premium"), 2)
                 ];
             });
         $result = [
             "count" => $policiesList->count(),
-            "sum" => $policiesList->sum('premium'),
+            "sum" => round($policiesList->sum('premium'), 2),
             "by_insurance_company" => $byInsuranceCompany
         ];
 
@@ -443,7 +442,7 @@ class PolicyService implements PolicyServiceContract
                     $d = Carbon::parse($tmp->first()->registration_date);
                     return [
                         "count" => $tmp->count(),
-                        "sum" => $tmp->sum("premium"),
+                        "sum" => round($tmp->sum("premium"), 2),
                         "label" => mb_convert_case($d->locale('ru')->getTranslatedMonthName('F') . " " . $d->year, MB_CASE_TITLE),
                     ];
                 });
@@ -471,7 +470,7 @@ class PolicyService implements PolicyServiceContract
                     $d = Carbon::parse($tmp->first()->registration_date);
                     return [
                         "count" => $tmp->count(),
-                        "sum" => $tmp->sum("premium"),
+                        "sum" => round($tmp->sum("premium"), 2),
                         'label' => $d->format('d.m.Y'),
                     ];
                 });
