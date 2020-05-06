@@ -18,13 +18,13 @@ class Report extends Model
         'creator_id',
         'create_date',
         'reward',
-        'is_payed'
+        'is_payed',
+        'creator_id'
     ];
     protected $hidden = [
         'created_at',
         'updated_at',
         'file_id',
-        'creator_id'
     ];
 
     protected $appends = [

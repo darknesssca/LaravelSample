@@ -9,6 +9,7 @@ use App\Contracts\Repositories\Services\PolicyTypeServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\StatisticsNotFoundException;
+use App\Models\Policy;
 use App\Repositories\PolicyRepository;
 use App\Traits\ValueSetterTrait;
 use Benfin\Api\Contracts\AuthMicroserviceContract;
@@ -134,7 +135,9 @@ class PolicyService implements PolicyServiceContract
         return [
             'policy' => $policies->forPage($page, $perPage),
             'pagination' => [
-                'pageCount' => ceil($policies->count() / $perPage)
+                'pageCount' => ceil($policies->count() / $perPage),
+                'page'=>$page,
+                'per_page'=>$perPage,
             ]
         ];
     }
@@ -661,4 +664,14 @@ class PolicyService implements PolicyServiceContract
         return $policy->number;
     }
 
+    /**
+     * возвращает список пользователей, которые оформляли полисы
+     */
+    public function usersWithPolicies(){
+        $policies = Policy::select('agent_id')->get();
+        $ids = [];
+        foreach ($policies as $pol)
+            $ids[]=$pol['agent_id'];
+        return $this->authService->usersInfo($ids);
+    }
 }

@@ -27,7 +27,7 @@ class PolicyListRequest extends AbstractRequest
             "from.date" => "Поле 'from' должно быть датой!",
             "to.date" => "Поле 'to' должно быть датой!",
             "page.integer" => "Поле 'page' должно быть целым числом!",
-            "per_page.integer" => "Поле 'per_page' должно быть датой!",
+            "per_page.integer" => "Поле 'per_page' должно быть целым числом!",
             "order.in" => "Поле 'order' должно быть asc либо desc!",
         ];
     }

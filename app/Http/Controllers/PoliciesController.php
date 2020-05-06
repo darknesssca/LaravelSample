@@ -8,7 +8,6 @@ use App\Http\Requests\Policies\PolicyStatisticRequest;
 use App\Http\Requests\Policies\PolicyWithRewardsRequest;
 use App\Services\PolicyService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class PoliciesController extends Controller
@@ -58,5 +57,14 @@ class PoliciesController extends Controller
     public function statistic(PolicyStatisticRequest $request)
     {
         return Response::success(app(PolicyServiceContract::class)->statistic($request->validated()));
+    }
+
+    public function usersWithPolicies()
+    {
+        try {
+            return Response::success(app(PolicyServiceContract::class)->usersWithPolicies());
+        } catch (\Exception $exception) {
+            return Response::error($exception->getMessage(), 500);
+        }
     }
 }
