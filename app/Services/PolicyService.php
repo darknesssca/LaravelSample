@@ -81,6 +81,9 @@ class PolicyService implements PolicyServiceContract
                 $clientIds[] = $policy->insurant_id;
                 $policyIds[] = $policy->id;
             }
+            $agentIds = array_unique($agentIds);
+            $clientIds = array_unique($clientIds);
+            $policyIds = array_unique($policyIds);
 
             $agents = app(AuthMicroserviceContract::class)->usersInfo($agentIds) ?? [];
             $clients = app(CommissionCalculationMicroserviceContract::class)->clientsInfo($clientIds) ?? [];
@@ -89,6 +92,7 @@ class PolicyService implements PolicyServiceContract
             )->mapToGroups(function ($reward) {
                 return [$reward['policy_id'] => $reward];
             });
+
 
             $policies = $policies->map(function ($policy) use ($agents, $clients, $rewards) {
                 $policy['type'] = $policy->type->name;
@@ -104,6 +108,7 @@ class PolicyService implements PolicyServiceContract
 
                 return $policy;
             });
+
 
             if (isset($filter['commission_paid'])) {
                 $paid = $filter['commission_paid'];
