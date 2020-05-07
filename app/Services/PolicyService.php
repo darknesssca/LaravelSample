@@ -135,8 +135,8 @@ class PolicyService implements PolicyServiceContract
             'policy' => $policies->forPage($page, $perPage),
             'pagination' => [
                 'pageCount' => ceil($policies->count() / $perPage),
-                'page'=>$page,
-                'per_page'=>$perPage,
+                'page' => $page,
+                'per_page' => $perPage,
             ]
         ];
     }
@@ -665,11 +665,12 @@ class PolicyService implements PolicyServiceContract
     /**
      * возвращает список пользователей, которые оформляли полисы
      */
-    public function usersWithPolicies(){
+    public function usersWithPolicies()
+    {
         $policies = Policy::select('agent_id')->get();
         $ids = [];
         foreach ($policies as $pol)
-            $ids[]=$pol['agent_id'];
-        return $this->authService->usersInfo($ids);
+            $ids[] = $pol['agent_id'];
+        return $this->authService->usersInfo(array_unique($ids));
     }
 }
