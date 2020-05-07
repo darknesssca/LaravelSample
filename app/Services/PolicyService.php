@@ -10,6 +10,7 @@ use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\StatisticsNotFoundException;
 use App\Models\Policy;
+use App\Models\Report;
 use App\Repositories\PolicyRepository;
 use App\Traits\ValueSetterTrait;
 use Benfin\Api\Contracts\AuthMicroserviceContract;
@@ -155,18 +156,29 @@ class PolicyService implements PolicyServiceContract
         return $reward;
     }
 
-    /**возвращает список полисов и вознаграждений по фильтру
+    /**возвращает список полисов, по которым пользователю можно получить выплату
+     * (для этих полисов не должно быть создано отчетов у этого пользователя)
      * @param array $filter
      * @return array
      * @throws ApiRequestsException
      */
-    public function listWithRewards(array $filter)
+    public function listAbleToPayment(array $filter)
     {
         $filter['agent_id'] = GlobalStorage::getUserId();
         $page = $filter['page'] ?? 1;
         $per_page = $filter['per_page'] ?? 10;
         $sort = $filter['sort'] ?? 'id';
         $order = $filter['order'] ?? 'asc';
+
+        //получаем список полисов, по которым уже есть отчет
+        $reports = Report::with('policies')->where('creator_id', $filter['agent_id'])->get();
+        $exclude_policy_ids = $reports->reduce(function ($carry, $report) {
+            $arr = $report['policies']->map(function ($polic) {
+                return $polic['id'];
+            })->toArray();
+            return array_merge($arr, $carry);
+        }, []);
+        $exclude_policy_ids = array_unique($exclude_policy_ids);
 
         //получаем субагентов
         $subagents = $this->authService->getSubagents();
@@ -196,7 +208,8 @@ class PolicyService implements PolicyServiceContract
             'from' => $filter['from'] ?? '',
             'to' => $filter['to'] ?? '',
             'paid' => $filter['police_paid'] ?? true,
-            'ids' => $policies_ids,
+            'ids' => $policies_ids, //берем только те, для которых есть вознаграждения
+            'exclude_policy_ids' => $exclude_policy_ids, //исключаем те, у которых уже есть отчет для этого пользователя
             'agent_ids' => array_merge($subagents_ids, [$filter['agent_id']]),
         ]);
         $clients_ids = [];
@@ -238,19 +251,22 @@ class PolicyService implements PolicyServiceContract
             $collection = $collection->sortBy($sort);
         }
 
+        //пагинация
+        $total_pages = ceil(($collection->count() / $per_page));
+        $collection = $collection->forPage($page, $per_page);
+
         //собраем массив, чтоб не потерять сортировку при преобразовании в json
         $data = [];
         foreach ($collection as $item) {
             $data[] = $item;
         }
 
-        //пагинация
         return [
             'page' => $page,
             'per_page' => $per_page,
             'order' => $order,
             'sort' => $sort,
-            'total_pages' => ceil(($collection->count() / $per_page)),
+            'total_pages' => $total_pages,
             'data' => $data,
         ];
     }

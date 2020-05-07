@@ -28,6 +28,10 @@ class PolicyRepository implements PolicyRepositoryContract
                 $query = $query->whereIn('id', $policyIds);
             }
 
+            if ($excludePolicyIds = $filter['exclude_policy_ids'] ?? null) {
+                $query = $query->whereNotIn('id', $excludePolicyIds);
+            }
+
             if ($agentIds = $filter['agent_ids'] ?? null) {
                 $query = $query->whereIn('agent_id', $agentIds);
             }
