@@ -53,7 +53,7 @@ class PolicyService implements PolicyServiceContract
         if (!$isAdmin) {
             $filter['agent_ids'] = [GlobalStorage::getUserId()];
 
-            $subagents = Arr::get(app(AuthMicroserviceContract::class)->getSubagents(GlobalStorage::getUserId()), 'content.subagents', []);
+            $subagents = Arr::get(app(AuthMicroserviceContract::class)->getSubagents(), 'content.subagents', []);
             foreach ($subagents as $subagent) {
                 $filter['agent_ids'][] = $subagent['id'];
             }
@@ -108,7 +108,7 @@ class PolicyService implements PolicyServiceContract
                 $policy['client'] = $clients[$policy->client_id]['full_name'] ?? '';
                 $policy['insurant'] = $clients[$policy->insurant_id]['full_name'] ?? '';
                 $policy['rewards'] = $rewards[$policy->id] ?? [];
-                $reward = $this->getCommission($rewards[$policy->id] ?? []);
+                $reward = $this->getRewardValue($rewards[$policy->id] ?? [], $policy->agent_id);
                 $policy['commission_paid'] = $reward['paid'] ?? false;
                 $policy['commission_value'] = $reward['value'] ?? null;
 
@@ -152,10 +152,13 @@ class PolicyService implements PolicyServiceContract
         ];
     }
 
-    private function getCommission($rewards)
+    private function getRewardValue($rewards, $policy_agent_id)
     {
-        $reward = collect($rewards)->first(function ($reward) {
-            return $reward['user_id'] === GlobalStorage::getUserId();
+        $reward = collect($rewards)->first(function ($reward) use ($policy_agent_id) {
+            if (GlobalStorage::userIsAdmin()) //для админа ищем основное вознаграждение агента
+                return $reward['user_id'] === $policy_agent_id;
+            else
+                return $reward['user_id'] === GlobalStorage::getUserId();
         });
 
         return $reward;
@@ -691,6 +694,6 @@ class PolicyService implements PolicyServiceContract
         $ids = [];
         foreach ($policies as $pol)
             $ids[] = $pol['agent_id'];
-        return $this->authService->usersInfo(array_unique($ids));
+        return $this->authService->getUsersList(['user_id' => array_unique($ids)]);
     }
 }

@@ -86,7 +86,7 @@ class InsuranceController extends Controller
     {
         $company = $this->getCompany($code);
         $method = 'payment';
-        return Response::success($this->runService($company, $request->toArray(), $method));
+        return Response::success($this->runService($company, $request->validated(), $method));
     }
 
 }
