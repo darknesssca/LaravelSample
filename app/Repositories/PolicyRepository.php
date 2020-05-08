@@ -121,20 +121,4 @@ class PolicyRepository implements PolicyRepositoryContract
             ->where('number', $policyNumber)
             ->first();
     }
-
-    /**возвращает список id полисов, по которым пользователь запросил вывод средств
-     * @param $agent_id
-     * @return array
-     */
-    public function getReportedPoliciesIds(int $agent_id): array
-    {
-        $reports = Report::with('policies')->where('creator_id', $agent_id)->get();
-        $exclude_policy_ids = $reports->reduce(function ($carry, $report) {
-            $arr = $report['policies']->map(function ($polic) {
-                return $polic['id'];
-            })->toArray();
-            return array_merge($arr, $carry);
-        }, []);
-        return array_unique($exclude_policy_ids);
-    }
 }
