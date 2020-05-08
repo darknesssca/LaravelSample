@@ -63,23 +63,13 @@ class TinkoffMasterService extends TinkoffService implements TinkoffMasterServic
 
     public function payment($company, $attributes): void
     {
-        if (
-            isset($attributes['Body']['sendPaymentNotificationPartnerRequest']['paymentStatus']) &&
-            $attributes['Body']['sendPaymentNotificationPartnerRequest']['paymentStatus'] &&
-            (strtolower($attributes['Body']['sendPaymentNotificationPartnerRequest']['paymentStatus']) == 'confirm') &&
-            isset($attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber']) &&
-            $attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber']
-        ) {
-            $policy = $this->policyService->getNotPaidPolicyByPaymentNumber($attributes['Body']['sendPaymentNotificationPartnerRequest']['policyNumber']);
-            if (!$policy) {
-                throw new PolicyNotFoundException('Нет полиса с таким номером');
-            }
-            $this->policyService->update($policy->id, [
-                'paid' => true,
-            ]);
-        } else {
-            throw new PolicyNotFoundException('Не указан номер полиса или полис уже был отмечен как оплаченный');
+        $policy = $this->policyService->getNotPaidPolicyByPaymentNumber($attributes['policyNumber']);
+        if (!$policy) {
+            throw new PolicyNotFoundException('Нет полиса с таким номером');
         }
+        $this->policyService->update($policy->id, [
+            'paid' => true,
+        ]);
     }
 
     /**
