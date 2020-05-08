@@ -676,6 +676,6 @@ class PolicyService implements PolicyServiceContract
         $ids = [];
         foreach ($policies as $pol)
             $ids[] = $pol['agent_id'];
-        return $this->authService->usersInfo(array_unique($ids));
+        return $this->authService->getUsersList(['user_id'=>array_unique($ids)]);
     }
 }
