@@ -7,11 +7,13 @@ use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\DocTypeServiceContract;
 use App\Contracts\Repositories\Services\PolicyTypeServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
+use App\Contracts\Services\ReportServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\StatisticsNotFoundException;
 use App\Models\Policy;
 use App\Models\Report;
 use App\Repositories\PolicyRepository;
+use App\Services\Qiwi\ReportService;
 use App\Traits\ValueSetterTrait;
 use Benfin\Api\Contracts\AuthMicroserviceContract;
 use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
@@ -34,12 +36,15 @@ class PolicyService implements PolicyServiceContract
     private $commissionCalculationService;
     /** @var AuthMicroservice */
     private $authService;
+    /**  @var ReportService  */
+    private $reportService;
 
     public function __construct(PolicyRepositoryContract $policyRepository)
     {
         $this->policyRepository = $policyRepository;
         $this->commissionCalculationService = app(CommissionCalculationMicroserviceContract::class);
         $this->authService = app(AuthMicroserviceContract::class);
+        $this->reportService = app(ReportServiceContract::class);
     }
 
     public function getList(array $filter = [], string $sort = 'id', string $order = 'asc', int $page = 1, int $perPage = 20, string $search = null)
@@ -171,7 +176,7 @@ class PolicyService implements PolicyServiceContract
         $order = $filter['order'] ?? 'asc';
 
         //получаем список полисов, по которым уже есть отчет
-        $exclude_policy_ids=$this->policyRepository->getReportedPoliciesIds($filter['agent_id']);
+        $exclude_policy_ids=$this->reportService->getReportedPoliciesIds($filter['agent_id']);
 
         //получаем субагентов
         $subagents = $this->authService->getSubagents();

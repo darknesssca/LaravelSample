@@ -114,7 +114,7 @@ class ReportService implements ReportServiceContract
         if (isset($this->available_reward['available']) && $this->available_reward['available'] <= 0) {
             throw new Exception('Исчерпан лимит наград');
         }
-        $used_policies = $this->policyRepository->getReportedPoliciesIds(GlobalStorage::getUserId());
+        $used_policies = $this->getReportedPoliciesIds(GlobalStorage::getUserId());
         $intersect = array_intersect($used_policies,$fields['policies']);
         if(count($intersect) >0){
             $intersected = implode(',',$intersect);
@@ -448,5 +448,20 @@ class ReportService implements ReportServiceContract
 
             $this->commission_mks->massUpdateRewards($fields);
         }
+    }
+    /**возвращает список id полисов, по которым пользователь запросил вывод средств
+     * @param $agent_id
+     * @return array
+     */
+    public function getReportedPoliciesIds(int $agent_id)
+    {
+        $reports = $this->reportRepository->getByCreatorId($agent_id,[]);
+        $exclude_policy_ids = $reports->reduce(function ($carry, $report) {
+            $arr = $report['policies']->map(function ($polic) {
+                return $polic['id'];
+            })->toArray();
+            return array_merge($arr, $carry);
+        }, []);
+        return array_unique($exclude_policy_ids);
     }
 }
