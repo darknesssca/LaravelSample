@@ -203,14 +203,15 @@ class PolicyService implements PolicyServiceContract
         }
 
         //получаем полисы по вознаграждениям
+        $agents_ids=array_merge($subagents_ids, [$filter['agent_id']]);
         /** @var Collection $policies */
         $policies = $this->policyRepository->getList([
             'from' => $filter['from'] ?? '',
             'to' => $filter['to'] ?? '',
-            'paid' => $filter['police_paid'] ?? true,
+            'paid' => boolval($filter['police_paid']) ?? true,
             'ids' => $policies_ids, //берем только те, для которых есть вознаграждения
             'exclude_policy_ids' => $exclude_policy_ids, //исключаем те, у которых уже есть отчет для этого пользователя
-            'agent_ids' => array_merge($subagents_ids, [$filter['agent_id']]),
+            'agent_ids' => $agents_ids,
         ]);
         $clients_ids = [];
         foreach ($policies as $police) {

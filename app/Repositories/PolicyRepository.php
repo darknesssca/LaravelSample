@@ -62,7 +62,6 @@ class PolicyRepository implements PolicyRepositoryContract
             if ($to = $filter['to'] ?? null) {
                 $query = $query->where('registration_date', '<=', Carbon::parse($to));
             }
-
             return $query->get();
         };
         //Если пользователь  админ выдаем данные без кеша
