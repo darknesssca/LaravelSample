@@ -46,7 +46,10 @@ abstract class CompanyService
     public function sendBillUrl($email, $billUrl)
     {
         $notify = app(NotifyMicroserviceContract::class);
-        $status = $notify->sendMail($email, $billUrl, config('api_sk.notifyMicroserviceCode'));
+        $data = [
+            'link' => $billUrl
+        ];
+        $status = $notify->sendMail($email, $data, 'payment');
         if (isset($status["error"]) && !$status["error"]) {
             return true;
         }
