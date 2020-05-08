@@ -171,14 +171,7 @@ class PolicyService implements PolicyServiceContract
         $order = $filter['order'] ?? 'asc';
 
         //получаем список полисов, по которым уже есть отчет
-        $reports = Report::with('policies')->where('creator_id', $filter['agent_id'])->get();
-        $exclude_policy_ids = $reports->reduce(function ($carry, $report) {
-            $arr = $report['policies']->map(function ($polic) {
-                return $polic['id'];
-            })->toArray();
-            return array_merge($arr, $carry);
-        }, []);
-        $exclude_policy_ids = array_unique($exclude_policy_ids);
+        $exclude_policy_ids=$this->policyRepository->getReportedPoliciesIds($filter['agent_id']);
 
         //получаем субагентов
         $subagents = $this->authService->getSubagents();
@@ -218,7 +211,7 @@ class PolicyService implements PolicyServiceContract
             $clients_ids[] = $police['client_id'];
         }
 
-        //получаем пользователей
+        //получаем клиентов
         $clients = $this->commissionCalculationService->getClients(['client_id' => array_unique($clients_ids)]);
         if ($clients['error']) {
             throw new ApiRequestsException($clients['errors']);

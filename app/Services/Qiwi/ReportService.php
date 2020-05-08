@@ -14,6 +14,7 @@ use App\Exceptions\QiwiCreatePayoutException;
 use App\Exceptions\TaxStatusNotServiceException;
 use App\Models\File;
 use App\Models\Report;
+use App\Repositories\PolicyRepository;
 use App\Repositories\ReportRepository;
 use Benfin\Api\Contracts\AuthMicroserviceContract;
 use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
@@ -31,6 +32,7 @@ class ReportService implements ReportServiceContract
 {
     /** @var ReportRepository $reportRepository */
     private $reportRepository;
+    /** @var PolicyRepository $policyRepository */
     private $policyRepository;
     private $insuranceCompanyRepository;
 
@@ -101,7 +103,6 @@ class ReportService implements ReportServiceContract
     /**
      * @param array $fields
      * @return mixed
-     * @throws TaxStatusNotServiceException
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      * @throws Exception
@@ -112,6 +113,12 @@ class ReportService implements ReportServiceContract
 
         if (isset($this->available_reward['available']) && $this->available_reward['available'] <= 0) {
             throw new Exception('Исчерпан лимит наград');
+        }
+        $used_policies = $this->policyRepository->getReportedPoliciesIds(GlobalStorage::getUserId());
+        $intersect = array_intersect($used_policies,$fields['policies']);
+        if(count($intersect) >0){
+            $intersected = implode(',',$intersect);
+            throw new Exception("Для этих полисов уже была запрошена выплата: $intersected");
         }
 
         $fields['creator_id'] = GlobalStorage::getUserId();
