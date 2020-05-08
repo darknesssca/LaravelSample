@@ -7,6 +7,7 @@ namespace App\Repositories;
 use App\Cache\Policy\PolicyCacheTag;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Models\Policy;
+use App\Models\Report;
 use Benfin\Api\GlobalStorage;
 use Benfin\Cache\CacheKeysTrait;
 use Carbon\Carbon;
@@ -26,6 +27,10 @@ class PolicyRepository implements PolicyRepositoryContract
 
             if ($policyIds = $filter['policy_ids'] ?? null) {
                 $query = $query->whereIn('id', $policyIds);
+            }
+
+            if ($excludePolicyIds = $filter['exclude_policy_ids'] ?? null) {
+                $query = $query->whereNotIn('id', $excludePolicyIds);
             }
 
             if ($agentIds = $filter['agent_ids'] ?? null) {
@@ -58,7 +63,6 @@ class PolicyRepository implements PolicyRepositoryContract
             if ($to = $filter['to'] ?? null) {
                 $query = $query->where('registration_date', '<=', Carbon::parse($to));
             }
-
             return $query->get();
         };
         //Если пользователь  админ выдаем данные без кеша

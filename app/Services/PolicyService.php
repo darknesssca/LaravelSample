@@ -7,10 +7,13 @@ use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\Services\DocTypeServiceContract;
 use App\Contracts\Repositories\Services\PolicyTypeServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
+use App\Contracts\Services\ReportServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\StatisticsNotFoundException;
 use App\Models\Policy;
+use App\Models\Report;
 use App\Repositories\PolicyRepository;
+use App\Services\Qiwi\ReportService;
 use App\Traits\ValueSetterTrait;
 use Benfin\Api\Contracts\AuthMicroserviceContract;
 use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
@@ -33,12 +36,15 @@ class PolicyService implements PolicyServiceContract
     private $commissionCalculationService;
     /** @var AuthMicroservice */
     private $authService;
+    /**  @var ReportService  */
+    private $reportService;
 
     public function __construct(PolicyRepositoryContract $policyRepository)
     {
         $this->policyRepository = $policyRepository;
         $this->commissionCalculationService = app(CommissionCalculationMicroserviceContract::class);
         $this->authService = app(AuthMicroserviceContract::class);
+        $this->reportService = app(ReportServiceContract::class);
     }
 
     public function getList(array $filter = [], string $sort = 'id', string $order = 'asc', int $page = 1, int $perPage = 20, string $search = null)
@@ -158,18 +164,22 @@ class PolicyService implements PolicyServiceContract
         return $reward;
     }
 
-    /**возвращает список полисов и вознаграждений по фильтру
+    /**возвращает список полисов, по которым пользователю можно получить выплату
+     * (для этих полисов не должно быть создано отчетов у этого пользователя)
      * @param array $filter
      * @return array
      * @throws ApiRequestsException
      */
-    public function listWithRewards(array $filter)
+    public function listAbleToPayment(array $filter)
     {
         $filter['agent_id'] = GlobalStorage::getUserId();
         $page = $filter['page'] ?? 1;
         $per_page = $filter['per_page'] ?? 10;
         $sort = $filter['sort'] ?? 'id';
         $order = $filter['order'] ?? 'asc';
+
+        //получаем список полисов, по которым уже есть отчет
+        $exclude_policy_ids=$this->reportService->getReportedPoliciesIds($filter['agent_id']);
 
         //получаем субагентов
         $subagents = $this->authService->getSubagents();
@@ -194,20 +204,22 @@ class PolicyService implements PolicyServiceContract
         }
 
         //получаем полисы по вознаграждениям
+        $agents_ids=array_merge($subagents_ids, [$filter['agent_id']]);
         /** @var Collection $policies */
         $policies = $this->policyRepository->getList([
             'from' => $filter['from'] ?? '',
             'to' => $filter['to'] ?? '',
-            'paid' => $filter['police_paid'] ?? true,
-            'ids' => $policies_ids,
-            'agent_ids' => array_merge($subagents_ids, [$filter['agent_id']]),
+            'paid' => boolval($filter['police_paid']) ?? true,
+            'ids' => $policies_ids, //берем только те, для которых есть вознаграждения
+            'exclude_policy_ids' => $exclude_policy_ids, //исключаем те, у которых уже есть отчет для этого пользователя
+            'agent_ids' => $agents_ids,
         ]);
         $clients_ids = [];
         foreach ($policies as $police) {
             $clients_ids[] = $police['client_id'];
         }
 
-        //получаем пользователей
+        //получаем клиентов
         $clients = $this->commissionCalculationService->getClients(['client_id' => array_unique($clients_ids)]);
         if ($clients['error']) {
             throw new ApiRequestsException($clients['errors']);
@@ -241,19 +253,22 @@ class PolicyService implements PolicyServiceContract
             $collection = $collection->sortBy($sort);
         }
 
+        //пагинация
+        $total_pages = ceil(($collection->count() / $per_page));
+        $collection = $collection->forPage($page, $per_page);
+
         //собраем массив, чтоб не потерять сортировку при преобразовании в json
         $data = [];
         foreach ($collection as $item) {
             $data[] = $item;
         }
 
-        //пагинация
         return [
             'page' => $page,
             'per_page' => $per_page,
             'order' => $order,
             'sort' => $sort,
-            'total_pages' => ceil(($collection->count() / $per_page)),
+            'total_pages' => $total_pages,
             'data' => $data,
         ];
     }

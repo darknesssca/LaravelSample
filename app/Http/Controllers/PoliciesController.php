@@ -45,10 +45,10 @@ class PoliciesController extends Controller
      * @param PolicyWithRewardsRequest $request
      * @return JsonResponse
      */
-    public function listWithRewards(PolicyWithRewardsRequest $request)
+    public function listAbleToPayment(PolicyWithRewardsRequest $request)
     {
         try {
-            return Response::success($this->policyService->listWithRewards($request->validated()));
+            return Response::success($this->policyService->listAbleToPayment($request->validated()));
         } catch (\Exception $exception) {
             return Response::error($exception->getMessage(), 500);
         }

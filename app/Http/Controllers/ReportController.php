@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Contracts\Services\ReportServiceContract;
 use App\Http\Requests\Reports\CreateReportRequest;
 use App\Http\Requests\Reports\GetListReportsRequest;
+use App\Services\Qiwi\ReportService;
 use Benfin\Requests\Exceptions\AbstractException;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -13,6 +14,7 @@ use Illuminate\Http\Response;
 
 class ReportController extends Controller
 {
+    /** @var ReportService $reportService  */
     private $reportService;
 
     public function __construct(ReportServiceContract $reportService)
