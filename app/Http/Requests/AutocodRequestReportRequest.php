@@ -12,11 +12,9 @@ class AutocodRequestReportRequest extends AbstractRequest
 
     public  function rules():array
     {
-        return  ['vin' => 'required'];//todo добавить регулярку на вин
+        return  [
+            'vin' => 'required|regex:/^[A-HJ-NPR-Za-hj-npr-z0-9]+$/|min:12|max:17'
+        ];
     }
 
-    public  function messages():array
-    {
-       return ['vin.required' => 'не задано поле vin'];//todo добавить регулярку на вин
-    }
 }
