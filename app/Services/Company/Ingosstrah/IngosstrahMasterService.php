@@ -233,8 +233,17 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
                 $tokenData = $this->getTokenDataByCompany($processData['token'], $company->code);
                 $attributes['premium'] = $tokenData['premium'];
                 GlobalStorage::setUser($processData['data']['user']);
-                $dbPolicyId = $this->createPolicy($company, $attributes);
-                $processData['data']['dbPolicyId'] = $dbPolicyId;
+                $tokenData = $this->getTokenData($processData['token'], true);
+                if (!isset($tokenData['dbPolicyId'])) {
+                    $dbPolicyId = $this->createPolicy($company, $attributes);
+                    if ($dbPolicyId) {
+                        $processData['data']['dbPolicyId'] = $dbPolicyId;
+                        $tokenData['dbPolicyId'] = $dbPolicyId;
+                        $this->intermediateDataService->update($processData['token'], [
+                            'data' => json_encode($tokenData),
+                        ]);
+                    }
+                }
                 $eosagoService = app(IngosstrahEosagoServiceContract::class);
                 $eosagoData = $eosagoService->run($company, $processData);
                 if (!$eosagoData['isEosago'] && $eosagoData['hold']) {
