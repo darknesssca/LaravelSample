@@ -11,7 +11,7 @@ class PolicyWithRewardsRequest extends AbstractRequest
     public function rules(): array
     {
         return [
-            "reward_paid" => "required|bool",
+            "reward_paid" => "required|integer",
             "police_paid" => "sometimes|bool",
             "from" => "sometimes|date",
             "to" => "sometimes|date",
