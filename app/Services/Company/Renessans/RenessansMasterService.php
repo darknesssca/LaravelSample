@@ -246,6 +246,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
                 ]);
                 return;
             }
+            $attributes['token'] = $processData['token'];
             $this->pushForm($attributes);
             $attributes['number'] = $attributes['policyId'];
             $tokenData = $this->getTokenDataByCompany($processData['token'], $company->code);
