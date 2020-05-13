@@ -143,7 +143,9 @@ class PolicyService implements PolicyServiceContract
         }
 
         return [
-            'policy' => $policies->forPage($page, $perPage),
+            // С помощью array values удаляем ключи чтобы вместо объекта был массив.
+            //Если не удалить ключи то массив преобразуется в объект и на фронте работать не будет.
+            'policy' => array_values($policies->forPage($page, $perPage)->toArray()),
             'pagination' => [
                 'pageCount' => ceil($policies->count() / $perPage),
                 'page' => $page,
