@@ -143,7 +143,9 @@ class PolicyService implements PolicyServiceContract
         }
 
         return [
-            'policy' => $policies->forPage($page, $perPage),
+            // С помощью array values удаляем ключи чтобы вместо объекта был массив.
+            //Если не удалить ключи то массив преобразуется в объект и на фронте работать не будет.
+            'policy' => array_values($policies->forPage($page, $perPage)->toArray()),
             'pagination' => [
                 'pageCount' => ceil($policies->count() / $perPage),
                 'page' => $page,
@@ -193,7 +195,14 @@ class PolicyService implements PolicyServiceContract
         }
 
         //получаем вознаграждения
-        $rewards = $this->commissionCalculationService->getRewards(['paid' => $filter['reward_paid'], 'user_id' => $filter['agent_id']]);
+
+        $rewards_params['user_id'] = $filter['agent_id'];
+
+        if (in_array(intval($filter['reward_paid']), [0, 1])){
+            $rewards_params['paid'] = $filter['reward_paid'];
+        }
+
+        $rewards = $this->commissionCalculationService->getRewards($rewards_params);
         if ($rewards['error']) {
             throw new ApiRequestsException($rewards['errors']);
         }
