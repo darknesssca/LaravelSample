@@ -52,7 +52,7 @@ class ReportRepository implements ReportRepositoryContract
             $query = Report::with(['policies', 'file']);
 
             if (!empty($filter['search'])) {
-                $query->where('name', 'like', '%' . $filter['search'] . '%');
+                $query->where('name', 'ilike', '%' . $filter['search'] . '%');
             }
 
             if (!empty($filter['orderBy']) && !empty($filter['orderDirection'])) {
