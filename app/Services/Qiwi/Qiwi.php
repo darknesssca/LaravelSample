@@ -125,7 +125,7 @@ class Qiwi
     private function setPayoutRecipientParams()
     {
         switch ($this->commonParams['tax_status']) {
-            case 'individual':
+            case 'physical':
                 $this->payoutRecipient = [
                     'providerCode' => 'bank-card-russia',
                     'fields' => [
