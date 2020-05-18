@@ -121,4 +121,8 @@ class PolicyRepository implements PolicyRepositoryContract
             ->where('number', $policyNumber)
             ->first();
     }
+
+    public function getById($id) {
+        return Policy::where('id', $id)->first();
+    }
 }

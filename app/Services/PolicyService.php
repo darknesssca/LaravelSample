@@ -9,6 +9,7 @@ use App\Contracts\Repositories\Services\PolicyTypeServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Contracts\Services\ReportServiceContract;
 use App\Exceptions\ApiRequestsException;
+use App\Exceptions\PolicyNotFoundException;
 use App\Exceptions\StatisticsNotFoundException;
 use App\Models\Policy;
 use App\Models\Report;
@@ -336,7 +337,8 @@ class PolicyService implements PolicyServiceContract
             }
         }
 
-        $reward = $mks->createRewards($policy->id, $policy->premium, $policy->insurance_company_id, $policy->registration_date, $policy->region_kladr, GlobalStorage::getUserId(), GlobalStorage::getUserRefererId());
+        $reward = $mks->createRewards($policy->id);
+
         if (
             (isset($reward['error']) && !$reward['error']) &&
             (isset($reward['content']) && isset($reward['content']['commission_id']))
@@ -696,4 +698,24 @@ class PolicyService implements PolicyServiceContract
             $ids[] = $pol['agent_id'];
         return $this->authService->getUsersList(['user_id' => array_unique($ids)]);
     }
+
+    /**
+     * получить полис по id
+     * @param int $id
+     * @return mixed
+     * @throws PolicyNotFoundException
+     */
+    public function getById(int $id)
+    {
+        $policy = $this->policyRepository->getById($id);
+        if (
+            !$policy ||
+            !GlobalStorage::userIsAdmin() && $policy->agent_id !== GlobalStorage::getUserId()
+        ) {
+            throw new PolicyNotFoundException('Полис не найден');
+        }
+
+        return $policy;
+    }
+
 }
