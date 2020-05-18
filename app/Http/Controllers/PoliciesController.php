@@ -8,6 +8,7 @@ use App\Http\Requests\Policies\PolicyStatisticRequest;
 use App\Http\Requests\Policies\PolicyWithRewardsRequest;
 use App\Services\PolicyService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class PoliciesController extends Controller
@@ -18,6 +19,10 @@ class PoliciesController extends Controller
     public function __construct()
     {
         $this->policyService = app(PolicyServiceContract::class);
+    }
+    
+    public function getById($id) {
+        return Response::success(app(PolicyServiceContract::class)->getById($id));
     }
 
     public function list(PolicyListRequest $request)

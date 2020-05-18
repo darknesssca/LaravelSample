@@ -6,6 +6,8 @@ interface PolicyServiceContract
 {
     public function getList(array $filter = [], string $sort = 'id', string $order = 'asc', int $page = 1, int $perPage = 20, string $search = null);
 
+    public function getById(int $id);
+
     public function statistic(array $filter = []);
 
     public function create(array $fields, int $draftId = null);
