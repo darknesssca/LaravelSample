@@ -50,7 +50,7 @@ class PolicyService implements PolicyServiceContract
 
     public function getList(array $filter = [], string $sort = 'id', string $order = 'asc', int $page = 1, int $perPage = 20, string $search = null)
     {
-        $isAdmin = in_array('admin', GlobalStorage::getUserGroup());
+        $isAdmin = GlobalStorage::userIsAdmin();
         if (!$isAdmin) {
             $filter['agent_ids'] = [GlobalStorage::getUserId()];
 
@@ -100,8 +100,7 @@ class PolicyService implements PolicyServiceContract
                 return [$reward['policy_id'] => $reward];
             });
 
-
-            $policies = $policies->map(function ($policy) use ($agents, $clients, $rewards) {
+            $policies = $policies->map(function ($policy) use ($agents, $clients, $rewards, $isAdmin) {
                 $policy['type'] = $policy->type->name;
                 $policy['company'] = $policy->company->name;
                 $policy['referer'] = $policy->agent_id !== GlobalStorage::getUserId();
@@ -112,6 +111,10 @@ class PolicyService implements PolicyServiceContract
                 $reward = $this->getRewardValue($rewards[$policy->id] ?? [], $policy->agent_id);
                 $policy['commission_paid'] = $reward['paid'] ?? false;
                 $policy['commission_value'] = $reward['value'] ?? null;
+                if ($isAdmin) {
+                    $policy['agent_tax_status'] = $agents[$policy->agent_id]['tax_status']['name'] ?? '';
+                    $policy['agent_inn'] = $agents[$policy->agent_id]['requisite']['inn'] ?? '';
+                }
 
                 return $policy;
             });
