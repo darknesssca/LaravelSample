@@ -18,8 +18,10 @@ use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\MethodForbiddenException;
 use App\Exceptions\TokenException;
+use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
+use Carbon\Carbon;
 
 class SoglasieMasterService extends SoglasieService implements SoglasieMasterServiceContract
 {
@@ -61,6 +63,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
             'scoringId' => $dataScoring['scoringId'],
             'kbmId' => $dataKbm['kbmId'],
             'premium' => $dataCalculate['premium'],
+            'reward' => $this->getReward($company->id, $tokenData['form'], $dataCalculate['premium'])
         ];
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
@@ -68,6 +71,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
         return [
             'status' => 'calculated',
             'premium' => $dataCalculate['premium'],
+            'reward' => $tokenData[$company->code]['reward'],
         ];
     }
 
@@ -308,5 +312,46 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
             ]);
             $this->billPolicyRepository->delete($processData['id']);
         }
+    }
+
+    private function getReward($companyId, $formData, $policyPremium)
+    {
+        $insurerId = $formData['policy']['insurantId'];
+        $insurer = [];
+        $needleAddress = [];
+
+        foreach ($formData['subjects'] as $subject) {
+            if ($subject['id'] == $insurerId) {
+                $insurer = $subject['fields'];
+            }
+        }
+        if (!empty($insurer) && !empty($insurer['addresses'])) {
+            foreach ($insurer['addresses'] as $address) {
+                if ($address['address']['addressType'] == 'registration') {
+                    $needleAddress = $address['address'];
+                }
+            }
+        }
+
+        $params = [
+            'insurance_company_id' => $companyId,
+            'policy_date' => Carbon::now()->format('Y-m-d'),
+            'kladr_id' => $needleAddress['regionKladr']
+        ];
+
+        /** @var CommissionCalculationMicroserviceContract $calc_service */
+        $calc_service = app(CommissionCalculationMicroserviceContract::class);
+        $response = $calc_service->getCommissionsList($params);
+
+        if (count($response['content']['data']) == 1){
+            if (GlobalStorage::userIsAgent())
+                $percent_reward = intval($response['content']['data'][0]['agent_reward']);
+            if (GlobalStorage::userIsJustUser())
+                $percent_reward = intval($response['content']['data'][0]['user_reward']);
+            return ($percent_reward / 100) * $policyPremium;
+        }
+
+
+        return 0;
     }
 }
