@@ -209,7 +209,7 @@ class TinkoffMasterService extends TinkoffService implements TinkoffMasterServic
         $calc_service = app(CommissionCalculationMicroserviceContract::class);
         $response = $calc_service->getCommissionsList($params);
 
-        if (count($response['content']['data']) == 1){
+        if (count($response['content']['data']) > 0){
             if (GlobalStorage::userIsAgent())
                 $percent_reward = intval($response['content']['data'][0]['agent_reward']);
             if (GlobalStorage::userIsJustUser())
