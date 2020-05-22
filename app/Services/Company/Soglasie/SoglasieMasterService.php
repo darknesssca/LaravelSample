@@ -61,6 +61,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
             'scoringId' => $dataScoring['scoringId'],
             'kbmId' => $dataKbm['kbmId'],
             'premium' => $dataCalculate['premium'],
+            'reward' => $this->getReward($company->id, $tokenData['form'], $dataCalculate['premium'])
         ];
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
@@ -68,6 +69,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
         return [
             'status' => 'calculated',
             'premium' => $dataCalculate['premium'],
+            'reward' => $tokenData[$company->code]['reward'],
         ];
     }
 

@@ -7,7 +7,6 @@ use App\Contracts\Company\Tinkoff\TinkoffBillLinkServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCreateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffMasterServiceContract;
-use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\MethodForbiddenException;
 use App\Exceptions\PolicyNotFoundException;
 use Benfin\Api\Contracts\LogMicroserviceContract;
@@ -25,12 +24,14 @@ class TinkoffMasterService extends TinkoffService implements TinkoffMasterServic
             'status' => 'calculated',
             'setNumber' => $dataCalculate['setNumber'],
             'premium' => $dataCalculate['premium'],
+            'reward' => $this->getReward($company->id, $tokenData['form'], $dataCalculate['premium'])
         ];
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
         return [
             'premium' => $dataCalculate['premium'],
+            'reward' => $tokenData[$company->code]['reward'],
         ];
     }
 

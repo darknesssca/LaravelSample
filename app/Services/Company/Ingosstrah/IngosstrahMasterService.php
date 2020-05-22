@@ -49,12 +49,14 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
             'status' => 'calculated',
             'sessionToken' => $loginData['sessionToken'],
             'premium' => $dataCalculate['premium'],
+            'reward' => $this->getReward($company->id, $tokenData['form'], $dataCalculate['premium']),
         ];
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
         return [
             'premium' => $dataCalculate['premium'],
+            'reward' => $tokenData[$company->code]['reward'],
         ];
     }
 

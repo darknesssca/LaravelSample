@@ -11,8 +11,6 @@ use App\Contracts\Company\Renessans\RenessansCheckCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansGetStatusServiceContract;
 use App\Contracts\Company\Renessans\RenessansMasterServiceContract;
-use App\Contracts\Repositories\Services\PolicyTypeServiceContract;
-use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\MethodForbiddenException;
 use App\Exceptions\TokenException;
@@ -94,6 +92,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
                 return [
                     'status' => 'done',
                     'premium' => $tokenData['finalPremium'],
+                    'reward' => $tokenData['reward']
                 ];
             case 'error':
                 throw new ApiRequestsException($tokenData['errorMessages']);
@@ -211,6 +210,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $tokenData[$company->code]['status'] = 'calculated';
         $tokenData[$company->code]['calcId'] = $processData['data']['finalCalcId'];
         $tokenData[$company->code]['finalPremium'] = $dataCalculate['premium'];
+        $tokenData[$company->code]['reward'] = $this->getReward($company->id, $tokenData['form'], $dataCalculate['premium']);
         $this->intermediateDataService->update($processData['token'], [
             'data' => json_encode($tokenData),
         ]);
