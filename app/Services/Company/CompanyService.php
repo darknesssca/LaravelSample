@@ -32,8 +32,7 @@ abstract class CompanyService
         IntermediateDataServiceContract $intermediateDataService,
         RequestProcessServiceContract $requestProcessService,
         PolicyServiceContract $policyService
-    )
-    {
+    ) {
         $this->intermediateDataService = $intermediateDataService;
         $this->requestProcessService = $requestProcessService;
         $this->policyService = $policyService;
@@ -153,11 +152,13 @@ abstract class CompanyService
         $calc_service = app(CommissionCalculationMicroserviceContract::class);
         $response = $calc_service->getCommissionsList($params);
 
-        if (count($response['content']['data']) > 0){
-            if (GlobalStorage::userIsAgent())
+        if (count($response['content']['data']) > 0) {
+            if (GlobalStorage::userIsAgent()) {
                 $percent_reward = intval($response['content']['data'][0]['agent_reward']);
-            if (GlobalStorage::userIsJustUser())
+            }
+            if (GlobalStorage::userIsJustUser()) {
                 $percent_reward = intval($response['content']['data'][0]['user_reward']);
+            }
             return ($percent_reward / 100) * $policyPremium;
         }
 
