@@ -11,6 +11,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        $this->call([PolicySeeder::class]);
+        $this->call([
+            InsuranceCompanySeeder::class,
+            PolicyTypeSeeder::class,
+            DocTypeSeeder::class,
+            DocTypeInsuranceSeeder::class,
+            SourceAcquisitionSeeder::class,
+            InsuranceAcquisitionSeeder::class,
+            UsageTargetSeeder::class,
+            InsuranceUsageTargetSeeder::class,
+            GenderSeeder::class,
+            InsuranceGenderSeeder::class
+        ]);
     }
 }
