@@ -52,7 +52,6 @@ $router->group(
                     $router->get('/', 'PoliciesController@list');
                     $router->get('statistic', 'PoliciesController@statistic');
                     $router->get('/{id:\d+}', 'PoliciesController@getById');
-                    $router->post('/', 'PoliciesController@create');
                     $router->get('/with-rewards', 'PoliciesController@listAbleToPayment');
                     $router->get('/users-with-policies', 'PoliciesController@usersWithPolicies');
                 });

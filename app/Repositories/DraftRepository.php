@@ -99,13 +99,13 @@ class DraftRepository implements DraftRepositoryContract
         $cacheKey = self::getCacheKey("filter", $agentId, $filter);
 
         return Cache::tags($cacheTag)->remember($cacheKey, $this->_DAY_TTL, function () use ($agentId, $filter) {
-            $query = Draft::with(['owner', 'mark', 'category']);
+            $query = Draft::with(['owner', 'insurer', 'mark', 'category']);
 
             $query->where('agent_id', $agentId); //только для заданного агента
             if (!empty($filter['query'])) {
                 $query->where(function (Builder $query) use ($filter) {
                     //Поиск по ФИО
-                    $query->orWhereHas('owner', function (Builder $sub_query) use ($filter) {
+                    $query->orWhereHas('insurer', function (Builder $sub_query) use ($filter) {
                         $words = explode(' ', $filter['query'], 3);
                         if (count($words) == 1) {
                             $sub_query->where('last_name', 'ilike', '%' . $filter['query'] . '%')
