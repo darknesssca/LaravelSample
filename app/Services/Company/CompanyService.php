@@ -159,7 +159,7 @@ abstract class CompanyService
             if (GlobalStorage::userIsJustUser()) {
                 $percent_reward = intval($response['content']['data'][0]['user_reward']);
             }
-            return ($percent_reward / 100) * $policyPremium;
+            return round(($percent_reward / 100) * $policyPremium, 2);
         }
 
         return 0;
