@@ -74,8 +74,6 @@ class ReportController extends Controller
         try {
             return $this->reportService->createPayout($id);
         } catch (Exception $exception) {
-            echo $exception->getFile();
-            echo $exception->getLine();
             $httpCode = ($exception instanceof AbstractException) ? $exception->getHttpCode() : 400;
             return Response::error($exception->getMessage(), $httpCode);
         }
