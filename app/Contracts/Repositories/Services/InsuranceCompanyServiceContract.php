@@ -8,5 +8,5 @@ interface InsuranceCompanyServiceContract
 {
     public function getCompany($code);
     public function getCompanyById($id);
-    public function getInsuranceCompanyList();
+    public function getInsuranceCompanyList($checkActive);
 }
