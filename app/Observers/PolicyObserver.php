@@ -25,7 +25,7 @@ trait PolicyObserver
                 ->where('insurance_company_id', $model->insurance_company_id)
                 ->where('registration_date', $model->registration_date)
                 ->first();
-            
+
             if ($duplicate) {
                 throw new PolicyDuplicateException('Попытка создать дубликат полиса');
             }
@@ -35,28 +35,28 @@ trait PolicyObserver
 
         static::saved(function ($model) {
             Cache::tags(self::getPolicyListCacheTagByUser($model->agent_id))->flush();
-            $referId = app(AuthMicroserviceContract::class)->userInfo($model->agent_id)["referer_id"] ?? "";
-            Cache::tags(self::getPolicyListCacheTagByAttribute("List|$referId"))->flush();
+            $referId = app(AuthMicroserviceContract::class)->userInfo($model->agent_id)["content"]["referer_id"] ?? "";
+            Cache::tags(self::getPolicyListCacheTagByAttribute("|List|$referId"))->flush();
         });
 
         static::created(function ($model) {
             Cache::tags(self::getPolicyListCacheTagByUser($model->agent_id))->flush();
-            $referId = app(AuthMicroserviceContract::class)->userInfo($model->agent_id)["referer_id"] ?? "";
-            Cache::tags(self::getPolicyListCacheTagByAttribute("List|$referId"))->flush();
+            $referId = app(AuthMicroserviceContract::class)->userInfo($model->agent_id)["content"]["referer_id"] ?? "";
+            Cache::tags(self::getPolicyListCacheTagByUser("|List|$referId"))->flush();
         });
 
         static::updated(function ($model) {
             if ($model->isDirty()) {
                 Cache::tags(self::getPolicyListCacheTagByUser($model->agent_id))->flush();
-                $referId = app(AuthMicroserviceContract::class)->userInfo($model->agent_id)["referer_id"] ?? "";
-                Cache::tags(self::getPolicyListCacheTagByAttribute("List|$referId"))->flush();
+                $referId = app(AuthMicroserviceContract::class)->userInfo($model->agent_id)["content"]["referer_id"] ?? "";
+                Cache::tags(self::getPolicyListCacheTagByUser("|List|$referId"))->flush();
             }
         });
 
         static::deleted(function ($model) {
             Cache::tags(self::getPolicyListCacheTagByUser())->flush();
-            $referId = app(AuthMicroserviceContract::class)->userInfo($model->agent_id)["referer_id"] ?? "";
-            Cache::tags(self::getPolicyListCacheTagByAttribute("List|$referId"))->flush();
+            $referId = app(AuthMicroserviceContract::class)->userInfo($model->agent_id)["content"]["referer_id"] ?? "";
+            Cache::tags(self::getPolicyListCacheTagByUser("|List|$referId"))->flush();
         });
     }
 }
