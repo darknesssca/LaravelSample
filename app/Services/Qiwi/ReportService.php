@@ -9,9 +9,7 @@ use App\Contracts\Repositories\InsuranceCompanyRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\ReportRepositoryContract;
 use App\Contracts\Services\ReportServiceContract;
-use App\Exceptions\ApiRequestsException;
 use App\Exceptions\QiwiCreatePayoutException;
-use App\Exceptions\TaxStatusNotServiceException;
 use App\Models\File;
 use App\Models\Report;
 use App\Repositories\PolicyRepository;
@@ -59,8 +57,7 @@ class ReportService implements ReportServiceContract
         ReportRepositoryContract $reportRepository,
         PolicyRepositoryContract $policyRepository,
         InsuranceCompanyRepositoryContract $insuranceCompanyRepository
-    )
-    {
+    ) {
         $this->reportRepository = $reportRepository;
         $this->policyRepository = $policyRepository;
         $this->insuranceCompanyRepository = $insuranceCompanyRepository;
@@ -115,9 +112,9 @@ class ReportService implements ReportServiceContract
             throw new Exception('Исчерпан лимит наград');
         }
         $used_policies = $this->getReportedPoliciesIds(GlobalStorage::getUserId());
-        $intersect = array_intersect($used_policies,$fields['policies']);
-        if(count($intersect) >0){
-            $intersected = implode(',',$intersect);
+        $intersect = array_intersect($used_policies, $fields['policies']);
+        if (count($intersect) > 0) {
+            $intersected = implode(',', $intersect);
             throw new Exception("Для этих полисов уже была запрошена выплата: $intersected");
         }
 
@@ -389,11 +386,7 @@ class ReportService implements ReportServiceContract
         }
 
         $this->initQiwi($this->creator['requisite'], $this->creator['tax_status']['code']);
-        try {
-            $payout_id = $this->qiwi->createPayout($report->reward);
-        } catch (Exception $exception) {
-            throw new QiwiCreatePayoutException($exception->getMessage(), 0, $exception);
-        }
+        $payout_id = $this->qiwi->createPayout($report->reward);
 
         if (!empty($payout_id)) {
             $report->payout_id = $payout_id;
@@ -411,7 +404,9 @@ class ReportService implements ReportServiceContract
             ];
 
             $this->commission_mks->massUpdateRewards($fields);
-        } else throw new QiwiCreatePayoutException('Не удалось зарегистрировать оплату. Попробуйте позже');
+        } else {
+            throw new QiwiCreatePayoutException('Не удалось зарегистрировать оплату. Попробуйте позже');
+        }
 
         $this->executePayout($report);
     }
@@ -449,13 +444,14 @@ class ReportService implements ReportServiceContract
             $this->commission_mks->massUpdateRewards($fields);
         }
     }
+
     /**возвращает список id полисов, по которым пользователь запросил вывод средств
      * @param $agent_id
      * @return array
      */
     public function getReportedPoliciesIds(int $agent_id)
     {
-        $reports = $this->reportRepository->getByCreatorId($agent_id,[]);
+        $reports = $this->reportRepository->getByCreatorId($agent_id, []);
         $exclude_policy_ids = $reports->reduce(function ($carry, $report) {
             $arr = $report['policies']->map(function ($polic) {
                 return $polic['id'];
