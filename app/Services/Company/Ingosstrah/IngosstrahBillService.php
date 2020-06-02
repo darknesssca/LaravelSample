@@ -4,6 +4,7 @@ namespace App\Services\Company\Ingosstrah;
 
 use App\Contracts\Company\Ingosstrah\IngosstrahBillServiceContract;
 use App\Exceptions\ApiRequestsException;
+use Illuminate\Support\Facades\Storage;
 
 class IngosstrahBillService extends IngosstrahService implements IngosstrahBillServiceContract
 {
@@ -11,7 +12,30 @@ class IngosstrahBillService extends IngosstrahService implements IngosstrahBillS
     public function run($company, $processData): array
     {
         $data = $this->prepareData($processData);
+
+        $this->writeLog(
+            $this->logPath,
+            [
+                'request' => [
+                    'url' => $this->apiWsdlUrl,
+                    'method' => 'Bill',
+                    'payload' => $data
+                ]
+            ]
+        );
+
         $response = $this->requestBySoap($this->apiWsdlUrl, 'CreateBill', $data);
+
+        $this->writeLog(
+            $this->logPath,
+            [
+                'response' => [
+                    'method' => 'Bill',
+                    'response' => $response
+                ]
+            ]
+        );
+
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(
                 'API страховой компании вернуло ошибку: ' .

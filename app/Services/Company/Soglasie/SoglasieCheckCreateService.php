@@ -32,7 +32,29 @@ class SoglasieCheckCreateService extends SoglasieService implements SoglasieChec
             'policyId' => $processData['data']['policyId'],
         ]);
         $headers = $this->getHeaders();
+
+        $this->writeLog(
+            $this->logPath,
+            [
+                'request' => [
+                    'method' => 'CheckCreate',
+                    'url' => $url
+                ]
+            ]
+        );
+
         $response = $this->getRequest($url, [], $headers, false);
+
+        $this->writeLog(
+            $this->logPath,
+            [
+                'response' => [
+                    'method' => 'CheckCreate',
+                    'response' => $response
+                ]
+            ]
+        );
+
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');
         }

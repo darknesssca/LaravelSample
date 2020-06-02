@@ -28,6 +28,7 @@ abstract class SoglasieService extends CompanyService
         PolicyServiceContract $policyService
     )
     {
+        $this->logPath = 'soglasie/log_' . date('d.m.Y', time()) . '.txt';
         $this->apiUser = config('api_sk.soglasie.user');
         $this->apiPassword = config('api_sk.soglasie.password');
         $this->apiSubUser = config('api_sk.soglasie.subUser');

@@ -11,7 +11,30 @@ class IngosstrahEosagoService extends IngosstrahService implements IngosstrahEos
     public function run($company, $processData): array
     {
         $data = $this->prepareData($processData);
+
+        $this->writeLog(
+            $this->logPath,
+            [
+                'request' => [
+                    'method' => 'Eosago',
+                    'url' => $this->apiWsdlUrl,
+                    'payload' => $data
+                ]
+            ]
+        );
+
         $response = $this->requestBySoap($this->apiWsdlUrl, 'MakeEOsago', $data);
+
+        $this->writeLog(
+            $this->logPath,
+            [
+                'response' => [
+                    'method' => 'Eosago',
+                    'response' => $response
+                ]
+            ]
+        );
+
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(
                 'API страховой компании вернуло ошибку: ' .

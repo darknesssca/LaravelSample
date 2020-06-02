@@ -22,8 +22,10 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
     public function calculate($company, $attributes):array
     {
         $this->pushForm($attributes);
+
         $serviceCalculate = app(RenessansCalculateServiceContract::class);
         $dataCalculate = $serviceCalculate->run($company, $attributes);
+        $dataCalculate['user'] = GlobalStorage::getUser();
         $this->requestProcessService->create([
             'token' => $attributes['token'],
             'state' => 1,
@@ -203,6 +205,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
                 'calcId' => $processData['data']['finalCalcId'],
             ]
         ];
+        GlobalStorage::setUser($processData['data']['user']);
         $serviceCalculate = app(RenessansCheckCalculateServiceContract::class);
         $dataCalculate = $serviceCalculate->run($company, $calculateAttributes);
         $this->requestProcessService->delete($processData['token']);
@@ -304,8 +307,8 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
                 return;
             }
             throw new ApiRequestsException( // завершаем обработку эксепшеном, чтобы правильно отработать checkCount
-                'API страховой компании не вернуло ответ',
-                isset($dataStatus['message']) ? $dataStatus['message'] : 'нет данных об ошибке'
+                    'API страховой компании не вернуло ответ: ' .
+                    isset($dataStatus['message']) ? $dataStatus['message'] : 'нет данных об ошибке'
             );
         }
         $serviceBill = app(RenessansBillLinkServiceContract::class);

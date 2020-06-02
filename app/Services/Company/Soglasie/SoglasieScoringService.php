@@ -57,7 +57,30 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
                 'partial' => $this->transformAnyToBoolean(false),
             ],
         ];
+
+        $this->writeLog(
+            $this->logPath,
+            [
+                'request' => [
+                    'method' => 'Scoring',
+                    'url' => $this->apiWsdlUrl,
+                    'payload' => $data
+                ]
+            ]
+        );
+
         $response = $this->requestBySoap($this->apiWsdlUrl, 'getScoringId', $data, $auth, $headers, $xmlAttributes);
+
+        $this->writeLog(
+            $this->logPath,
+            [
+                'response' => [
+                    'method' => 'Scoring',
+                    'response' => $response
+                ]
+            ]
+        );
+
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(
                 'API страховой компании вернуло ошибку: ' .

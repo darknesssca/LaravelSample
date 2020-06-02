@@ -8,6 +8,7 @@ use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
+use Illuminate\Support\Facades\Storage;
 
 class RenessansBillLinkService extends RenessansService implements RenessansBillLinkServiceContract
 {
@@ -30,7 +31,30 @@ class RenessansBillLinkService extends RenessansService implements RenessansBill
         $this->setUrlLinks($data);
         $this->setBillCode($attributes);
         $url = $this->getUrl($attributes);
+
+        $this->writeLog(
+            $this->logPath,
+            [
+                'request' => [
+                    'method' => 'BillLink',
+                    'url' => $url,
+                    'payload' => $data
+                ]
+            ]
+        );
+
         $response = $this->getRequest($url, $data, [], false);
+
+        $this->writeLog(
+            $this->logPath,
+            [
+                'response' => [
+                    'method' => 'BillLink',
+                    'response' => $response
+                ]
+            ]
+        );
+
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');
         }

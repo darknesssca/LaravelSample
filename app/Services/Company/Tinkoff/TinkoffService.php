@@ -25,6 +25,7 @@ abstract class TinkoffService extends CompanyService
         PolicyServiceContract $policyService
     )
     {
+        $this->logPath = 'tinkoff/log_' . date('d.m.Y', time()) . '.txt';
         $this->apiWsdlUrl = config('api_sk.tinkoff.wsdlUrl');
         $this->apiUser = config('api_sk.tinkoff.user');
         $this->apiPassword = config('api_sk.tinkoff.password');

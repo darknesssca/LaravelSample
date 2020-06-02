@@ -14,6 +14,8 @@ use App\Contracts\Repositories\Services\UsageTargetServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Traits\TransformBooleanTrait;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class RenessansCalculateService extends RenessansService implements RenessansCalculateServiceContract
 {
@@ -48,7 +50,29 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
         $this->setAuth($attributes);
         $url = $this->getUrl();
         $data = $this->prepareData($company, $attributes);
+        $this->writeLog(
+            $this->logPath,
+            [
+                'request' => [
+                    'method' => 'Calculate',
+                    'url' => $url,
+                    'payload' => $data
+                ]
+            ]
+        );
+
         $response = $this->postRequest($url, $data, [], false);
+
+        $this->writeLog(
+            $this->logPath,
+            [
+                'response' => [
+                    'method' => 'Calculate',
+                    'response' => $response
+                ]
+            ]
+        );
+
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');
         }

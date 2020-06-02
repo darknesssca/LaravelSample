@@ -15,6 +15,7 @@ use Benfin\Api\GlobalStorage;
 use Benfin\Api\Traits\HttpRequest;
 use Benfin\Api\Traits\SoapRequest;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 abstract class CompanyService
 {
@@ -26,6 +27,7 @@ abstract class CompanyService
     protected $intermediateDataService;
     protected $requestProcessService;
     protected $policyService;
+    protected $logPath;
 
 
     public function __construct(
@@ -163,5 +165,31 @@ abstract class CompanyService
         }
 
         return 0;
+    }
+
+    public function writeLog(string $path, array $data)
+    {
+        if (!config('app.debug')) {
+            return;
+        }
+        $log = Storage::disk('minio')->exists($path);
+        $data['time'] = date('d.m.Y H:i:s', time());
+        if ($log) {
+            Storage::disk('minio')->append(
+                $path,
+                json_encode(
+                    $data,
+                    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                )
+            );
+        } else {
+            Storage::disk('minio')->put(
+                $path,
+                json_encode(
+                    $data,
+                    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                )
+            );
+        }
     }
 }

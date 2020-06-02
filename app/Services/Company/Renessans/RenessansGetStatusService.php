@@ -8,6 +8,7 @@ use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
+use Illuminate\Support\Facades\Storage;
 
 class RenessansGetStatusService extends RenessansService implements RenessansGetStatusServiceContract
 {
@@ -28,7 +29,30 @@ class RenessansGetStatusService extends RenessansService implements RenessansGet
         $data = [];
         $this->setAuth($data);
         $url = $this->getUrl($attributes);
+
+        $this->writeLog(
+            $this->logPath,
+            [
+                'request' => [
+                    'method' => 'GetStatus',
+                    'url' => $url,
+                    'payload' => $data
+                ]
+            ]
+        );
+
         $response = $this->getRequest($url, $data, [], false);
+
+        $this->writeLog(
+            $this->logPath,
+            [
+                'response' => [
+                    'method' => 'GetStatus',
+                    'response' => $response
+                ]
+            ]
+        );
+
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');
         }
