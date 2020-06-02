@@ -71,12 +71,8 @@ class InsuranceCompanySeeder extends Seeder
 
     public function run()
     {
-        $minio_path_to_file = env('MINIO_ENDPOINT', 'http://172.27.1.121:9000/') .
-            env('MINIO_BUCKET', 'test');
-
-        foreach (self::$files as $file) {
-            $file['dir'] = $minio_path_to_file . $file['dir'];
-
+        foreach (self::$files as &$file) {
+            $file['dir'] = config('filesystems.disks.minio.bucket') . $file['dir'];
             File::updateOrCreate(
                 [
                     'id' => $file['id']
