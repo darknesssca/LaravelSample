@@ -276,7 +276,7 @@ class ReportService implements ReportServiceContract
 
         $file_name = sprintf('report_%s.xls', $report_id);
         $tmp_file_path = '/tmp/' . $file_name;
-        $cloud_file_path = 'reports/' . $file_name;
+        $cloud_file_path = '/reports/' . md5($file_name) . '.xls';
 
         $writer = new Xls($spreadsheet);
         $writer->save($tmp_file_path);
@@ -287,7 +287,7 @@ class ReportService implements ReportServiceContract
         } else {
             $file_params = [
                 'name' => $file_name,
-                'dir' => Storage::cloud()->url($cloud_file_path),
+                'dir' =>  config('filesystems.disks.minio.bucket') . $cloud_file_path,
                 'content_type' => mime_content_type($tmp_file_path),
                 'size' => filesize($tmp_file_path),
             ];
