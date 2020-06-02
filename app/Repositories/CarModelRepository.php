@@ -71,7 +71,7 @@ class CarModelRepository implements CarModelRepositoryContract
                 ])
                     ->with(['category'])
                     ->where('mark_id', $mark_id)
-                    ->where('name', $name)
+                    ->where('name', 'ilike', $name)
                     ->first();
             }
         );
