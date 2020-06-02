@@ -5,6 +5,7 @@ namespace App\Services\Company\Ingosstrah;
 use App\Contracts\Company\Ingosstrah\IngosstrahBillLinkServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Traits\TransformBooleanTrait;
+use Illuminate\Support\Facades\Storage;
 
 class IngosstrahBillLinkService extends IngosstrahService implements IngosstrahBillLinkServiceContract
 {
@@ -14,7 +15,29 @@ class IngosstrahBillLinkService extends IngosstrahService implements IngosstrahB
     public function run($company, $processData): array
     {
         $data = $this->prepareData($processData);
+        $this->writeLog(
+            $this->logPath,
+            [
+                'request' => [
+                    'url' => $this->apiWsdlUrl,
+                    'method' => 'BillLink',
+                    'payload' => $data
+                ]
+            ]
+        );
+
         $response = $this->requestBySoap($this->apiWsdlUrl, 'CreateOnlineBill', $data);
+
+        $this->writeLog(
+            $this->logPath,
+            [
+                'method' => 'BillLink',
+                'response' => [
+                    'response' => $response
+                ]
+            ]
+        );
+
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(
                 'API страховой компании вернуло ошибку: ' .

@@ -50,7 +50,30 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
     public function run($company, $attributes): array
     {
         $data = $this->prepareData($company, $attributes);
+
+        $this->writeLog(
+            $this->logPath,
+            [
+                'request' => [
+                    'url' => $this->apiWsdlUrl,
+                    'method' => 'Calculate',
+                    'payload' => $data
+                ]
+            ]
+        );
+
         $response = $this->requestBySoap($this->apiWsdlUrl, 'GetTariff', $data);
+
+        $this->writeLog(
+            $this->logPath,
+            [
+                'response' => [
+                    'method' => 'Calculate',
+                    'response' => $response
+                ]
+            ]
+        );
+
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(
                 'API страховой компании вернуло ошибку: ' .

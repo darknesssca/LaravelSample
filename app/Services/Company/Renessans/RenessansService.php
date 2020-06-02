@@ -9,6 +9,7 @@ use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ConmfigurationException;
 use App\Services\Company\CompanyService;
+use Carbon\Carbon;
 
 abstract class RenessansService extends CompanyService
 {
@@ -23,6 +24,7 @@ abstract class RenessansService extends CompanyService
         PolicyServiceContract $policyService
     )
     {
+        $this->logPath = 'renes/log_' . date('d.m.Y', time()) . '.txt';
         $this->apiUrl = config('api_sk.renessans.apiUrl');
         $this->secretKey = config('api_sk.renessans.apiKey');
         if (!($this->apiUrl && $this->secretKey)) {
@@ -42,7 +44,9 @@ abstract class RenessansService extends CompanyService
             $this->apiPath;
         if ($data) {
             foreach ($data as $key => $value) {
-                $url = str_replace('{{'.$key.'}}', $value, $url);
+                if (gettype($value) != 'array') {
+                    $url = str_replace('{{' . $key . '}}', $value, $url);
+                }
             }
         }
         return $url;
