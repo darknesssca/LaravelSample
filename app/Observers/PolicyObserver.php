@@ -24,6 +24,8 @@ trait PolicyObserver
             $duplicate = Policy::where('number', $model->number)
                 ->where('insurance_company_id', $model->insurance_company_id)
                 ->where('registration_date', $model->registration_date)
+                ->where('client_id', $model->client_id)
+                ->where('insurant_id', $model->insurant_id)
                 ->first();
 
             if ($duplicate) {
