@@ -50,8 +50,8 @@ trait PolicyObserver
         static::updated(function ($model) {
             if ($model->isDirty()) {
                 Cache::tags(self::getPolicyListCacheTagByUser($model->agent_id))->flush();
-                $referId = app(AuthMicroserviceContract::class)->userInfo($model->agent_id)["content"]["referer_id"] ?? "";
-                Cache::tags(self::getPolicyListCacheTagByUser("|List|$referId"))->flush();
+                //$referId = app(AuthMicroserviceContract::class)->userInfo($model->agent_id)["content"]["referer_id"] ?? "";
+                //Cache::tags(self::getPolicyListCacheTagByUser("|List|$referId"))->flush();
             }
         });
 
