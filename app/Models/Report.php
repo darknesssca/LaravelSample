@@ -42,18 +42,6 @@ class Report extends Model
         return $this->belongsTo('App\Models\File');
     }
 
-    public static function boot()
-    {
-        parent::boot();
-        self::creating(function ($model) {
-            $model->create_date = Carbon::now();
-            $model->creator_id = GlobalStorage::getUserId();
-            $model->is_payed = false;
-        });
-    }
-
-    //Accessors
-
     public function getCreatePayoutLinkAttribute()
     {
             return ($this->requested == false && $this->is_payed == false) ? "/api/v1/car-insurance/reports/{$this->id}/payout/create" : '';

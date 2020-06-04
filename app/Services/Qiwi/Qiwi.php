@@ -4,6 +4,7 @@
 namespace App\Services\Qiwi;
 
 
+use App\Exceptions\QiwiCreatePayoutException;
 use App\Exceptions\TaxStatusNotServiceException;
 use Exception;
 use GuzzleHttp\Client;
@@ -67,14 +68,17 @@ class Qiwi
         $this->setPayoutParams($amount);
         $this->commonParams['payout_id'] = $this->getGUID();
 
-
         $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/payments/{$this->commonParams['payout_id']}";
-        $response = $this->sendRequest('PUT', $url, $this->payoutParams);
+        try {
+            $response = $this->sendRequest('PUT', $url, $this->payoutParams);
+        } catch (\Exception $e) {
+            throw new QiwiCreatePayoutException($e->getMessage());
+        }
 
         $response = json_decode($response['content'], true);
 
         if ($response['status']['value'] != 'READY') {
-            throw new Exception('Не удалось создать выплату');
+            throw new QiwiCreatePayoutException('Не удалось создать выплату');
         }
 
         return $this->commonParams['payout_id'];
