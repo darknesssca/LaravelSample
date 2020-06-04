@@ -206,9 +206,10 @@ class ReportService implements ReportServiceContract
     {
         $new_clients = [];
         $clients = $this->commission_mks->getClients(['client_id' => $clients_ids])['content'];
-
-        foreach ($clients as $client) {
-            $new_clients[$client['id']] = $client;
+        if (!empty($clients)) {
+            foreach ($clients as $client) {
+                $new_clients[$client['id']] = $client;
+            }
         }
 
         return $new_clients;
@@ -327,7 +328,7 @@ class ReportService implements ReportServiceContract
 
             $xls_policy['sk'] = $this->insuranceCompanyRepository->getById($policy->insurance_company_id)->name;
 
-            $xls_policy['strahovatel'] = $this->clients[$policy->client_id]['full_name'];
+            $xls_policy['strahovatel'] = $this->clients[$policy->client_id]['full_name'] ?? '-';
 
             $xls_policy['create_date'] = $policy->registration_date;
 
