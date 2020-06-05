@@ -81,6 +81,9 @@ class ReportService implements ReportServiceContract
     public function getReportInfo($id): array
     {
         $report = $this->reportRepository->getById($id);
+        if ($report->creator_id !== GlobalStorage::getUserId() && !GlobalStorage::userIsAdmin()) {
+            throw new Exception('Ошибка доступа');
+        }
         $report_info = $report->toArray();
         $report_info['creator'] = $this->getCreator($report->creator_id);
 
