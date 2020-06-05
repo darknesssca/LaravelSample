@@ -27,12 +27,7 @@ class ReportRepository implements ReportRepositoryContract
      */
     public function getById($id): Report
     {
-        $cacheTag = self::getReportCacheTag();
-        $cacheKey = self::getCacheKey('id', $id);
-
-        $report = Cache::tags($cacheTag)->remember($cacheKey, $this->_DAY_TTL, function () use ($id) {
-            return Report::with(['policies', 'file'])->find($id);
-        });
+        $report = Report::with(['policies', 'file'])->find($id);
 
         $this->checkReport($report);
 
