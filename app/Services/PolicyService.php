@@ -566,7 +566,7 @@ class PolicyService implements PolicyServiceContract
                 'birth_place' => 'birthPlace'
             ], $subject['fields']);
             foreach ($subject['fields']['addresses'] as $address) {
-                if ($address['address']['addressType'] == 'registration') {
+                if (isset($address['address']['addressType']) && $address['address']['addressType'] == 'registration') {
                     $cAddress = $address["address"];
                     $pSubject['address'] = '';
                     if (isset($cAddress['city']) && !empty($cAddress['city'])) {

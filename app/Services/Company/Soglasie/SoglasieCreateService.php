@@ -134,7 +134,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
             'CarInfo' => [
                 'VIN' => $attributes['car']['vin'],
                 'MarkModelCarCode' => $carModel['model'] ? $carModel['model'] : $carModel['otherModel'],
-                'MarkPTS' => $this->carMarkService->getCompanyMark($attributes['car']['maker'], $company->id),
+                'MarkPTS' => $this->carMarkService->getCarMarkName($attributes['car']['maker']),
                 'ModelPTS' => $attributes['car']['model'],
                 'YearIssue' => $attributes['car']['year'],
                 'DocumentCar' => [],
@@ -221,6 +221,9 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         $this->setValuesByArray($data['CarOwner']['Phisical'], [
             "Patronymic" => 'middleName',
         ], $owner);
+        $this->setValuesByArray($data['Insurer']['Phisical'], [
+            "Patronymic" => 'middleName',
+        ], $insurer);
         $data['CarOwner']['Phisical']['Documents']["Document"] = $this->prepareSubjectDocument($company,$owner);
         $data['CarOwner']['Phisical']['Addresses']["Address"] = $this->prepareSubjectAddress($company, $owner);
         //insurer
@@ -270,6 +273,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
             $pDocument = [
                 'TypeRSA' => $this->docTypeService->getCompanyDocTypeByRelation3($document['document']['documentType'], $document['document']['isRussian'], $company->id),
                 'Number' => $document['document']['number'],
+                'Date' => $document['document']['dateIssue']
             ];
             $this->setValuesByArray($pDocument, [
                 "Serial" => 'series',
@@ -283,6 +287,9 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
     {
         $addresses = [];
         foreach ($subject['addresses'] as $address) {
+            if (isset($address['address']) && empty($address['address'])) {
+                continue;
+            }
             $pAddress = [
                 'Type' => $this->addressTypeService->getCompanyAddressType($address['address']['addressType'], $company->code),
                 'Country' => $this->countryService->getCountryById($address['address']['country'])['code'],
@@ -319,10 +326,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
                 'Sex' => $this->genderService->getCompanyGender($driver['gender'], $company->id),
                 'Documents' => [
                     'Document' => [],
-                ],
-                'Addresses' => [
-                    'Address' => [],
-                ],
+                ]
             ],
             'DrivingExpDate' => $driverRef['driver']['drivingLicenseIssueDateOriginal'],
         ];
@@ -331,7 +335,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         ], $driver);
         $pDriver['Face']['Documents']['Document'] = $this->prepareDriverDocument($company, $driver);
         $license = $this->searchDocumentByType($driver, 'license');
-        if (!$license['isRussian']) {
+        if (!$license['isRussian'] || $pDriver['Face']['Resident'] === false) {
             $pDriver['Face']['Addresses']['Address'] = $this->prepareSubjectAddress($company, $driver);
         }
         return $pDriver;
