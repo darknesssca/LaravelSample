@@ -81,6 +81,9 @@ class ReportService implements ReportServiceContract
     public function getReportInfo($id): array
     {
         $report = $this->reportRepository->getById($id);
+        if ($report->creator_id !== GlobalStorage::getUserId() && !GlobalStorage::userIsAdmin()) {
+            throw new Exception('Ошибка доступа');
+        }
         $report_info = $report->toArray();
         $report_info['creator'] = $this->getCreator($report->creator_id);
 
@@ -107,9 +110,8 @@ class ReportService implements ReportServiceContract
     public function createReport(array $fields)
     {
         $this->available_reward = $this->commission_mks->getAvailableReward();
-
         if (isset($this->available_reward['available']) && $this->available_reward['available'] <= 0) {
-            throw new Exception('Исчерпан лимит наград');
+            throw new Exception('Исчерпан лимит вывода на текущий год');
         }
         $used_policies = $this->getReportedPoliciesIds(GlobalStorage::getUserId());
         $intersect = array_intersect($used_policies, $fields['policies']);
@@ -382,6 +384,10 @@ class ReportService implements ReportServiceContract
             $report = $this->reportRepository->getById($report);
         }
 
+        if ($report->is_payed || $report->creator_id !== GlobalStorage::getUserId()) {
+            throw new Exception('По этому отчету уже была произведена выплата или вы не являетесь создателем отчета');
+        }
+
         if (empty($this->creator)) {
             $this->creator = $this->getCreator(GlobalStorage::getUserId());
         }
@@ -420,6 +426,9 @@ class ReportService implements ReportServiceContract
     {
         if (is_integer($report)) {
             $report = $this->reportRepository->getById($report);
+        }
+        if ($report->is_payed || $report->creator_id !== GlobalStorage::getUserId()) {
+            throw new Exception('По этому отчету уже была произведена выплата или вы не являетесь создателем отчета');
         }
 
         if ($this->qiwi) {

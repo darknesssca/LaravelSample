@@ -28,5 +28,10 @@ trait ReportObserver
             $cacheTag = $model->creator_id;
             Cache::tags(self::getReportCacheTagByAttribute("Creator|$cacheTag"))->flush();
         });
+        static::updated(function ($model) {
+            Cache::tags(self::getReportCacheTagByAttribute('Filter'))->flush();
+            $cacheTag = $model->creator_id;
+            Cache::tags(self::getReportCacheTagByAttribute("Creator|$cacheTag"))->flush();
+        });
     }
 }
