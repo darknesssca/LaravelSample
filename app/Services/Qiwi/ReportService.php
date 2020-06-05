@@ -428,7 +428,7 @@ class ReportService implements ReportServiceContract
             $report = $this->reportRepository->getById($report);
         }
         if ($report->is_payed || $report->creator_id !== GlobalStorage::getUserId()) {
-            throw new Exception('Произошла ошибка');
+            throw new Exception('По этому отчету уже была произведена выплата или вы не являетесь создателем отчета');
         }
 
         if ($this->qiwi) {
