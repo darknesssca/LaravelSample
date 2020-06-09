@@ -100,12 +100,14 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     "firstName" => $subject['fields']['firstName'],
                     "middleName" => $subject['fields']['middleName'],
                     "birthdate" => $subject['fields']['birthdate'],
-                    "email" => $subject['fields']['email'],
                     "gender" => $this->genderService->getCompanyGender($subject['fields']['gender'], $company->id),
                     "citizenship" => $this->countryService->getCountryById($subject['fields']['citizenship'])['alpha2'],
                     'document' => [],
                 ],
             ];
+            $this->setValuesByArray($pSubject['subjectDetails'], [
+                'email' => 'email'
+            ], $subject['fields']['email']);
             $this->setValuesByArray($pSubject['subjectDetails'], [
                 'middleName' => 'middleName'
             ], $subject['fields']['middleName']);
