@@ -88,7 +88,7 @@ abstract class CompanyService
     protected function searchAddressByType($subject, $type)
     {
         foreach ($subject['addresses'] as $iAddress => $address) {
-            if ($address['address']['addressType'] == $type) { // TODO значение из справочника
+            if (isset($address['address']['addressType']) && $address['address']['addressType'] == $type) { // TODO значение из справочника
                 return $address['address'];
             }
         }
