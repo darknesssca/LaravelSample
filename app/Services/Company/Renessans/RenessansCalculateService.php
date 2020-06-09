@@ -101,7 +101,9 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             $attributes['car']['maker'],
             $attributes['car']['category'],
             $attributes['car']['model'],
-            $company->id);
+            $company->id,
+            false
+        );
         $data = [
             'key' => $attributes['key'],
             'dateStart' => $attributes['policy']['beginDate'],
