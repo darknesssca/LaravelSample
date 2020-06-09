@@ -121,30 +121,32 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 $subject['fields']['addresses'][] = $homeAddress;
             }
             foreach ($subject['fields']['addresses'] as $iAddress => $address) {
-                $pAddress = [
-                    'addressType' => $this->addressTypeService->getCompanyAddressType($address['address']['addressType'], $company->code),
-                    'country' => $this->countryService->getCountryById($address['address']['country'])['alpha2'],
-                    //'region' => $address['address']['region'],
-                ];
-                $this->setValuesByArray($pAddress, [
-                    "postCode" => 'postCode',
-                    "KLADR1" => 'regionKladr',
-                    "district" => 'district',
-                    "KLADR2" => 'districtKladr',
-                    "city" => 'city',
-                    "KLADR3" => 'cityKladr',
-                    "populatedCenter" => 'populatedCenter',
-                    "KLADR4" => 'populatedCenterKladr',
-                    "street" => 'street',
-                    "KLADR5" => 'streetKladr',
-                    "building" => 'building',
-                    "KLADR6" => 'buildingKladr',
-                    "flat" => 'flat',
-                ], $address['address']);
-                if (isset($address['address']['regionKladr'])) {
-                    $pAddress['region'] = substr($address['address']['regionKladr'], 0, 2);
+                if (isset($address['address']) && !empty($address['address'])) {
+                    $pAddress = [
+                        'addressType' => $this->addressTypeService->getCompanyAddressType($address['address']['addressType'], $company->code),
+                        'country' => $this->countryService->getCountryById($address['address']['country'])['alpha2'],
+                        //'region' => $address['address']['region'],
+                    ];
+                    $this->setValuesByArray($pAddress, [
+                        "postCode" => 'postCode',
+                        "KLADR1" => 'regionKladr',
+                        "district" => 'district',
+                        "KLADR2" => 'districtKladr',
+                        "city" => 'city',
+                        "KLADR3" => 'cityKladr',
+                        "populatedCenter" => 'populatedCenter',
+                        "KLADR4" => 'populatedCenterKladr',
+                        "street" => 'street',
+                        "KLADR5" => 'streetKladr',
+                        "building" => 'building',
+                        "KLADR6" => 'buildingKladr',
+                        "flat" => 'flat',
+                    ], $address['address']);
+                    if (isset($address['address']['regionKladr'])) {
+                        $pAddress['region'] = substr($address['address']['regionKladr'], 0, 2);
+                    }
+                    $pSubject['subjectDetails']['address'][] = $pAddress;
                 }
-                $pSubject['subjectDetails']['address'][] = $pAddress;
             }
             foreach ($subject['fields']['documents'] as $document) {
                 $pDocument = [
@@ -162,12 +164,16 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 ], $document['document']);
                 $pSubject['subjectDetails']['document'][] = $pDocument;
             }
-            $pSubject['subjectDetails']['phone'] = [
-                "isPrimary" => true,
-                "typePhone" => 'mobile',
-                "numberPhone" => $subject['fields']['phone'],
-            ];
+            if (isset($subject['fields']['phone'])) {
+                $pSubject['subjectDetails']['phone'] = [
+                    "isPrimary" => true,
+                    "typePhone" => 'mobile',
+                    "numberPhone" => $subject['fields']['phone'],
+                ];
+            }
+
             $data['subjectInfo'][] = $pSubject;
+
         }
         //vehicleInfo
         $data['vehicleInfo'] = [
