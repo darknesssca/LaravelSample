@@ -64,11 +64,20 @@ class CarModelService implements CarModelServiceContract
         ];
     }
 
-    public function getCompanyModelByName($mark_id, $categoryId, $name, $companyId)
+    /**
+     * @param $mark_id
+     * @param $categoryId
+     * @param $name
+     * @param $companyId
+     * @param bool $needOther
+     * @return array|null[]|string[]
+     * @throws GuidesNotFoundException
+     */
+    public function getCompanyModelByName($mark_id, $categoryId, $name, $companyId, $needOther = true)
     {
         $data = $this->carModelRepository->getCompanyModelByName($mark_id, $categoryId, $name, $companyId);
 
-        if (!$data) {
+        if (!$data && $needOther) {
             $result = [
                 'model' => null,
             ];
@@ -86,15 +95,20 @@ class CarModelService implements CarModelServiceContract
                     throw new GuidesNotFoundException('Выбранная страховая компания не позволяет страховать указанную модель автомобиля.');
                 }
             } else {
-                $result['otherModel'] = '';
-                $categoryData = $this->carCategoryRepository->getCategoryById($categoryId);
-                if (!$categoryData) {
-                    throw new GuidesNotFoundException('Не найдены данные в справочнике');
-                }
-                $result['category'] = $categoryData->name;
+                throw new GuidesNotFoundException('В справочнике автомобилей не найдено совпадений для выбранной страховой компании');
             }
 
             return $result;
+        } else if (!$data && !$needOther) {
+            $category = $this->carCategoryRepository->getCategoryById($categoryId);
+            if (!$category) {
+                throw new GuidesNotFoundException('Не найдены данные в справочнике');
+            }
+            return [
+                'model' => null,
+                'otherModel' => 'Прочие',
+                'category' => $category->name
+            ];
         }
 
         $codes = $data->codes;
