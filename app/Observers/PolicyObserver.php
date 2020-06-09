@@ -21,6 +21,9 @@ trait PolicyObserver
         parent::boot();
 
         static::creating(function($model) {
+            Cache::tags(self::getPolicyListCacheTagByUser($model->agent_id))->flush();
+            $referId = app(AuthMicroserviceContract::class)->userInfo($model->agent_id)["content"]["referer_id"] ?? "";
+            Cache::tags(self::getPolicyListCacheTagByUser("|List|$referId"))->flush();
             $duplicate = Policy::where('number', $model->number)
                 ->where('insurance_company_id', $model->insurance_company_id)
                 ->where('registration_date', $model->registration_date)
@@ -33,12 +36,6 @@ trait PolicyObserver
             }
 
             return true;
-        });
-
-        static::saved(function ($model) {
-            Cache::tags(self::getPolicyListCacheTagByUser($model->agent_id))->flush();
-            $referId = app(AuthMicroserviceContract::class)->userInfo($model->agent_id)["content"]["referer_id"] ?? "";
-            Cache::tags(self::getPolicyListCacheTagByAttribute("|List|$referId"))->flush();
         });
 
         static::created(function ($model) {
