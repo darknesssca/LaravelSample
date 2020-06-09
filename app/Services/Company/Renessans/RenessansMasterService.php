@@ -9,6 +9,7 @@ use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCheckCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCheckCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
+use App\Contracts\Company\Renessans\RenessansGetPdfServiceContract;
 use App\Contracts\Company\Renessans\RenessansGetStatusServiceContract;
 use App\Contracts\Company\Renessans\RenessansMasterServiceContract;
 use App\Exceptions\ApiRequestsException;
@@ -329,6 +330,8 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $serviceStatus = app(RenessansGetStatusServiceContract::class);
         $dataStatus = $serviceStatus->run($company, $attributes);
         if ($dataStatus['result'] && $dataStatus['payStatus'] && $dataStatus['policyNumber']) {
+            $serviceGetPdf = app(RenessansGetPdfServiceContract::class);
+            $serviceGetPdf->run($company, $attributes);
             $this->policyService->update($processData['id'], [
                 'paid' => true,
                 'number' => $dataStatus['policyNumber'],

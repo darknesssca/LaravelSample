@@ -20,6 +20,7 @@ use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCheckCalculateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCheckCreateServiceContract;
 use App\Contracts\Company\Renessans\RenessansCreateServiceContract;
+use App\Contracts\Company\Renessans\RenessansGetPdfServiceContract;
 use App\Contracts\Company\Renessans\RenessansGetStatusServiceContract;
 use App\Contracts\Company\Renessans\RenessansGuidesSourceContract;
 use App\Contracts\Company\Renessans\RenessansMasterServiceContract;
@@ -53,6 +54,7 @@ use App\Services\Company\Renessans\RenessansCalculateService;
 use App\Services\Company\Renessans\RenessansCheckCalculateService;
 use App\Services\Company\Renessans\RenessansCheckCreateService;
 use App\Services\Company\Renessans\RenessansCreateService;
+use App\Services\Company\Renessans\RenessansGetPdfService;
 use App\Services\Company\Renessans\RenessansGetStatusService;
 use App\Services\Company\Renessans\RenessansGuidesService;
 use App\Services\Company\Renessans\RenessansMasterService;
@@ -105,6 +107,8 @@ class CompanyServiceProvider extends ServiceProvider
         $this->app->singleton(RenessansGetStatusServiceContract::class, RenessansGetStatusService::class);
         //guides
         $this->app->singleton(RenessansGuidesSourceContract::class, RenessansGuidesService::class);
+        //pdf
+        $this->app->singleton(RenessansGetPdfServiceContract::class, RenessansGetPdfService::class);
     }
 
     protected function registerTinkoffServices()
