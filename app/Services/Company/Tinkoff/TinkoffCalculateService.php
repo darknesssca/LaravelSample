@@ -107,10 +107,10 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
             ];
             $this->setValuesByArray($pSubject['subjectDetails'], [
                 'email' => 'email'
-            ], $subject['fields']['email']);
+            ], $subject['fields']);
             $this->setValuesByArray($pSubject['subjectDetails'], [
                 'middleName' => 'middleName'
-            ], $subject['fields']['middleName']);
+            ], $subject['fields']);
             $regAddress = $this->searchAddressByType($subject['fields'], 'registration');
             $homeAddress = $this->searchAddressByType($subject['fields'], 'home');
             if ($regAddress && !$homeAddress) {
