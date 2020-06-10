@@ -109,7 +109,7 @@ class ReportService implements ReportServiceContract
      */
     public function createReport(array $fields)
     {
-        $this->available_reward = $this->commission_mks->getAvailableReward();
+        $this->available_reward = $this->commission_mks->getAvailableReward()["content"];
         if (isset($this->available_reward['available']) && $this->available_reward['available'] <= 0) {
             throw new Exception('Исчерпан лимит вывода на текущий год');
         }
