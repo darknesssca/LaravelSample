@@ -97,12 +97,14 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
 
     protected function prepareData($company, $attributes)
     {
+        /**
+         * todo Добавить последний параметр false, когда ренес запустят новые справочники и АИС 2.0
+         */
         $carModel = $this->carModelService->getCompanyModelByName(
             $attributes['car']['maker'],
             $attributes['car']['category'],
             $attributes['car']['model'],
-            $company->id,
-            false
+            $company->id
         );
         $data = [
             'key' => $attributes['key'],
