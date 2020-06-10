@@ -77,7 +77,7 @@ class CarModelService implements CarModelServiceContract
     {
         $data = $this->carModelRepository->getCompanyModelByName($mark_id, $categoryId, $name, $companyId);
 
-        if (!$data && $needOther) {
+        if ((!$data && $needOther) || ($data && !$data->codes->count() && $needOther)) {
             $result = [
                 'model' => null,
             ];
@@ -99,7 +99,7 @@ class CarModelService implements CarModelServiceContract
             }
 
             return $result;
-        } else if (!$data && !$needOther) {
+        } else if ((!$data && !$needOther) || ($data && !$data->codes->count() && !$needOther)) {
             $category = $this->carCategoryRepository->getCategoryById($categoryId);
             if (!$category) {
                 throw new GuidesNotFoundException('Не найдены данные в справочнике');
@@ -110,7 +110,6 @@ class CarModelService implements CarModelServiceContract
                 'category' => $category->name
             ];
         }
-
         $codes = $data->codes;
         if (!$codes || !$codes->count()) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
