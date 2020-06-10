@@ -177,18 +177,12 @@ abstract class CompanyService
         if ($log) {
             Storage::disk('minio')->append(
                 $path,
-                json_encode(
-                    $data,
-                    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
-                )
+                print_r($data, true)
             );
         } else {
             Storage::disk('minio')->put(
                 $path,
-                json_encode(
-                    $data,
-                    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
-                )
+                print_r($data, true)
             );
         }
     }
