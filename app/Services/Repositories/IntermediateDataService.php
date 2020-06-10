@@ -37,7 +37,7 @@ class IntermediateDataService implements IntermediateDataServiceContract
     public function update($token, $data)
     {
         $object = $this->repository->update($token, $data);
-        $this->save($token, $object);
+        $this->drop($token);
         return $object;
     }
 
