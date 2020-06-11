@@ -12,6 +12,7 @@ class CreateReportRequest extends AbstractRequest
         return [
             'name' => 'required',
             'policies' => 'required|array',
+            'policies.*' => 'required|integer'
         ];
     }
 
@@ -20,6 +21,8 @@ class CreateReportRequest extends AbstractRequest
         return [
             'name.required' => 'Поле Название не заполнено',
             'policies.required' => 'Поле Полисы не заполнено',
+            'policies.*.required' => 'Поле Полис не заполнено',
+            'policies.*.integer' => 'Поле Полис должно быть числом',
         ];
     }
 }

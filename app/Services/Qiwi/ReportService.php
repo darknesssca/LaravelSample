@@ -225,6 +225,7 @@ class ReportService implements ReportServiceContract
      */
     private function createXls($report_id)
     {
+        $n_str = 2;
         $policies = $this->preparePoliciesForXls();
 
         $spreadsheet = new Spreadsheet();
@@ -259,9 +260,7 @@ class ReportService implements ReportServiceContract
         $sheet->getColumnDimension('K')->setAutoSize(true);
         $sheet->getColumnDimension('L')->setAutoSize(true);
 
-        $n_str = 1;
         foreach ($policies as $policy) {
-            $n_str++;
             $sheet->setCellValue('A' . $n_str, $n_str);
             $sheet->setCellValue('B' . $n_str, $policy['product_type']);
             $sheet->setCellValue('C' . $n_str, $policy['dogovor_number']);
@@ -274,8 +273,8 @@ class ReportService implements ReportServiceContract
             $sheet->setCellValue('J' . $n_str, $policy['status_sk']);
             $sheet->setCellValue('K' . $n_str, $policy['prodavec_fio']);
             $sheet->setCellValue('L' . $n_str, $policy['prodavec_email']);
+            $n_str += 1;
         }
-
 
         $file_name = sprintf('report_%s.xls', $report_id);
         $tmp_file_path = '/tmp/' . $file_name;
