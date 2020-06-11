@@ -57,7 +57,30 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
     public function run($company, $attributes): array
     {
         $data = $this->prepareData($company, $attributes);
+
+        $this->writeLog(
+            $this->logPath,
+            [
+                'request' => [
+                    'method' => 'Calculate',
+                    'url' => $this->apiWsdlUrl,
+                    'payload' => $data
+                ]
+            ]
+        );
+
         $response = $this->requestBySoap($this->apiWsdlUrl, 'calcPartnerFQuote', $data);
+
+        $this->writeLog(
+            $this->logPath,
+            [
+                'response' => [
+                    'method' => 'Calculate',
+                    'response' => $response
+                ]
+            ]
+        );
+
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(
                 'API страховой компании вернуло ошибку: ' .
