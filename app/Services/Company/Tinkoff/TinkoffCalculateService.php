@@ -121,7 +121,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 $subject['fields']['addresses'][] = $homeAddress;
             }
             foreach ($subject['fields']['addresses'] as $iAddress => $address) {
-                if (isset($address['address']) && !empty($address['address'])) {
+                if (isset($address['address']['country']) && !empty($address['address']['country'])) {
                     $pAddress = [
                         'addressType' => $this->addressTypeService->getCompanyAddressType($address['address']['addressType'], $company->code),
                         'country' => $this->countryService->getCountryById($address['address']['country'])['alpha2'],
