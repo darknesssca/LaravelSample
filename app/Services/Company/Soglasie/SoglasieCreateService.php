@@ -212,6 +212,10 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
             'TypeRSA' => $this->docTypeService->getCompanyCarDocType3($attributes['car']['document']['documentType'], $company->id),
             'IsPrimary' => true,
         ];
+        if ($attributes['car']['document']['documentType'] == 'sts') {
+            $data['CarInfo']['LicensePlate'] = $attributes['car']['regNumber'];
+        }
+
         $this->setValuesByArray($data['CarInfo']['DocumentCar'], [
             "Serial" => 'series',
             "Number" => 'number',
