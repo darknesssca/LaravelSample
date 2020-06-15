@@ -13,6 +13,8 @@ class PolicyStatisticRequest extends  AbstractRequest
        return [
            "from" => "required|date",
            "to" => "required|date",
+           'agent_ids' => 'array',
+           'agent_ids.*' => 'integer',
        ];
     }
 

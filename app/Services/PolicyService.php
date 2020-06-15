@@ -391,8 +391,11 @@ class PolicyService implements PolicyServiceContract
             $endDate = Carbon::parse($filter["to"]);
             $needSortByMonth = $startDate->diffInMonths($endDate) > 0;
 
+            $user_ids = $policies->pluck('agent_id')->unique()->all();
+            $usersInfo = app(AuthMicroserviceContract::class)->usersInfo($user_ids);
+
             $organizedPolicies = $this->organizePolicies($policies, $userId, $subagentIds);
-            $organizedStatistics = $this->makeStatistic($organizedPolicies, $needSortByMonth, $filter['from'], $filter['to']);
+            $organizedStatistics = $this->makeStatistic($organizedPolicies, $needSortByMonth, $filter['from'], $filter['to'], $usersInfo);
         }
 
         if (empty($organizedStatistics)) {
@@ -420,6 +423,7 @@ class PolicyService implements PolicyServiceContract
                     $organized["network"][] = $policy;
                 }
             }
+            $policy->product_id = 1; //костыль, на данный момент отсутствует поле
             $organized["all"][] = $policy;
         }
 
@@ -431,13 +435,14 @@ class PolicyService implements PolicyServiceContract
      * @param bool $needSortByMonth
      * @param $from
      * @param $to
+     * @param $usersInfo
      * @return array
      */
-    private function makeStatistic($organizedArray, $needSortByMonth, $from, $to)
+    private function makeStatistic($organizedArray, $needSortByMonth, $from, $to, $usersInfo)
     {
         $statistics = [];
         foreach ($organizedArray as $key => $policies) {
-            $statistics[$key] = $this->makeStatisticFromPoliciesList($policies, $needSortByMonth, $from, $to);
+            $statistics[$key] = $this->makeStatisticFromPoliciesList($policies, $needSortByMonth, $from, $to, $usersInfo);
         }
         return $statistics;
     }
@@ -448,27 +453,28 @@ class PolicyService implements PolicyServiceContract
      * @param bool $needSortByMonth
      * @param $from
      * @param $to
+     * @param $usersInfo
      * @return array
      */
-    private function makeStatisticFromPoliciesList($policiesList, $needSortByMonth, $from, $to): array
+    private function makeStatisticFromPoliciesList($policiesList, $needSortByMonth, $from, $to, $usersInfo): array
     {
         //группировка по страховым компаниям
         $policiesList = collect($policiesList);
-        $byInsuranceCompany = $policiesList
-            ->groupBy('insurance_company_id')
-            ->map(function ($item, $index) {
-                $tmp = collect($item);
-                return [
-                    "count" => $tmp->count(),
-                    "sum" => round($tmp->sum("premium"), 2)
-                ];
-            });
         $result = [
             "count" => $policiesList->count(),
             "sum" => round($policiesList->sum('premium'), 2),
-            "by_insurance_company" => $byInsuranceCompany
+            "by_insurance_company" => $this->collectBy($policiesList, ['group_by' => 'insurance_company_id']),
+            "by_user" => $this->collectByUser($policiesList),
         ];
 
+        $result['by_user'] = $result['by_user']->map(function ($user, $userId) use ($usersInfo) {
+            return array_merge($user, [
+                'first_name' => $usersInfo[$userId]['first_name'] ?? null,
+                'last_name' => $usersInfo[$userId]['last_name'] ?? null,
+                'patronymic' => $usersInfo[$userId]['patronymic'] ?? null,
+                'tax_status' => $usersInfo[$userId]['tax_status'] ?? null,
+            ]);
+        });
 
         if ($needSortByMonth) {
             $result["detail"] = $policiesList
@@ -533,6 +539,38 @@ class PolicyService implements PolicyServiceContract
             $result['detail'] = $result['detail']->sortKeys();
         }
         return $result;
+    }
+
+    private function collectBy($policies, $struct)
+    {
+        return $policies
+            ->groupBy($struct['group_by'])
+            ->map(function ($groupedPolicies, $index) use ($struct) {
+                $result = [
+                    "count" => $groupedPolicies->count(),
+                    "sum" => round($groupedPolicies->sum("premium"), 2)
+                ];
+                if (isset($struct['subGroup'])) {
+                    $result[$struct['subGroup']['key']] = $this->collectBy($groupedPolicies, $struct['subGroup']);
+                }
+                return $result;
+            });
+    }
+
+    private function collectByUser($policiesList)
+    {
+        $struct = [
+            'group_by' => 'agent_id',
+            'subGroup' => [
+                'group_by' => 'insurance_company_id',
+                'key' => 'by_insurance_company',
+                'subGroup' => [
+                    'group_by' => 'product_id',
+                    'key' => 'by_product'
+                ]
+            ]
+        ];
+        return $this->collectBy($policiesList, $struct);
     }
 
     public function createPolicyFromCustomData($companyId, $attributes)
