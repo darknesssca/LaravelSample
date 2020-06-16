@@ -1,7 +1,5 @@
 <?php
 
-//TODO Сделать получение пользователей из кэша
-
 namespace App\Services\Qiwi;
 
 
@@ -10,6 +8,8 @@ use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\ReportRepositoryContract;
 use App\Contracts\Services\ReportServiceContract;
 use App\Exceptions\QiwiCreatePayoutException;
+use App\Exceptions\TaxStatusNotServiceException;
+use App\Jobs\QiwiPayoutJob;
 use App\Models\File;
 use App\Models\Report;
 use App\Repositories\PolicyRepository;
@@ -113,10 +113,11 @@ class ReportService implements ReportServiceContract
         if (isset($this->available_reward['available']) && $this->available_reward['available'] <= 0) {
             throw new Exception('Исчерпан лимит вывода на текущий год');
         }
+
         $used_policies = $this->getReportedPoliciesIds(GlobalStorage::getUserId());
         $intersect = array_intersect($used_policies, $fields['policies']);
         if (count($intersect) > 0) {
-            $intersected = implode(',', $intersect);
+            $intersected = implode(', ', $intersect);
             throw new Exception("Для этих полисов уже была запрошена выплата: $intersected");
         }
 
@@ -124,19 +125,21 @@ class ReportService implements ReportServiceContract
         $fields['reward'] = $this->getReward($fields['policies']);
 
         $this->creator = $this->getCreator($fields['creator_id']);
-        $this->clients = $this->getClients($this->clients);
+
+        if ($this->creator['tax_status']['code'] == 'individual') {
+            throw new TaxStatusNotServiceException();
+        }
 
         $report = $this->reportRepository->create($fields);
         $report->policies()->sync($fields['policies']);
         $report->save();
-        try {
-            $this->createPayout($report);
-        } catch (QiwiCreatePayoutException $exception) { //если при регистрации платежа произошла ошибка, то отменяем создание отчета
-            $report->policies()->detach();
-            $report->forceDelete();
-            throw $exception;
-        }
-        $this->createXls($report->id); //если все хорошо, то создаем и сохраняем отчет
+
+        $params = [
+            'user' => GlobalStorage::getUser(),
+            'report_id' => $report->id,
+        ];
+
+        dispatch((new QiwiPayoutJob($params))->onQueue('qiwiPayout'));
 
         $message = "Создан отчет на выплату {$report->id}";
         $this->log_mks->sendLog($message, config('api_sk.logMicroserviceCode'), $fields['creator_id']);
@@ -164,10 +167,11 @@ class ReportService implements ReportServiceContract
 
     /**
      * @param array $policies_ids
+     * @param bool $check_reward
      * @return int
      * @throws Exception
      */
-    private function getReward(array $policies_ids)
+    private function getReward(array $policies_ids, $check_reward = true)
     {
         $reward_sum = 0;
 
@@ -187,13 +191,17 @@ class ReportService implements ReportServiceContract
         }
 
         foreach ($rewards as $reward) {
-            if ($reward['paid'] == false && $reward['requested'] == false && $this->policies[$reward['policy_id']]->paid == true) {
-                $reward_sum += floatval($reward['value']);
+            if ($check_reward == false){
                 $this->rewards[$reward['policy_id']] = $reward;
+            } else {
+                if ($reward['paid'] == false && $reward['requested'] == false && $this->policies[$reward['policy_id']]->paid == true) {
+                    $reward_sum += floatval($reward['value']);
+                    $this->rewards[$reward['policy_id']] = $reward;
+                }
             }
         }
 
-        if ($reward_sum <= 0) {
+        if ($reward_sum <= 0 && $check_reward == true) {
             throw new Exception('Отстутствуют доступные для вывода награды');
         }
 
@@ -218,14 +226,19 @@ class ReportService implements ReportServiceContract
     }
 
     /** cоздает файл отета и отправляет в минио
-     * @param int $report_id
+     * @param Report $report
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      * @throws Exception
      */
-    private function createXls($report_id)
+    public function createXls(Report $report)
     {
         $n_str = 2;
+        $policies_ids = $report->policies()->get(['id'])->toArray();
+        $this->getReward($policies_ids, false);
+        $this->clients = $this->getClients($this->clients);
+        $this->creator = $this->getCreator(GlobalStorage::getUserId());
+
         $policies = $this->preparePoliciesForXls();
 
         $spreadsheet = new Spreadsheet();
@@ -276,7 +289,7 @@ class ReportService implements ReportServiceContract
             $n_str += 1;
         }
 
-        $file_name = sprintf('report_%s.xls', $report_id);
+        $file_name = sprintf('report_%s.xls', $report->id);
         $tmp_file_path = '/tmp/' . $file_name;
         $cloud_file_path = '/reports/' . md5($file_name) . '.xls';
 
@@ -289,14 +302,14 @@ class ReportService implements ReportServiceContract
         } else {
             $file_params = [
                 'name' => $file_name,
-                'dir' =>  config('filesystems.disks.minio.bucket') . $cloud_file_path,
+                'dir' => config('filesystems.disks.minio.bucket') . $cloud_file_path,
                 'content_type' => mime_content_type($tmp_file_path),
                 'size' => filesize($tmp_file_path),
             ];
 
-            $file = File::create($file_params);
+            $file = File::query()->create($file_params);
 
-            Report::find($report_id)->file()->associate($file->id)->save();
+            $report->file()->associate($file->id)->save();
             unlink($tmp_file_path);
         }
     }
