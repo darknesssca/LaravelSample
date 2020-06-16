@@ -387,15 +387,21 @@ class PolicyService implements PolicyServiceContract
         $policies = $this->policyRepository->getList($filter)->sortBy('registration_date');
 
         if ($policies->isNotEmpty()) {
-            $startDate = Carbon::parse($filter["from"]);
-            $endDate = Carbon::parse($filter["to"]);
-            $needSortByMonth = $startDate->diffInMonths($endDate) > 0;
-
             $user_ids = $policies->pluck('agent_id')->unique()->all();
             $usersInfo = app(AuthMicroserviceContract::class)->usersInfo($user_ids);
 
             $organizedPolicies = $this->organizePolicies($policies, $userId, $subagentIds);
-            $organizedStatistics = $this->makeStatistic($organizedPolicies, $needSortByMonth, $filter['from'], $filter['to'], $usersInfo);
+
+            $startDate = Carbon::parse($filter["from"]);
+            $endDate = Carbon::parse($filter["to"]);
+            $sort = [
+                'needSortByMonth' => $startDate->diffInMonths($endDate) > 0,
+                'from' => $filter['from'],
+                'to' => $filter['to'],
+                'groupedByUserOrderBy' => $filter['grouped_by_user_order_by'] ?? 'count',
+            ];
+
+            $organizedStatistics = $this->makeStatistic($organizedPolicies, $sort, $usersInfo);
         }
 
         if (empty($organizedStatistics)) {
@@ -432,17 +438,15 @@ class PolicyService implements PolicyServiceContract
 
     /**
      * @param array $organizedArray
-     * @param bool $needSortByMonth
-     * @param $from
-     * @param $to
+     * @param $sort
      * @param $usersInfo
      * @return array
      */
-    private function makeStatistic($organizedArray, $needSortByMonth, $from, $to, $usersInfo)
+    private function makeStatistic($organizedArray, $sort, $usersInfo)
     {
         $statistics = [];
         foreach ($organizedArray as $key => $policies) {
-            $statistics[$key] = $this->makeStatisticFromPoliciesList($policies, $needSortByMonth, $from, $to, $usersInfo);
+            $statistics[$key] = $this->makeStatisticFromPoliciesList($policies, $sort, $usersInfo);
         }
         return $statistics;
     }
@@ -450,13 +454,11 @@ class PolicyService implements PolicyServiceContract
     /**
      * Группировка статистики продаж по датам
      * @param Collection $policiesList
-     * @param bool $needSortByMonth
-     * @param $from
-     * @param $to
+     * @param $sort
      * @param $usersInfo
      * @return array
      */
-    private function makeStatisticFromPoliciesList($policiesList, $needSortByMonth, $from, $to, $usersInfo): array
+    private function makeStatisticFromPoliciesList($policiesList, $sort, $usersInfo): array
     {
         //группировка по страховым компаниям
         $policiesList = collect($policiesList);
@@ -464,7 +466,7 @@ class PolicyService implements PolicyServiceContract
             "count" => $policiesList->count(),
             "sum" => round($policiesList->sum('premium'), 2),
             "by_insurance_company" => $this->collectBy($policiesList, ['group_by' => 'insurance_company_id']),
-            "by_user" => $this->collectByUser($policiesList),
+            "by_user" => $this->collectByUser($policiesList, $sort['groupedByUserOrderBy']),
         ];
 
         $result['by_user'] = $result['by_user']->map(function ($user, $userId) use ($usersInfo) {
@@ -476,7 +478,7 @@ class PolicyService implements PolicyServiceContract
             ]);
         });
 
-        if ($needSortByMonth) {
+        if ($sort['needSortByMonth']) {
             $result["detail"] = $policiesList
                 ->groupBy(function ($item, $index) {
                     $d = Carbon::parse($item['registration_date']);
@@ -493,7 +495,7 @@ class PolicyService implements PolicyServiceContract
                 });
 
             //добавление несуществующих в выборке дат
-            $period = CarbonPeriod::create($from, '1 months', $to)->locale('ru');
+            $period = CarbonPeriod::create($sort['from'], '1 months', $sort['to'])->locale('ru');
             foreach ($period as $date) {
                 /** @var CarbonInterface $date */
                 $formatted = $date->year . " " . $date->month;
@@ -519,7 +521,7 @@ class PolicyService implements PolicyServiceContract
                         'label' => $d->format('d.m.Y'),
                     ];
                 });
-            $period = CarbonPeriod::create($from, $to)->locale('ru');
+            $period = CarbonPeriod::create($sort['from'], $sort['to'])->locale('ru');
 
             //добавление несуществующих в выборке дат
             foreach ($period as $date) {
@@ -543,7 +545,7 @@ class PolicyService implements PolicyServiceContract
 
     private function collectBy($policies, $struct)
     {
-        return $policies
+        $result = $policies
             ->groupBy($struct['group_by'])
             ->map(function ($groupedPolicies, $index) use ($struct) {
                 $result = [
@@ -555,20 +557,27 @@ class PolicyService implements PolicyServiceContract
                 }
                 return $result;
             });
+        if (!empty($struct['order_by'])) {
+            return $result->sortByDesc($struct['order_by']);
+        }
+        return $result;
     }
 
-    private function collectByUser($policiesList)
+    private function collectByUser($policiesList, $orderBy)
     {
         $struct = [
             'group_by' => 'agent_id',
+            'order_by' => $orderBy,
             'subGroup' => [
                 'group_by' => 'insurance_company_id',
                 'key' => 'by_insurance_company',
+                'order_by' => $orderBy,
                 'subGroup' => [
                     'group_by' => 'product_id',
-                    'key' => 'by_product'
-                ]
-            ]
+                    'key' => 'by_product',
+                    'order_by' => $orderBy,
+                ],
+            ],
         ];
         return $this->collectBy($policiesList, $struct);
     }
