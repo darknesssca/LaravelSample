@@ -41,7 +41,7 @@ class SoglasieCancelCreateService extends SoglasieService implements SoglasieCan
                 ]
             ]
         );
-        return $this->getRequest($url, [], $headers, false); // нам без разницы что там произошло в результате, поэтому никаких эксепшенов отлавливать не будем
+        return $this->putRequest($url, [], $headers, false); // нам без разницы что там произошло в результате, поэтому никаких эксепшенов отлавливать не будем
     }
 
     protected function getHeaders()

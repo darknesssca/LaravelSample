@@ -223,7 +223,8 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 'mileage' => $attributes['car']['mileage'],
                 'numberOfOwners' => 1,
                 'registrationNumber' => [
-                    'isNoRegistrationNumber' => true,
+                    'isNoRegistrationNumber' => false,
+                    'registrationNumber' => $attributes['car']['regNumber']
                 ],
                 'sourceAcquisition' => $this->sourceAcquisitionService->getCompanySourceAcquisitions($attributes['car']['sourceAcquisition'], $company->id),
                 'vehicleCost' => $attributes['car']['vehicleCost'],
@@ -263,8 +264,8 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
         ], $attributes['car']['inspection']);
         //OSAGOFQ
         $data['OSAGOFQ'] = [
-            'effectiveDate' => $this->dateTimeZoneFromDateWithNullTime($attributes['policy']['beginDate']),
-            'expirationDate' => $this->dateTimeZoneFromDateWithNullTime($attributes['policy']['endDate']),
+            'effectiveDate' => $this->dateTimeZoneFromDateStartOfDay($attributes['policy']['beginDate']),
+            'expirationDate' => $this->dateTimeZoneFromDateEndOfDay($attributes['policy']['endDate']),
             'isEOSAGO' => true,
             'insurant' => [
                 'subjectNumber' => $attributes['policy']['insurantId'],
