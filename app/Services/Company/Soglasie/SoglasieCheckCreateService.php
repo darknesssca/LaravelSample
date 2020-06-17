@@ -58,6 +58,12 @@ class SoglasieCheckCreateService extends SoglasieService implements SoglasieChec
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');
         }
+        if (isset($response['status']) && $response['status'] == 'ERROR') {
+            return [
+                'status' => 'error',
+                'messages' => $this->getMessages($response)
+            ];
+        }
         if (
             !isset($response['status']) || !$response['status']  ||
             !isset($response['policy']) || !$response['policy'] ||

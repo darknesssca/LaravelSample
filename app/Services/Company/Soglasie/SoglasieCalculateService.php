@@ -60,6 +60,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
             [
                 'request' => [
                     'method' => 'Calculate',
+                    'SKMethod' => 'CalcProduct',
                     'url' => $this->apiWsdlUrl,
                     'payload' => $data
                 ]
@@ -356,7 +357,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         ];
         $data['contract']['param'][] = [
             'id' => 4764,
-            'val' =>  $this->genderService->getCompanyGender($owner['gender'], $company->id),
+            'val' =>  $this->genderService->getCompanyGender($insurer['gender'], $company->id),
         ];
         $data = [
             'data' => $data,
