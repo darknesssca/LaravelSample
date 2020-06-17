@@ -13,6 +13,12 @@ trait DateFormatTrait
         return $date->format('Y-m-d\TH:i:sP');
     }
 
+    protected function dateTimeZoneFromDateWithNullTime($date)
+    {
+        $date = Carbon::createFromFormat('Y-m-d', $date);
+        return $date->startOfDay()->format('Y-m-d\TH:i:sP');
+    }
+
     protected function formatToRuDate($date)
     {
         $date = Carbon::createFromFormat('Y-m-d', $date);

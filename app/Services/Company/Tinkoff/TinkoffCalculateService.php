@@ -263,7 +263,8 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
         ], $attributes['car']['inspection']);
         //OSAGOFQ
         $data['OSAGOFQ'] = [
-            'effectiveDate' => $this->dateTimeZoneFromDate($attributes['policy']['beginDate']),
+            'effectiveDate' => $this->dateTimeZoneFromDateWithNullTime($attributes['policy']['beginDate']),
+            'expirationDate' => $this->dateTimeZoneFromDateWithNullTime($attributes['policy']['endDate']),
             'isEOSAGO' => true,
             'insurant' => [
                 'subjectNumber' => $attributes['policy']['insurantId'],
