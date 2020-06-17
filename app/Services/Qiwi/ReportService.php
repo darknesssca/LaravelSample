@@ -7,7 +7,7 @@ use App\Contracts\Repositories\InsuranceCompanyRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\ReportRepositoryContract;
 use App\Contracts\Services\ReportServiceContract;
-use App\Exceptions\QiwiCreatePayoutException;
+use App\Exceptions\Qiwi\CreatePayoutException;
 use App\Exceptions\TaxStatusNotServiceException;
 use App\Jobs\Qiwi\QiwiCreatePayoutJob;
 use App\Models\File;
@@ -387,7 +387,7 @@ class ReportService implements ReportServiceContract
     /**
      * @param $report
      * @throws Exception
-     * @throws QiwiCreatePayoutException
+     * @throws CreatePayoutException
      */
     public function createPayout($report)
     {
@@ -423,7 +423,7 @@ class ReportService implements ReportServiceContract
 
             $this->commission_mks->massUpdateRewards($fields);
         } else {
-            throw new QiwiCreatePayoutException('Не удалось зарегистрировать оплату. Попробуйте позже');
+            throw new CreatePayoutException('Не удалось зарегистрировать оплату. Попробуйте позже');
         }
     }
 

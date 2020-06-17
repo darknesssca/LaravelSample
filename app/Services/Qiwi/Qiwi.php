@@ -4,7 +4,10 @@
 namespace App\Services\Qiwi;
 
 
-use App\Exceptions\QiwiCreatePayoutException;
+use App\Exceptions\Qiwi\CreatePayoutException;
+use App\Exceptions\Qiwi\ExecutePayoutException;
+use App\Exceptions\Qiwi\PayoutAlreadyExistException;
+use App\Exceptions\Qiwi\PayoutInsufficientFundsException;
 use App\Exceptions\TaxStatusNotServiceException;
 use Exception;
 use GuzzleHttp\Client;
@@ -59,8 +62,10 @@ class Qiwi
     /**
      * @param $amount
      * @return string
+     * @throws CreatePayoutException
+     * @throws PayoutAlreadyExistException
+     * @throws PayoutInsufficientFundsException
      * @throws TaxStatusNotServiceException
-     * @throws Exception
      */
     public function createPayout($amount)
     {
@@ -71,15 +76,25 @@ class Qiwi
         $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/payments/{$this->commonParams['payout_id']}";
         try {
             $response = $this->sendRequest('PUT', $url, $this->payoutParams);
-        } catch (\Exception $e) {
-            throw new QiwiCreatePayoutException($e->getMessage());
+        } catch (Exception $e) {
+            throw new CreatePayoutException($e->getMessage());
         }
 
         $response = json_decode($response['content'], true);
 
-        if ($response['status']['value'] != 'READY') {
-            throw new QiwiCreatePayoutException('Не удалось создать выплату');
+        if (!empty($response['errorCode'])) {
+            switch ($response['errorCode']) {
+                case 'payout.payment.already-exist':
+                    throw new PayoutAlreadyExistException();
+                    break;
+                case 'payout.insufficient_funds':
+                    throw new PayoutInsufficientFundsException();
+                    break;
+            }
+        } elseif ($response['status']['value'] != 'READY') {
+            throw new CreatePayoutException('Не удалось создать выплату');
         }
+
 
         return $this->commonParams['payout_id'];
     }
@@ -96,8 +111,14 @@ class Qiwi
 
         $response = json_decode($response['content'], true);
 
-        if ($response['status']['value'] != 'COMPLETED') {
-            throw new Exception('Не удалось исполнить выплату');
+        if (!empty($response['errorCode'])) {
+            switch ($response['errorCode']) {
+                case 'payout.insufficient_funds':
+                    throw new PayoutInsufficientFundsException();
+                    break;
+            }
+        } elseif ($response['status']['value'] != 'COMPLETED') {
+            throw new ExecutePayoutException('Не удалось исполнить выплату');
         }
 
         return true;

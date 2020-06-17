@@ -6,6 +6,9 @@ namespace App\Jobs\Qiwi;
 
 use App\Jobs\Job;
 use Benfin\Api\Contracts\AuthMicroserviceContract;
+use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
+use Benfin\Api\Contracts\NotifyMicroserviceContract;
+use Benfin\Api\Exceptions\ResponseErrorException;
 use Benfin\Api\GlobalStorage;
 use Exception;
 
@@ -29,5 +32,44 @@ class QiwiJob extends Job
         }
 
         GlobalStorage::setUserToken($token['content']['access_token']);
+    }
+
+    /**
+     * @return int
+     * @throws ResponseErrorException
+     */
+    protected function getAllowPayRequests()
+    {
+        /** @var CommissionCalculationMicroserviceContract $commission_mks */
+        $commission_mks = app(CommissionCalculationMicroserviceContract::class);
+        $option =  $commission_mks->getOptions('allow_pay_requests');
+
+        if (isset($option['error']) && $option['error']) {
+            throw new ResponseErrorException($option['errors'] ?? [], $option['code'] ?? 400);
+        }
+
+        return (int) $option['content']['value'];
+    }
+
+    protected function disableAllowPayRequests()
+    {
+        /** @var CommissionCalculationMicroserviceContract $commission_mks */
+        $commission_mks = app(CommissionCalculationMicroserviceContract::class);
+        $commission_mks->updateOptions(['allow_pay_requests' => '0']);
+    }
+
+    protected function sendNotify()
+    {
+        $data = [
+            'sender' => env('EMAIL_NOTIFY_SENDER'),
+        ];
+
+        /** @var NotifyMicroserviceContract $notify_mks */
+        $notify_mks = app(NotifyMicroserviceContract::class);
+        $notify_mks->sendMail(
+            env('QIWI_BALANCE_NOTIFY_EMAIL'),
+            $data,
+            'qiwi_balance'
+        );
     }
 }
