@@ -9,7 +9,7 @@ use App\Contracts\Repositories\ReportRepositoryContract;
 use App\Contracts\Services\ReportServiceContract;
 use App\Exceptions\QiwiCreatePayoutException;
 use App\Exceptions\TaxStatusNotServiceException;
-use App\Jobs\QiwiPayoutJob;
+use App\Jobs\Qiwi\QiwiCreatePayoutJob;
 use App\Models\File;
 use App\Models\Report;
 use App\Repositories\PolicyRepository;
@@ -103,8 +103,7 @@ class ReportService implements ReportServiceContract
     /**
      * @param array $fields
      * @return mixed
-     * @throws \PhpOffice\PhpSpreadsheet\Exception
-     * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
+     * @throws TaxStatusNotServiceException
      * @throws Exception
      */
     public function createReport(array $fields)
@@ -139,7 +138,7 @@ class ReportService implements ReportServiceContract
             'report_id' => $report->id,
         ];
 
-        dispatch((new QiwiPayoutJob($params))->onQueue('qiwiPayout'));
+        dispatch((new QiwiCreatePayoutJob($params))->onQueue('QiwiCreatePayout'));
 
         $message = "Создан отчет на выплату {$report->id}";
         $this->log_mks->sendLog($message, config('api_sk.logMicroserviceCode'), $fields['creator_id']);
@@ -426,8 +425,6 @@ class ReportService implements ReportServiceContract
         } else {
             throw new QiwiCreatePayoutException('Не удалось зарегистрировать оплату. Попробуйте позже');
         }
-
-        $this->executePayout($report);
     }
 
     /**
@@ -443,7 +440,7 @@ class ReportService implements ReportServiceContract
             throw new Exception('По этому отчету уже была произведена выплата или вы не являетесь создателем отчета');
         }
 
-        if ($this->qiwi) {
+        if (!$this->qiwi) {
             $this->initQiwi([], '');
         }
 
