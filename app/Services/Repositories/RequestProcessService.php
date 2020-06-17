@@ -45,12 +45,10 @@ class RequestProcessService implements RequestProcessServiceContract
         }
         $checkCount = ++$object->checkCount;
         if ($checkCount >= config('api_sk.maxCheckCount')) {
-            $object->delete();
-            $this->drop($this->getLocalStorageKey($token, $companyCode));
+            $this->delete($token, $companyCode);
             return false;
         }
-        $object->update(['checkCount' => $checkCount]);
-        $this->drop($this->getLocalStorageKey($token, $companyCode));
+        $this->update($token, $companyCode, ['checkCount' => $checkCount]);
         return true;
 
     }
@@ -64,19 +62,14 @@ class RequestProcessService implements RequestProcessServiceContract
 
     public function delete($token, $companyCode)
     {
-        if ($this->isStored($this->getLocalStorageKey($token, $companyCode))) {
-            $object = $this->load($this->getLocalStorageKey($token, $companyCode));
-            $this->drop($this->getLocalStorageKey($token, $companyCode));
-            return $object->delete();
-        }
+        $this->drop($this->getLocalStorageKey($token, $companyCode));
         return $this->repository->delete($token, $companyCode);
     }
 
     public function update($token, $companyCode, $data)
     {
-        $object = $this->repository->update($token, $companyCode, $data);
         $this->drop($this->getLocalStorageKey($token, $companyCode));
-        return $object;
+        return $this->repository->update($token, $companyCode, $data);
     }
 
     public function create($data)
