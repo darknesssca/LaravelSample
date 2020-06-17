@@ -19,72 +19,63 @@ class RequestProcessService implements RequestProcessServiceContract
         $this->repository = $repository;
     }
 
+    private function getLocalStorageKey($token, $companyCode)
+    {
+        return $companyCode . '_' . $token;
+    }
+
     public function getPool($state, $limit)
     {
         $pool = $this->repository->getPool($state, $limit);
         foreach ($pool as $item) {
-            $this->save($item->token, $item);
+            $this->save($this->getLocalStorageKey($item->token, $item->company), $item);
         }
         return $pool;
     }
 
-    public function updateCheckCount($token)
+    public function updateCheckCount($token, $companyCode)
     {
-        if ($this->isStored($token)) {
-            $object = $this->load($token);
+        if ($this->isStored($this->getLocalStorageKey($token, $companyCode))) {
+            $object = $this->load($this->getLocalStorageKey($token, $companyCode));
         } else {
-            $object = $this->find($token);
+            $object = $this->find($token, $companyCode);
         }
         if (!$object) {
             return false;
         }
         $checkCount = ++$object->checkCount;
         if ($checkCount >= config('api_sk.maxCheckCount')) {
-            $object->delete();
+            $this->delete($token, $companyCode);
             return false;
         }
-        $object->update(['checkCount' => $checkCount]);
+        $this->update($token, $companyCode, ['checkCount' => $checkCount]);
         return true;
 
     }
 
-    public function getByToken($token)
+    public function find($token, $companyCode)
     {
-        if ($this->isStored($token)) {
-            return $this->load($token);
-        } else {
-           return$this->find($token);
-        }
-    }
-
-    public function find($token)
-    {
-        $object = $this->repository->find($token);
-        $this->save($token, $object);
+        $object = $this->repository->find($token, $companyCode);
+        $this->save($this->getLocalStorageKey($token, $companyCode), $object);
         return $object;
     }
 
-    public function delete($token)
+    public function delete($token, $companyCode)
     {
-        if ($this->isStored($token)) {
-            $object = $this->load($token);
-            $this->drop($token);
-            return $object->delete();
-        }
-        return $this->repository->delete($token);
+        $this->drop($this->getLocalStorageKey($token, $companyCode));
+        return $this->repository->delete($token, $companyCode);
     }
 
-    public function update($token, $data)
+    public function update($token, $companyCode, $data)
     {
-        $object = $this->repository->update($token, $data);
-        $this->save($token, $object);
-        return $object;
+        $this->drop($this->getLocalStorageKey($token, $companyCode));
+        return $this->repository->update($token, $companyCode, $data);
     }
 
     public function create($data)
     {
         $object = $this->repository->create($data);
-        $this->save($object->token, $object);
+        $this->save($this->getLocalStorageKey($object->token, $object->company), $object);
         return $object;
     }
 }
