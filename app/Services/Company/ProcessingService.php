@@ -157,7 +157,7 @@ class ProcessingService extends CompanyService implements ProcessingServiceContr
             } else {
                 $errorMessages = [$exception->getMessage()];
             }
-            $isUpdated = $this->requestProcessService->updateCheckCount($processItem['token']);
+            $isUpdated = $this->requestProcessService->updateCheckCount($processItem['token'], $company->code);
             if ($isUpdated === false) {
                 $tokenData = $this->getTokenData($processItem['token'], true);
                 $tokenData[$company->code]['status'] = 'error';
