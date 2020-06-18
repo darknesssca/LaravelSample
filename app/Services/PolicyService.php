@@ -422,6 +422,7 @@ class PolicyService implements PolicyServiceContract
         $organized = [];
 
         foreach ($policies as $policy) {
+            $policy->product_id = 1; //костыль, на данный момент отсутствует поле
             if ($policy->agent_id == $userId) {
                 $organized["self"][] = $policy;
             } else {
@@ -429,7 +430,6 @@ class PolicyService implements PolicyServiceContract
                     $organized["network"][] = $policy;
                 }
             }
-            $policy->product_id = 1; //костыль, на данный момент отсутствует поле
             $organized["all"][] = $policy;
         }
 
@@ -474,7 +474,7 @@ class PolicyService implements PolicyServiceContract
                 'first_name' => $usersInfo[$userId]['first_name'] ?? null,
                 'last_name' => $usersInfo[$userId]['last_name'] ?? null,
                 'patronymic' => $usersInfo[$userId]['patronymic'] ?? null,
-                'tax_status' => $usersInfo[$userId]['tax_status'] ?? null,
+                'tax_status' => $usersInfo[$userId]['tax_status']['name'] ?? null,
             ]);
         });
 
