@@ -31,7 +31,7 @@ class QiwiCreatePayoutJob extends QiwiJob
 
         if ($this->getAllowPayRequests() == 1){
             $reportService = app(ReportServiceContract::class);
-            $report = $reportService->reportRepository()->getById($this->params['report_id']);
+            $report = $this->getReport($this->params['report_id']);
 
             try {
                 $reportService->createPayout($report);
@@ -47,5 +47,10 @@ class QiwiCreatePayoutJob extends QiwiJob
         } else {
             dispatch((new QiwiCreatePayoutJob($this->params))->onQueue('QiwiCreatePayout'));
         }
+    }
+
+    public function failed(Exception $exception)
+    {
+        $this->stopProcessing($this->params['report_id']);
     }
 }

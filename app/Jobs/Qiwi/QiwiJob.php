@@ -4,6 +4,7 @@
 namespace App\Jobs\Qiwi;
 
 
+use App\Contracts\Services\ReportServiceContract;
 use App\Jobs\Job;
 use Benfin\Api\Contracts\AuthMicroserviceContract;
 use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
@@ -71,5 +72,20 @@ class QiwiJob extends Job
             $data,
             'qiwi_balance'
         );
+    }
+
+    protected function getReport($report_id)
+    {
+        /** @var ReportServiceContract $reportService */
+        $reportService = app(ReportServiceContract::class);
+        $report = $reportService->reportRepository()->getById($report_id);
+        return $report;
+    }
+
+    protected function stopProcessing($report_id)
+    {
+        $report = $this->getReport($report_id);
+        $report->processing = false;
+        $report->save();
     }
 }
