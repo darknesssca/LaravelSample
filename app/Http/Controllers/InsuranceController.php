@@ -56,9 +56,23 @@ class InsuranceController extends Controller
 
     public function store(FormSendRequest $request)
     {
+        $validatedRequest = $request->validated();
         $data = [
-            'form' => $request->validated(),
+            'form' => $validatedRequest,
         ];
+        if (isset($validatedRequest['prevToken']) && $validatedRequest['prevToken']) {
+            try {
+                $oldToken = $this->getTokenData($validatedRequest['prevToken']);
+                if ($oldToken) {
+                    unset($oldToken['form']);
+                    if ($oldToken) {
+                        $data['prevData'] = $oldToken;
+                    }
+                }
+            } catch (\Exception $exception) {
+                // ignore
+            }
+        }
         $token = $this->createToken($data);
         $logger = app(LogMicroserviceContract::class);
         $logger->sendLog(
