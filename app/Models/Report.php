@@ -11,6 +11,10 @@ class Report extends Model
 {
     use ReportObserver;
 
+    const STATUS_FAILED = 0;
+    const STATUS_PROCESSING = 1;
+    const STATUS_PAYED = 2;
+
     protected $guarded = [];
     protected $table = 'reports';
     protected $fillable = [
@@ -28,8 +32,7 @@ class Report extends Model
     ];
 
     protected $appends = [
-        'create_payout_link',
-        'execute_payout_link'
+        'status',
     ];
 
     public function policies()
@@ -42,13 +45,20 @@ class Report extends Model
         return $this->belongsTo('App\Models\File');
     }
 
-    public function getCreatePayoutLinkAttribute()
+    public function getStatusAttribute()
     {
-            return ($this->requested == false && $this->is_payed == false) ? "/api/v1/car-insurance/reports/{$this->id}/payout/create" : '';
-    }
+        if ($this->processing == false && $this->is_payed == false){
+            return self::STATUS_FAILED;
+        }
 
-    public function getExecutePayoutLinkAttribute()
-    {
-        return ($this->is_payed == false && $this->requested == true) ? "/api/v1/car-insurance/reports/{$this->id}/payout/execute" : '';
+        if ($this->processing == true && $this->is_payed == false) {
+            return self::STATUS_PROCESSING;
+        }
+
+        if ($this->is_payed == true) {
+            return self::STATUS_PAYED;
+        }
+
+        return null;
     }
 }
