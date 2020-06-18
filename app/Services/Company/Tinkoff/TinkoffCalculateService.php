@@ -14,7 +14,6 @@ use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Contracts\Repositories\Services\SourceAcquisitionServiceContract;
 use App\Contracts\Repositories\Services\UsageTargetServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
-use App\Exceptions\ApiRequestsException;
 use App\Services\Repositories\AddressTypeService;
 use App\Traits\DateFormatTrait;
 use App\Traits\TransformBooleanTrait;
@@ -68,9 +67,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 ]
             ]
         );
-
         $response = $this->requestBySoap($this->apiWsdlUrl, 'calcPartnerFQuote', $data);
-
         $this->writeLog(
             $this->logPath,
             [
@@ -81,27 +78,34 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
             ]
         );
 
+        $data = [
+            'setNumber' => $response['response']->setNumber ?? null,
+            'quoteNumber' => $response['response']->OSAGOFQ->quoteNumber ?? null,
+            'subjects' => $this->getSubjectIds($data, $response),
+        ];
+
         if (isset($response['fault']) && $response['fault']) {
-            throw new ApiRequestsException(
+            $data['error'] = true;
+            $data['errorMessage'] =
                 'API страховой компании вернуло ошибку: ' .
-                isset($response['message']) ? $response['message'] : ''
-            );
+                isset($response['message']) ? $response['message'] : '';
+            return $data;
         }
         if (!isset($response['response']->OSAGOFQ->totalPremium)) {
-            throw new ApiRequestsException([
-                'API страховой компании не вернуло данных',
+            $data['error'] = true;
+            $data['errorMessage'] = ['API страховой компании не вернуло данных',
                 isset($response['response']->Header->resultInfo->errorInfo->descr) ?
                     $response['response']->Header->resultInfo->errorInfo->descr :
-                    'нет данных об ошибке',
-            ]);
+                    'нет данных об ошибке'];
+            return $data;
         }
         if (isset($response['response']->OSAGOFQ->isTerminalG) && $response['response']->OSAGOFQ->isTerminalG) {
-            throw new ApiRequestsException('Выдача полиса запрещена страховой компанией');
+            $data['error'] = true;
+            $data['errorMessage'] = 'Выдача полиса запрещена страховой компанией';
+            return $data;
         }
-        $data = [
-            'setNumber' => $response['response']->setNumber,
-            'premium' => $response['response']->OSAGOFQ->totalPremium,
-        ];
+        $data['error'] = false;
+        $data['premium'] = $response['response']->OSAGOFQ->totalPremium;
         return $data;
     }
 
@@ -114,6 +118,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
             $company->id);
         $data = [];
         $this->setHeader($data);
+        $this->setPrevSetNumber($attributes, $data);
         //subjectInfo
         foreach ($attributes['subjects'] as $iSubject => $subject) {
             $pSubject = [
@@ -128,6 +133,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     'document' => [],
                 ],
             ];
+            $this->setPrevSubjectId($attributes, $subject, $pSubject);
             $this->setValuesByArray($pSubject['subjectDetails'], [
                 'email' => 'email'
             ], $subject['fields']);
@@ -277,6 +283,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 'isMultidrive' => $this->transformAnyToBoolean($attributes['policy']['isMultidrive']),
             ],
         ];
+        $this->setPrevQuoteNumber($attributes, $data['OSAGOFQ']);
         if (!$attributes['policy']['isMultidrive']) {
             $data['OSAGOFQ']['driversList']['namedList'] = [];
             foreach ($attributes['drivers'] as $iDriver => $driver) {
@@ -287,6 +294,162 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
             }
         }
         return $data;
+    }
+
+    private function getSubjectIds($data, $response)
+    {
+        if (!isset($response['response']->subjectInfo)) {
+            return null;
+        }
+        $subjects = [];
+        if (is_array($response['response']->subjectInfo)) {
+            $subjects = $response['response']->subjectInfo;
+        } else {
+            $subjects[0] = $response['response']->subjectInfo; // 1 subject
+        }
+        return [
+            'insurant' => $this->getResponseInsurant($data, $subjects),
+            'owner' => $this->getResponseOwner($data, $subjects),
+            'drivers' => $this->getResponseDrivers($data, $subjects),
+        ];
+    }
+
+    private function getResponseInsurant($data, $subjects)
+    {
+        $sid = $data['OSAGOFQ']['insurant']['subjectNumber'];
+        return $this->getResponseSubjectById($sid, $subjects);
+    }
+
+    private function getResponseOwner($data, $subjects)
+    {
+        $sid = $data['OSAGOFQ']['carOwner']['subjectNumber'];
+        if ($sid == $data['OSAGOFQ']['insurant']['subjectNumber']) {
+            return [
+                'type' => 'linked',
+                'link_key' => 'insurant',
+            ];
+        }
+        return $this->getResponseSubjectById($sid, $subjects);
+    }
+
+    private function getResponseDrivers($data, $subjects)
+    {
+        if ($data['OSAGOFQ']['driversList']['isMultidrive']) {
+            return [
+                'type' => 'none',
+            ];
+        }
+        $drivers = [];
+        foreach ($data['OSAGOFQ']['driversList']['namedList']['driver'] as $driver) {
+            if ($driver['subjectNumber'] == $data['OSAGOFQ']['insurant']['subjectNumber']) {
+                $drivers[] = [
+                    'type' => 'linked',
+                    'link_key' => 'insurant',
+                ];
+                continue;
+            } elseif ($driver['subjectNumber'] == $data['OSAGOFQ']['carOwner']['subjectNumber']) {
+                $drivers[] = [
+                    'type' => 'linked',
+                    'link_key' => 'owner',
+                ];
+                continue;
+            }
+            $drivers[] = $this->getResponseSubjectById($driver['subjectNumber'], $subjects);
+        }
+        return $drivers;
+    }
+
+    private function getResponseSubjectById($sid, $subjects)
+    {
+        foreach ($subjects as $subject) {
+            if (isset($subject->subjectNumber) && $subject->subjectNumber == $sid) {
+                if (isset($subject->ID) && $subject->ID) {
+                    return [
+                        'type' => 'unique',
+                        'subjectNumber' => $subject->subjectNumber,
+                        'id' => $subject->ID,
+                    ];
+                }
+            }
+        }
+        return null;
+    }
+
+    private function setPrevSetNumber($attributes, &$data)
+    {
+        if (
+            $attributes['prevData'] &&
+            isset($attributes['prevData']['setNumber']) && $attributes['prevData']['setNumber'] &&
+            isset($attributes['prevData']['quoteNumber']) && $attributes['prevData']['quoteNumber']
+        ) {
+            $data['setNumber'] = $attributes['prevData']['setNumber'];
+        }
+    }
+
+    private function setPrevQuoteNumber($attributes, &$data)
+    {
+        if (
+            $attributes['prevData'] &&
+            isset($attributes['prevData']['setNumber']) && $attributes['prevData']['setNumber'] &&
+            isset($attributes['prevData']['quoteNumber']) && $attributes['prevData']['quoteNumber']
+        ) {
+            $data['quoteNumber'] = $attributes['prevData']['quoteNumber'];
+        }
+    }
+
+    private function setPrevSubjectId(&$attributes, $subject, &$data)
+    {
+        if (!$attributes['prevData']) {
+            return;
+        }
+        if ($subject['id'] == $attributes['policy']['insurantId']) {
+            if (
+                isset($attributes['prevData']['subjects']['insurant']['id']) && $attributes['prevData']['subjects']['insurant']['id']
+            ) {
+                $data['ID'] = $attributes['prevData']['subjects']['insurant']['id'];
+            }
+            return;
+        } elseif ($subject['id'] == $attributes['policy']['ownerId']) {
+            if (
+                isset($attributes['prevData']['subjects']['owner']) && $attributes['prevData']['subjects']['owner']
+            ) {
+                if (
+                    $attributes['prevData']['subjects']['owner']['type'] == 'unique' &&
+                    isset($attributes['prevData']['subjects']['owner']['id']) && $attributes['prevData']['subjects']['owner']['id']
+                ) {
+                    $data['ID'] = $attributes['prevData']['subjects']['owner']['id'];
+                }
+            }
+            return;
+        } elseif (in_array($subject['id'], $this->getDriverSubjectNumbersList($attributes))) {
+            if (
+                isset($attributes['prevData']['subjects']['drivers']) && $attributes['prevData']['subjects']['drivers']
+            ) {
+                foreach ($attributes['prevData']['subjects']['drivers'] as $key => $driver) {
+                    if (
+                        $driver['type'] == 'unique' &&
+                        isset($driver['id']) && $driver['id']
+                    ) {
+                        $data['ID'] = $driver['id'];
+                        unset($attributes['prevData']['subjects']['drivers'][$key]);
+                        return;
+                    }
+                }
+                return;
+            }
+        }
+    }
+
+    private function getDriverSubjectNumbersList($attributes)
+    {
+        $list = [];
+        if ($attributes['policy']['isMultidrive']) {
+            return $list;
+        }
+        foreach ($attributes['drivers'] as $driver) {
+            $list[] = $driver['driver']['driverId'];
+        }
+        return $list;
     }
 
 }

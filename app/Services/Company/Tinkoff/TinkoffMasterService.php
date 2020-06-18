@@ -7,6 +7,7 @@ use App\Contracts\Company\Tinkoff\TinkoffBillLinkServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCreateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffMasterServiceContract;
+use App\Exceptions\ApiRequestsException;
 use App\Exceptions\MethodForbiddenException;
 use App\Exceptions\PolicyNotFoundException;
 use Benfin\Api\Contracts\LogMicroserviceContract;
@@ -17,12 +18,28 @@ class TinkoffMasterService extends TinkoffService implements TinkoffMasterServic
     public function calculate($company, $attributes):array
     {
         $this->pushForm($attributes);
+        $attributes['prevData'] = $this->getPrevTokenDataByCompany($attributes['token'], $company->code);
         $calculateService = app(TinkoffCalculateServiceContract::class);
         $dataCalculate = $calculateService->run($company, $attributes);
+        if ($dataCalculate['error']) {
+            $tokenData = $this->getTokenData($attributes['token'], true);
+            $tokenData[$company->code] = [
+                'status' => 'error',
+                'setNumber' => $dataCalculate['setNumber'],
+                'quoteNumber' => $dataCalculate['quoteNumber'],
+                'subjects' => $dataCalculate['subjects'],
+            ];
+            $this->intermediateDataService->update($attributes['token'], [
+                'data' => json_encode($tokenData),
+            ]);
+            throw new ApiRequestsException($dataCalculate['errorMessage']);
+        }
         $tokenData = $this->getTokenData($attributes['token'], true);
         $tokenData[$company->code] = [
             'status' => 'calculated',
             'setNumber' => $dataCalculate['setNumber'],
+            'quoteNumber' => $dataCalculate['quoteNumber'],
+            'subjects' => $dataCalculate['subjects'],
             'premium' => $dataCalculate['premium'],
             'reward' => $this->getReward($company->id, $tokenData['form'], $dataCalculate['premium'])
         ];
