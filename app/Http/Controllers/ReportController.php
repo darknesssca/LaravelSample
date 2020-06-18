@@ -69,20 +69,10 @@ class ReportController extends Controller
         }
     }
 
-    public function createPayout(int $id)
+    public function rerunPayout(int $id)
     {
         try {
-            return $this->reportService->createPayout($id);
-        } catch (Exception $exception) {
-            $httpCode = ($exception instanceof AbstractException) ? $exception->getHttpCode() : 400;
-            return Response::error($exception->getMessage(), $httpCode);
-        }
-    }
-
-    public function executePayout(int $id)
-    {
-        try {
-            return $this->reportService->executePayout($id);
+            return $this->reportService->rerunPayout($id);
         } catch (Exception $exception) {
             $httpCode = ($exception instanceof AbstractException) ? $exception->getHttpCode() : 400;
             return Response::error($exception->getMessage(), $httpCode);

@@ -8,8 +8,10 @@ use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\ReportRepositoryContract;
 use App\Contracts\Services\ReportServiceContract;
 use App\Exceptions\Qiwi\CreatePayoutException;
+use App\Exceptions\ReportNotFoundException;
 use App\Exceptions\TaxStatusNotServiceException;
 use App\Jobs\Qiwi\QiwiCreatePayoutJob;
+use App\Jobs\Qiwi\QiwiExecutePayoutJob;
 use App\Models\File;
 use App\Models\Report;
 use App\Repositories\PolicyRepository;
@@ -461,6 +463,28 @@ class ReportService implements ReportServiceContract
             ];
 
             $this->commission_mks->massUpdateRewards($fields);
+        }
+    }
+
+    /**
+     * @param $report
+     * @throws ReportNotFoundException
+     */
+    public function rerunPayout($report)
+    {
+        if (is_integer($report)) {
+            $report = $this->reportRepository->getById($report);
+        }
+
+        $params = [
+            'user' => GlobalStorage::getUser(),
+            'report_id' => $report->id,
+        ];
+
+        if ($report->requested == false && $report->is_payed == false) {
+            dispatch((new QiwiCreatePayoutJob($params))->onQueue('QiwiCreatePayout'));
+        } elseif ($report->requested == true && $report->is_payed == false) {
+            dispatch((new QiwiExecutePayoutJob($params))->onQueue('QiwiExecutePayout'));
         }
     }
 
