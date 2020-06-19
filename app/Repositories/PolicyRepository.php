@@ -129,4 +129,17 @@ class PolicyRepository implements PolicyRepositoryContract
     public function getById($id) {
         return Policy::where('id', $id)->first();
     }
+
+    public function getUserListByPolicies($filter)
+    {
+        $query = Policy::select('agent_id')->groupBy('agent_id');
+        if (!empty($filter['from'])) {
+            $query = $query->where('registration_date', '>=', Carbon::parse($filter['from']));
+        }
+
+        if (!empty($filter['to'])) {
+            $query = $query->where('registration_date', '<=', Carbon::parse($filter['to']));
+        }
+        return $query->get();
+    }
 }

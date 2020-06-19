@@ -386,10 +386,19 @@ class PolicyService implements PolicyServiceContract
         /** * @var Collection $policies */
         $policies = $this->policyRepository->getList($filter)->sortBy('registration_date');
 
+        $user_ids = [];
         if ($policies->isNotEmpty()) {
-            $user_ids = $policies->pluck('agent_id')->unique()->all();
-            $usersInfo = app(AuthMicroserviceContract::class)->usersInfo($user_ids);
+            $ids = $policies->pluck('agent_id')->unique()->all();
+            $user_ids = array_merge($user_ids, $ids);
+        }
 
+        if ($user_ids) {
+            $usersInfo = app(AuthMicroserviceContract::class)->usersInfo($user_ids);
+        } else {
+            $usersInfo = [];
+        }
+
+        if ($policies->isNotEmpty()) {
             $organizedPolicies = $this->organizePolicies($policies, $userId, $subagentIds);
 
             $startDate = Carbon::parse($filter["from"]);
@@ -407,6 +416,7 @@ class PolicyService implements PolicyServiceContract
         if (empty($organizedStatistics)) {
             throw new StatisticsNotFoundException('За выбранный период не продано ни одного полиса');
         }
+
         return $organizedStatistics;
     }
 
@@ -748,14 +758,18 @@ class PolicyService implements PolicyServiceContract
 
     /**
      * возвращает список пользователей, которые оформляли полисы
+     * @param array $filter
+     * @return array
      */
-    public function usersWithPolicies()
+    public function usersWithPolicies(array $filter = [])
     {
-        $policies = Policy::select('agent_id')->get();
-        $ids = [];
-        foreach ($policies as $pol)
-            $ids[] = $pol['agent_id'];
-        return $this->authService->getUsersList(['user_id' => array_unique($ids)]);
+        $agentList = $this->policyRepository->getUserListByPolicies($filter);
+
+        if ($agentList->isNotEmpty()) {
+            $ids = $agentList->pluck('agent_id')->all();
+            return $this->authService->getUsersList(['user_id' => $ids]);
+        }
+        return [];
     }
 
     /**
