@@ -28,19 +28,18 @@ class QiwiExecutePayoutJob extends QiwiJob
         GlobalStorage::setUser($this->params['user']);
         $this->login();
 
-        if ($this->getAllowPayRequests() == 1){
+        if ($this->getAllowPayRequests() == 1) {
             $reportService = app(ReportServiceContract::class);
             $report = $this->getReport($this->params['report_id']);
 
             try {
                 $reportService->executePayout($report);
+                dispatch((new QiwiCreateXlsJob($this->params))->onQueue('QiwiCreateXls'));
             } catch (PayoutInsufficientFundsException $exception) {
                 $this->disableAllowPayRequests();
                 $this->sendNotify();
                 dispatch((new QiwiExecutePayoutJob($this->params))->onQueue('QiwiExecutePayout'));
             }
-
-            dispatch((new QiwiCreateXlsJob($this->params))->onQueue('QiwiCreateXls'));
         } else {
             dispatch((new QiwiExecutePayoutJob($this->params))->onQueue('QiwiExecutePayout'));
         }
