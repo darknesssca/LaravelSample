@@ -5,7 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Benfin\Api\GlobalStorage;
 
-class Restrictions
+class RestrictionPolicy
 {
     /**
      * Handle an incoming request.

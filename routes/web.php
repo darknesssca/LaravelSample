@@ -40,7 +40,7 @@ $router->group(
                 );
 
                 // запросы в страховые компании
-                $router->group(['middleware' => 'restrictionpolicy'], function () use ($router) {
+                $router->group(['middleware' => 'restriction.policy'], function () use ($router) {
                     $router->group(['prefix' => 'registration'], function () use ($router) {
                         $router->post('send', 'InsuranceController@store'); //Запрос с формой, в ответе приходит токен формы
                         $router->post('{code}/payment', 'InsuranceController@payment');
