@@ -6,6 +6,7 @@ use App\Providers\ValidationProvider;
 use Benfin\Api\BenfinMicroserviceProvider;
 use Benfin\Requests\BenfinMacroProvider;
 use Benfin\Requests\BenfinRequestProvider;
+use App\Http\Middleware\Restrictions;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
@@ -87,7 +88,10 @@ $app->configure('api');
 // $app->routeMiddleware([
 //     'auth' => App\Http\Middleware\Authenticate::class,
 // ]);
-$app->routeMiddleware(['auth' => Benfin\Auth\Http\Middleware\Authenticate::class,]);
+$app->routeMiddleware([
+    'auth' => Benfin\Auth\Http\Middleware\Authenticate::class,
+    'restrictionpolicy' => Restrictions::class,
+    ]);
 /*
 |--------------------------------------------------------------------------
 | Register Service Providers

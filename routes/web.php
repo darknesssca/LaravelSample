@@ -40,12 +40,14 @@ $router->group(
                 );
 
                 // запросы в страховые компании
-                $router->group(['prefix' => 'registration'], function () use ($router) {
+                $router->group(['middleware' => 'restrictionpolicy'], function () use ($router) {
+                    $router->group(['prefix' => 'registration'], function () use ($router) {
                         $router->post('send', 'InsuranceController@store'); //Запрос с формой, в ответе приходит токен формы
                         $router->post('{code}/payment', 'InsuranceController@payment');
                         $router->post('{code}/{method}', 'InsuranceController@index'); //Запросы с токеном формы, для получения предложений
-                    }
-                );
+                    });
+                });
+
 
                 //policies
                 $router->group(['prefix' => 'policies'], function () use ($router) {
