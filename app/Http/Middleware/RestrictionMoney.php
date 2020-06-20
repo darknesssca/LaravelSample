@@ -6,7 +6,7 @@ use Closure;
 use Benfin\Api\GlobalStorage;
 use Illuminate\Http\Response;
 
-class RestrictionPolicy
+class RestrictionMoney
 {
     /**
      * Handle an incoming request.
@@ -18,8 +18,8 @@ class RestrictionPolicy
     public function handle($request, Closure $next)
     {
         $restrictions = GlobalStorage::getRestrictions();
-        if ((!isset($restrictions['restriction_policy'])) || ($restrictions['restriction_policy']) ) {
-            return Response::error(["Оформление полисов заблокировано, обратитесь в техподдержку"], 401);
+        if ((!isset($restrictions['restriction_money'])) || ($restrictions['restriction_money']) ) {
+            return Response::error(["Вывод средств заблокирован, обратитесь в техподдержку"], 401);
         }
 
         return $next($request);

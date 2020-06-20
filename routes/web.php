@@ -69,10 +69,19 @@ $router->group(
 
                 //reports
                 $router->group(['prefix' => 'reports'], function () use ($router) {
-                        $router->post('/', 'ReportController@create');
+                        $router->post('/', [
+                            'uses' => 'ReportController@create',
+                            'middleware' => 'restriction.money'
+                        ]);
                         $router->get('/', 'ReportController@index');
-                        $router->patch('{id}/payout/create', 'ReportController@createPayout');
-                        $router->patch('{id}/payout/execute', 'ReportController@executePayout');
+                        $router->patch('{id}/payout/create', [
+                            'uses' => 'ReportController@createPayout',
+                            'middleware' => 'restriction.money'
+                        ]);
+                        $router->patch('{id}/payout/execute', [
+                            'uses' => 'ReportController@executePayout',
+                            'middleware' => 'restriction.money'
+                        ]);
                         $router->get('{id}', 'ReportController@show');
                     }
                 );
