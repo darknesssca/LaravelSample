@@ -53,7 +53,7 @@
         {
             "type": "vcs",
             "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/cache.git"
-        }
+        },
         {
             "type": "vcs",
             "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/restrictions.git"
