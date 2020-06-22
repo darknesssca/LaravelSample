@@ -89,8 +89,8 @@ $app->configure('api');
 // ]);
 $app->routeMiddleware([
     'auth' => Benfin\Auth\Http\Middleware\Authenticate::class,
-    'restriction.policy' => \App\Http\Middleware\RestrictionPolicy::class,
-    'restriction.money' => \App\Http\Middleware\RestrictionMoney::class,
+    'restriction.policy' => \Benfin\Restrictions\Http\Middleware\RestrictionPolicy::class,
+    'restriction.money' => \Benfin\Restrictions\Http\Middleware\RestrictionMoney::class,
     ]);
 /*
 |--------------------------------------------------------------------------
