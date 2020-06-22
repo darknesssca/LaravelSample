@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Http\Requests\Policies\PolicyListRequest;
 use App\Http\Requests\Policies\PolicyStatisticRequest;
+use App\Http\Requests\Policies\PolicyUsersRequest;
 use App\Http\Requests\Policies\PolicyWithRewardsRequest;
 use App\Services\PolicyService;
 use Illuminate\Http\JsonResponse;
@@ -20,7 +21,7 @@ class PoliciesController extends Controller
     {
         $this->policyService = app(PolicyServiceContract::class);
     }
-    
+
     public function getById($id) {
         return Response::success(app(PolicyServiceContract::class)->getById($id));
     }
@@ -64,10 +65,10 @@ class PoliciesController extends Controller
         return Response::success(app(PolicyServiceContract::class)->statistic($request->validated()));
     }
 
-    public function usersWithPolicies()
+    public function usersWithPolicies(PolicyUsersRequest $request)
     {
         try {
-            return Response::success(app(PolicyServiceContract::class)->usersWithPolicies());
+            return Response::success(app(PolicyServiceContract::class)->usersWithPolicies($request->validated()));
         } catch (\Exception $exception) {
             return Response::error($exception->getMessage(), 500);
         }
