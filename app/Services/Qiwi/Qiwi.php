@@ -6,6 +6,7 @@ namespace App\Services\Qiwi;
 
 use App\Exceptions\QiwiCreatePayoutException;
 use App\Exceptions\TaxStatusNotServiceException;
+use Benfin\Api\Contracts\AuthMicroserviceContract;
 use Exception;
 use GuzzleHttp\Client;
 
@@ -69,6 +70,7 @@ class Qiwi
         $this->commonParams['payout_id'] = $this->getGUID();
 
         $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/payments/{$this->commonParams['payout_id']}";
+
         try {
             $response = $this->sendRequest('PUT', $url, $this->payoutParams);
         } catch (\Exception $e) {
@@ -76,6 +78,18 @@ class Qiwi
         }
 
         $response = json_decode($response['content'], true);
+
+        if (
+            isset($response['status']['value']) && ($response['status']['value'] == 'FAILED') &&
+            isset($response['status']['errorCode']) && ($response['status']['errorCode'] == 'BILLING_DECLINED')
+        ) {
+            try {
+                app(AuthMicroserviceContract::class)->qiwiReset();
+            } catch (\Exception $exception) {
+                // todo: should make custom exception for api error
+            }
+            throw new QiwiCreatePayoutException($response['status']['errorMessage'] ?? 'Не удалось создать выплату');
+        }
 
         if ($response['status']['value'] != 'READY') {
             throw new QiwiCreatePayoutException('Не удалось создать выплату');
