@@ -671,6 +671,7 @@ class PolicyService implements PolicyServiceContract
             'vehicle_unladen_mass' => 'minWeight',
             'vehicle_loaded_mass' => 'maxWeight',
             'vehicle_count_seats' => 'seats',
+            'vehicle_category_id' => 'category',
         ], $attributes['car']);
         $docTypeService = app(DocTypeServiceContract::class);
         $docTypeId = $docTypeService->getDocTypeByCode($attributes['car']['document']['documentType']);
