@@ -24,11 +24,6 @@ class AutocodReportService extends AutocodService
      */
     public function getReport(string $vin, string $uid): array
     {
-
-        if (env('APP_DEBUG') && $uid == $this->uid_taxi) {
-            return ['report_id' => 'benfin_active_taxi_license_report_Z94CB41AAGR422720@benfin', 'suggest_get' => '0'];
-        }
-
         $data = [
             "query_type" => "VIN",
             "query" => $vin,
