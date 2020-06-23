@@ -1,7 +1,7 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
     "content-hash": "038c6f91db9ef4308d51f5bfdfcc3205",
@@ -92,11 +92,11 @@
         },
         {
             "name": "benfin/packages/api-communication",
-            "version": "v1.5.30",
+            "version": "1.5.34",
             "source": {
                 "type": "git",
                 "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/api-communication.git",
-                "reference": "aa5b52e6bde9224459caa037eff435473913f585"
+                "reference": "241a2d244dcad2f51063e108ec5f51b5574a8d1a"
             },
             "require": {
                 "benfin/packages/requests": ">=1.1",
@@ -125,7 +125,7 @@
                 }
             ],
             "description": "BENFIN Api communication",
-            "time": "2020-06-17T13:41:06+00:00"
+            "time": "2020-06-22T14:54:34+00:00"
         },
         {
             "name": "benfin/packages/auth",
