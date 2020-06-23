@@ -16,14 +16,18 @@ class RequestProcessRepository implements RequestProcessRepositoryContract
             ->get();
     }
 
-    public function update($token, $data)
+    public function update($token, $companyCode, $data)
     {
-        return RequestProcess::where('token', $token)->update($data);
+        return RequestProcess::where('token', $token)
+            ->where('company', $companyCode)
+            ->update($data);
     }
 
-    public function find($token)
+    public function find($token, $companyCode)
     {
-        return RequestProcess::find($token);
+        return RequestProcess::where('token', $token)
+            ->where('company', $companyCode)
+            ->first();
     }
 
     public function create($data)
@@ -31,8 +35,10 @@ class RequestProcessRepository implements RequestProcessRepositoryContract
         return RequestProcess::create($data);
     }
 
-    public function delete($token)
+    public function delete($token, $companyCode)
     {
-        return RequestProcess::where('token', $token)->delete();
+        return RequestProcess::where('token', $token)
+            ->where('company', $companyCode)
+            ->delete();
     }
 }

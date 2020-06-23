@@ -71,6 +71,15 @@ trait TokenTrait
         return $data[$companyCode];
     }
 
+    protected function getPrevTokenDataByCompany($token, $companyCode)
+    {
+        $data = $this->getTokenData($token);
+        if (!isset($data['prevData'][$companyCode]) || !$data['prevData'][$companyCode]) {
+            return null;
+        }
+        return $data['prevData'][$companyCode];
+    }
+
     protected function pushForm(&$attributes)
     {
         $form = $this->getTokenForm($attributes['token']);

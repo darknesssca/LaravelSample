@@ -41,4 +41,5 @@ return [
     'maxPoliciesCountForPaymentCheck' => env('API_PROCESSING_MAX_POLICIES_COUNT_FOR_PAYMENT_CHECK'),
     'processingInterval' => env('API_PROCESSING_INTERVAL'),
     'processingGetPaymentDelay' => env('API_PROCESSING_GET_PAYMENT_DELAY'),
+    'debugLog' => env('API_DEBUG_LOG'),
 ];

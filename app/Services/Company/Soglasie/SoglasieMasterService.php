@@ -139,7 +139,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
         $checkData = $checkService->run($company, $processData);
         switch ($checkData['status']) {
             case 'error':
-                $this->requestProcessService->delete($processData['token']);
+                $this->requestProcessService->delete($processData['token'], $company->code);
                 $this->dropCreate($company, $processData['token'], $checkData['messages']);
                 break;
             case 'complete':
@@ -148,12 +148,12 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
                     case 'RSA_CHECK_FAIL':
                     case 'SK_CHECK_FAIL':
                         $this->cancelCreate($company, $processData);
-                        $this->requestProcessService->delete($processData['token']);
+                        $this->requestProcessService->delete($processData['token'], $company->code);
                         $this->dropCreate($company, $processData['token'], $checkData['messages']);
                         break;
                     case 'SK_CHECK_OK':
                     case 'RSA_CHECK_OK':
-                        $this->requestProcessService->delete($processData['token']);
+                        $this->requestProcessService->delete($processData['token'], $company->code);
                         $billLinkService = app(SoglasieBillLinkServiceContract::class);
                         $billLinkData = $billLinkService->run($company, $processData);
                         $form = [
