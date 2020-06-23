@@ -169,7 +169,7 @@ abstract class CompanyService
 
     public function writeLog(string $path, array $data)
     {
-        if (!config('app.debug')) {
+        if (!config('api_sk.debugLog')) {
             return;
         }
         $log = Storage::disk('minio')->exists($path);
