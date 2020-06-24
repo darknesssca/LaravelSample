@@ -28,7 +28,7 @@ class AutocodController extends Controller
     {
         try {
             $params = $request->validated();
-            $result = $this->engine->readReportAutocompleteSync($params['vin']); //ожидаем генерации отчета
+            $result = $this->engine->readReportAutocompleteSync($params['vin'], $params['needSave'] ?? false); //ожидаем генерации отчета
             return Response::success($result);
         } catch (ClientException $cle) {
             return Response::error($cle->getMessage(), 500);
