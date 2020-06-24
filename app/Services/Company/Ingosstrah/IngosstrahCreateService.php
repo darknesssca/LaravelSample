@@ -12,8 +12,8 @@ use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Contracts\Repositories\Services\UsageTargetServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
-use App\Traits\PrepareAddressesTrait;
 use App\Traits\DateFormatTrait;
+use App\Traits\PrepareAddressesTrait;
 use App\Traits\TransformBooleanTrait;
 use Spatie\ArrayToXml\ArrayToXml;
 
@@ -36,8 +36,7 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
         DocTypeServiceContract $docTypeService,
         GenderServiceContract $genderService,
         CountryServiceContract $countryService
-    )
-    {
+    ) {
         $this->usageTargetService = $usageTargetService;
         $this->carModelService = $carModelService;
         $this->docTypeService = $docTypeService;
@@ -147,20 +146,28 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
                         "RiskCtg" => $attributes['policy']['isMultidrive'] ? '28966316' : "28966116",
                         'UsageType' => '1381850903',
                         "UsageTarget" => [
-                            $this->usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id) =>
+                            $this->usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'],
+                                $company->id) =>
                                 $this->transformBooleanToChar(true),
                         ],
                         "UseWithTrailer" => $this->transformBooleanToChar($attributes['car']['isUsedWithTrailer']),
                         "PeriodList" => [
                             "Period" => [
-                                "DateBeg" =>  $attributes['policy']['beginDate'],
-                                "DateEnd" =>  $attributes['policy']['endDate'],
+                                "DateBeg" => $attributes['policy']['beginDate'],
+                                "DateEnd" => $attributes['policy']['endDate'],
                             ],
                         ],
                     ],
                 ],
             ],
         ];
+
+        if (!empty($attributes['car']['inspection']['number']) && !empty($attributes['car']['inspection']['dateIssue']) && !empty($attributes['car']['inspection']['dateEnd'])) {
+            $data['General']['DISetting'] = "1";
+        } else {
+            $data['General']['DISetting'] = "3";
+        }
+
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $this->setValuesByArray($data['Agreement']['Insurer'], [
             'MobilePhone' => 'phone',
@@ -206,7 +213,8 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
             $sDocument = $this->searchDocumentByType($subject['fields'], 'passport');
             if ($sDocument) {
                 $pDocument = [
-                    'DocType' => $this->docTypeService->getCompanyPassportDocType($sDocument['isRussian'], $company->id),
+                    'DocType' => $this->docTypeService->getCompanyPassportDocType($sDocument['isRussian'],
+                        $company->id),
                 ];
                 $this->setValuesByArray($pDocument, [
                     "Serial" => 'series',
@@ -226,7 +234,8 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
             'RegNum' => 'regNumber',
         ], $attributes['car']);
         $data['Agreement']['Vehicle']['Document'] = [
-            'DocType' => $this->docTypeService->getCompanyCarDocType($attributes['car']['document']['documentType'], $company->id),
+            'DocType' => $this->docTypeService->getCompanyCarDocType($attributes['car']['document']['documentType'],
+                $company->id),
         ];
         $this->setValuesByArray($data['Agreement']['Vehicle']['Document'], [
             "Serial" => 'series',
@@ -251,7 +260,8 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
                 $sDocument = $this->searchDocumentByTypeAndId($attributes, $driver['driver']['driverId'], 'license');
                 if ($sDocument) {
                     $pDriver['DriverLicense'] = [
-                        'DocType' => $this->docTypeService->getCompanyLicenseDocType($sDocument['documentType'], $company->id),
+                        'DocType' => $this->docTypeService->getCompanyLicenseDocType($sDocument['documentType'],
+                            $company->id),
                     ];
                     $this->setValuesByArray($pDriver['DriverLicense'], [
                         "Serial" => 'series',

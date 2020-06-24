@@ -153,6 +153,13 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                 ],
             ],
         ];
+
+        if (!empty($attributes['car']['inspection']['number']) && !empty($attributes['car']['inspection']['dateIssue']) && !empty($attributes['car']['inspection']['dateEnd'])) {
+            $data['General']['DISetting'] = "1";
+        } else {
+            $data['General']['DISetting'] = "3";
+        }
+
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $this->setValuesByArray($data['TariffParameters']['Agreement']['Insurer'], [
             'MobilePhone' => 'phone',
