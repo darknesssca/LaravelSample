@@ -77,7 +77,6 @@ class FormSendRequest extends AbstractRequest
             "car.inspection.number" => [
                 Rule::requiredIf($expired_car_year),
                 'numeric',
-                'size:15',
             ],
             "car.inspection.dateIssue" => [
                 'date',
