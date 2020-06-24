@@ -36,8 +36,12 @@ class AutocodReportService extends AutocodService
         $res = $this->postRequest($this->baseurl . 'user/reports/' . $uid . '/_make', $data, $headers,false,false,true);
         if(!empty($res['status']) && $res['status'] === 400)
             throw new \Exception("Некорректный запрос");
-        if($res['state'] !== 'ok')
+        if($res['state'] !== 'ok') {
+            if ($res['event']['type'] == 'ValidationFailed') {
+                throw new \Exception('Некорректный формат VIN-номера');
+            }
             throw new \Exception($res['event']['message']);
+        }
         $this->logger->sendLog("Запрошен отчет autocod: vin=$vin, uid=$uid", env("LOG_MICROSERVICE_CODE"));
         return ['report_id' => $res['data'][0]['uid'], 'suggest_get' => $res['data'][0]['suggest_get']];
     }
