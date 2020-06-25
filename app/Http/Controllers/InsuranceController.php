@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Exceptions\AutocodException;
+use App\Exceptions\LimitationsException;
 use App\Exceptions\TokenException;
 use App\Http\Requests\FormSendRequest;
 use App\Http\Requests\PaymentRequest;
@@ -16,6 +17,7 @@ use App\Traits\TokenTrait;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 use Illuminate\Http\Response;
+use Illuminate\Support\Carbon;
 
 class InsuranceController extends Controller
 {
@@ -50,6 +52,7 @@ class InsuranceController extends Controller
         if ($method == 'calculate') {
             $formData = $this->getTokenData($validatedRequest['token']);
             $this->checkCommissionAvailable($company->id, $formData['form']);
+            $this->checkGlobalLimitations($formData['form']);
         }
         $method = strtolower((string)$method);
         return Response::success($this->runService($company, $validatedRequest, $method));
@@ -119,6 +122,25 @@ class InsuranceController extends Controller
             'isTaxi' => $this->look($autocodIsTaxiId)['status'],
             'isExist' => $this->look($autocodIsExistId)['status'],
         ];
+    }
+
+    private function checkGlobalLimitations($formData)
+    {
+        if ($formData['autocod']['isTaxi']) {
+            throw new LimitationsException('Автомобиль зарегистрирован в качестве такси. Оформление полиса невозможно');
+        }
+        if (!$formData['autocod']['isExist']) {
+            $documentDateIssue = Carbon::parse($formData['car']['document']['dateIssue'])
+                ->startOfDay()
+                ->addDays(10)
+                ->timestamp;
+            $checkDate = Carbon::now()
+                ->startOfDay()
+                ->timestamp;
+            if ($documentDateIssue >= $checkDate) {
+                throw new LimitationsException('Оформление полиса для данного ТС запрещено');
+            }
+        }
     }
 
 }

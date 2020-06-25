@@ -39,6 +39,9 @@ class AutocodReportService extends AutocodService
         $res = $this->postRequest($this->baseurl . 'user/reports/' . $uid . '/_make', $data, $headers,false,false,true);
         if(!empty($res['status']) && $res['status'] === 400)
             throw new \Exception("Некорректный запрос");
+        if (!isset($res['state'])) {
+            throw new \Exception('При получени данных из автокода произошла ошибка. Попробуйте еще раз.');
+        }
         if($res['state'] !== 'ok') {
             if ($res['event']['type'] == 'ValidationFailed') {
                 throw new \Exception('Некорректный формат VIN-номера');
