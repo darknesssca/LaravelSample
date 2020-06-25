@@ -14,7 +14,7 @@ class AutocodRequestReportRequest extends AbstractRequest
     {
         return  [
             'vin' => 'required|regex:/^[A-HJ-NPR-Za-hj-npr-z0-9]+$/|min:12|max:17',
-            'needSave' => 'boolean'
+            'eosago' => 'boolean'
         ];
     }
 
