@@ -5,20 +5,21 @@ namespace App\Http\Controllers;
 
 use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Exceptions\AutocodException;
 use App\Exceptions\TokenException;
 use App\Http\Requests\FormSendRequest;
 use App\Http\Requests\PaymentRequest;
 use App\Http\Requests\ProcessRequest;
+use App\Traits\CacheStore;
 use App\Traits\CompanyServicesTrait;
 use App\Traits\TokenTrait;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
-use Benfin\Requests\Exceptions\ValidationException;
 use Illuminate\Http\Response;
 
 class InsuranceController extends Controller
 {
-    use TokenTrait, CompanyServicesTrait;
+    use TokenTrait, CompanyServicesTrait, CacheStore;
 
     protected $intermediateDataService;
     protected $insuranceCompanyService;
@@ -60,6 +61,7 @@ class InsuranceController extends Controller
         $data = [
             'form' => $validatedRequest,
         ];
+        $this->setStoredKeys($data['form']);
         if (isset($validatedRequest['prevToken']) && $validatedRequest['prevToken']) {
             try {
                 $oldToken = $this->getTokenData($validatedRequest['prevToken']);
@@ -101,6 +103,22 @@ class InsuranceController extends Controller
         $company = $this->getCompany($code);
         $method = 'payment';
         return Response::success($this->runService($company, $request->validated(), $method));
+    }
+
+    private function setStoredKeys(&$formData)
+    {
+        $autocodIsTaxiId = $this->getId('autocod', GlobalStorage::getUserId(), $formData['car']['vin'], 'isTaxi');
+        $autocodIsExistId = $this->getId('autocod', GlobalStorage::getUserId(), $formData['car']['vin'], 'isExist');
+        if(
+            !$this->exist($autocodIsTaxiId) ||
+            !$this->exist($autocodIsExistId)
+        ) {
+            throw new AutocodException('Проверка на использование ТС в такси не выполнялась');
+        }
+        $formData['autocod'] = [
+            'isTaxi' => $this->look($autocodIsTaxiId)['status'],
+            'isExist' => $this->look($autocodIsExistId)['status'],
+        ];
     }
 
 }

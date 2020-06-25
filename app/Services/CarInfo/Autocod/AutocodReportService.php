@@ -88,7 +88,7 @@ class AutocodReportService extends AutocodService
         if(empty($r2['data'][0]['content'])) {
             if ($eosago) {
                 $this->put(
-                    $this->getId('autocod', GlobalStorage::getUserId(), $vin, 'data'),
+                    $this->getId('autocod', GlobalStorage::getUserId(), $vin, 'isExist'),
                     ['status' => false]
                 );
                 $r2['found'] = false;
@@ -98,7 +98,7 @@ class AutocodReportService extends AutocodService
         }
         if ($eosago) {
             $this->put(
-                $this->getId('autocod', GlobalStorage::getUserId(), $vin, 'data'),
+                $this->getId('autocod', GlobalStorage::getUserId(), $vin, 'isExist'),
                 ['status' => true]
             );
         }
@@ -138,7 +138,7 @@ class AutocodReportService extends AutocodService
                     if ($eosago) {
                         $this->put(
                             $this->getId('autocod', GlobalStorage::getUserId(), $vin, 'isTaxi'),
-                            ['taxi' => true]
+                            ['status' => true]
                         );
                     }
                     return true;
@@ -148,7 +148,7 @@ class AutocodReportService extends AutocodService
         if ($eosago) {
             $this->put(
                 $this->getId('autocod', GlobalStorage::getUserId(), $vin, 'isTaxi'),
-                ['taxi' => false]
+                ['status' => false]
             );
         }
         return false;
