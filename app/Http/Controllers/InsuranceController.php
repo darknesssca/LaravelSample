@@ -137,7 +137,7 @@ class InsuranceController extends Controller
             $checkDate = Carbon::now()
                 ->startOfDay()
                 ->timestamp;
-            if ($documentDateIssue >= $checkDate) {
+            if ($documentDateIssue <= $checkDate) {
                 throw new LimitationsException('Оформление полиса для данного ТС запрещено');
             }
         }
