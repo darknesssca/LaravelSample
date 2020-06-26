@@ -11,28 +11,14 @@ class TinkoffCreateService extends TinkoffService implements TinkoffCreateServic
     {
         $data = $this->prepareData($attributes);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'request' => [
-                    'method' => 'Create',
-                    'url' => $this->apiWsdlUrl,
-                    'payload' => $data
-                ]
-            ]
-        );
+        $this->writeRequestLog([
+            'url' => $this->apiWsdlUrl,
+            'payload' => $data
+        ]);
 
         $response = $this->requestBySoap($this->apiWsdlUrl, 'issueQuoteSetPartner', $data);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'response' => [
-                    'method' => 'Create',
-                    'response' => $response
-                ]
-            ]
-        );
+        $this->writeResponseLog($response);
 
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(

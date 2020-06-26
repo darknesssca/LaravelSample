@@ -36,28 +36,14 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
         $headers = $this->getHeaders();
         $auth = $this->getAuth();
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'request' => [
-                    'method' => 'KBM',
-                    'url' => $this->apiWsdlUrl,
-                    'payload' => $data
-                ]
-            ]
-        );
+        $this->writeRequestLog([
+            'url' => $this->apiWsdlUrl,
+            'payload' => $data
+        ]);
 
         $response = $this->requestBySoap($this->apiWsdlUrl, 'getKbm', $data, $auth, $headers);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'response' => [
-                    'method' => 'KBM',
-                    'response' => $response
-                ]
-            ]
-        );
+        $this->writeResponseLog($response);
 
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(

@@ -8,7 +8,6 @@ use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
-use Illuminate\Support\Facades\Storage;
 
 class RenessansCheckCreateService extends RenessansService implements RenessansCheckCreateServiceContract
 {
@@ -30,28 +29,14 @@ class RenessansCheckCreateService extends RenessansService implements RenessansC
         $this->setAuth($data);
         $url = $this->getUrl($attributes);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'request' => [
-                    'method' => 'CheckCreate',
-                    'url' => $url,
-                    'payload' => $data
-                ]
-            ]
-        );
+        $this->writeRequestLog([
+            'url' => $url,
+            'payload' => $data
+        ]);
 
         $response = $this->getRequest($url, $data, [], false);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'response' => [
-                    'method' => 'CheckCreate',
-                    'response' => $response
-                ]
-            ]
-        );
+        $this->writeResponseLog($response);
 
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');

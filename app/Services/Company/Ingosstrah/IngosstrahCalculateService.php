@@ -51,28 +51,14 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
     {
         $data = $this->prepareData($company, $attributes);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'request' => [
-                    'url' => $this->apiWsdlUrl,
-                    'method' => 'Calculate',
-                    'payload' => $data
-                ]
-            ]
-        );
+        $this->writeRequestLog([
+            'url' => $this->apiWsdlUrl,
+            'payload' => $data
+        ]);
 
         $response = $this->requestBySoap($this->apiWsdlUrl, 'GetTariff', $data);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'response' => [
-                    'method' => 'Calculate',
-                    'response' => $response
-                ]
-            ]
-        );
+        $this->writeResponseLog($response);
 
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(

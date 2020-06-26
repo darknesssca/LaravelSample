@@ -34,28 +34,14 @@ class SoglasieBillLinkService extends SoglasieService implements SoglasieBillLin
         ]);
         $headers = $this->getHeaders();
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'request' => [
-                    'method' => 'BillLink',
-                    'url' => $url,
-                    'payload' => $data
-                ]
-            ]
-        );
+        $this->writeRequestLog([
+            'url' => $url,
+            'payload' => $data
+        ]);
 
         $response = $this->getRequest($url, [], $headers, false);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'response' => [
-                    'method' => 'BillLink',
-                    'response' => $response
-                ]
-            ]
-        );
+        $this->writeResponseLog($response);
 
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');
