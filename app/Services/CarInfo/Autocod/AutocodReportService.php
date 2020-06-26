@@ -89,22 +89,20 @@ class AutocodReportService extends AutocodService
             sleep(0.2);
         }
         if(empty($r2['data'][0]['content'])) {
+            $this->put(
+                $this->getId('autocod', GlobalStorage::getUserId(), $vin, 'isExist'),
+                ['status' => false]
+            );
             if ($eosago) {
-                $this->put(
-                    $this->getId('autocod', GlobalStorage::getUserId(), $vin, 'isExist'),
-                    ['status' => false]
-                );
                 $r2['found'] = false;
                 return $r2;
             }
             throw new \Exception("По заданному VIN ничего не найдено");
         }
-        if ($eosago) {
-            $this->put(
-                $this->getId('autocod', GlobalStorage::getUserId(), $vin, 'isExist'),
-                ['status' => true]
-            );
-        }
+        $this->put(
+            $this->getId('autocod', GlobalStorage::getUserId(), $vin, 'isExist'),
+            ['status' => true]
+        );
         $r2['found'] = true;
         return $r2;
     }
@@ -138,22 +136,18 @@ class AutocodReportService extends AutocodService
         if ($cnt > 0) {
             foreach ($r2['data'][0]['content']['taxi']['history']['items'] as $item) {
                 if ($item['license']['status'] == "ACTIVE") {
-                    if ($eosago) {
-                        $this->put(
-                            $this->getId('autocod', GlobalStorage::getUserId(), $vin, 'isTaxi'),
-                            ['status' => true]
-                        );
-                    }
+                    $this->put(
+                        $this->getId('autocod', GlobalStorage::getUserId(), $vin, 'isTaxi'),
+                        ['status' => true]
+                    );
                     return true;
                 }
             }
         }
-        if ($eosago) {
-            $this->put(
-                $this->getId('autocod', GlobalStorage::getUserId(), $vin, 'isTaxi'),
-                ['status' => false]
-            );
-        }
+        $this->put(
+            $this->getId('autocod', GlobalStorage::getUserId(), $vin, 'isTaxi'),
+            ['status' => false]
+        );
         return false;
     }
 }
