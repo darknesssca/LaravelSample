@@ -41,8 +41,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
         CountryServiceContract $countryService,
         AddressTypeService $addressTypeService,
         SourceAcquisitionServiceContract $sourceAcquisitionService
-    )
-    {
+    ) {
         $this->usageTargetService = $usageTargetService;
         $this->carModelService = $carModelService;
         $this->docTypeService = $docTypeService;
@@ -57,26 +56,14 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
     {
         $data = $this->prepareData($company, $attributes);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'request' => [
-                    'method' => 'Calculate',
-                    'url' => $this->apiWsdlUrl,
-                    'payload' => $data
-                ]
-            ]
-        );
+        $this->writeRequestLog([
+            'url' => $this->apiWsdlUrl,
+            'payload' => $data
+        ]);
+
         $response = $this->requestBySoap($this->apiWsdlUrl, 'calcPartnerFQuote', $data);
-        $this->writeLog(
-            $this->logPath,
-            [
-                'response' => [
-                    'method' => 'Calculate',
-                    'response' => $response
-                ]
-            ]
-        );
+
+        $this->writeResponseLog($response);
 
         $data = [
             'setNumber' => $response['response']->setNumber ?? null,
@@ -93,10 +80,12 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
         }
         if (!isset($response['response']->OSAGOFQ->totalPremium)) {
             $data['error'] = true;
-            $data['errorMessage'] = ['API страховой компании не вернуло данных',
+            $data['errorMessage'] = [
+                'API страховой компании не вернуло данных',
                 isset($response['response']->Header->resultInfo->errorInfo->descr) ?
                     $response['response']->Header->resultInfo->errorInfo->descr :
-                    'нет данных об ошибке'];
+                    'нет данных об ошибке'
+            ];
             return $data;
         }
         if (isset($response['response']->OSAGOFQ->isTerminalG) && $response['response']->OSAGOFQ->isTerminalG) {
@@ -152,7 +141,8 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
             foreach ($subject['fields']['addresses'] as $iAddress => $address) {
                 if (isset($address['address']['country']) && !empty($address['address']['country'])) {
                     $pAddress = [
-                        'addressType' => $this->addressTypeService->getCompanyAddressType($address['address']['addressType'], $company->code),
+                        'addressType' => $this->addressTypeService->getCompanyAddressType($address['address']['addressType'],
+                            $company->code),
                         'country' => $this->countryService->getCountryById($address['address']['country'])['alpha2'],
                         //'region' => $address['address']['region'],
                     ];
@@ -232,19 +222,17 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     'isNoRegistrationNumber' => false,
                     'registrationNumber' => $attributes['car']['regNumber']
                 ],
-                'sourceAcquisition' => $this->sourceAcquisitionService->getCompanySourceAcquisitions($attributes['car']['sourceAcquisition'], $company->id),
+                'sourceAcquisition' => $this->sourceAcquisitionService->getCompanySourceAcquisitions($attributes['car']['sourceAcquisition'],
+                    $company->id),
                 'vehicleCost' => $attributes['car']['vehicleCost'],
-                'vehicleUsage' => $this->usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'], $company->id),
+                'vehicleUsage' => $this->usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'],
+                    $company->id),
                 'VIN' => [
                     'isVINMissing' => false,
                     'isIrregularVIN' => $this->transformAnyToBoolean($attributes['car']['isIrregularVIN']),
                     'VIN' => $attributes['car']['vin'],
                 ],
                 'year' => $attributes['car']['year'],
-                'techInspectionInfo' => [
-                    'sourceInfo' => 'CUSTOMER',
-                    'techDocumentType' => $this->docTypeService->getCompanyInspectionDocType(true, $company->id),
-                ],
                 'isRightHandDrive' => false, // заглушка
                 'numberOfKeys' => [
                     'IsUnknownNumberOfKeys' => true,
@@ -254,20 +242,29 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $insurerRegAddress = $this->searchAddressByType($insurer, 'registration');
         if (isset($insurerRegAddress['regionKladr'])) {
-            $data['vehicleInfo']['vehicleDetails']['vehicleUseRegion'] = substr($insurerRegAddress['regionKladr'], 0, 2);
+            $data['vehicleInfo']['vehicleDetails']['vehicleUseRegion'] = substr($insurerRegAddress['regionKladr'], 0,
+                2);
         }
-        $data['vehicleInfo']['vehicleDetails']['vehicleDocument']['documentType'] = $this->docTypeService->getCompanyCarDocType($attributes['car']['document']['documentType'], $company->id);
+        $data['vehicleInfo']['vehicleDetails']['vehicleDocument']['documentType'] = $this->docTypeService->getCompanyCarDocType($attributes['car']['document']['documentType'],
+            $company->id);
         $this->setValuesByArray($data['vehicleInfo']['vehicleDetails']['vehicleDocument'], [
             'documentSeries' => 'series',
             'documentNumber' => 'number',
             'documentIssued' => 'dateIssue',
         ], $attributes['car']['document']);
-        $this->setValuesByArray($data['vehicleInfo']['vehicleDetails']['techInspectionInfo'], [
-            'techInspSeries' => 'series',
-            'techInspNumber' => 'number',
-            'techInspIssuedDate' => 'dateIssue',
-            'techInspExpirationDate' => 'dateEnd',
-        ], $attributes['car']['inspection']);
+        if (!empty($attributes['car']['inspection']['number']) && !empty($attributes['car']['inspection']['dateIssue']) && !empty($attributes['car']['inspection']['dateEnd'])) {
+            $data['vehicleInfo']['vehicleDetails']['techInspectionInfo'] = [
+                'sourceInfo' => 'CUSTOMER',
+                'techDocumentType' => $this->docTypeService->getCompanyInspectionDocType(true, $company->id),
+            ];
+            $this->setValuesByArray($data['vehicleInfo']['vehicleDetails']['techInspectionInfo'], [
+                'techInspSeries' => 'series',
+                'techInspNumber' => 'number',
+                'techInspIssuedDate' => 'dateIssue',
+                'techInspExpirationDate' => 'dateEnd',
+            ], $attributes['car']['inspection']);
+        }
+
         //OSAGOFQ
         $data['OSAGOFQ'] = [
             'effectiveDate' => $this->dateTimeZoneFromDateStartOfDay($attributes['policy']['beginDate']),
