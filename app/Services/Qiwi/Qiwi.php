@@ -6,6 +6,7 @@ namespace App\Services\Qiwi;
 
 use App\Exceptions\QiwiCreatePayoutException;
 use App\Exceptions\TaxStatusNotServiceException;
+use Benfin\Log\Facades\Log;
 use Exception;
 use GuzzleHttp\Client;
 
@@ -45,14 +46,48 @@ class Qiwi
     public function getProviders($providerCode = '')
     {
         $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/providers/{$providerCode}";
+
+        Log::daily(
+            [
+                'url' => $url,
+                'payload' => [],
+            ],
+            'qiwi',
+            'getProvidersRequest'
+        );
+
         $response = $this->sendRequest('GET', $url);
+
+        Log::daily(
+            $response,
+            'qiwi',
+            'getProvidersResponse'
+        );
+
         return $response['content'];
     }
 
     public function getProvidersDirectories($providerCode = '', $expand = true)
     {
         $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/providers/directory/{$providerCode}?expand={$expand}";
+
+        Log::daily(
+            [
+                'url' => $url,
+                'payload' => [],
+            ],
+            'qiwi',
+            'getProvidersDirectoriesRequest'
+        );
+
         $response = $this->sendRequest('GET', $url);
+
+        Log::daily(
+            $response,
+            'qiwi',
+            'getProvidersDirectoriesResponse'
+        );
+
         return $response['content'];
     }
 
@@ -69,9 +104,31 @@ class Qiwi
         $this->commonParams['payout_id'] = $this->getGUID();
 
         $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/payments/{$this->commonParams['payout_id']}";
+
+        Log::daily(
+            [
+                'url' => $url,
+                'payload' => $this->payoutParams,
+            ],
+            'qiwi',
+            'createPayoutRequest'
+        );
+
         try {
             $response = $this->sendRequest('PUT', $url, $this->payoutParams);
+
+            Log::daily(
+                $response,
+                'qiwi',
+                'createPayoutResponse'
+            );
         } catch (\Exception $e) {
+            Log::daily(
+                $e->getMessage(),
+                'qiwi',
+                'createPayoutException'
+            );
+
             throw new QiwiCreatePayoutException($e->getMessage());
         }
 
@@ -92,7 +149,23 @@ class Qiwi
     public function executePayout($payout_id)
     {
         $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/payments/{$payout_id}/execute";
+
+        Log::daily(
+            [
+                'url' => $url,
+                'payload' => [],
+            ],
+            'qiwi',
+            'executePayoutRequest'
+        );
+
         $response = $this->sendRequest('POST', $url);
+
+        Log::daily(
+            $response,
+            'qiwi',
+            'executePayoutResponse'
+        );
 
         $response = json_decode($response['content'], true);
 

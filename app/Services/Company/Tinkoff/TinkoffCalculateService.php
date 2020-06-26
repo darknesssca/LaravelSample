@@ -56,26 +56,14 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
     {
         $data = $this->prepareData($company, $attributes);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'request' => [
-                    'method' => 'Calculate',
-                    'url' => $this->apiWsdlUrl,
-                    'payload' => $data
-                ]
-            ]
-        );
+        $this->writeRequestLog([
+            'url' => $this->apiWsdlUrl,
+            'payload' => $data
+        ]);
+
         $response = $this->requestBySoap($this->apiWsdlUrl, 'calcPartnerFQuote', $data);
-        $this->writeLog(
-            $this->logPath,
-            [
-                'response' => [
-                    'method' => 'Calculate',
-                    'response' => $response
-                ]
-            ]
-        );
+
+        $this->writeResponseLog($response);
 
         $data = [
             'setNumber' => $response['response']->setNumber ?? null,

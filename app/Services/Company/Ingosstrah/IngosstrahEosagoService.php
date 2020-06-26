@@ -12,28 +12,14 @@ class IngosstrahEosagoService extends IngosstrahService implements IngosstrahEos
     {
         $data = $this->prepareData($processData);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'request' => [
-                    'method' => 'Eosago',
-                    'url' => $this->apiWsdlUrl,
-                    'payload' => $data
-                ]
-            ]
-        );
+        $this->writeRequestLog([
+            'url' => $this->apiWsdlUrl,
+            'payload' => $data
+        ]);
 
         $response = $this->requestBySoap($this->apiWsdlUrl, 'MakeEOsago', $data);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'response' => [
-                    'method' => 'Eosago',
-                    'response' => $response
-                ]
-            ]
-        );
+        $this->writeResponseLog($response);
 
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(

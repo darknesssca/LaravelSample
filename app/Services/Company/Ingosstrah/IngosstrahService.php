@@ -23,7 +23,6 @@ abstract class IngosstrahService extends CompanyService
         PolicyServiceContract $policyService
     )
     {
-        $this->logPath = 'ingos/log_' . date('d.m.Y', time()) . '.txt';
         $this->apiWsdlUrl = config('api_sk.ingosstrah.wsdlUrl');
         $this->apiUser = config('api_sk.ingosstrah.user');
         $this->apiPassword = config('api_sk.ingosstrah.password');

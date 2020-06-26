@@ -12,28 +12,14 @@ class IngosstrahCheckCreateService extends IngosstrahService implements Ingosstr
     {
         $data = $this->prepareData($processData);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'request' => [
-                    'method' => 'CheckCreate',
-                    'url' => $this->apiWsdlUrl,
-                    'payload' => $data
-                ]
-            ]
-        );
+        $this->writeRequestLog([
+            'url' => $this->apiWsdlUrl,
+            'payload' => $data
+        ]);
 
         $response = $this->requestBySoap($this->apiWsdlUrl, 'GetAgreement', $data);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'response' => [
-                    'method' => 'CheckCreate',
-                    'response' => $response
-                ]
-            ]
-        );
+        $this->writeResponseLog($response);
 
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(

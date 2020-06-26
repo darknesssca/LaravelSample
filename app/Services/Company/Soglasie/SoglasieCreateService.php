@@ -65,28 +65,14 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         $headers = $this->getHeaders();
         $url = $this->getUrl();
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'request' => [
-                    'method' => 'Create',
-                    'url' => $url,
-                    'payload' => $data
-                ]
-            ]
-        );
+        $this->writeRequestLog([
+            'url' => $url,
+            'payload' => $data
+        ]);
 
         $response = $this->postRequest($url, $data, $headers, false, false, true);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'response' => [
-                    'method' => 'Create',
-                    'response' => $response
-                ]
-            ]
-        );
+        $this->writeResponseLog($response);
 
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');
