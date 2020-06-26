@@ -145,7 +145,7 @@ class Qiwi
             } catch (\Exception $exception) {
                 // todo: should make custom exception for api error
             }
-            $response['status']['errorMessage'] = 'Партнер не привязан к налогоплательщику с ИНН 111111111111';
+
             if (
                 isset($response['status']['errorMessage']) &&
                 mb_strpos(
