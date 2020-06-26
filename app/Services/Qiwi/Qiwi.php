@@ -5,7 +5,9 @@ namespace App\Services\Qiwi;
 
 
 use App\Exceptions\QiwiCreatePayoutException;
+use App\Exceptions\QiwiResolutionException;
 use App\Exceptions\TaxStatusNotServiceException;
+use Benfin\Api\Contracts\AuthMicroserviceContract;
 use Benfin\Log\Facades\Log;
 use Exception;
 use GuzzleHttp\Client;
@@ -133,6 +135,28 @@ class Qiwi
         }
 
         $response = json_decode($response['content'], true);
+
+        if (
+            isset($response['status']['value']) && ($response['status']['value'] == 'FAILED') &&
+            isset($response['status']['errorCode']) && ($response['status']['errorCode'] == 'BILLING_DECLINED')
+        ) {
+            try {
+                app(AuthMicroserviceContract::class)->qiwiReset();
+            } catch (\Exception $exception) {
+                // todo: should make custom exception for api error
+            }
+
+            if (
+                isset($response['status']['errorMessage']) &&
+                mb_strpos(
+                    mb_strtolower($response['status']['errorMessage']),
+                    'партнер не привязан к налогоплательщику'
+                ) !== false
+            ) {
+                throw new QiwiResolutionException('Уважаемый Пользователь, Вы не предоставили Киви-банку разрешение на обработку ИНН и регистрацию дохода. Повторно ознакомьтесь с инструкцией в Профайле и предоставьте разрешение в Мой налог.');
+            }
+            throw new QiwiResolutionException('Уважаемый Пользователь, проверьте корректность платежных данных (ИНН, номер карты) в Профайле и предоставьте разрешение Киви-банку на обработку ИНН и регистрацию дохода в Мой налог.');
+        }
 
         if ($response['status']['value'] != 'READY') {
             throw new QiwiCreatePayoutException('Не удалось создать выплату');
