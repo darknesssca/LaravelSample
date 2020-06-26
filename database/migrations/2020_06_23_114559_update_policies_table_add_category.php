@@ -14,7 +14,7 @@ class UpdatePoliciesTableAddCategory extends Migration
     public function up()
     {
         Schema::table('policies', function (Blueprint $table) {
-            $table->integer('vehicle_category_id');
+            $table->integer('vehicle_category_id')->nullable();
             $table->foreign('vehicle_category_id')->references('id')->on('car_categories');
         });
     }
