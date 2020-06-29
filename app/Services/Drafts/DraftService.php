@@ -350,7 +350,6 @@ class DraftService implements DraftServiceContract
                 'vehicle_loaded_mass' => 'maxWeight',
                 'vehicle_count_seats' => 'seats',
                 'vehicle_mileage' => 'mileage',
-                'vehicle_cost' => 'vehicleCost',
                 'vehicle_acquisition' => 'sourceAcquisition',
                 'vehicle_usage_target' => 'vehicleUsage',
                 'vehicle_with_trailer' => 'isUsedWithTrailer',
