@@ -76,7 +76,7 @@ class PolicyService implements PolicyServiceContract
 
             $filter['client_ids'] = $clientIds;
         }
-        
+
         $policies = $this->policyRepository->getList($filter);
 
         if ($policies->isNotEmpty()) {
@@ -607,7 +607,6 @@ class PolicyService implements PolicyServiceContract
             'vehicle_with_trailer' => 'isUsedWithTrailer',
             'vehicle_mileage' => 'mileage',
             'vehicle_acquisition' => 'sourceAcquisition',
-            'vehicle_cost' => 'vehicleCost',
             'vehicle_usage_target' => 'vehicleUsage',
             'vehicle_vin' => 'vin',
             'vehicle_engine_power' => 'enginePower',

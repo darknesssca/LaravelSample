@@ -29,7 +29,6 @@ class Draft extends Model
         'vehicle_loaded_mass',
         'vehicle_count_seats',
         'vehicle_mileage',
-        'vehicle_cost',
         'vehicle_acquisition',
         'vehicle_usage_target',
         'vehicle_usage_type',

@@ -61,7 +61,6 @@ class FormSendRequest extends AbstractRequest
             "car.seats" => "integer",
             "car.mileage" => "required|integer",
             "car.sourceAcquisition" => "required|integer|exists:source_acquisitions,id",
-            "car.vehicleCost" => "required|integer",
             "car.vehicleUsage" => "required|integer",
             "car.isIrregularVIN" => "required|boolean",
             "car.vin" => "required|string",

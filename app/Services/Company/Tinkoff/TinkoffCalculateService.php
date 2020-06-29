@@ -224,7 +224,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 ],
                 'sourceAcquisition' => $this->sourceAcquisitionService->getCompanySourceAcquisitions($attributes['car']['sourceAcquisition'],
                     $company->id),
-                'vehicleCost' => $attributes['car']['vehicleCost'],
+                'vehicleCost' => 0,
                 'vehicleUsage' => $this->usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'],
                     $company->id),
                 'VIN' => [
