@@ -31,6 +31,7 @@ class Policy extends Model
         'vehicle_vin',
         'vehicle_reg_country',
         'vehicle_made_year',
+        'vehicle_category_id',
         'vehicle_unladen_mass',
         'vehicle_loaded_mass',
         'vehicle_count_seats',

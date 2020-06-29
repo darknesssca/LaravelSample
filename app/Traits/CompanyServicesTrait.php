@@ -43,11 +43,13 @@ trait CompanyServicesTrait
         $params = [
             'insurance_company_id' => $companyId,
             'policy_date' => Carbon::now()->format('Y-m-d'),
-            'kladr_id' => $needleAddress['regionKladr']
+            'kladr_id' => $needleAddress['regionKladr'],
+            'car_category_id' => $formData['car']['category'],
+            'car_usage_target_id' => $formData['car']['vehicleUsage'],
         ];
         $isAvailable = app(CommissionCalculationMicroserviceContract::class)->checkCommissionAvailable($params);
         if (!$isAvailable || isset($isAvailable['content']['status']) &&  $isAvailable['content']['status'] === false) {
-            throw new NotAvailableCommissionException('Оформление невозможно в данном регионе');
+            throw new NotAvailableCommissionException('По выбранным параметрам оформление невозможно');
         }
     }
 
