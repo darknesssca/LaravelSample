@@ -42,4 +42,7 @@ return [
     'processingInterval' => env('API_PROCESSING_INTERVAL'),
     'processingGetPaymentDelay' => env('API_PROCESSING_GET_PAYMENT_DELAY'),
     'debugLog' => env('API_DEBUG_LOG'),
+    'qiwi' => [
+        'adminEmails' => env('QIWI_ADMIN_EMAILS')
+    ],
 ];
