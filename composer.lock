@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "038c6f91db9ef4308d51f5bfdfcc3205",
+    "content-hash": "44dcde80eec4c12b5c554e3429ee1ee8",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -92,11 +92,11 @@
         },
         {
             "name": "benfin/packages/api-communication",
-            "version": "v1.5.27",
+            "version": "1.5.38",
             "source": {
                 "type": "git",
                 "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/api-communication.git",
-                "reference": "4750a99dbe75240822c95636029766110a07a496"
+                "reference": "350e773efc5bca40f5832016b85e772b7dacb036"
             },
             "require": {
                 "benfin/packages/requests": ">=1.1",
@@ -125,7 +125,7 @@
                 }
             ],
             "description": "BENFIN Api communication",
-            "time": "2020-06-10T07:24:30+00:00"
+            "time": "2020-06-30T08:22:59+00:00"
         },
         {
             "name": "benfin/packages/auth",
@@ -226,6 +226,40 @@
             ],
             "description": "BENFIN Requests",
             "time": "2020-03-30T18:22:13+00:00"
+        },
+        {
+            "name": "benfin/packages/restrictions",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/restrictions.git",
+                "reference": "c9a81638a7d86a9bfb1fc8d741795fc3f24d17a5"
+            },
+            "require": {
+                "benfin/packages/api-communication": ">=1.4",
+                "laravel/lumen-framework": ">=6.0",
+                "nowakowskir/php-jwt": "^1.1",
+                "php": "^7.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Benfin\\Restrictions\\": [
+                        "src/"
+                    ]
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nikolay Demchenko",
+                    "email": "ni.demchenko@qsoft.ru"
+                }
+            ],
+            "description": "BENFIN Middleware for check restrictions",
+            "time": "2020-06-22T15:23:46+00:00"
         },
         {
             "name": "coraxster/flysystem-aws-s3-v3-minio",
@@ -3942,6 +3976,20 @@
                 "polyfill",
                 "portable"
             ],
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
             "time": "2020-02-27T09:26:54+00:00"
         },
         {
@@ -4004,6 +4052,20 @@
                 "portable",
                 "shim"
             ],
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
             "time": "2020-03-09T19:04:49+00:00"
         },
         {
@@ -4063,6 +4125,20 @@
                 "portable",
                 "shim"
             ],
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
             "time": "2020-03-09T19:04:49+00:00"
         },
         {
@@ -4117,6 +4193,20 @@
                 "polyfill",
                 "portable",
                 "shim"
+            ],
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
             ],
             "time": "2020-02-27T09:26:54+00:00"
         },
@@ -4175,6 +4265,20 @@
                 "polyfill",
                 "portable",
                 "shim"
+            ],
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
             ],
             "time": "2020-02-27T09:26:54+00:00"
         },
@@ -6193,5 +6297,6 @@
         "ext-soap": "*",
         "ext-xml": "*"
     },
-    "platform-dev": []
+    "platform-dev": [],
+    "plugin-api-version": "1.1.0"
 }
