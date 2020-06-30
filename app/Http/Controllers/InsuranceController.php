@@ -51,8 +51,8 @@ class InsuranceController extends Controller
         $company = $this->getCompany($code);
         if ($method == 'calculate') {
             $formData = $this->getTokenData($validatedRequest['token']);
-            $this->checkCommissionAvailable($company->id, $formData['form']);
             $this->checkGlobalLimitations($formData['form']);
+            $this->checkCommissionAvailable($company->id, $formData['form']);
         }
         $method = strtolower((string)$method);
         return Response::success($this->runService($company, $validatedRequest, $method));
