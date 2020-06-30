@@ -167,7 +167,7 @@ class Qiwi
 
     /**
      * @param $payout_id
-     * @return bool
+     * @return array
      * @throws Exception
      */
     public function executePayout($payout_id)
@@ -197,7 +197,10 @@ class Qiwi
             throw new Exception('Не удалось исполнить выплату');
         }
 
-        return true;
+        return [
+            'status' => true,
+            'checkUrl' => $response['billingDetails']['receiptUrl'] ?? null,
+        ];
     }
 
 
