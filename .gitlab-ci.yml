@@ -42,7 +42,39 @@ deploy_stage:
     - master
   tags:
     - stage
+
+build_stage1:
+  stage: build
+  before_script:
+  - export CURRENT_COMMIT=${CI_COMMIT_SHA::8}
+  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:latest || true
+    - docker build --build-arg build_env=stage -f docker/Dockerfile --cache-from $CI_REGISTRY_IMAGE:$BRANCH_NAME --tag $CI_REGISTRY_IMAGE:$CURRENT_COMMIT --tag $CI_REGISTRY_IMAGE:stage1 .
+    - docker push $CI_REGISTRY_IMAGE:$CURRENT_COMMIT
+    - docker push $CI_REGISTRY_IMAGE:stage1
+  only:
+    - stage1
+  tags:
+    - staging
     
+deploy_stage1:
+  stage: deploy-stage
+  variables:
+    GIT_STRATEGY: none
+    KUBE_API_CA: $STAGE_KUBE_API_CA
+    KUBE_API_SERVER: $STAGE_KUBE_API_SERVER
+    KUBE_API_USERNAME: $STAGE_KUBE_API_USERNAME
+    KUBE_API_PASSWORD: $STAGE_KUBE_API_PASSWORD
+    KUBE_DEPLOYMENT_NAME: $STAGE_KUBE_DEPLOYMENT_NAME
+  image: registry.gitlab.qsoft.ru/system-software/k8s-tool:latest
+  script:
+    - kubectl -n benfin-stage rollout restart deployment $KUBE_DEPLOYMENT_NAME
+  only:
+    - stage1
+  tags:
+    - stage
+
 tag_prod:
   stage: prep-prod
   variables:
