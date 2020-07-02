@@ -55,28 +55,15 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         $data = $this->prepareData($company, $attributes);
         $headers = $this->getHeaders();
         $auth = $this->getAuth();
-        $this->writeLog(
-            $this->logPath,
-            [
-                'request' => [
-                    'method' => 'Calculate',
-                    'url' => $this->apiWsdlUrl,
-                    'payload' => $data
-                ]
-            ]
-        );
+
+        $this->writeRequestLog([
+            'url' => $this->apiWsdlUrl,
+            'payload' => $data
+        ]);
 
         $response = $this->requestBySoap($this->apiWsdlUrl, 'CalcProduct', $data, $auth, $headers);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'response' => [
-                    'method' => 'Calculate',
-                    'response' => $response
-                ]
-            ]
-        );
+        $this->writeResponseLog($response);
 
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(
@@ -200,7 +187,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                     [
                         'id' => 43,
                         'val' => $this->transformBooleanToInteger(
-                            $this->countryService->getCountryById($attributes['car']['countryOfRegistration'])['alpha2'] == 'RU'
+                            $this->countryService->getCountryById($attributes['car']['countryOfRegistration'])['alpha2'] != 'RU'
                         ),
                     ],
                 ],
@@ -320,12 +307,18 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         ];
         $regAddress = $this->searchAddressByType($owner, 'registration');
         if ($regAddress) {
-            $data['contract']['param'][] = [
-                'id' => 1122,
-                'val' => isset($regAddress['cityKladr']) ? $regAddress['cityKladr'] :
-                    isset($regAddress['populatedCenterKladr']) ? $regAddress['populatedCenterKladr'] :
-                    '',
+            $arKladr = [
+                'id' => 1122
             ];
+
+            if (!empty($regAddress['cityKladr'])) {
+                $arKladr['val'] = $regAddress['cityKladr'];
+            } else if (!empty($regAddress['populatedCenterKladr'])) {
+                $arKladr['val'] = $regAddress['populatedCenterKladr'];
+            } else {
+                $arKladr['val'] = '';
+            }
+            $data['contract']['param'][] = $arKladr;
         }
         //insurer
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
@@ -356,7 +349,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         ];
         $data['contract']['param'][] = [
             'id' => 4764,
-            'val' =>  $this->genderService->getCompanyGender($owner['gender'], $company->id),
+            'val' =>  $this->genderService->getCompanyGender($insurer['gender'], $company->id),
         ];
         $data = [
             'data' => $data,

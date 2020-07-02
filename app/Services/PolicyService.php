@@ -71,12 +71,14 @@ class PolicyService implements PolicyServiceContract
                     ]
                 ];
             }
-            $filter['agent_ids'] = array_merge($filter['agent_ids'] ?? [], $agentIds);
+
+            $filter['agent_ids'] = $isAdmin ? $agentIds : array_intersect($filter['agent_ids'] ?? [], $agentIds);
 
             $filter['client_ids'] = $clientIds;
         }
 
         $policies = $this->policyRepository->getList($filter);
+
         if ($policies->isNotEmpty()) {
             $policyIds = [];
             $clientIds = [];
@@ -662,7 +664,6 @@ class PolicyService implements PolicyServiceContract
             'vehicle_with_trailer' => 'isUsedWithTrailer',
             'vehicle_mileage' => 'mileage',
             'vehicle_acquisition' => 'sourceAcquisition',
-            'vehicle_cost' => 'vehicleCost',
             'vehicle_usage_target' => 'vehicleUsage',
             'vehicle_vin' => 'vin',
             'vehicle_engine_power' => 'enginePower',

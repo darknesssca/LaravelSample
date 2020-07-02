@@ -51,28 +51,14 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
     {
         $data = $this->prepareData($company, $attributes);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'request' => [
-                    'url' => $this->apiWsdlUrl,
-                    'method' => 'Calculate',
-                    'payload' => $data
-                ]
-            ]
-        );
+        $this->writeRequestLog([
+            'url' => $this->apiWsdlUrl,
+            'payload' => $data
+        ]);
 
         $response = $this->requestBySoap($this->apiWsdlUrl, 'GetTariff', $data);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'response' => [
-                    'method' => 'Calculate',
-                    'response' => $response
-                ]
-            ]
-        );
+        $this->writeResponseLog($response);
 
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(
@@ -153,6 +139,13 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
                 ],
             ],
         ];
+
+        if (!empty($attributes['car']['inspection']['number']) && !empty($attributes['car']['inspection']['dateIssue']) && !empty($attributes['car']['inspection']['dateEnd'])) {
+            $data['General']['DISetting'] = "1";
+        } else {
+            $data['General']['DISetting'] = "3";
+        }
+
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $this->setValuesByArray($data['TariffParameters']['Agreement']['Insurer'], [
             'MobilePhone' => 'phone',

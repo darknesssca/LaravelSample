@@ -24,7 +24,6 @@ abstract class RenessansService extends CompanyService
         PolicyServiceContract $policyService
     )
     {
-        $this->logPath = 'renes/log_' . date('d.m.Y', time()) . '.txt';
         $this->apiUrl = config('api_sk.renessans.apiUrl');
         $this->secretKey = config('api_sk.renessans.apiKey');
         if (!($this->apiUrl && $this->secretKey)) {

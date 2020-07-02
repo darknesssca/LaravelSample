@@ -159,7 +159,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $serviceCreate = app(RenessansCreateServiceContract::class);
         $dataSegment = $serviceCreate->run($company, $attributes);
         $processData['data']['segmentPolicyId'] = $dataSegment['policyId'];
-        $this->requestProcessService->update($processData['token'], [
+        $this->requestProcessService->update($processData['token'], $company->code, [
             'state' => 5,
             'data' => json_encode($processData['data']),
             'checkCount' => 0,
@@ -174,7 +174,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $serviceCreate = app(RenessansCheckCreateServiceContract::class);
         $dataCreate = $serviceCreate->run($company, $segmentAttributes);
         if ($dataCreate['result'] && $dataCreate['status'] != 'ok') {
-            $this->requestProcessService->delete($processData['token']);
+            $this->requestProcessService->delete($processData['token'], $company->code);
             $tokenData = $this->getTokenData($processData['token'], true);
             $tokenData[$company->code]['status'] = 'error';
             $tokenData[$company->code]['errorMessages'] = $dataCreate['message'];
@@ -192,7 +192,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $dataCalculate = $serviceCalculate->run($company, $attributes);
         $processData['data']['finalCalcId'] = $dataCalculate['calcId'];
         $processData['data']['finalPremium'] = $dataCalculate['premium'];
-        $this->requestProcessService->update($processData['token'], [
+        $this->requestProcessService->update($processData['token'], $company->code, [
             'state' => 10,
             'data' => json_encode($processData['data']),
             'checkCount' => 0,
@@ -209,7 +209,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         GlobalStorage::setUser($processData['data']['user']);
         $serviceCalculate = app(RenessansCheckCalculateServiceContract::class);
         $dataCalculate = $serviceCalculate->run($company, $calculateAttributes);
-        $this->requestProcessService->delete($processData['token']);
+        $this->requestProcessService->delete($processData['token'], $company->code);
         $tokenData = $this->getTokenData($processData['token'], true);
         $tokenData[$company->code]['status'] = 'calculated';
         $tokenData[$company->code]['calcId'] = $processData['data']['finalCalcId'];
@@ -228,7 +228,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $serviceCreate = app(RenessansCheckCreateServiceContract::class);
         $dataCreate = $serviceCreate->run($company, $attributes);
         if ($dataCreate['result'] && $dataCreate['status'] != 'ok') {
-            $this->requestProcessService->delete($processData['token']);
+            $this->requestProcessService->delete($processData['token'], $company->code);
             $tokenData = $this->getTokenData($processData['token'], true);
             $tokenData[$company->code]['status'] = 'error';
             $tokenData[$company->code]['errorMessages'] = $dataCreate['message'];
@@ -241,7 +241,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $dataStatus = $serviceStatus->run($company, $attributes);
         if (!($dataStatus['result'] && $dataStatus['createStatus'])) {
             if ($dataStatus['status'] == 'error') {
-                $this->requestProcessService->delete($processData['token']);
+                $this->requestProcessService->delete($processData['token'], $company->code);
                 $tokenData = $this->getTokenData($processData['token'], true);
                 $tokenData[$company->code]['status'] = 'error';
                 $tokenData[$company->code]['errorMessages'] = $dataStatus['message'];
@@ -257,7 +257,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
             $attributes['premium'] = $tokenData['finalPremium'];
             GlobalStorage::setUser($processData['data']['user']);
             $this->createPolicy($company, $attributes); // if this move to hold we create policy for lk
-            $this->requestProcessService->update($processData['token'], [
+            $this->requestProcessService->update($processData['token'], $company->code, [
                 'state' => 75,
                 'data' => json_encode($processData['data']),
                 'checkCount' => 0,
@@ -280,7 +280,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $this->createPolicy($company, $attributes);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $this->sendBillUrl($insurer['email'], $dataBill['billUrl']);
-        $this->requestProcessService->delete($processData['token']);
+        $this->requestProcessService->delete($processData['token'], $company->code);
         $tokenData = $this->getTokenData($processData['token'], true);
         $tokenData[$company->code]['status'] = 'done';
         $tokenData[$company->code]['billUrl'] = $dataBill['billUrl'];
@@ -298,7 +298,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $dataStatus = $serviceStatus->run($company, $attributes);
         if (!($dataStatus['result'] && $dataStatus['createStatus'])) {
             if ($dataStatus['status'] == 'error') {
-                $this->requestProcessService->delete($processData['token']);
+                $this->requestProcessService->delete($processData['token'], $company->code);
                 $tokenData = $this->getTokenData($processData['token'], true);
                 $tokenData[$company->code]['status'] = 'error';
                 $tokenData[$company->code]['errorMessages'] = $dataStatus['message'];
@@ -318,7 +318,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $this->pushForm($attributes);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $this->sendBillUrl($insurer['email'], $dataBill['billUrl']);
-        $this->requestProcessService->delete($processData['token']);
+        $this->requestProcessService->delete($processData['token'], $company->code);
         $this->destroyToken($attributes['token']);
     }
 

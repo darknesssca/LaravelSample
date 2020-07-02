@@ -219,7 +219,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
             case 'прекращен страховщиком':
             case 'прекращён страховщиком':
             case 'выпущен':
-                $this->requestProcessService->delete($processData['token']);
+                $this->requestProcessService->delete($processData['token'], $company->code);
                 $this->dropCreate($company, $processData['token'], [
                     'API страховой компании вернуло статус ' . $checkData['state'],
                     $checkData['message']
@@ -251,7 +251,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
                 if (!$eosagoData['isEosago'] && $eosagoData['hold']) {
                     $processData['data']['status'] = 'hold';
                     $processData['data']['sessionToken'] = $newSessionToken;
-                    $this->requestProcessService->update($processData['token'], [
+                    $this->requestProcessService->update($processData['token'], $company->code, [
                         'state' => 75,
                         'data' => json_encode($processData['data']),
                         'checkCount' => 0,
@@ -270,7 +270,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
             default: // все остальные статусы рассматриваем как WORKING
                 if ($isNeedUpdateToken) {
                     $processData['data']['sessionToken'] = $newSessionToken;
-                    $this->requestProcessService->update($processData['token'], [
+                    $this->requestProcessService->update($processData['token'], $company->code, [
                         'data' => json_encode($processData['data']),
                     ]);
                 }
@@ -308,7 +308,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         } else {
             if ($isNeedUpdateToken) {
                 $processData['data']['sessionToken'] = $newSessionToken;
-                $this->requestProcessService->update($processData['token'], [
+                $this->requestProcessService->update($processData['token'], $company->code, [
                     'data' => json_encode($processData['data']),
                 ]);
             }
@@ -321,7 +321,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
 
     protected function createBill($company, $processData, $destroyToken = false)
     {
-        $this->requestProcessService->delete($processData['token']);
+        $this->requestProcessService->delete($processData['token'], $company->code);
         $billService = app(IngosstrahBillServiceContract::class);
         $billData = $billService->run($company, $processData);
         $processData['data']['billIsn'] = $billData['billIsn'];

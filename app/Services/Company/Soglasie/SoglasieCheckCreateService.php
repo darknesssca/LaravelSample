@@ -33,30 +33,23 @@ class SoglasieCheckCreateService extends SoglasieService implements SoglasieChec
         ]);
         $headers = $this->getHeaders();
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'request' => [
-                    'method' => 'CheckCreate',
-                    'url' => $url
-                ]
-            ]
-        );
+        $this->writeRequestLog([
+            'url' => $url,
+            'payload' => []
+        ]);
 
         $response = $this->getRequest($url, [], $headers, false);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'response' => [
-                    'method' => 'CheckCreate',
-                    'response' => $response
-                ]
-            ]
-        );
+        $this->writeResponseLog($response);
 
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');
+        }
+        if (isset($response['status']) && $response['status'] == 'ERROR') {
+            return [
+                'status' => 'error',
+                'messages' => $this->getMessages($response)
+            ];
         }
         if (
             !isset($response['status']) || !$response['status']  ||

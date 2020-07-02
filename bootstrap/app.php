@@ -112,6 +112,7 @@ $app->register(BenfinRequestProvider::class);
 $app->register(App\Providers\MinIOStorageServiceProvider::class);
 $app->register(RepositoryServiceProvider::class);
 $app->register(Illuminate\Redis\RedisServiceProvider::class);
+$app->register(Benfin\Log\LogServiceProvider::class);
 
 /*
 |--------------------------------------------------------------------------

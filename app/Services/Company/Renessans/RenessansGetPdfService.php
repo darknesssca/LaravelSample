@@ -28,28 +28,16 @@ class RenessansGetPdfService extends RenessansService implements RenessansGetPdf
         $data = [];
         $this->setAuth($data);
         $url = $this->getUrl($attributes);
-        $this->writeLog(
-            $this->logPath,
-            [
-                'request' => [
-                    'method' => 'GetPdf',
-                    'url' => $url,
-                    'payload' => $data
-                ]
-            ]
-        );
+
+        $this->writeRequestLog([
+            'url' => $url,
+            'payload' => $data
+        ]);
 
         $response = $this->getRequest($url, $data, [], false);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'response' => [
-                    'method' => 'GetPdf',
-                    'response' => $response
-                ]
-            ]
-        );
+        $this->writeResponseLog($response);
+
         return [];
     }
 

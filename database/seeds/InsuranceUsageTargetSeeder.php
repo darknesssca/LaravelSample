@@ -33,30 +33,30 @@ class InsuranceUsageTargetSeeder extends Seeder
             'reference_usage_target_code2' => 'personal',
         ],
         // Такси
-        [
-            'target_id' => 2,
-            'insurance_company_id' => 1,
-            'reference_usage_target_code' => 'Такси',
-            'reference_usage_target_code2' => 'Такси',
-        ],
-        [
-            'target_id' => 2,
-            'insurance_company_id' => 2,
-            'reference_usage_target_code' => 'Taxi',
-            'reference_usage_target_code2' => 'Taxi',
-        ],
-        [
-            'target_id' => 2,
-            'insurance_company_id' => 3,
-            'reference_usage_target_code' => '5',
-            'reference_usage_target_code2' => 'Taxi',
-        ],
-        [
-            'target_id' => 2,
-            'insurance_company_id' => 4,
-            'reference_usage_target_code' => 'taxi',
-            'reference_usage_target_code2' => 'taxi',
-        ],
+//        [
+//            'target_id' => 2,
+//            'insurance_company_id' => 1,
+//            'reference_usage_target_code' => 'Такси',
+//            'reference_usage_target_code2' => 'Такси',
+//        ],
+//        [
+//            'target_id' => 2,
+//            'insurance_company_id' => 2,
+//            'reference_usage_target_code' => 'Taxi',
+//            'reference_usage_target_code2' => 'Taxi',
+//        ],
+//        [
+//            'target_id' => 2,
+//            'insurance_company_id' => 3,
+//            'reference_usage_target_code' => '5',
+//            'reference_usage_target_code2' => 'Taxi',
+//        ],
+//        [
+//            'target_id' => 2,
+//            'insurance_company_id' => 4,
+//            'reference_usage_target_code' => 'taxi',
+//            'reference_usage_target_code2' => 'taxi',
+//        ],
         // Сдача в аренду
         [
             'target_id' => 3,

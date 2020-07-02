@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "44dcde80eec4c12b5c554e3429ee1ee8",
+    "content-hash": "47624dd0b7694fff430ed712aad7f496",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -192,6 +192,39 @@
             ],
             "description": "BENFIN cache",
             "time": "2020-04-16T15:24:14+00:00"
+        },
+        {
+            "name": "benfin/packages/log",
+            "version": "v1.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/log.git",
+                "reference": "97434fbceec4262dc2813fbad0cbe2d9fa51956c"
+            },
+            "require": {
+                "coraxster/flysystem-aws-s3-v3-minio": "^1.0",
+                "laravel/lumen-framework": ">=6.0",
+                "php": "^7.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Benfin\\Log\\": [
+                        "src/"
+                    ]
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Roman Egorov",
+                    "email": "r.egorov@qsoft.ru"
+                }
+            ],
+            "description": "BENFIN logger",
+            "time": "2020-06-26T10:30:25+00:00"
         },
         {
             "name": "benfin/packages/requests",

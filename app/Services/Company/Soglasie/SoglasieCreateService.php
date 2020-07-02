@@ -65,28 +65,14 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         $headers = $this->getHeaders();
         $url = $this->getUrl();
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'request' => [
-                    'method' => 'Create',
-                    'url' => $url,
-                    'payload' => $data
-                ]
-            ]
-        );
+        $this->writeRequestLog([
+            'url' => $url,
+            'payload' => $data
+        ]);
 
         $response = $this->postRequest($url, $data, $headers, false, false, true);
 
-        $this->writeLog(
-            $this->logPath,
-            [
-                'response' => [
-                    'method' => 'Create',
-                    'response' => $response
-                ]
-            ]
-        );
+        $this->writeResponseLog($response);
 
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');
@@ -140,12 +126,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
                 'DocumentCar' => [],
                 'TicketCar' => [
                     'TypeRSA' => $this->docTypeService->getCompanyInspectionDocType3(true, $company->id),
-                    'Number' => $attributes['car']['inspection']['number'],
-                    'Date' => $attributes['car']['inspection']['dateIssue'],
                 ],
-                'TicketCarYear' => $this->getYearFromDate($attributes['car']['inspection']['dateEnd']),
-                'TicketCarMonth' => $this->getMonthFromDate($attributes['car']['inspection']['dateEnd']),
-                'TicketDiagnosticDate' => $attributes['car']['inspection']['dateIssue'],
                 'EngCap' => $attributes['car']['enginePower'],
                 'GoalUse' => $usageTarget,
                 'Rented' => $this->transformAnyToBoolean($usageTarget == 'Rent'),
@@ -186,6 +167,16 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
             ],
             'IKP1l' => ' ',
         ];
+
+        if (!empty($attributes['car']['inspection']['number']) && !empty($attributes['car']['inspection']['dateIssue']) && !empty($attributes['car']['inspection']['dateEnd'])) {
+            $data['CarInfo']['TicketCar']['Number'] = $attributes['car']['inspection']['number'];
+            $data['CarInfo']['TicketCar']['Date'] = $attributes['car']['inspection']['dateIssue'];
+
+            $data['CarInfo']['TicketCarYear'] = $this->getYearFromDate($attributes['car']['inspection']['dateEnd']);
+            $data['CarInfo']['TicketCarMonth'] = $this->getMonthFromDate($attributes['car']['inspection']['dateEnd']);
+            $data['CarInfo']['TicketDiagnosticDate'] = $attributes['car']['inspection']['dateIssue'];
+        }
+
         $prolongationPolicyNumber = $this->policyService->searchOldPolicyByPolicyNumber($company->id, $attributes);
         if ($prolongationPolicyNumber) {
             $serialNumber = explode(' ', $prolongationPolicyNumber);
