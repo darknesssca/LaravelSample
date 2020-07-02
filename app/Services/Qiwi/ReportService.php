@@ -2,11 +2,11 @@
 
 namespace App\Services\Qiwi;
 
-
 use App\Contracts\Repositories\InsuranceCompanyRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\ReportRepositoryContract;
 use App\Contracts\Services\ReportServiceContract;
+use App\Contracts\Utils\DeferredResultContract;
 use App\Exceptions\Qiwi\CreatePayoutException;
 use App\Exceptions\ReportNotFoundException;
 use App\Exceptions\TaxStatusNotServiceException;
@@ -26,7 +26,6 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
-
 
 class ReportService implements ReportServiceContract
 {
@@ -136,16 +135,23 @@ class ReportService implements ReportServiceContract
         $report->policies()->sync($fields['policies']);
         $report->save();
 
+        $deferredResultUtil = app(DeferredResultContract::class);
+
+        $deferredResultId = $deferredResultUtil->getId('report', $report->id);
+
         $params = [
             'user' => GlobalStorage::getUser(),
             'report_id' => $report->id,
         ];
 
+        $deferredResultUtil->process($deferredResultId);
+
         dispatch((new QiwiCreatePayoutJob($params))->onQueue('QiwiCreatePayout'));
 
         $message = "Создан отчет на выплату {$report->id}";
         $this->log_mks->sendLog($message, config('api_sk.logMicroserviceCode'), $fields['creator_id']);
-        return Response::success('Отчет успешно создан');
+
+        return $deferredResultUtil->getInitialResponse($deferredResultId);
     }
 
     /**
@@ -193,7 +199,7 @@ class ReportService implements ReportServiceContract
         }
 
         foreach ($rewards as $reward) {
-            if ($check_reward == false){
+            if ($check_reward == false) {
                 $this->rewards[$reward['policy_id']] = $reward;
             } else {
                 if ($reward['paid'] == false && $reward['requested'] == false && $this->policies[$reward['policy_id']]->paid == true) {
@@ -421,7 +427,8 @@ class ReportService implements ReportServiceContract
 
             $fields = [
                 'reward_id' => array_column($this->rewards, 'id'),
-                'requested' => true
+                'requested' => true,
+                'processing' => 10,
             ];
 
             $this->commission_mks->massUpdateRewards($fields);
@@ -461,7 +468,8 @@ class ReportService implements ReportServiceContract
 
             $fields = [
                 'reward_id' => array_column($this->rewards, 'id'),
-                'paid' => true
+                'paid' => true,
+                'processing' => 20,
             ];
 
             $this->commission_mks->massUpdateRewards($fields);
@@ -483,11 +491,19 @@ class ReportService implements ReportServiceContract
             'report_id' => $report->id,
         ];
 
+        $deferredResultUtil = app(DeferredResultContract::class);
+
+        $deferredResultId = $deferredResultUtil->getId('report', $report->id);
+
+        $deferredResultUtil->process($deferredResultId);
+
         if ($report->requested == false && $report->is_payed == false) {
             dispatch((new QiwiCreatePayoutJob($params))->onQueue('QiwiCreatePayout'));
         } elseif ($report->requested == true && $report->is_payed == false) {
             dispatch((new QiwiExecutePayoutJob($params))->onQueue('QiwiExecutePayout'));
         }
+
+        return $deferredResultUtil->getInitialResponse($deferredResultId);
     }
 
     /**возвращает список id полисов, по которым пользователь запросил вывод средств
@@ -506,7 +522,7 @@ class ReportService implements ReportServiceContract
         return array_unique($exclude_policy_ids);
     }
 
-    public function getStatus(): array
+    public function getProcessingStatus(): array
     {
         $reports = $this->reportRepository->getProcessingReports();
         return [

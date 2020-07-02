@@ -5,10 +5,15 @@ namespace App\Jobs\Qiwi;
 
 
 use App\Contracts\Services\ReportServiceContract;
+use App\Contracts\Utils\DeferredResultContract;
+use App\Exceptions\Qiwi\BillingDeclinedException;
 use App\Exceptions\Qiwi\PayoutAlreadyExistException;
 use App\Exceptions\Qiwi\PayoutInsufficientFundsException;
+use App\Exceptions\Qiwi\ResolutionException;
 use Benfin\Api\GlobalStorage;
 use Exception;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Queue;
 
 class QiwiCreatePayoutJob extends QiwiJob
 {
@@ -36,20 +41,60 @@ class QiwiCreatePayoutJob extends QiwiJob
             try {
                 $reportService->createPayout($report);
                 dispatch((new QiwiExecutePayoutJob($this->params))->onQueue('QiwiExecutePayout'));
+            } catch (BillingDeclinedException $exception) {
+                $this->stopProcessing($this->params['report_id'], 1001);
+                $deferredResultUtil = app(DeferredResultContract::class);
+                $deferredResultId = $deferredResultUtil->getId('report', $report->id);
+                if ($deferredResultUtil->exist($deferredResultId)) {
+                    $deferredResultUtil->error($deferredResultId, [
+                        'errorCode' => 1001,
+                        'errorMessage' => $exception->getMessageData(),
+                    ]);
+                }
+            } catch (ResolutionException $exception) {
+                $this->stopProcessing($this->params['report_id'], 1002);
+                $deferredResultUtil = app(DeferredResultContract::class);
+                $deferredResultId = $deferredResultUtil->getId('report', $report->id);
+                if ($deferredResultUtil->exist($deferredResultId)) {
+                    $deferredResultUtil->error($deferredResultId, [
+                        'errorCode' => 1002,
+                        'errorMessage' => $exception->getMessageData(),
+                    ]);
+                }
             } catch (PayoutAlreadyExistException $exception) {
-                dispatch((new QiwiCreatePayoutJob($this->params))->onQueue('QiwiCreatePayout'));
+                Queue::later(
+                    Carbon::now()->addSeconds(config('api_sk.qiwi.requestInterval')),
+                    new QiwiCreatePayoutJob($this->params),
+                    '',
+                    'QiwiCreatePayout'
+                );
             } catch (PayoutInsufficientFundsException $exception) {
                 $this->disableAllowPayRequests();
                 $this->sendNotify();
-                dispatch((new QiwiCreatePayoutJob($this->params))->onQueue('QiwiCreatePayout'));
+                Queue::later(
+                    Carbon::now()->addSeconds(config('api_sk.qiwi.requestInterval')),
+                    new QiwiCreatePayoutJob($this->params),
+                    '',
+                    'QiwiCreatePayout'
+                );
             }
         } else {
-            dispatch((new QiwiCreatePayoutJob($this->params))->onQueue('QiwiCreatePayout'));
+            Queue::later(
+                Carbon::now()->addSeconds(config('api_sk.qiwi.requestInterval')),
+                new QiwiCreatePayoutJob($this->params),
+                '',
+                'QiwiCreatePayout'
+            );
         }
     }
 
     public function failed(Exception $exception)
     {
-        $this->stopProcessing($this->params['report_id']);
+        Queue::later(
+            Carbon::now()->addSeconds(config('api_sk.qiwi.requestInterval')),
+            new QiwiCreatePayoutJob($this->params),
+            '',
+            'QiwiCreatePayout'
+        );
     }
 }

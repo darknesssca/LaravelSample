@@ -2,6 +2,7 @@
 
 namespace App\Services\Qiwi;
 
+use App\Exceptions\Qiwi\BillingDeclinedException;
 use App\Exceptions\Qiwi\CreatePayoutException;
 use App\Exceptions\Qiwi\ExecutePayoutException;
 use App\Exceptions\Qiwi\PayoutAlreadyExistException;
@@ -140,17 +141,7 @@ class Qiwi
 
         $response = json_decode($response['content'], true);
 
-        if (!empty($response['errorCode'])) {
-            switch ($response['errorCode']) {
-                case 'payout.payment.already-exist':
-                    throw new PayoutAlreadyExistException();
-                    break;
-                case 'payout.insufficient_funds':
-                    throw new PayoutInsufficientFundsException();
-                    break;
-            }
-        }
-
+        // check billing declined !first!
         if (
             isset($response['status']['value']) && ($response['status']['value'] == 'FAILED') &&
             isset($response['status']['errorCode']) && ($response['status']['errorCode'] == 'BILLING_DECLINED')
@@ -170,11 +161,24 @@ class Qiwi
             ) {
                 throw new ResolutionException('Уважаемый Пользователь, Вы не предоставили Киви-банку разрешение на обработку ИНН и регистрацию дохода. Повторно ознакомьтесь с инструкцией в Профайле и предоставьте разрешение в Мой налог.');
             }
-            throw new ResolutionException('Уважаемый Пользователь, проверьте корректность платежных данных (ИНН, номер карты) в Профайле и предоставьте разрешение Киви-банку на обработку ИНН и регистрацию дохода в Мой налог.');
+            throw new BillingDeclinedException('Уважаемый Пользователь, проверьте корректность платежных данных (ИНН, номер карты) в Профайле и предоставьте разрешение Киви-банку на обработку ИНН и регистрацию дохода в Мой налог.');
         }
 
+        // check gate errors
+        if (!empty($response['errorCode'])) {
+            switch ($response['errorCode']) {
+                case 'payout.payment.already-exist':
+                    throw new PayoutAlreadyExistException();
+                    break;
+                case 'payout.insufficient_funds':
+                    throw new PayoutInsufficientFundsException();
+                    break;
+            }
+        }
+
+        // check status
         if ($response['status']['value'] != 'READY') {
-                throw new CreatePayoutException('Не удалось создать выплату');
+            throw new CreatePayoutException('Не удалось создать выплату');
         }
 
         return $this->commonParams['payout_id'];

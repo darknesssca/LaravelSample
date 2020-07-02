@@ -5,9 +5,12 @@ namespace App\Jobs\Qiwi;
 
 
 use App\Contracts\Services\ReportServiceContract;
+use App\Contracts\Utils\DeferredResultContract;
 use App\Exceptions\Qiwi\PayoutInsufficientFundsException;
 use Benfin\Api\GlobalStorage;
 use Exception;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Queue;
 
 class QiwiExecutePayoutJob extends QiwiJob
 {
@@ -34,20 +37,41 @@ class QiwiExecutePayoutJob extends QiwiJob
 
             try {
                 $reportService->executePayout($report);
+                $deferredResultUtil = app(DeferredResultContract::class);
+                $deferredResultId = $deferredResultUtil->getId('report', $report->id);
+                if ($deferredResultUtil->exist($deferredResultId)) {
+                    $deferredResultUtil->done($deferredResultId);
+                }
                 dispatch((new QiwiCreateXlsJob($this->params))->onQueue('QiwiCreateXls'));
             } catch (PayoutInsufficientFundsException $exception) {
                 $this->disableAllowPayRequests();
                 $this->sendNotify();
-                dispatch((new QiwiExecutePayoutJob($this->params))->onQueue('QiwiExecutePayout'));
+                Queue::later(
+                    Carbon::now()->addSeconds(config('api_sk.qiwi.requestInterval')),
+                    new QiwiExecutePayoutJob($this->params),
+                    '',
+                    'QiwiExecutePayout'
+                );
             }
         } else {
-            dispatch((new QiwiExecutePayoutJob($this->params))->onQueue('QiwiExecutePayout'));
+            Queue::later(
+                Carbon::now()->addSeconds(config('api_sk.qiwi.requestInterval')),
+                new QiwiExecutePayoutJob($this->params),
+                '',
+                'QiwiExecutePayout'
+            );
         }
 
     }
 
     public function failed(Exception $exception)
     {
+        Queue::later(
+            Carbon::now()->addSeconds(config('api_sk.qiwi.requestInterval')),
+            new QiwiExecutePayoutJob($this->params),
+            '',
+            'QiwiExecutePayout'
+        );
         $this->stopProcessing($this->params['report_id']);
     }
 }

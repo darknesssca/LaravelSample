@@ -100,6 +100,7 @@ $app->routeMiddleware([ 'admin' => Benfin\Auth\Http\Middleware\Admin::class, ]);
 |
 */
 
+$app->register(App\Providers\AppServiceProvider::class);
 $app->register(ValidationProvider::class);
 $app->register(App\Providers\CompanyServiceProvider::class);
 $app->register(App\Providers\RepositoryServiceProvider::class);

@@ -82,10 +82,10 @@ class QiwiJob extends Job
         return $report;
     }
 
-    protected function stopProcessing($report_id)
+    protected function stopProcessing($report_id, $state)
     {
         $report = $this->getReport($report_id);
-        $report->processing = false;
+        $report->processing = $state;
         $report->save();
     }
 }

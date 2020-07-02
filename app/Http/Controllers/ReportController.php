@@ -4,7 +4,9 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\Services\ReportServiceContract;
+use App\Contracts\Utils\DeferredResultContract;
 use App\Exceptions\Qiwi\ResolutionException;
+use App\Http\Requests\DeferredResultRequest;
 use App\Http\Requests\Reports\CreateReportRequest;
 use App\Http\Requests\Reports\GetListReportsRequest;
 use App\Services\Qiwi\ReportService;
@@ -57,10 +59,10 @@ class ReportController extends Controller
     /**
      * @return JsonResponse
      */
-    public function status()
+    public function processingStatus()
     {
         try {
-            $status = $this->reportService->getStatus();
+            $status = $this->reportService->getProcessingStatus();
             return Response::success($status);
         } catch (Exception $exception) {
             $httpCode = ($exception instanceof AbstractException) ? $exception->getHttpCode() : 400;
@@ -76,23 +78,28 @@ class ReportController extends Controller
     {
         try {
             $fields = $request->validated();
-            return $this->reportService->createReport($fields);
-        } catch (ResolutionException $exception) {
-            return Response::success([
-                'fail' => true,
-                'redirect' => true,
-                'message' => $exception->getMessageData(),
-            ]);
+            return Response::success($this->reportService->createReport($fields));
         } catch (Exception $exception) {
             $httpCode = ($exception instanceof AbstractException) ? $exception->getHttpCode() : 400;
             return Response::error($exception->getMessage(), $httpCode);
         }
     }
 
+    public function status(DeferredResultRequest $request)
+    {
+        $deferredResultId = $request->get('id');
+        $deferredResultUtil = app(DeferredResultContract::class);
+        $result = $deferredResultUtil->get($deferredResultId);
+        if (!$result) {
+            return $deferredResultUtil->getInitialResponse($deferredResultId, $deferredResultUtil->getErrorStatus());
+        }
+        return $result;
+    }
+
     public function rerunPayout(int $id)
     {
         try {
-            return $this->reportService->rerunPayout($id);
+            return Response::success($this->reportService->createReport($this->reportService->rerunPayout($id)));
         } catch (Exception $exception) {
             $httpCode = ($exception instanceof AbstractException) ? $exception->getHttpCode() : 400;
             return Response::error($exception->getMessage(), $httpCode);
