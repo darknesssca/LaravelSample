@@ -229,6 +229,39 @@
             "time": "2020-04-20T12:57:04+00:00"
         },
         {
+            "name": "benfin/packages/log",
+            "version": "v1.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/log.git",
+                "reference": "97434fbceec4262dc2813fbad0cbe2d9fa51956c"
+            },
+            "require": {
+                "coraxster/flysystem-aws-s3-v3-minio": "^1.0",
+                "laravel/lumen-framework": ">=6.0",
+                "php": "^7.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Benfin\\Log\\": [
+                        "src/"
+                    ]
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Roman Egorov",
+                    "email": "r.egorov@qsoft.ru"
+                }
+            ],
+            "description": "BENFIN logger",
+            "time": "2020-06-26T10:30:25+00:00"
+        },
+        {
             "name": "benfin/packages/requests",
             "version": "v1.1.8",
             "source": {

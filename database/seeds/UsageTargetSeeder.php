@@ -13,11 +13,11 @@ class UsageTargetSeeder extends Seeder
             'code' => 'personal',
             'name' => 'Личная',
         ],
-        [
-            'id' => 2,
-            'code' => 'taxi',
-            'name' => 'Такси',
-        ],
+//        [
+//            'id' => 2,
+//            'code' => 'taxi',
+//            'name' => 'Такси',
+//        ],
         [
             'id' => 3,
             'code' => 'rent',

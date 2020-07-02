@@ -14,6 +14,7 @@ use Benfin\Api\Contracts\NotifyMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 use Benfin\Api\Traits\HttpRequest;
 use Benfin\Api\Traits\SoapRequest;
+use Benfin\Log\Facades\Log;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 
@@ -27,7 +28,6 @@ abstract class CompanyService
     protected $intermediateDataService;
     protected $requestProcessService;
     protected $policyService;
-    protected $logPath;
 
 
     public function __construct(
@@ -167,23 +167,31 @@ abstract class CompanyService
         return 0;
     }
 
-    public function writeLog(string $path, array $data)
+    public function writeRequestLog(array $data)
     {
-        if (!config('app.debug')) {
+        if (!config('api_sk.debugLog')) {
             return;
         }
-        $log = Storage::disk('minio')->exists($path);
-        $data['time'] = date('d.m.Y H:i:s', time());
-        if ($log) {
-            Storage::disk('minio')->append(
-                $path,
-                print_r($data, true)
-            );
-        } else {
-            Storage::disk('minio')->put(
-                $path,
-                print_r($data, true)
-            );
+        $class = explode('\\', get_called_class());
+        $tag = array_pop($class) . 'Request';
+        Log::daily(
+            $data,
+            static::companyCode,
+            $tag
+        );
+    }
+
+    public function writeResponseLog(array $data)
+    {
+        if (!config('api_sk.debugLog')) {
+            return;
         }
+        $class = explode('\\', get_called_class());
+        $tag = array_pop($class) . 'Response';
+        Log::daily(
+            $data,
+            static::companyCode,
+            $tag
+        );
     }
 }

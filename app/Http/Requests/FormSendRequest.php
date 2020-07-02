@@ -5,11 +5,25 @@ namespace App\Http\Requests;
 
 
 use Benfin\Requests\AbstractRequest;
+use Carbon\Carbon;
+use Illuminate\Validation\Rule;
 
 class FormSendRequest extends AbstractRequest
 {
-    public function rules():array
+    public function rules(): array
     {
+        //Проверка года выпуска авто
+        $expired_car_year = function () {
+            $year = (int)$this->get('car')['year'];
+            $current_year = Carbon::now()->year;
+
+            if ($current_year - $year >= 4) {
+                return true;
+            }
+
+            return false;
+        };
+
         return [
             'draftId' => "integer",
             'number' => "string",
@@ -47,7 +61,6 @@ class FormSendRequest extends AbstractRequest
             "car.seats" => "integer",
             "car.mileage" => "required|integer",
             "car.sourceAcquisition" => "required|integer|exists:source_acquisitions,id",
-            "car.vehicleCost" => "required|integer",
             "car.vehicleUsage" => "required|integer",
             "car.isIrregularVIN" => "required|boolean",
             "car.vin" => "required|string",
@@ -60,9 +73,20 @@ class FormSendRequest extends AbstractRequest
             "car.document.dateIssue" => "required|string",
             "car.inspection" => "required",
             "car.inspection.series" => "string",
-            "car.inspection.number" => "required|string",
-            "car.inspection.dateIssue" => "required|date|date_format:Y-m-d",
-            "car.inspection.dateEnd" => "required|date|date_format:Y-m-d",
+            "car.inspection.number" => [
+                Rule::requiredIf($expired_car_year),
+                'numeric',
+            ],
+            "car.inspection.dateIssue" => [
+                'date',
+                'date_format:Y-m-d',
+                Rule::requiredIf($expired_car_year),
+            ],
+            "car.inspection.dateEnd" => [
+                'date',
+                'date_format:Y-m-d',
+                Rule::requiredIf($expired_car_year),
+            ],
             'policy' => "required",
             'policy.beginDate' => "required|date|date_format:Y-m-d|before:policy.endDate",
             'policy.endDate' => "required|date|date_format:Y-m-d|after:policy.beginDate",
@@ -73,6 +97,7 @@ class FormSendRequest extends AbstractRequest
             'drivers.*.driver' => "required",
             'drivers.*.driver.driverId' => "required|integer|driver_foreign_license",
             'drivers.*.driver.drivingLicenseIssueDateOriginal' => "required|date|date_format:Y-m-d",
+            'prevToken' => 'string|size:32'
         ];
     }
 }

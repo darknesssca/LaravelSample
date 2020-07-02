@@ -59,7 +59,8 @@ class ReportService implements ReportServiceContract
         ReportRepositoryContract $reportRepository,
         PolicyRepositoryContract $policyRepository,
         InsuranceCompanyRepositoryContract $insuranceCompanyRepository
-    ) {
+    )
+    {
         $this->reportRepository = $reportRepository;
         $this->policyRepository = $policyRepository;
         $this->insuranceCompanyRepository = $insuranceCompanyRepository;
@@ -446,9 +447,10 @@ class ReportService implements ReportServiceContract
             $this->initQiwi([], '');
         }
 
-        $execute_status = $this->qiwi->executePayout($report->payout_id);
+        $executeResult = $this->qiwi->executePayout($report->payout_id);
 
-        if ($execute_status == true) {
+        if ($executeResult['status']) {
+            $this->sendCheckToAdmin($executeResult['checkUrl']);
             $report->is_payed = true;
             $report->save();
 
@@ -511,5 +513,32 @@ class ReportService implements ReportServiceContract
             'count' => $reports->count(),
             'sum' => $reports->sum('reward'),
         ];
+    }
+
+    private function sendCheckToAdmin($checkUrl): void
+    {
+        if (!$checkUrl) {
+            return;
+        }
+        $adminEmails = config('api_sk.qiwi.adminEmails');
+        if (!$adminEmails) {
+            return;
+        }
+        $adminEmailsArray = explode(',', $adminEmails);
+        if (empty($adminEmailsArray)) {
+            return;
+        }
+        foreach ($adminEmailsArray as $email) {
+            try {
+                $email = trim($email);
+                $notify = app(NotifyMicroserviceContract::class);
+                $data = [
+                    'link' => $checkUrl,
+                ];
+                $notify->sendMail($email, $data, 'qiwi-check');
+            } catch (\Exception $exception) {
+                // ignore
+            }
+        }
     }
 }

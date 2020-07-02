@@ -28,10 +28,7 @@ class AutocodController extends Controller
     {
         try {
             $params = $request->validated();
-            if (env('APP_DEBUG') ) {
-                $params['vin']='Z94CB44AAGR323520';
-            }
-            $result = $this->engine->readReportAutocompleteSync($params['vin']); //ожидаем генерации отчета
+            $result = $this->engine->readReportAutocompleteSync($params['vin'], $params['eosago'] ?? false); //ожидаем генерации отчета
             return Response::success($result);
         } catch (ClientException $cle) {
             return Response::error($cle->getMessage(), 500);
@@ -67,10 +64,7 @@ class AutocodController extends Controller
     {
         try {
             $params = $request->validated();
-            if (env('APP_DEBUG') ) {
-                $params['vin']='Z94CB44AAGR323520';
-            }
-            $result = $this->engine->checkTaxi($params['vin']);
+            $result = $this->engine->checkTaxi($params['vin'], $params['eosago'] ?? false);
             return Response::success($result);
         } catch (ClientException $cle) {
             return Response::error($cle->getMessage(), 500);

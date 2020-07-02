@@ -1,14 +1,15 @@
 <?php
 
-
 namespace App\Services\Qiwi;
-
 
 use App\Exceptions\Qiwi\CreatePayoutException;
 use App\Exceptions\Qiwi\ExecutePayoutException;
 use App\Exceptions\Qiwi\PayoutAlreadyExistException;
 use App\Exceptions\Qiwi\PayoutInsufficientFundsException;
+use App\Exceptions\Qiwi\ResolutionException;
 use App\Exceptions\TaxStatusNotServiceException;
+use Benfin\Api\Contracts\AuthMicroserviceContract;
+use Benfin\Log\Facades\Log;
 use Exception;
 use GuzzleHttp\Client;
 
@@ -48,14 +49,48 @@ class Qiwi
     public function getProviders($providerCode = '')
     {
         $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/providers/{$providerCode}";
+
+        Log::daily(
+            [
+                'url' => $url,
+                'payload' => [],
+            ],
+            'qiwi',
+            'getProvidersRequest'
+        );
+
         $response = $this->sendRequest('GET', $url);
+
+        Log::daily(
+            $response,
+            'qiwi',
+            'getProvidersResponse'
+        );
+
         return $response['content'];
     }
 
     public function getProvidersDirectories($providerCode = '', $expand = true)
     {
         $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/providers/directory/{$providerCode}?expand={$expand}";
+
+        Log::daily(
+            [
+                'url' => $url,
+                'payload' => [],
+            ],
+            'qiwi',
+            'getProvidersDirectoriesRequest'
+        );
+
         $response = $this->sendRequest('GET', $url);
+
+        Log::daily(
+            $response,
+            'qiwi',
+            'getProvidersDirectoriesResponse'
+        );
+
         return $response['content'];
     }
 
@@ -74,9 +109,32 @@ class Qiwi
         $this->commonParams['payout_id'] = $this->getGUID();
 
         $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/payments/{$this->commonParams['payout_id']}";
+
+        Log::daily(
+            [
+                'url' => $url,
+                'payload' => $this->payoutParams,
+            ],
+            'qiwi',
+            'createPayoutRequest'
+        );
+
         try {
             $response = $this->sendRequest('PUT', $url, $this->payoutParams);
+
+            Log::daily(
+                $response,
+                'qiwi',
+                'createPayoutResponse'
+            );
+
         } catch (Exception $e) {
+            Log::daily(
+                $e->getMessage(),
+                'qiwi',
+                'createPayoutException'
+            );
+
             throw new CreatePayoutException($e->getMessage());
         }
 
@@ -91,23 +149,62 @@ class Qiwi
                     throw new PayoutInsufficientFundsException();
                     break;
             }
-        } elseif ($response['status']['value'] != 'READY') {
-            throw new CreatePayoutException('Не удалось создать выплату');
         }
 
+        if (
+            isset($response['status']['value']) && ($response['status']['value'] == 'FAILED') &&
+            isset($response['status']['errorCode']) && ($response['status']['errorCode'] == 'BILLING_DECLINED')
+        ) {
+            try {
+                app(AuthMicroserviceContract::class)->qiwiReset();
+            } catch (\Exception $exception) {
+                // todo: should make custom exception for api error
+            }
+
+            if (
+                isset($response['status']['errorMessage']) &&
+                mb_strpos(
+                    mb_strtolower($response['status']['errorMessage']),
+                    'партнер не привязан к налогоплательщику'
+                ) !== false
+            ) {
+                throw new ResolutionException('Уважаемый Пользователь, Вы не предоставили Киви-банку разрешение на обработку ИНН и регистрацию дохода. Повторно ознакомьтесь с инструкцией в Профайле и предоставьте разрешение в Мой налог.');
+            }
+            throw new ResolutionException('Уважаемый Пользователь, проверьте корректность платежных данных (ИНН, номер карты) в Профайле и предоставьте разрешение Киви-банку на обработку ИНН и регистрацию дохода в Мой налог.');
+        }
+
+        if ($response['status']['value'] != 'READY') {
+                throw new CreatePayoutException('Не удалось создать выплату');
+        }
 
         return $this->commonParams['payout_id'];
     }
 
     /**
      * @param $payout_id
-     * @return bool
+     * @return array
      * @throws Exception
      */
     public function executePayout($payout_id)
     {
         $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/payments/{$payout_id}/execute";
+
+        Log::daily(
+            [
+                'url' => $url,
+                'payload' => [],
+            ],
+            'qiwi',
+            'executePayoutRequest'
+        );
+
         $response = $this->sendRequest('POST', $url);
+
+        Log::daily(
+            $response,
+            'qiwi',
+            'executePayoutResponse'
+        );
 
         $response = json_decode($response['content'], true);
 
@@ -121,7 +218,10 @@ class Qiwi
             throw new ExecutePayoutException('Не удалось исполнить выплату');
         }
 
-        return true;
+        return [
+            'status' => true,
+            'checkUrl' => $response['billingDetails']['receiptUrl'] ?? null,
+        ];
     }
 
 

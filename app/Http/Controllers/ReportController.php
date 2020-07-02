@@ -4,6 +4,7 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\Services\ReportServiceContract;
+use App\Exceptions\Qiwi\ResolutionException;
 use App\Http\Requests\Reports\CreateReportRequest;
 use App\Http\Requests\Reports\GetListReportsRequest;
 use App\Services\Qiwi\ReportService;
@@ -76,6 +77,12 @@ class ReportController extends Controller
         try {
             $fields = $request->validated();
             return $this->reportService->createReport($fields);
+        } catch (ResolutionException $exception) {
+            return Response::success([
+                'fail' => true,
+                'redirect' => true,
+                'message' => $exception->getMessageData(),
+            ]);
         } catch (Exception $exception) {
             $httpCode = ($exception instanceof AbstractException) ? $exception->getHttpCode() : 400;
             return Response::error($exception->getMessage(), $httpCode);
