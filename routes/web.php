@@ -69,6 +69,10 @@ $router->group(
                 $router->group(['prefix' => 'reports'], function () use ($router) {
                         $router->post('/', 'ReportController@create');
                         $router->get('/', 'ReportController@index');
+                        $router->get('/status', [
+                            'uses' => 'ReportController@status',
+                            'middleware' => 'admin'
+                        ]);
                         $router->patch('{id}/payout/rerun', 'ReportController@rerunPayout');
                         $router->get('{id}', 'ReportController@show');
                     }

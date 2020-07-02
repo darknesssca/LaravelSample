@@ -88,6 +88,7 @@ $app->configure('api');
 //     'auth' => App\Http\Middleware\Authenticate::class,
 // ]);
 $app->routeMiddleware(['auth' => Benfin\Auth\Http\Middleware\Authenticate::class,]);
+$app->routeMiddleware([ 'admin' => Benfin\Auth\Http\Middleware\Admin::class, ]);
 /*
 |--------------------------------------------------------------------------
 | Register Service Providers

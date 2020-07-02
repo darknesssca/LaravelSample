@@ -24,4 +24,6 @@ interface ReportServiceContract
     public function rerunPayout($report);
 
     public function createXls(Report $report);
+
+    public function getStatus(): array;
 }

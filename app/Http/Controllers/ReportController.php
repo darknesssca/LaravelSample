@@ -53,6 +53,19 @@ class ReportController extends Controller
         }
     }
 
+    /**
+     * @return JsonResponse
+     */
+    public function status()
+    {
+        try {
+            $status = $this->reportService->getStatus();
+            return Response::success($status);
+        } catch (Exception $exception) {
+            $httpCode = ($exception instanceof AbstractException) ? $exception->getHttpCode() : 400;
+            return Response::error($exception->getMessage(), $httpCode);
+        }
+    }
 
     /**
      * @param CreateReportRequest $request

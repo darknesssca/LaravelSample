@@ -503,4 +503,13 @@ class ReportService implements ReportServiceContract
         }, []);
         return array_unique($exclude_policy_ids);
     }
+
+    public function getStatus(): array
+    {
+        $reports = $this->reportRepository->getProcessingReports();
+        return [
+            'count' => $reports->count(),
+            'sum' => $reports->sum('reward'),
+        ];
+    }
 }
