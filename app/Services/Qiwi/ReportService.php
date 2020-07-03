@@ -498,8 +498,12 @@ class ReportService implements ReportServiceContract
         $deferredResultUtil->process($deferredResultId);
 
         if ($report->requested == false && $report->is_payed == false) {
+            $report->processing = 1;
+            $report->save();
             dispatch((new QiwiCreatePayoutJob($params))->onQueue('QiwiCreatePayout'));
         } elseif ($report->requested == true && $report->is_payed == false) {
+            $report->processing = 10;
+            $report->save();
             dispatch((new QiwiExecutePayoutJob($params))->onQueue('QiwiExecutePayout'));
         }
 

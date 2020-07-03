@@ -69,6 +69,7 @@ $router->group(
                 $router->group(['prefix' => 'reports'], function () use ($router) {
                         $router->post('/', 'ReportController@create');
                         $router->get('/', 'ReportController@index');
+                        $router->get('status', 'ReportController@status');
                         $router->get('/processing-status', [
                             'uses' => 'ReportController@processingStatus',
                             'middleware' => 'admin'

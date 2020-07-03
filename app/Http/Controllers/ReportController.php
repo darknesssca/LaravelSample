@@ -92,7 +92,7 @@ class ReportController extends Controller
         if (!$result) {
             return $deferredResultUtil->getInitialResponse($deferredResultId, $deferredResultUtil->getErrorStatus());
         }
-        return $result;
+        return Response::success($result);
     }
 
     public function rerunPayout(int $id)

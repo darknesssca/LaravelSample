@@ -49,6 +49,8 @@ class QiwiCreatePayoutJob extends QiwiJob
                     $deferredResultUtil->error($deferredResultId, [
                         'errorCode' => 1001,
                         'errorMessage' => $exception->getMessageData(),
+                        'fail' => true,
+                        'redirect' => true,
                     ]);
                 }
             } catch (ResolutionException $exception) {
@@ -59,6 +61,8 @@ class QiwiCreatePayoutJob extends QiwiJob
                     $deferredResultUtil->error($deferredResultId, [
                         'errorCode' => 1002,
                         'errorMessage' => $exception->getMessageData(),
+                        'fail' => true,
+                        'redirect' => true,
                     ]);
                 }
             } catch (PayoutAlreadyExistException $exception) {

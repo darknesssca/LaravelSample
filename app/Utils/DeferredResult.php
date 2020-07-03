@@ -9,11 +9,14 @@ class DeferredResult implements DeferredResultContract
 {
     use CacheStore;
 
-    protected $cacheStorePrefix = '';
-
     const ERROR = 'error';
     const WAITING = 'process';
     const DONE = 'done';
+
+    public function __construct()
+    {
+        $this->cacheStorePrefix = '';
+    }
 
     public function get(string $id): ?array
     {
