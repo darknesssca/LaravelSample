@@ -17,4 +17,9 @@ class HoldingJob extends Job
         $service->holding();
         dispatch((new HoldingJob)->onQueue('holding'));
     }
+
+    public function failed()
+    {
+        dispatch((new HoldingJob)->onQueue('holding'));
+    }
 }

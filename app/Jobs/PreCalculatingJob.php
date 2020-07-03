@@ -17,4 +17,9 @@ class PreCalculatingJob extends Job
         $service->preCalculating();
         dispatch((new PreCalculatingJob)->onQueue('preCalculating'));
     }
+
+    public function failed()
+    {
+        dispatch((new PreCalculatingJob)->onQueue('preCalculating'));
+    }
 }
