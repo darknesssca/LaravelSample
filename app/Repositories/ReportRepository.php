@@ -122,7 +122,8 @@ class ReportRepository implements ReportRepositoryContract
     public function getProcessingReports()
     {
         return Report::select('reward')
-            ->where('processing', true)
+            ->where('processing', '>', 0)
+            ->where('processing', '<=', 1000)
             ->where('is_payed', false)
             ->get();
     }

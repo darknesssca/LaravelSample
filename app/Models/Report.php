@@ -23,7 +23,8 @@ class Report extends Model
         'create_date',
         'reward',
         'is_payed',
-        'creator_id'
+        'creator_id',
+        'processing',
     ];
     protected $hidden = [
         'created_at',
@@ -47,11 +48,20 @@ class Report extends Model
 
     public function getStatusAttribute()
     {
-        if ($this->processing == false && $this->is_payed == false){
+        if (
+            (
+                $this->processing == 0 ||
+                ($this->processing > 1000 && $this->processing <= 2000)
+            ) &&
+            $this->is_payed == false
+        ) {
             return self::STATUS_FAILED;
         }
 
-        if ($this->processing == true && $this->is_payed == false) {
+        if (
+            ($this->processing > 0 || $this->processing <= 1000) &&
+            $this->is_payed == false
+        ) {
             return self::STATUS_PROCESSING;
         }
 

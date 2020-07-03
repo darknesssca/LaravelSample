@@ -62,8 +62,7 @@ class ReportController extends Controller
     public function processingStatus()
     {
         try {
-            $status = $this->reportService->getProcessingStatus();
-            return Response::success($status);
+            return Response::success($this->reportService->getProcessingStatus());
         } catch (Exception $exception) {
             $httpCode = ($exception instanceof AbstractException) ? $exception->getHttpCode() : 400;
             return Response::error($exception->getMessage(), $httpCode);
@@ -99,7 +98,7 @@ class ReportController extends Controller
     public function rerunPayout(int $id)
     {
         try {
-            return Response::success($this->reportService->createReport($this->reportService->rerunPayout($id)));
+            return Response::success($this->reportService->rerunPayout($id));
         } catch (Exception $exception) {
             $httpCode = ($exception instanceof AbstractException) ? $exception->getHttpCode() : 400;
             return Response::error($exception->getMessage(), $httpCode);

@@ -72,6 +72,5 @@ class QiwiExecutePayoutJob extends QiwiJob
             '',
             'QiwiExecutePayout'
         );
-        $this->stopProcessing($this->params['report_id']);
     }
 }
