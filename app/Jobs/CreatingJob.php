@@ -17,4 +17,9 @@ class CreatingJob extends Job
         $service->creating();
         dispatch((new CreatingJob)->onQueue('creating'));
     }
+
+    public function failed()
+    {
+        dispatch((new CreatingJob)->onQueue('creating'));
+    }
 }
