@@ -536,7 +536,7 @@ class ReportService implements ReportServiceContract
         if (!$checkUrl) {
             return;
         }
-        $adminEmails = config('api_sk.qiwi.adminEmails');
+        $adminEmails = config('api.qiwi.adminEmails');
         if (!$adminEmails) {
             return;
         }

@@ -41,9 +41,4 @@ return [
     'maxPoliciesCountForPaymentCheck' => env('API_PROCESSING_MAX_POLICIES_COUNT_FOR_PAYMENT_CHECK'),
     'processingInterval' => env('API_PROCESSING_INTERVAL'),
     'processingGetPaymentDelay' => env('API_PROCESSING_GET_PAYMENT_DELAY'),
-    'debugLog' => env('API_DEBUG_LOG'),
-    'qiwi' => [
-        'adminEmails' => env('QIWI_ADMIN_EMAILS'),
-        'requestInterval' => env('QIWI_REQUEST_INTERVAL'),
-    ],
 ];

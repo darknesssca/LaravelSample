@@ -63,7 +63,7 @@ class QiwiCreatePayoutJob extends QiwiJob
                 }
             } catch (PayoutAlreadyExistException $exception) {
                 Queue::later(
-                    Carbon::now()->addSeconds(config('api_sk.qiwi.requestInterval')),
+                    Carbon::now()->addSeconds(config('api.qiwi.requestInterval')),
                     new QiwiCreatePayoutJob($this->params),
                     '',
                     'QiwiCreatePayout'
@@ -72,7 +72,7 @@ class QiwiCreatePayoutJob extends QiwiJob
                 $this->disableAllowPayRequests();
                 $this->sendNotify();
                 Queue::later(
-                    Carbon::now()->addSeconds(config('api_sk.qiwi.requestInterval')),
+                    Carbon::now()->addSeconds(config('api.qiwi.requestInterval')),
                     new QiwiCreatePayoutJob($this->params),
                     '',
                     'QiwiCreatePayout'
@@ -80,7 +80,7 @@ class QiwiCreatePayoutJob extends QiwiJob
             }
         } else {
             Queue::later(
-                Carbon::now()->addSeconds(config('api_sk.qiwi.requestInterval')),
+                Carbon::now()->addSeconds(config('api.qiwi.requestInterval')),
                 new QiwiCreatePayoutJob($this->params),
                 '',
                 'QiwiCreatePayout'
@@ -91,7 +91,7 @@ class QiwiCreatePayoutJob extends QiwiJob
     public function failed(Exception $exception)
     {
         Queue::later(
-            Carbon::now()->addSeconds(config('api_sk.qiwi.requestInterval')),
+            Carbon::now()->addSeconds(config('api.qiwi.requestInterval')),
             new QiwiCreatePayoutJob($this->params),
             '',
             'QiwiCreatePayout'
