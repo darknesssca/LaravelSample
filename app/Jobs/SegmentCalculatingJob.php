@@ -17,4 +17,9 @@ class SegmentCalculatingJob extends Job
         $service->segmentCalculating();
         dispatch((new SegmentCalculatingJob)->onQueue('segmentCalculating'));
     }
+
+    public function failed()
+    {
+        dispatch((new SegmentCalculatingJob)->onQueue('segmentCalculating'));
+    }
 }

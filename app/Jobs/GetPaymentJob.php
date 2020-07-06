@@ -25,4 +25,9 @@ class GetPaymentJob extends Job
             'getPayment'
         );
     }
+
+    public function failed()
+    {
+        dispatch((new GetPaymentJob)->onQueue('getPayment'));
+    }
 }

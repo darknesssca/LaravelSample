@@ -17,4 +17,9 @@ class SegmentingJob extends Job
         $service->segmenting();
         dispatch((new SegmentingJob)->onQueue('segmenting'));
     }
+
+    public function failed()
+    {
+        dispatch((new SegmentingJob)->onQueue('segmenting'));
+    }
 }
