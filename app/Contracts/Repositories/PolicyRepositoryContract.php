@@ -32,4 +32,6 @@ interface PolicyRepositoryContract
     public function create(array $data):Policy;
 
     public function searchOldPolicyByPolicyNumber($companyId, $policyNumber);
+
+    public function getUserListByPolicies($filter);
 }
