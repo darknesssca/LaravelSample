@@ -46,6 +46,11 @@ class Report extends Model
         return $this->belongsTo('App\Models\File');
     }
 
+    /**
+     * 1-1000           processing states
+     * 1001-2000        error states
+     * 2001+            reserved states
+     */
     public function getStatusAttribute()
     {
         if (
