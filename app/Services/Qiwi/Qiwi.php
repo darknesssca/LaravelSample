@@ -2,6 +2,7 @@
 
 namespace App\Services\Qiwi;
 
+use App\Contracts\Repositories\ErrorRepositoryContract;
 use App\Exceptions\Qiwi\BillingDeclinedException;
 use App\Exceptions\Qiwi\CreatePayoutException;
 use App\Exceptions\Qiwi\ExecutePayoutException;
@@ -20,6 +21,9 @@ class Qiwi
     private $payoutParams;
     private $payoutRecipient;
     private $commonParams;
+
+    /** @var ErrorRepositoryContract $errorRepository */
+    private $errorRepository;
 
     /**
      * Qiwi constructor.
@@ -43,6 +47,8 @@ class Qiwi
             'tax_status' => $tax_status_code,
             'description' => $description,
         ];
+
+        $this->errorRepository = app(ErrorRepositoryContract::class);
     }
 
     //Методы запросов к api
@@ -98,9 +104,11 @@ class Qiwi
     /**
      * @param $amount
      * @return string
+     * @throws BillingDeclinedException
      * @throws CreatePayoutException
      * @throws PayoutAlreadyExistException
      * @throws PayoutInsufficientFundsException
+     * @throws ResolutionException
      * @throws TaxStatusNotServiceException
      */
     public function createPayout($amount)
@@ -148,7 +156,7 @@ class Qiwi
         ) {
             try {
                 app(AuthMicroserviceContract::class)->qiwiReset();
-            } catch (\Exception $exception) {
+            } catch (Exception $exception) {
                 // todo: should make custom exception for api error
             }
 
@@ -159,9 +167,9 @@ class Qiwi
                     'партнер не привязан к налогоплательщику'
                 ) !== false
             ) {
-                throw new ResolutionException('Уважаемый Пользователь, Вы не предоставили Киви-банку разрешение на обработку ИНН и регистрацию дохода. Повторно ознакомьтесь с инструкцией в Профайле и предоставьте разрешение в Мой налог.');
+                throw new ResolutionException($this->errorRepository->getReportErrorByCode(1002));
             }
-            throw new BillingDeclinedException('Уважаемый Пользователь, проверьте корректность платежных данных (ИНН, номер карты) в Профайле и предоставьте разрешение Киви-банку на обработку ИНН и регистрацию дохода в Мой налог.');
+            throw new BillingDeclinedException($this->errorRepository->getReportErrorByCode(1001));
         }
 
         // check gate errors

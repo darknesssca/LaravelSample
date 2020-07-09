@@ -2,9 +2,8 @@
 
 namespace App\Models;
 
+use App\Contracts\Repositories\ErrorRepositoryContract;
 use App\Observers\ReportObserver;
-use Benfin\Api\GlobalStorage;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Report extends Model
@@ -34,6 +33,7 @@ class Report extends Model
 
     protected $appends = [
         'status',
+        'error_message'
     ];
 
     public function policies()
@@ -75,5 +75,12 @@ class Report extends Model
         }
 
         return null;
+    }
+    
+    public function getErrorMessageAttribute()
+    {
+        /** @var ErrorRepositoryContract $error_repository */
+        $error_repository = app(ErrorRepositoryContract::class);
+        return $error_repository->getReportErrorByCode($this->processing);
     }
 }

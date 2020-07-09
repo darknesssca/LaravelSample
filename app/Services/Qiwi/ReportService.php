@@ -478,6 +478,7 @@ class ReportService implements ReportServiceContract
 
     /**
      * @param $report
+     * @return mixed
      * @throws ReportNotFoundException
      */
     public function rerunPayout($report)
