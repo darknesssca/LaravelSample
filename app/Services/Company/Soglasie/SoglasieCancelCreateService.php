@@ -40,7 +40,7 @@ class SoglasieCancelCreateService extends SoglasieService implements SoglasieCan
 
         $response = $this->putRequest($url, [], $headers, false);
 
-        $this->writeResponseLog($response);
+        $this->writeResponseLog($response ?? ['Нет ответа']);
 
         return $response; // нам без разницы что там произошло в результате, поэтому никаких эксепшенов отлавливать не будем
     }
