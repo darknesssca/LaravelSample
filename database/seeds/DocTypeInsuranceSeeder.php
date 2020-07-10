@@ -201,9 +201,9 @@ class DocTypeInsuranceSeeder extends Seeder
         [
             'doctype_id' => 7,
             'insurance_company_id' => 3,
-            'reference_doctype_code' => 51,
-            'reference_doctype_code2' => 51,
-            'reference_doctype_code3' => 51,
+            'reference_doctype_code' => 53,
+            'reference_doctype_code2' => 53,
+            'reference_doctype_code3' => 53,
         ],
         [
             'doctype_id' => 7,
@@ -231,9 +231,9 @@ class DocTypeInsuranceSeeder extends Seeder
         [
             'doctype_id' => 8,
             'insurance_company_id' => 3,
-            'reference_doctype_code' => 51,
-            'reference_doctype_code2' => 51,
-            'reference_doctype_code3' => 51,
+            'reference_doctype_code' => 53,
+            'reference_doctype_code2' => 53,
+            'reference_doctype_code3' => 53,
         ],
         [
             'doctype_id' => 8,
