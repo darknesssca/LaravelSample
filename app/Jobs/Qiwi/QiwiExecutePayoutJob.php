@@ -45,7 +45,8 @@ class QiwiExecutePayoutJob extends QiwiJob
                 dispatch((new QiwiCreateXlsJob($this->params))->onQueue('QiwiCreateXls'));
             } catch (PayoutInsufficientFundsException $exception) {
                 $this->disableAllowPayRequests();
-                $this->sendNotify();
+                $status = $reportService->getProcessingStatus();
+                $this->sendNotify($status['sum']);
                 Queue::later(
                     Carbon::now()->addSeconds(config('api.qiwi.requestInterval')),
                     new QiwiExecutePayoutJob($this->params),

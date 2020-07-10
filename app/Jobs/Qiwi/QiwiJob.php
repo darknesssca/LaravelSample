@@ -59,10 +59,11 @@ class QiwiJob extends Job
         $commission_mks->updateOptions(['allow_pay_requests' => '0']);
     }
 
-    protected function sendNotify()
+    protected function sendNotify($sum)
     {
         $data = [
             'sender' => env('EMAIL_NOTIFY_SENDER'),
+            'sum' => $sum
         ];
 
         /** @var NotifyMicroserviceContract $notify_mks */
