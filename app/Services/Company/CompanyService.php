@@ -173,7 +173,7 @@ abstract class CompanyService
     public function writeRequestLog(array $data)
     {
         $this->logTag = md5(time() . random_int(000000, 999999));
-        if (!config('api_sk.debugLog')) {
+        if (!config('api.debugLog')) {
             return;
         }
         $class = explode('\\', get_called_class());
@@ -187,7 +187,7 @@ abstract class CompanyService
 
     public function writeResponseLog(array $data)
     {
-        if (!config('api_sk.debugLog')) {
+        if (!config('api.debugLog')) {
             return;
         }
         $class = explode('\\', get_called_class());

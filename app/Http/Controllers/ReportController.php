@@ -4,7 +4,9 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\Services\ReportServiceContract;
-use App\Exceptions\QiwiResolutionException;
+use App\Contracts\Utils\DeferredResultContract;
+use App\Exceptions\Qiwi\ResolutionException;
+use App\Http\Requests\DeferredResultRequest;
 use App\Http\Requests\Reports\CreateReportRequest;
 use App\Http\Requests\Reports\GetListReportsRequest;
 use App\Services\Qiwi\ReportService;
@@ -54,6 +56,18 @@ class ReportController extends Controller
         }
     }
 
+    /**
+     * @return JsonResponse
+     */
+    public function processingStatus()
+    {
+        try {
+            return Response::success($this->reportService->getProcessingStatus());
+        } catch (Exception $exception) {
+            $httpCode = ($exception instanceof AbstractException) ? $exception->getHttpCode() : 400;
+            return Response::error($exception->getMessage(), $httpCode);
+        }
+    }
 
     /**
      * @param CreateReportRequest $request
@@ -63,33 +77,28 @@ class ReportController extends Controller
     {
         try {
             $fields = $request->validated();
-            return $this->reportService->createReport($fields);
-        } catch (QiwiResolutionException $exception) {
-            return Response::success([
-                'fail' => true,
-                'redirect' => true,
-                'message' => $exception->getMessageData(),
-            ]);
+            return Response::success($this->reportService->createReport($fields));
         } catch (Exception $exception) {
             $httpCode = ($exception instanceof AbstractException) ? $exception->getHttpCode() : 400;
             return Response::error($exception->getMessage(), $httpCode);
         }
     }
 
-    public function createPayout(int $id)
+    public function status(DeferredResultRequest $request)
     {
-        try {
-            return $this->reportService->createPayout($id);
-        } catch (Exception $exception) {
-            $httpCode = ($exception instanceof AbstractException) ? $exception->getHttpCode() : 400;
-            return Response::error($exception->getMessage(), $httpCode);
+        $deferredResultId = $request->get('id');
+        $deferredResultUtil = app(DeferredResultContract::class);
+        $result = $deferredResultUtil->get($deferredResultId);
+        if (!$result) {
+            return $deferredResultUtil->getInitialResponse($deferredResultId, $deferredResultUtil->getErrorStatus());
         }
+        return Response::success($result);
     }
 
-    public function executePayout(int $id)
+    public function rerunPayout(int $id)
     {
         try {
-            return $this->reportService->executePayout($id);
+            return Response::success($this->reportService->rerunPayout($id));
         } catch (Exception $exception) {
             $httpCode = ($exception instanceof AbstractException) ? $exception->getHttpCode() : 400;
             return Response::error($exception->getMessage(), $httpCode);

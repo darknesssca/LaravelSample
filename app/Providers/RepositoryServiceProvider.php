@@ -12,6 +12,7 @@ use App\Contracts\Repositories\CountryRepositoryContract;
 use App\Contracts\Repositories\DocTypeRepositoryContract;
 use App\Contracts\Repositories\DraftClientRepositoryContract;
 use App\Contracts\Repositories\DriverRepositoryContract;
+use App\Contracts\Repositories\ErrorRepositoryContract;
 use App\Contracts\Repositories\GenderRepositoryContract;
 use App\Contracts\Repositories\InsuranceCompanyRepositoryContract;
 use App\Contracts\Repositories\IntermediateDataRepositoryContract;
@@ -46,6 +47,7 @@ use App\Repositories\CountryRepository;
 use App\Repositories\DocTypeRepository;
 use App\Repositories\DraftClientRepository;
 use App\Repositories\DriverRepository;
+use App\Repositories\ErrorRepository;
 use App\Repositories\GenderRepository;
 use App\Repositories\InsuranceCompanyRepository;
 use App\Repositories\IntermediateDataRepository;
@@ -104,6 +106,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(SourceAcquisitionRepositoryContract::class, SourceAcquisitionRepository::class);
         $this->app->bind(AddressTypeRepositoryContract::class, AddressTypeRepository::class);
         $this->app->bind(ReportRepositoryContract::class, ReportRepository::class);
+        $this->app->bind(ErrorRepositoryContract::class, ErrorRepository::class);
     }
 
     protected function registerRepositoryServiceProviders()

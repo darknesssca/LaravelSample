@@ -1,13 +1,13 @@
 <?php
 
-
 namespace App\Traits;
-
 
 use Illuminate\Support\Facades\Cache;
 
 trait CacheStore
 {
+    protected $cacheStorePrefix = 'temp_data|';
+
     public function exist(string $id): bool
     {
         return Cache::has($id);
@@ -41,8 +41,8 @@ trait CacheStore
         }
     }
 
-    public function getId(...$args)
+    public function getId(...$args): string
     {
-        return 'temp_data|' . md5(serialize($args));
+        return $this->cacheStorePrefix . md5(serialize($args));
     }
 }
