@@ -26,7 +26,7 @@ class SoglasieCancelCreateService extends SoglasieService implements SoglasieCan
         parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
-    public function run($company, $processData): ?array
+    public function run($company, $processData): array
     {
         $url = $this->getUrl([
             'policyId' => $processData['data']['policyId'],
