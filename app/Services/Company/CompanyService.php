@@ -183,7 +183,7 @@ abstract class CompanyService
         );
     }
 
-    public function writeResponseLog(array $data)
+    public function writeResponseLog(array $data = null)
     {
         if (!config('api_sk.debugLog')) {
             return;
