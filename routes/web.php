@@ -40,12 +40,14 @@ $router->group(
                 );
 
                 // запросы в страховые компании
-                $router->group(['prefix' => 'registration'], function () use ($router) {
+                $router->group(['middleware' => 'restriction.policy'], function () use ($router) {
+                    $router->group(['prefix' => 'registration'], function () use ($router) {
                         $router->post('send', 'InsuranceController@store'); //Запрос с формой, в ответе приходит токен формы
                         $router->post('{code}/payment', 'InsuranceController@payment');
                         $router->post('{code}/{method}', 'InsuranceController@index'); //Запросы с токеном формы, для получения предложений
-                    }
-                );
+                    });
+                });
+
 
                 //policies
                 $router->group(['prefix' => 'policies'], function () use ($router) {
@@ -67,10 +69,19 @@ $router->group(
 
                 //reports
                 $router->group(['prefix' => 'reports'], function () use ($router) {
-                        $router->post('/', 'ReportController@create');
+                        $router->post('/', [
+                            'uses' => 'ReportController@create',
+                            'middleware' => 'restriction.money'
+                        ]);
                         $router->get('/', 'ReportController@index');
-                        $router->patch('{id}/payout/create', 'ReportController@createPayout');
-                        $router->patch('{id}/payout/execute', 'ReportController@executePayout');
+                        $router->patch('{id}/payout/create', [
+                            'uses' => 'ReportController@createPayout',
+                            'middleware' => 'restriction.money'
+                        ]);
+                        $router->patch('{id}/payout/execute', [
+                            'uses' => 'ReportController@executePayout',
+                            'middleware' => 'restriction.money'
+                        ]);
                         $router->get('{id}', 'ReportController@show');
                     }
                 );

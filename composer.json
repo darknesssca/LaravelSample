@@ -22,6 +22,7 @@
         "benfin/packages/cache": "^1.0",
         "benfin/packages/log": "^1.0",
         "benfin/packages/requests": ">=1.1",
+        "benfin/packages/restrictions": ">=1.0",
         "coraxster/flysystem-aws-s3-v3-minio": "^1.0",
         "doctrine/dbal": "^2.10",
         "guzzlehttp/guzzle": "^6.5",
@@ -57,6 +58,10 @@
         {
             "type": "vcs",
             "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/log.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/restrictions.git"
         }
     ],
     "autoload": {

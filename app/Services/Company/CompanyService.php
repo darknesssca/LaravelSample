@@ -148,7 +148,9 @@ abstract class CompanyService
         $params = [
             'insurance_company_id' => $companyId,
             'policy_date' => Carbon::now()->format('Y-m-d'),
-            'kladr_id' => $needleAddress['regionKladr']
+            'kladr_id' => $needleAddress['regionKladr'],
+            'car_category_id' => $formData['car']['category'],
+            'car_usage_target_id' => $formData['car']['vehicleUsage'],
         ];
 
         /** @var CommissionCalculationMicroserviceContract $calc_service */
