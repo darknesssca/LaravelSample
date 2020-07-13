@@ -24,6 +24,7 @@ abstract class CompanyService
 
     public const companyCode = '';
     protected $companyId;
+    protected $logTag;
 
     protected $intermediateDataService;
     protected $requestProcessService;
@@ -171,11 +172,12 @@ abstract class CompanyService
 
     public function writeRequestLog(array $data)
     {
+        $this->logTag = md5(time() . random_int(000000, 999999));
         if (!config('api_sk.debugLog')) {
             return;
         }
         $class = explode('\\', get_called_class());
-        $tag = array_pop($class) . 'Request';
+        $tag = array_pop($class) . 'Request | ' . $this->logTag;
         Log::daily(
             $data,
             static::companyCode,
@@ -189,7 +191,8 @@ abstract class CompanyService
             return;
         }
         $class = explode('\\', get_called_class());
-        $tag = array_pop($class) . 'Response';
+        $tag = array_pop($class) . 'Response | ' . $this->logTag;
+        $this->logTag = '';
         Log::daily(
             $data,
             static::companyCode,

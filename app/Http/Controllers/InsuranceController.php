@@ -81,7 +81,7 @@ class InsuranceController extends Controller
         $token = $this->createToken($data);
         $logger = app(LogMicroserviceContract::class);
         $logger->sendLog(
-            'пользователь отправил форму со следующими полями: ' . json_encode($data['form']),
+            'Пользователь отправил форму со следующими полями: ' . json_encode($data['form'], JSON_UNESCAPED_UNICODE),
             config('api_sk.logMicroserviceCode'),
             GlobalStorage::getUserId()
         );
