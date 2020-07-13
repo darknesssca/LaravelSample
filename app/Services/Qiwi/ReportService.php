@@ -431,7 +431,7 @@ class ReportService implements ReportServiceContract
             throw new Exception('По этому отчету уже была произведена выплата или вы не являетесь создателем отчета');
         }
 
-        if ($this->qiwi) {
+        if (!$this->qiwi) {
             $this->initQiwi([], '');
         }
 
@@ -497,5 +497,14 @@ class ReportService implements ReportServiceContract
                 // ignore
             }
         }
+    }
+
+    public function getBalance()
+    {
+        if (!$this->qiwi) {
+            $this->initQiwi([], '');
+        }
+
+        return $this->qiwi->getBalance();
     }
 }

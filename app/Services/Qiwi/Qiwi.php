@@ -203,6 +203,32 @@ class Qiwi
         ];
     }
 
+    public function getBalance()
+    {
+        $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/balance";
+
+        Log::daily(
+            [
+                'url' => $url,
+                'payload' => [],
+            ],
+            'qiwi',
+            'getBalanceRequest'
+        );
+
+        $response = $this->sendRequest('GET', $url);
+
+        Log::daily(
+            $response,
+            'qiwi',
+            'getBalanceResponse'
+        );
+
+        $response = json_decode($response['content'], true);
+
+        return $response;
+    }
+
 
     //Методы создания объектов
 

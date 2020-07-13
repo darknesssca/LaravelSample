@@ -74,6 +74,10 @@ $router->group(
                             'middleware' => 'restriction.money'
                         ]);
                         $router->get('/', 'ReportController@index');
+                        $router->get('/balance', [
+                            'uses' => 'ReportController@getBalance',
+                            'middleware' => 'admin'
+                        ]);
                         $router->patch('{id}/payout/create', [
                             'uses' => 'ReportController@createPayout',
                             'middleware' => 'restriction.money'

@@ -19,4 +19,6 @@ interface ReportServiceContract
     public function createPayout($report);
 
     public function executePayout($report);
+
+    public function getBalance();
 }
