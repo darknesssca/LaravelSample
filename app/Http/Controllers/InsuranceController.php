@@ -79,8 +79,9 @@ class InsuranceController extends Controller
 
         if (isset($validatedRequest['draftId']) && $validatedRequest['draftId'] > 0) {
             $this->draftService->update($validatedRequest['draftId'], $validatedRequest);
+            $draftId = $validatedRequest['draftId'];
         } else {
-            $this->draftService->create($validatedRequest);
+            $draftId = $this->draftService->create($validatedRequest);
         }
 
         $data = [
@@ -107,7 +108,10 @@ class InsuranceController extends Controller
             config('api_sk.logMicroserviceCode'),
             GlobalStorage::getUserId()
         );
-        return Response::success(['token' => $token->token]);
+        return Response::success([
+            'token' => $token->token,
+            'draftId' => $draftId
+        ]);
     }
 
     /**
