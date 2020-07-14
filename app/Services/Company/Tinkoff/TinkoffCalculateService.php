@@ -376,8 +376,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
     {
         if (
             $attributes['prevData'] &&
-            isset($attributes['prevData']['setNumber']) && $attributes['prevData']['setNumber'] &&
-            isset($attributes['prevData']['quoteNumber']) && $attributes['prevData']['quoteNumber']
+            isset($attributes['prevData']['setNumber']) && $attributes['prevData']['setNumber']
         ) {
             $data['setNumber'] = $attributes['prevData']['setNumber'];
         }
@@ -387,7 +386,6 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
     {
         if (
             $attributes['prevData'] &&
-            isset($attributes['prevData']['setNumber']) && $attributes['prevData']['setNumber'] &&
             isset($attributes['prevData']['quoteNumber']) && $attributes['prevData']['quoteNumber']
         ) {
             $data['quoteNumber'] = $attributes['prevData']['quoteNumber'];
