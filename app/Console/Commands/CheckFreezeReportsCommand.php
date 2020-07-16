@@ -76,10 +76,10 @@ class CheckFreezeReportsCommand extends Command
 
             if ((float)$status['sum'] > 0) {
                 $data = [
-                    'sender' => env('EMAIL_NOTIFY_SENDER'),
+                    'sender' => config('api.notify_sender'),
                     'sum' => $status['sum']
                 ];
-                $this->notifyMks->sendMail(env('QIWI_BALANCE_NOTIFY_EMAIL'), $data, 'qiwi_balance');
+                $this->notifyMks->sendMail(config('api.qiwi.balanceNotifyEmail'), $data, 'qiwi_balance');
             }
         }
     }
@@ -90,9 +90,9 @@ class CheckFreezeReportsCommand extends Command
     private function login()
     {
         $token = $this->authMks->login([
-            'email' => env('AUTH_LOGIN'),
-            'password' => env('AUTH_PASSWORD'),
-            'g-recaptcha-response' => env('AUTH_TOKEN'),
+            'email' => config('api.service_auth.login'),
+            'password' => config('api.service_auth.password'),
+            'g-recaptcha-response' => config('api.service_auth.token'),
         ]);
 
         if (!$token || (isset($token['error']) && $token['error'])) {
