@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
+use App\Contracts\Repositories\ErrorRepositoryContract;
 use App\Observers\ReportObserver;
-use Benfin\Api\GlobalStorage;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Report extends Model
 {
     use ReportObserver;
+
+    const STATUS_FAILED = 0;
+    const STATUS_PROCESSING = 1;
+    const STATUS_PAYED = 2;
 
     protected $guarded = [];
     protected $table = 'reports';
@@ -19,7 +22,8 @@ class Report extends Model
         'create_date',
         'reward',
         'is_payed',
-        'creator_id'
+        'creator_id',
+        'processing',
     ];
     protected $hidden = [
         'created_at',
@@ -28,8 +32,8 @@ class Report extends Model
     ];
 
     protected $appends = [
-        'create_payout_link',
-        'execute_payout_link'
+        'status',
+        'error_message'
     ];
 
     public function policies()
@@ -42,13 +46,41 @@ class Report extends Model
         return $this->belongsTo('App\Models\File');
     }
 
-    public function getCreatePayoutLinkAttribute()
+    /**
+     * 1-1000           processing states
+     * 1001-2000        error states
+     * 2001+            reserved states
+     */
+    public function getStatusAttribute()
     {
-            return ($this->requested == false && $this->is_payed == false) ? "/api/v1/car-insurance/reports/{$this->id}/payout/create" : '';
-    }
+        if (
+            (
+                $this->processing == 0 ||
+                ($this->processing > 1000 && $this->processing <= 2000)
+            ) &&
+            $this->is_payed == false
+        ) {
+            return self::STATUS_FAILED;
+        }
 
-    public function getExecutePayoutLinkAttribute()
+        if (
+            ($this->processing > 0 || $this->processing <= 1000) &&
+            $this->is_payed == false
+        ) {
+            return self::STATUS_PROCESSING;
+        }
+
+        if ($this->is_payed == true) {
+            return self::STATUS_PAYED;
+        }
+
+        return null;
+    }
+    
+    public function getErrorMessageAttribute()
     {
-        return ($this->is_payed == false && $this->requested == true) ? "/api/v1/car-insurance/reports/{$this->id}/payout/execute" : '';
+        /** @var ErrorRepositoryContract $error_repository */
+        $error_repository = app(ErrorRepositoryContract::class);
+        return $error_repository->getReportErrorByCode($this->processing);
     }
 }
