@@ -3,10 +3,14 @@
 namespace App\Http\Controllers;
 
 
+use App\Contracts\Repositories\Services\DraftServiceContract;
 use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
 use App\Exceptions\AutocodException;
+use App\Exceptions\CompanyException;
 use App\Exceptions\LimitationsException;
+use App\Exceptions\MethodNotFoundException;
+use App\Exceptions\NotAvailableCommissionException;
 use App\Exceptions\TokenException;
 use App\Http\Requests\FormSendRequest;
 use App\Http\Requests\PaymentRequest;
@@ -16,6 +20,7 @@ use App\Traits\CompanyServicesTrait;
 use App\Traits\TokenTrait;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
+use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 
@@ -25,14 +30,17 @@ class InsuranceController extends Controller
 
     protected $intermediateDataService;
     protected $insuranceCompanyService;
+    protected $draftService;
 
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
-        InsuranceCompanyServiceContract $insuranceCompanyService
+        InsuranceCompanyServiceContract $insuranceCompanyService,
+        DraftServiceContract $draftService
     )
     {
         $this->intermediateDataService = $intermediateDataService;
         $this->insuranceCompanyService = $insuranceCompanyService;
+        $this->draftService = $draftService;
     }
 
     /**
@@ -40,10 +48,11 @@ class InsuranceController extends Controller
      * @param $method
      * @param ProcessRequest $request
      * @return mixed
+     * @throws LimitationsException
      * @throws TokenException
-     * @throws \App\Exceptions\CompanyException
-     * @throws \App\Exceptions\MethodNotFoundException
-     * @throws \App\Exceptions\NotAvailableCommissionException
+     * @throws CompanyException
+     * @throws MethodNotFoundException
+     * @throws NotAvailableCommissionException
      */
     public function index($code, $method, ProcessRequest $request)
     {
@@ -58,9 +67,23 @@ class InsuranceController extends Controller
         return Response::success($this->runService($company, $validatedRequest, $method));
     }
 
+    /**
+     * @param FormSendRequest $request
+     * @return mixed
+     * @throws AutocodException
+     * @throws TokenException
+     */
     public function store(FormSendRequest $request)
     {
         $validatedRequest = $request->validated();
+
+        if (isset($validatedRequest['draftId']) && $validatedRequest['draftId'] > 0) {
+            $this->draftService->update($validatedRequest['draftId'], $validatedRequest);
+            $draftId = $validatedRequest['draftId'];
+        } else {
+            $draftId = $this->draftService->create($validatedRequest);
+        }
+
         $data = [
             'form' => $validatedRequest,
         ];
@@ -74,7 +97,7 @@ class InsuranceController extends Controller
                         $data['prevData'] = $oldToken;
                     }
                 }
-            } catch (\Exception $exception) {
+            } catch (Exception $exception) {
                 // ignore
             }
         }
@@ -85,7 +108,10 @@ class InsuranceController extends Controller
             config('api_sk.logMicroserviceCode'),
             GlobalStorage::getUserId()
         );
-        return Response::success(['token' => $token->token]);
+        return Response::success([
+            'token' => $token->token,
+            'draftId' => $draftId
+        ]);
     }
 
     /**
@@ -98,8 +124,8 @@ class InsuranceController extends Controller
      * @param $code
      * @param PaymentRequest $request
      * @return mixed
-     * @throws \App\Exceptions\CompanyException
-     * @throws \App\Exceptions\MethodNotFoundException
+     * @throws CompanyException
+     * @throws MethodNotFoundException
      */
     public function payment($code, PaymentRequest $request)
     {
@@ -108,6 +134,10 @@ class InsuranceController extends Controller
         return Response::success($this->runService($company, $request->validated(), $method));
     }
 
+    /**
+     * @param $formData
+     * @throws AutocodException
+     */
     private function setStoredKeys(&$formData)
     {
         $autocodIsTaxiId = $this->getId('autocod', GlobalStorage::getUserId(), $formData['car']['vin'], 'isTaxi');
@@ -124,6 +154,10 @@ class InsuranceController extends Controller
         ];
     }
 
+    /**
+     * @param $formData
+     * @throws LimitationsException
+     */
     private function checkGlobalLimitations($formData)
     {
         if ($formData['autocod']['isTaxi']) {
