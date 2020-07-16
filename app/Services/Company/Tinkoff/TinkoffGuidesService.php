@@ -31,6 +31,8 @@ class TinkoffGuidesService extends TinkoffService implements TinkoffGuidesSource
         "Rolls Royce",
     ];
 
+    private $carReferenceApiUrl;
+
     use GuidesSourceTrait;
 
     public function __construct(IntermediateDataServiceContract $intermediateDataService,
@@ -40,14 +42,22 @@ class TinkoffGuidesService extends TinkoffService implements TinkoffGuidesSource
     {
         parent::__construct($intermediateDataService, $requestProcessService, $policyService);
         $this->companyId = InsuranceCompany::where('code', self::companyCode)->first()['id'];
+        $this->carReferenceApiUrl = config('api_sk.tinkoff.modelsUrl');
     }
 
 
     public function updateCarModelsGuides(): bool
     {
-        $filename = Application::getInstance()->basePath() . "/storage/import/tinkoff_cars_import.xlsx"; //todo: сделать импорт из minio
+        /*
+         * старый способ обновления справочников из файла
+         */
+        //$filename = Application::getInstance()->basePath() . "/storage/import/tinkoff_cars_import.xlsx"; //todo: сделать импорт из minio
         try {
-            $arr = $this->readDocument($filename);
+            /*
+             * старый способ обновления справочников из файла
+             */
+            //$arr = $this->readDocument($filename);
+            $arr = $this->getCarsArray();
 
             foreach ($arr as $mark) {
                 $val = $this->prepareMark($mark);
@@ -56,9 +66,6 @@ class TinkoffGuidesService extends TinkoffService implements TinkoffGuidesSource
                 }
                 $cnt = $this->updateMark($val);
             }
-        } catch (\PhpOffice\PhpSpreadsheet\Exception $e) {
-            dump($e);
-            return false;
         } catch (\Exception $e) {
             dump($e);
             return false;
@@ -107,14 +114,14 @@ class TinkoffGuidesService extends TinkoffService implements TinkoffGuidesSource
         }
         $res = [
             "NAME" => $mark["NAME"],
-            "REF_CODE" => $mark["NAME"],
+            "REF_CODE" => $mark["REF_CODE"],
             "MODELS" => [],
         ];
 
         foreach ($mark["MODELS"] as $model) {
             $model = [
                 "NAME" => $model['NAME'],
-                "CATEGORY_CODE" => "B", //у тинькова все машины категории В
+                "CATEGORY_CODE" => $model["CATEGORY_CODE"],
                 "REF_CODE" => $model['REF_CODE'],
             ];
             $res["MODELS"][] = $model;
@@ -147,5 +154,160 @@ class TinkoffGuidesService extends TinkoffService implements TinkoffGuidesSource
 
         //берем первое слово
         return explode(' ', trim($name))[0];
+    }
+
+    private function doRequest($method, $data = [])
+    {
+        $data['Header'] = $this->getHeaders();
+
+        $wrappedInMethod = [
+            $method . 'Request' => $data
+        ];
+
+        $response = $this->postRequest(
+            $this->carReferenceApiUrl,
+            $wrappedInMethod,
+            [],
+            false,
+            false,
+            true
+        );
+
+        if (!empty($response[$method . 'Response'][$method])) {
+            return [
+                'error' => false,
+                'content' => $response[$method . 'Response'][$method] ?? null
+            ];
+        } else {
+            return [
+                'error' => true,
+                'errorMessage' => $response[$method . 'Response']['errorDescr'] ?? null
+            ];
+        }
+    }
+
+    private function getTypesMap()
+    {
+        return [
+            'a' => 1,
+            'b' => 2,
+            'c' => 3,
+            'd' => 4,
+            'tb' => 5,
+            'tm' => 6,
+            'коммунальная' => 9,
+            'погрузчик' => 13
+        ];
+    }
+
+    /**
+     * Получение типов ТС(по факту это категории, ноо ни не обозначены как категории).
+     * Метод не используется, т.к. по заверению ск список статичный и не будет меняться
+     * @return array
+     */
+    private function getTypes()
+    {
+        return $this->doRequest('listTypes');
+    }
+
+    /**
+     * Получение годов выпуска автомобилей для типа ТС
+     * @param $vehTypeId - идентификатор типа ТС
+     * @return array
+     */
+    private function getYears($vehTypeId)
+    {
+        $data = [
+            'vehicleType' => (string)$vehTypeId
+        ];
+        return $this->doRequest('listYears', $data);
+    }
+
+    /**
+     * Получение марок автомобилей по выбранному году и типу ТС
+     * @param $year - год выпуска
+     * @param $vehTypeId - идентификатор типа ТС
+     * @return array
+     */
+    private function getMakers($year, $vehTypeId)
+    {
+        $data = [
+            'year' => (string)$year,
+            'vehicleType' => (string)$vehTypeId
+        ];
+        return $this->doRequest('listMakers', $data);
+    }
+
+    /**
+     * Получение списка моделей по идентификатору марки, году и типу ТС
+     * @param $year - год выпуска
+     * @param $vehTypeId - идентификатор типа ТС
+     * @param $makerId -  идентификатор марки
+     * @return array
+     */
+    private function getModels($year, $vehTypeId, $makerId)
+    {
+        $data = [
+            'year' => (string)$year,
+            'vehicleType' => (string)$vehTypeId,
+            'maker' => (string)$makerId
+        ];
+        return $this->doRequest('listModels', $data);
+    }
+
+    /**
+     * установка заголовков авторизации
+     * @return array
+     */
+    private function getHeaders()
+    {
+        return [
+            'user' => config('api_sk.tinkoff.user'),
+            'password' => config('api_sk.tinkoff.password')
+        ];
+    }
+
+    public function getCarsArray()
+    {
+        $marks = [];
+        $types = $this->getTypesMap();
+        foreach ($types as $code => $type) {
+            $years = $this->getYears($type)['content'] ?? null;
+            if ($years) {
+                foreach ($years as $year) {
+                    $year = $year['year'];
+                    $yearMakers = $this->getMakers($year, $type)['content'] ?? null;
+
+                    if ($yearMakers) {
+                        $yearMakers = !isset($yearMakers['id']) ? $yearMakers : [$yearMakers];
+                        foreach ($yearMakers as $yearMaker) {
+                            if (!empty($yearMaker['id'])) {
+                                if (!isset($marks[$yearMaker['name']])) {
+                                    $marks[$yearMaker['name']] = [
+                                        'NAME' => $yearMaker['name'],
+                                        'REF_CODE' => $yearMaker['id'],
+                                        'MODELS' => []
+                                    ];
+                                }
+                                $models = $this->getModels($year, $type, $yearMaker['id'])['content'] ?? null;
+                                if ($models) {
+                                    $models = !isset($models['id']) ? $models : [$models];
+                                    foreach ($models as $model) {
+                                        if (!isset($marks[$yearMaker['name']]['MODELS'][$model['id']])) {
+                                            $marks[$yearMaker['name']]['MODELS'][$model['id']] = [
+                                                'NAME' => $model['name'],
+                                                'REF_CODE' => $model['id'],
+                                                'CATEGORY_CODE' => $code,
+                                            ];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $marks;
     }
 }

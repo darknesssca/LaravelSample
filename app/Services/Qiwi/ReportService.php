@@ -562,4 +562,13 @@ class ReportService implements ReportServiceContract
             }
         }
     }
+
+    public function getBalance()
+    {
+        if (!$this->qiwi) {
+            $this->initQiwi([], '');
+        }
+
+        return $this->qiwi->getBalance();
+    }
 }

@@ -104,4 +104,14 @@ class ReportController extends Controller
             return Response::error($exception->getMessage(), $httpCode);
         }
     }
+
+    public function getBalance()
+    {
+        try {
+            return Response::success($this->reportService->getBalance());
+        } catch (Exception $exception) {
+            $httpCode = ($exception instanceof AbstractException) ? $exception->getHttpCode() : 400;
+            return Response::error($exception->getMessage(), $httpCode);
+        }
+    }
 }

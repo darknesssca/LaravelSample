@@ -9,6 +9,7 @@ return [
         'user' => env('TINKOFF_API_USER'),
         'password' => env('TINKOFF_API_PASSWORD'),
         'producerCode' => env('TINKOFF_API_PRODUCER_CODE'),
+        'modelsUrl' => env('TINKOFF_API_MODELS_URL')
     ],
     'ingosstrah' => [
         'wsdlUrl' => env('INGOSSTRAH_API_WSDL_URL'),

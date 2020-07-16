@@ -26,4 +26,6 @@ interface ReportServiceContract
     public function createXls(Report $report);
 
     public function getProcessingStatus(): array;
+
+    public function getBalance();
 }
