@@ -5,6 +5,7 @@ namespace App\Contracts\Services;
 
 
 use App\Contracts\Repositories\ReportRepositoryContract;
+use App\Models\Report;
 
 interface ReportServiceContract
 {
@@ -19,6 +20,12 @@ interface ReportServiceContract
     public function createPayout($report);
 
     public function executePayout($report);
+
+    public function rerunPayout($report);
+
+    public function createXls(Report $report);
+
+    public function getProcessingStatus(): array;
 
     public function getBalance();
 }

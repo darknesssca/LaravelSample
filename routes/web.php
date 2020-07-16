@@ -78,12 +78,13 @@ $router->group(
                             'uses' => 'ReportController@getBalance',
                             'middleware' => 'admin'
                         ]);
-                        $router->patch('{id}/payout/create', [
-                            'uses' => 'ReportController@createPayout',
-                            'middleware' => 'restriction.money'
+                        $router->get('status', 'ReportController@status');
+                        $router->get('/processing-status', [
+                            'uses' => 'ReportController@processingStatus',
+                            'middleware' => 'admin'
                         ]);
-                        $router->patch('{id}/payout/execute', [
-                            'uses' => 'ReportController@executePayout',
+                        $router->patch('{id}/payout/rerun', [
+                            'uses' => 'ReportController@rerunPayout',
                             'middleware' => 'restriction.money'
                         ]);
                         $router->get('{id}', 'ReportController@show');

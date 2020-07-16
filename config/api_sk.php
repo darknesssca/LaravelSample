@@ -9,6 +9,7 @@ return [
         'user' => env('TINKOFF_API_USER'),
         'password' => env('TINKOFF_API_PASSWORD'),
         'producerCode' => env('TINKOFF_API_PRODUCER_CODE'),
+        'modelsUrl' => env('TINKOFF_API_MODELS_URL')
     ],
     'ingosstrah' => [
         'wsdlUrl' => env('INGOSSTRAH_API_WSDL_URL'),
@@ -41,8 +42,4 @@ return [
     'maxPoliciesCountForPaymentCheck' => env('API_PROCESSING_MAX_POLICIES_COUNT_FOR_PAYMENT_CHECK'),
     'processingInterval' => env('API_PROCESSING_INTERVAL'),
     'processingGetPaymentDelay' => env('API_PROCESSING_GET_PAYMENT_DELAY'),
-    'debugLog' => env('API_DEBUG_LOG'),
-    'qiwi' => [
-        'adminEmails' => env('QIWI_ADMIN_EMAILS')
-    ],
 ];

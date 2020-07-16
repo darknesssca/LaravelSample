@@ -118,4 +118,13 @@ class ReportRepository implements ReportRepositoryContract
             throw new ReportNotFoundException();
         }
     }
+
+    public function getProcessingReports()
+    {
+        return Report::select('reward')
+            ->where('processing', '>', 0)
+            ->where('processing', '<=', 1000)
+            ->where('is_payed', false)
+            ->get();
+    }
 }
