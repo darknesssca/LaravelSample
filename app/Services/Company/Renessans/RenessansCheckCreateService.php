@@ -54,6 +54,11 @@ class RenessansCheckCreateService extends RenessansService implements RenessansC
                     'message' => isset($response['message']) ? $response['message'] : 'нет деталей ошибки',
                 ];
             }
+        } else if (
+            isset($response['data']['RSA']) &&
+            isset($response['data']['Upload']) &&
+            (int) $response['data']['Upload'] > 0) {
+                throw new ApiRequestsException(['Не пройдена проверка в РСА']);
         }
         return [
             'result' => true,
