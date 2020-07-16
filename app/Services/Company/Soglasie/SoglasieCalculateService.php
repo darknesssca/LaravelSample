@@ -247,9 +247,9 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                 }
                 $properties['yearsOld'][] = $this->getYearsOld($driver['birthdate']);
                 $properties['experience'][] = $this->getYearsOld($driver['dateBeginDrive']);
-                $properties['fio'][] = $driver['lastName'] . ' ' .
-                    $driver['firstName'] .
-                    isset($driver['middleName']) ? ' ' . $driver['middleName'] : '';
+                $tmpFio = "{$driver['lastName']} {$driver['firstName']}";
+                $tmpFio .=  !empty($driver['middleName']) ? " {$driver['middleName']}" : "";
+                $properties['fio'][] = $tmpFio;
             }
             $data['contract']['param'][] = [
                 'id' => 2128,
@@ -275,7 +275,8 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                 'val' => $attributes['car']['seats'],
             ];
         }
-        if (isset($attributes['car']['maxWeight'])) {
+        $category = $this->carCategoryService->getCategoryById($attributes['car']['category'])->code ?? null;
+        if (isset($attributes['car']['maxWeight']) && $category == 'c') {
             $data['contract']['param'][] = [
                 'id' => 963,
                 'val' => $attributes['car']['maxWeight'],
@@ -299,7 +300,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         ];
         $data['contract']['param'][] = [
             'id' => 4763,
-            'val' =>  $this->genderService->getCompanyGender($owner['gender'], $company->id),
+            'val' =>  $this->genderService->getCompanyGender($owner['gender'], $company->id) == 'male' ? 'М' : 'Ж',
         ];
         $data['contract']['param'][] = [
             'id' => 4024,
@@ -349,7 +350,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         ];
         $data['contract']['param'][] = [
             'id' => 4764,
-            'val' =>  $this->genderService->getCompanyGender($insurer['gender'], $company->id),
+            'val' =>  $this->genderService->getCompanyGender($insurer['gender'], $company->id) == 'male' ? 'М' : 'Ж',
         ];
         $data = [
             'data' => $data,
