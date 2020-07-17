@@ -181,8 +181,8 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                         'val' => $this->carCategoryService->getCompanyCategory($attributes['car']['category'], $attributes['car']['isUsedWithTrailer'], $company->code),
                     ],
                     [
-                        'id' => 463,
-                        'val' => $this->transformBooleanToInteger(false), // заглушка
+                        'id' => 763,
+                        'val' => $this->transformBooleanToInteger(false), // заглушка, флаг транзитного номера
                     ],
                     [
                         'id' => 43,
@@ -228,7 +228,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         }
         //kbm
         $data['contract']['param'][] = [
-            'id' => 1329,
+            'id' => 687,
             'val' => $attributes['serviceData']['kbmId'],
         ];
         //drivers
