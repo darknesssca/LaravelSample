@@ -246,9 +246,10 @@ class Qiwi
                         'sinap-form-version' => 'payout::self-employed-bank-card, 1',
                         'inn' => $this->commonParams['requisites']['inn'],
                         'account' => $this->commonParams['requisites']['card_number'],
-                        'incomeType' => 'FROM_INDIVIDUAL',
+                        'incomeType' => 'FROM_LEGAL_ENTITY',
                         'description' => $this->commonParams['description'],
-                        'fio_optional' => ''
+                        'customerInn' => config('api.qiwi.organizationName'),
+                        'customerOrganization' => config('api.qiwi.organizationInn')
                     ]
                 ];
                 break;
