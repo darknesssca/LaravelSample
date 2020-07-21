@@ -25,7 +25,7 @@ class Qiwi
      * @param string $tax_status_code
      * @param string $description
      */
-    public function __construct($user_requisites, $tax_status_code, $description = 'Перевод')
+    public function __construct($user_requisites, $tax_status_code, $description = 'Услуги по заключению договора страхования')
     {
         $this->connectionParams = [
             'endpoint' => env('QIWI_ENDPOINT'),
@@ -246,9 +246,10 @@ class Qiwi
                         'sinap-form-version' => 'payout::self-employed-bank-card, 1',
                         'inn' => $this->commonParams['requisites']['inn'],
                         'account' => $this->commonParams['requisites']['card_number'],
-                        'incomeType' => 'FROM_INDIVIDUAL',
+                        'incomeType' => 'FROM_LEGAL_ENTITY',
                         'description' => $this->commonParams['description'],
-                        'fio_optional' => ''
+                        'customerInn' => config('api.qiwi.organizationName'),
+                        'customerOrganization' => config('api.qiwi.organizationInn')
                     ]
                 ];
                 break;

@@ -364,7 +364,7 @@ class ReportService implements ReportServiceContract
         return $xls_policies;
     }
 
-    public function initQiwi($user_requisites, $tax_status_code, $description = 'Перевод')
+    public function initQiwi($user_requisites, $tax_status_code, $description = 'Услуги по заключению договора страхования')
     {
         if (empty($this->qiwi)) {
             $this->qiwi = new Qiwi($user_requisites, $tax_status_code, $description);
