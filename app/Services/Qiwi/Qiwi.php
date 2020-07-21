@@ -25,7 +25,7 @@ class Qiwi
      * @param string $tax_status_code
      * @param string $description
      */
-    public function __construct($user_requisites, $tax_status_code, $description = 'Перевод')
+    public function __construct($user_requisites, $tax_status_code, $description = 'Услуги по заключению договора страхования')
     {
         $this->connectionParams = [
             'endpoint' => env('QIWI_ENDPOINT'),
