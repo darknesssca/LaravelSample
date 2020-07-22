@@ -222,8 +222,8 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                     'isNoRegistrationNumber' => false,
                     'registrationNumber' => $attributes['car']['regNumber']
                 ],
-                'sourceAcquisition' => $this->sourceAcquisitionService->getCompanySourceAcquisitions($attributes['car']['sourceAcquisition'],
-                    $company->id),
+                'sourceAcquisition' => (int)$attributes['car']['sourceAcquisition'] > 0 ? $this->sourceAcquisitionService->getCompanySourceAcquisitions($attributes['car']['sourceAcquisition'],
+                    $company->id) : 'находится в салоне',
                 'vehicleCost' => 0,
                 'vehicleUsage' => $this->usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'],
                     $company->id),
@@ -376,8 +376,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
     {
         if (
             $attributes['prevData'] &&
-            isset($attributes['prevData']['setNumber']) && $attributes['prevData']['setNumber'] &&
-            isset($attributes['prevData']['quoteNumber']) && $attributes['prevData']['quoteNumber']
+            isset($attributes['prevData']['setNumber']) && $attributes['prevData']['setNumber']
         ) {
             $data['setNumber'] = $attributes['prevData']['setNumber'];
         }
@@ -387,7 +386,6 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
     {
         if (
             $attributes['prevData'] &&
-            isset($attributes['prevData']['setNumber']) && $attributes['prevData']['setNumber'] &&
             isset($attributes['prevData']['quoteNumber']) && $attributes['prevData']['quoteNumber']
         ) {
             $data['quoteNumber'] = $attributes['prevData']['quoteNumber'];
