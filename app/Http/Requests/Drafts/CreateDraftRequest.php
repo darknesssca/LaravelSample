@@ -39,7 +39,7 @@ class CreateDraftRequest extends AbstractRequest
             "car.minWeight" => "regex:/^\d+$/",
             "car.maxWeight" => "regex:/^\d+$/",
             "car.seats" => "regex:/^\d+$/",
-            "car.mileage" => "regex:/^\d+$/",
+            "car.mileage" => "nullable|regex:/^\d+$/",
             "car.sourceAcquisition" => "regex:/^\d+$/",
             "car.vehicleUsage" => "regex:/^\d+$/",
             "car.vin" => "string",
