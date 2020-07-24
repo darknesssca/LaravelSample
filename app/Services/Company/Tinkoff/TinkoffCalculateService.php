@@ -216,7 +216,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 'kuzovNumber' => [
                     'isKuzovMissing' => true,
                 ],
-                'mileage' => $attributes['car']['mileage'],
+                'mileage' => $attributes['car']['mileage'] ?? 0,
                 'numberOfOwners' => 1,
                 'registrationNumber' => [
                     'isNoRegistrationNumber' => false,
