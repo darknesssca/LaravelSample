@@ -62,10 +62,10 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             throw new ApiRequestsException('API страховой компании не вернуло ответ');
         }
         if (!isset($response['result']) || !$response['result']) {
-            throw new ApiRequestsException(
-                'API страховой компании вернуло ошибку: ' .
+            throw new ApiRequestsException([
+                'API страховой компании вернуло ошибку: ',
                 isset($response['message']) ? $response['message'] : ''
-            );
+            ]);
         }
         if (!isset($response['data']) || !$response['data'] || !count($response['data'])) {
             throw new ApiRequestsException([
