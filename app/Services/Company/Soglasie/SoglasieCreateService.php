@@ -171,6 +171,9 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
                 'Number' => $attributes['car']['inspection']['number'],
                 'Date' => $attributes['car']['inspection']['dateIssue']
             ];
+            $this->setValuesByArray($data['CarInfo']['TicketCar'], [
+                "Serial" => 'documentSeries',
+            ], $attributes['car']['inspection']);
 
             $data['CarInfo']['TicketCarYear'] = $this->getYearFromDate($attributes['car']['inspection']['dateEnd']);
             $data['CarInfo']['TicketCarMonth'] = $this->getMonthFromDate($attributes['car']['inspection']['dateEnd']);
@@ -195,9 +198,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
             "MaxMass" => 'maxWeight',
             "PasQuant" => 'seats',
         ], $attributes['car']);
-        $this->setValuesByArray($data['CarInfo']['TicketCar'], [
-            "Serial" => 'documentSeries',
-        ], $attributes['car']['inspection']);
+
         //car.documents
         $data['CarInfo']['DocumentCar'] = [
             'TypeRSA' => $this->docTypeService->getCompanyCarDocType3($attributes['car']['document']['documentType'], $company->id),
