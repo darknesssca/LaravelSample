@@ -124,9 +124,6 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
                 'ModelPTS' => $attributes['car']['model'],
                 'YearIssue' => $attributes['car']['year'],
                 'DocumentCar' => [],
-                'TicketCar' => [
-                    'TypeRSA' => $this->docTypeService->getCompanyInspectionDocType3(true, $company->id),
-                ],
                 'EngCap' => $attributes['car']['enginePower'],
                 'GoalUse' => $usageTarget,
                 'Rented' => $this->transformAnyToBoolean($usageTarget == 'Rent'),
@@ -169,8 +166,11 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         ];
 
         if (!empty($attributes['car']['inspection']['number']) && !empty($attributes['car']['inspection']['dateIssue']) && !empty($attributes['car']['inspection']['dateEnd'])) {
-            $data['CarInfo']['TicketCar']['Number'] = $attributes['car']['inspection']['number'];
-            $data['CarInfo']['TicketCar']['Date'] = $attributes['car']['inspection']['dateIssue'];
+            $data['CarInfo']['TicketCar'] = [
+                'TypeRSA' => $this->docTypeService->getCompanyInspectionDocType3(true, $company->id),
+                'Number' => $attributes['car']['inspection']['number'],
+                'Date' => $attributes['car']['inspection']['dateIssue']
+            ];
 
             $data['CarInfo']['TicketCarYear'] = $this->getYearFromDate($attributes['car']['inspection']['dateEnd']);
             $data['CarInfo']['TicketCarMonth'] = $this->getMonthFromDate($attributes['car']['inspection']['dateEnd']);
