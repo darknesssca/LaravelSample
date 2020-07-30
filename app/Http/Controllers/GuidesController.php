@@ -11,6 +11,7 @@ use App\Contracts\Repositories\Services\GenderServiceContract;
 use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
 use App\Contracts\Repositories\Services\SourceAcquisitionServiceContract;
 use App\Contracts\Repositories\Services\UsageTargetServiceContract;
+use App\Http\Requests\CarModelsByMarkRequest;
 use App\Http\Requests\GuidesInsuranceCompaniesRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -24,10 +25,11 @@ class GuidesController extends Controller
         return Response::success($data);
     }
 
-    public function models($mark_id)
+    public function models($mark_id, CarModelsByMarkRequest $request)
     {
+        $categoryId = $request->validated()['category_id'] ?? null;
         $service = app(CarModelServiceContract::class);
-        $data = $service->getModelListByMarkId($mark_id);
+        $data = $service->getModelListByMarkId($mark_id, $categoryId);
         return Response::success($data);
     }
 

@@ -23,9 +23,9 @@ class CarModelService implements CarModelServiceContract
         $this->carCategoryRepository = $carCategoryRepository;
     }
 
-    public function getModelListByMarkId($mark_id)
+    public function getModelListByMarkId($mark_id, $categoryId = null)
     {
-        $data = $this->carModelRepository->getModelListByMarkId($mark_id);
+        $data = $this->carModelRepository->getModelListByMarkId($mark_id, $categoryId);
 
         if (!$data || !$data->count()) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
