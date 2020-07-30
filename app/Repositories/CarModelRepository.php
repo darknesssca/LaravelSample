@@ -17,14 +17,18 @@ class CarModelRepository implements CarModelRepositoryContract
     private $CACHE_DAY_TTL = 24 * 60 * 60;
 
 
-    public function getModelListByMarkId($mark_id)
+    public function getModelListByMarkId($mark_id, $categoryId = null)
     {
         $cacheTag = self::getCarModelTag();
-        $cacheKey = self::getCacheKey("ListById", $mark_id);
+        $cacheKey = self::getCacheKey("ListByIds", $mark_id, $categoryId);
 
-        return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, function () use ($mark_id) {
-            return CarModel::select(["id", "code", "name", "category_id", "mark_id"])
-                ->where("mark_id", $mark_id)->get();
+        return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, function () use ($mark_id, $categoryId) {
+            $query = CarModel::select(["id", "code", "name", "category_id", "mark_id"])
+                ->where("mark_id", $mark_id);
+            if ($categoryId) {
+                $query->where('category_id', $categoryId);
+            }
+            return $query->orderBy('name', 'asc')->get();
         });
     }
 
