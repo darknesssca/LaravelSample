@@ -84,8 +84,14 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 'API страховой компании не вернуло данных',
                 isset($response['response']->Header->resultInfo->errorInfo->descr) ?
                     $response['response']->Header->resultInfo->errorInfo->descr :
-                    'нет данных об ошибке'
+                    'нет данных об ошибке',
             ];
+
+            if (!empty($response['response']->validInfo)) {
+                foreach ($response['response']->validInfo as $message) {
+                    $data['errorMessage'][] = explode(';', $message->description)[0];
+                }
+            }
             return $data;
         }
         if (isset($response['response']->OSAGOFQ->isTerminalG) && $response['response']->OSAGOFQ->isTerminalG) {
