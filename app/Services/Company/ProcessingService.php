@@ -179,7 +179,7 @@ class ProcessingService extends CompanyService implements ProcessingServiceContr
     public function getPayment()
     {
         $limit = config('api_sk.maxPoliciesCountForPaymentCheck');
-        $policies = $this->policyService->getNotPaidPolicies($limit);
+        $policies = $this->policyService->getNotPaidPolicies($limit, 10);
         $method = 'getPayment';
         if (!$policies) {
             return;
@@ -187,6 +187,7 @@ class ProcessingService extends CompanyService implements ProcessingServiceContr
         foreach ($policies as $policy) {
             try {
                 $policyArray = $policy->toArray();
+                if (!$policyArray['bill']) continue;
                 $company = $this->getCompanyById($policyArray['insurance_company_id']);
                 $this->runService($company, $policyArray, $method);
             } catch (\Exception $exception) {

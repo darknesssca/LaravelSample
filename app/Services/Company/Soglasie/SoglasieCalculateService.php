@@ -227,9 +227,11 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
             ];
         }
         //kbm
-        $data['contract']['param'][] = [
-            'id' => 687,
-            'val' => $attributes['serviceData']['kbmId'],
+        $data['contract']['coeff'] = [
+            [
+                'id' => 687,
+                'val' => $attributes['serviceData']['kbmId'],
+            ]
         ];
         //drivers
         if (!$attributes['policy']['isMultidrive']) {
