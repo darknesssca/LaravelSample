@@ -61,7 +61,23 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
             'payload' => $data
         ]);
 
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            $data,
+            'carInsurance',
+            __CLASS__,
+            'request',
+        );
+
         $response = $this->requestBySoap($this->apiWsdlUrl, 'CalcProduct', $data, $auth, $headers);
+
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            $response,
+            'carInsurance',
+            __CLASS__,
+            'response',
+        );
 
         $this->writeResponseLog($response);
 
