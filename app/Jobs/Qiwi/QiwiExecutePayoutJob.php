@@ -40,7 +40,7 @@ class QiwiExecutePayoutJob extends QiwiJob
                 $deferredResultUtil = app(DeferredResultContract::class);
                 $deferredResultId = $deferredResultUtil->getId('report', $report->id);
                 if ($deferredResultUtil->exist($deferredResultId)) {
-                    $deferredResultUtil->done($deferredResultId);
+                    $deferredResultUtil->done($deferredResultId, $report->id);
                 }
                 dispatch((new QiwiCreateXlsJob($this->params))->onQueue('QiwiCreateXls'));
             } catch (PayoutInsufficientFundsException $exception) {

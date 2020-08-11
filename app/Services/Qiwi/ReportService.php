@@ -144,7 +144,7 @@ class ReportService implements ReportServiceContract
             'report_id' => $report->id,
         ];
 
-        $deferredResultUtil->process($deferredResultId);
+        $deferredResultUtil->process($deferredResultId, $report->id);
 
         dispatch((new QiwiCreatePayoutJob($params))->onQueue('QiwiCreatePayout'));
 
