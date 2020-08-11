@@ -548,10 +548,12 @@ class PolicyService implements PolicyServiceContract
                         ]);
                 }
             }
-
-            //сортировка по датам
-            $result['detail'] = $result['detail']->sortKeys();
         }
+
+        //сортировка по датам
+        $result['detail'] = $result['detail']->sortKeys(SORT_NATURAL);
+
+
         return $result;
     }
 
