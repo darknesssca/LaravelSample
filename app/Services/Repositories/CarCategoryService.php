@@ -37,7 +37,7 @@ class CarCategoryService implements CarCategoryServiceContract
 
     public function getCompanyCategory($categoryId, $isUsedWithTrailer, $companyCode)
     {
-        $category = $this->carCategoryRepository->getCategoryById($categoryId);
+        $category = $this->getCategoryById($categoryId);
 
         if (!$category) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
@@ -64,5 +64,9 @@ class CarCategoryService implements CarCategoryServiceContract
             }
         }
         return $data;
+    }
+
+    public function getCategoryById($categoryId) {
+        return $this->carCategoryRepository->getCategoryById($categoryId);
     }
 }

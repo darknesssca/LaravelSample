@@ -6,6 +6,8 @@ return [
         'adminEmails' => env('QIWI_ADMIN_EMAILS'),
         'requestInterval' => env('QIWI_REQUEST_INTERVAL'),
         'balanceNotifyEmail' => env('QIWI_BALANCE_NOTIFY_EMAIL'),
+        'organizationName' => env('ORGANIZATION_NAME', 'ООО ПАРЭКС'),
+        'organizationInn' => env('ORGANIZATION_INN', '7727101580'),
     ],
     'notify_sender' => env('EMAIL_NOTIFY_SENDER'),
     'service_auth' => [

@@ -74,7 +74,7 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
             ]);
         }
         return [
-            'kbmId' => $response['response']->response->CalcResponseValue->IdRequestCalc,
+            'kbmId' => $response['response']->response->CalcResponseValue->PolicyCalc->PolicyKBMValue,
         ];
     }
 
