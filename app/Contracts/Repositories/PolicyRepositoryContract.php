@@ -21,9 +21,10 @@ interface PolicyRepositoryContract
      * Возвращает коллекцию неоплаченных полисов за последние 2 дня
      *
      * @param $limit - ограничение по количеству записей, выбираемых за раз
+     * @param int $daysToSubtract
      * @return mixed
      */
-    public function getNotPaidPolicies($limit);
+    public function getNotPaidPolicies($limit, $daysToSubtract = 2);
 
     public function update($id, $data);
 

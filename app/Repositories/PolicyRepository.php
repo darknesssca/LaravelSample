@@ -101,14 +101,14 @@ class PolicyRepository implements PolicyRepositoryContract
             ->first();
     }
 
-    public function getNotPaidPolicies($limit)
+    public function getNotPaidPolicies($limit, $daysToSubtract = 2)
     {
         return Policy::with([
             'company',
             'bill',
         ])
             ->where('paid', 0)
-            ->whereDate('registration_date', '>', (new Carbon)->subDays(2)->format('Y-m-d'))
+            ->whereDate('registration_date', '>', (new Carbon)->subDays($daysToSubtract)->format('Y-m-d'))
             ->limit($limit)
             ->get();
     }

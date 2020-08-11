@@ -741,9 +741,9 @@ class PolicyService implements PolicyServiceContract
         return $this->policyRepository->getNotPaidPolicyByPaymentNumber($policyNumber);
     }
 
-    public function getNotPaidPolicies($limit)
+    public function getNotPaidPolicies($limit, $daysToSubtract = 2)
     {
-        return $this->policyRepository->getNotPaidPolicies($limit);
+        return $this->policyRepository->getNotPaidPolicies($limit, $daysToSubtract);
     }
 
     public function searchOldPolicyByPolicyNumber($companyId, $attributes)

@@ -18,7 +18,7 @@ interface PolicyServiceContract
 
     public function getNotPaidPolicyByPaymentNumber($policyNumber);
 
-    public function getNotPaidPolicies($limit);
+    public function getNotPaidPolicies($limit, $daysToSubtract = 2);
 
     public function searchOldPolicyByPolicyNumber($companyId, $attributes);
 }
