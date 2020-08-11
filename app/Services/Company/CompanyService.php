@@ -11,6 +11,7 @@ use App\Traits\TokenTrait;
 use App\Traits\ValueSetterTrait;
 use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
 use Benfin\Api\Contracts\NotifyMicroserviceContract;
+use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 use Benfin\Api\Traits\HttpRequest;
 use Benfin\Api\Traits\SoapRequest;
@@ -181,6 +182,40 @@ abstract class CompanyService
             static::companyCode,
             $tag
         );
+    }
+
+    /**
+     * Метод записи данных request и response от мс в базу данных (logs)
+     * @param string $token
+     * @param $data
+     * @param string $code
+     * @param string $serviceName
+     * @param string $type
+     * @param int|null $user_id
+     */
+    public function writeDatabaseLog(string $token, $data,
+                                     string $code, string $serviceName,
+                                     string $type, int $user_id = null)
+    {
+        $logMicroservice = app(LogMicroserviceContract::class);
+
+        $logs = $logMicroservice->getLogsList([
+            'message' => $token,
+        ]);
+
+        $message = [];
+        if (!empty($logs['data'])) {
+            $log = array_shift($logs['data']);
+            $message = json_decode($log['message']);
+            $message->$serviceName->$type = $data;
+
+            $logMicroservice->updateLog($message, $log['id']);
+        } else {
+            $message[$serviceName][$type] = $data;
+            $message['car_insurance_request_token'] = $token;
+
+            $logMicroservice->sendLog($message, $code, $user_id ?? GlobalStorage::getUserId());
+        }
     }
 
     public function writeResponseLog(array $data)
