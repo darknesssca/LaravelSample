@@ -72,26 +72,20 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
             'payload' => $data
         ]);
 
-        $this->writeDatabaseLog(
-            $attributes['token'],
-            $data,
-            config('api_sk.logMicroserviceCode'),
-            $this->companyName,
-            $this->serviceName,
-            'request',
-        );
-
         $response = $this->postRequest($url, $data, $headers, false, false, true);
 
         $this->writeResponseLog($response);
 
         $this->writeDatabaseLog(
             $attributes['token'],
+            [
+                'url' => $this->apiWsdlUrl,
+                'payload' => $data
+            ],
             $response,
             config('api_sk.logMicroserviceCode'),
             $this->companyName,
             $this->serviceName,
-            'response',
         );
 
         if (!$response) {

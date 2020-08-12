@@ -33,7 +33,6 @@ class SoglasieCancelCreateService extends SoglasieService implements SoglasieCan
         ]);
         $headers = $this->getHeaders();
 
-
         $this->writeRequestLog([
             'url' => $url,
             'payload' => []

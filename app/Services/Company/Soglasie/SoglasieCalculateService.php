@@ -63,24 +63,18 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
             'payload' => $data
         ]);
 
-        $this->writeDatabaseLog(
-            $attributes['token'],
-            $data,
-            config('api_sk.logMicroserviceCode'),
-            $this->companyName,
-            $this->serviceName,
-            'request',
-        );
-
         $response = $this->requestBySoap($this->apiWsdlUrl, 'CalcProduct', $data, $auth, $headers);
 
         $this->writeDatabaseLog(
             $attributes['token'],
+            [
+                'url' => $this->apiWsdlUrl,
+                'payload' => $data
+            ],
             $response,
             config('api_sk.logMicroserviceCode'),
             $this->companyName,
             $this->serviceName,
-            'response',
         );
 
         $this->writeResponseLog($response);

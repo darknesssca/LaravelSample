@@ -65,26 +65,20 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
             'payload' => $data
         ]);
 
-        $this->writeDatabaseLog(
-            $attributes['token'],
-            $data,
-            config('api_sk.logMicroserviceCode'),
-            $this->companyName,
-            $this->serviceName,
-            'request',
-        );
-
         $response = $this->requestBySoap($this->apiWsdlUrl, 'getScoringId', $data, $auth, $headers, $xmlAttributes);
 
         $this->writeResponseLog($response);
 
         $this->writeDatabaseLog(
             $attributes['token'],
+            [
+                'url' => $this->apiWsdlUrl,
+                'payload' => $data
+            ],
             $response,
             config('api_sk.logMicroserviceCode'),
             $this->companyName,
             $this->serviceName,
-            'response',
         );
 
         if (isset($response['fault']) && $response['fault']) {

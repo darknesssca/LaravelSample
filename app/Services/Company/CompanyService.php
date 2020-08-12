@@ -190,16 +190,17 @@ abstract class CompanyService
     /**
      * Метод записи данных request и response от мс в базу данных (logs)
      * @param string $token
-     * @param $data
+     * @param $requestData
+     * @param $responseData
      * @param string $code
      * @param string $companyName
-     * @param string $type
      * @param string $serviceName
      * @param int|null $user_id
      */
-    public function writeDatabaseLog(string $token, $data,
+    public function writeDatabaseLog(string $token,
+                                     $requestData, $responseData,
                                      string $code, string $companyName,
-                                     string $serviceName, string $type,
+                                     string $serviceName,
                                      int $user_id = null)
     {
         $logMicroservice = app(LogMicroserviceContract::class);
@@ -215,12 +216,16 @@ abstract class CompanyService
             $message->$companyName = $message->$companyName ?? new \stdClass();
             $message->$companyName->$serviceName = $message->$companyName->$serviceName ?? new \stdClass();
 
-            $message->$companyName->$serviceName->$type = $data;
+            $message->$companyName->$serviceName->request = $requestData;
+            $message->$companyName->$serviceName->response = $responseData;
 
             $logMicroservice->updateLog($message, $log['id']);
         } else {
             $message['car_insurance_request_token'] = $token;
-            $message[$companyName][$serviceName][$type] = $data;
+            $message[$companyName][$serviceName] = [
+                'request' => $requestData,
+                'response' => $responseData,
+            ];
 
             $logMicroservice->sendLog($message, $code, $user_id ?? GlobalStorage::getUserId());
         }

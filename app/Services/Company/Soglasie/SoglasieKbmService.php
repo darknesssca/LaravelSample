@@ -43,24 +43,18 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
             'payload' => $data
         ]);
 
-        $this->writeDatabaseLog(
-            $attributes['token'],
-            $data,
-            config('api_sk.logMicroserviceCode'),
-            $this->companyName,
-            $this->serviceName,
-            'request',
-        );
-
         $response = $this->requestBySoap($this->apiWsdlUrl, 'getKbm', $data, $auth, $headers);
 
         $this->writeDatabaseLog(
             $attributes['token'],
+            [
+                'url' => $this->apiWsdlUrl,
+                'payload' => $data
+            ],
             $response,
             config('api_sk.logMicroserviceCode'),
             $this->companyName,
             $this->serviceName,
-            'response',
         );
 
         $this->writeResponseLog($response);
