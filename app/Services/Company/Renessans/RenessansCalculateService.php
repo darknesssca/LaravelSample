@@ -48,15 +48,35 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
         $this->setAuth($attributes);
         $url = $this->getUrl();
         $data = $this->prepareData($company, $attributes);
+        $this->companyName = $this->getCompanyName(__NAMESPACE__);
+        $this->serviceName = $this->getServiceName(__CLASS__);
 
         $this->writeRequestLog([
             'url' => $url,
             'payload' => $data
         ]);
 
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            $data,
+            config('api_sk.logMicroserviceCode'),
+            $this->companyName,
+            $this->serviceName,
+            'request',
+        );
+
         $response = $this->postRequest($url, $data, [], false);
 
         $this->writeResponseLog($response);
+
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            $response,
+            config('api_sk.logMicroserviceCode'),
+            $this->companyName,
+            $this->serviceName,
+            'response',
+        );
 
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');

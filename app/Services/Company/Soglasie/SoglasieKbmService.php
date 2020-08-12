@@ -35,13 +35,33 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
         $data = $this->prepareData($company, $attributes);
         $headers = $this->getHeaders();
         $auth = $this->getAuth();
+        $this->companyName = $this->getCompanyName(__NAMESPACE__);
+        $this->serviceName = $this->getServiceName(__CLASS__);
 
         $this->writeRequestLog([
             'url' => $this->apiWsdlUrl,
             'payload' => $data
         ]);
 
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            $data,
+            config('api_sk.logMicroserviceCode'),
+            $this->companyName,
+            $this->serviceName,
+            'request',
+        );
+
         $response = $this->requestBySoap($this->apiWsdlUrl, 'getKbm', $data, $auth, $headers);
+
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            $response,
+            config('api_sk.logMicroserviceCode'),
+            $this->companyName,
+            $this->serviceName,
+            'response',
+        );
 
         $this->writeResponseLog($response);
 

@@ -57,15 +57,35 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
                 'partial' => $this->transformAnyToBoolean(false),
             ],
         ];
+        $this->companyName = $this->getCompanyName(__NAMESPACE__);
+        $this->serviceName = $this->getServiceName(__CLASS__);
 
         $this->writeRequestLog([
             'url' => $this->apiWsdlUrl,
             'payload' => $data
         ]);
 
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            $data,
+            config('api_sk.logMicroserviceCode'),
+            $this->companyName,
+            $this->serviceName,
+            'request',
+        );
+
         $response = $this->requestBySoap($this->apiWsdlUrl, 'getScoringId', $data, $auth, $headers, $xmlAttributes);
 
         $this->writeResponseLog($response);
+
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            $response,
+            config('api_sk.logMicroserviceCode'),
+            $this->companyName,
+            $this->serviceName,
+            'response',
+        );
 
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(

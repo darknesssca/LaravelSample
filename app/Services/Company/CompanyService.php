@@ -31,6 +31,9 @@ abstract class CompanyService
     protected $requestProcessService;
     protected $policyService;
 
+    protected $companyName;
+    protected $serviceName;
+
 
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
@@ -189,13 +192,15 @@ abstract class CompanyService
      * @param string $token
      * @param $data
      * @param string $code
-     * @param string $serviceName
+     * @param string $companyName
      * @param string $type
+     * @param string $serviceName
      * @param int|null $user_id
      */
     public function writeDatabaseLog(string $token, $data,
-                                     string $code, string $serviceName,
-                                     string $type, int $user_id = null)
+                                     string $code, string $companyName,
+                                     string $serviceName, string $type,
+                                     int $user_id = null)
     {
         $logMicroservice = app(LogMicroserviceContract::class);
 
@@ -207,15 +212,32 @@ abstract class CompanyService
         if (!empty($logs['data'])) {
             $log = array_shift($logs['data']);
             $message = json_decode($log['message']);
-            $message->$serviceName->$type = $data;
+            $message->$companyName = $message->$companyName ?? new \stdClass();
+            $message->$companyName->$serviceName = $message->$companyName->$serviceName ?? new \stdClass();
+
+            $message->$companyName->$serviceName->$type = $data;
 
             $logMicroservice->updateLog($message, $log['id']);
         } else {
-            $message[$serviceName][$type] = $data;
             $message['car_insurance_request_token'] = $token;
+            $message[$companyName][$serviceName][$type] = $data;
 
             $logMicroservice->sendLog($message, $code, $user_id ?? GlobalStorage::getUserId());
         }
+    }
+
+    public function getCompanyName($namespace)
+    {
+        $tmp = explode('\\', $namespace);
+
+        return(end($tmp));
+    }
+
+    public function getServiceName($className)
+    {
+        $tmp = explode('\\', $className);
+
+        return (end($tmp));
     }
 
     public function writeResponseLog(array $data)

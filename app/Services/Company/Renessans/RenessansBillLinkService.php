@@ -36,7 +36,23 @@ class RenessansBillLinkService extends RenessansService implements RenessansBill
             'payload' => $data
         ]);
 
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            $data,
+            config('api_sk.logMicroserviceUrl'),
+            'Renessans',
+            'request',
+        );
+
         $response = $this->getRequest($url, $data, [], false);
+
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            $response,
+            config('api_sk.logMicroserviceUrl'),
+            'Renessans',
+            'response',
+        );
 
         $this->writeResponseLog($response);
 

@@ -55,6 +55,8 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         $data = $this->prepareData($company, $attributes);
         $headers = $this->getHeaders();
         $auth = $this->getAuth();
+        $this->companyName = $this->getCompanyName(__NAMESPACE__);
+        $this->serviceName = $this->getServiceName(__CLASS__);
 
         $this->writeRequestLog([
             'url' => $this->apiWsdlUrl,
@@ -64,8 +66,9 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         $this->writeDatabaseLog(
             $attributes['token'],
             $data,
-            'carInsurance',
-            __CLASS__,
+            config('api_sk.logMicroserviceCode'),
+            $this->companyName,
+            $this->serviceName,
             'request',
         );
 
@@ -74,8 +77,9 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
         $this->writeDatabaseLog(
             $attributes['token'],
             $response,
-            'carInsurance',
-            __CLASS__,
+            config('api_sk.logMicroserviceCode'),
+            $this->companyName,
+            $this->serviceName,
             'response',
         );
 
