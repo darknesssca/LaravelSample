@@ -53,6 +53,8 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
         $this->setAuth($attributes);
         $url = $this->getUrl();
         $data = $this->prepareData($company, $attributes);
+        $this->companyName = $this->getName(__NAMESPACE__);
+        $this->serviceName = $this->getName(__CLASS__);
 
         $this->writeRequestLog([
             'url' => $url,
@@ -60,6 +62,18 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
         ]);
 
         $response = $this->postRequest($url, $data, [], false);
+
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            [
+                'url' => $this->$url,
+                'payload' => $data
+            ],
+            $response,
+            config('api_sk.logMicroserviceCode'),
+            $this->companyName,
+            $this->serviceName,
+        );
 
         $this->writeResponseLog($response);
 

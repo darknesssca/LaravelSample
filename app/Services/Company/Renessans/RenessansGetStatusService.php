@@ -28,6 +28,8 @@ class RenessansGetStatusService extends RenessansService implements RenessansGet
         $data = [];
         $this->setAuth($data);
         $url = $this->getUrl($attributes);
+        $this->companyName = $this->getName(__NAMESPACE__);
+        $this->serviceName = $this->getName(__CLASS__);
 
         $this->writeRequestLog([
             'url' => $url,
@@ -35,6 +37,18 @@ class RenessansGetStatusService extends RenessansService implements RenessansGet
         ]);
 
         $response = $this->getRequest($url, $data, [], false);
+
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            [
+                'url' => $this->$url,
+                'payload' => $data
+            ],
+            $response,
+            config('api_sk.logMicroserviceCode'),
+            $this->companyName,
+            $this->serviceName,
+        );
 
         $this->writeResponseLog($response);
 

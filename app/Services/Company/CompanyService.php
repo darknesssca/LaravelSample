@@ -231,18 +231,11 @@ abstract class CompanyService
         }
     }
 
-    public function getCompanyName($namespace)
+    public function getName($full)
     {
-        $tmp = explode('\\', $namespace);
+        $tmp = explode('\\', $full);
 
         return(end($tmp));
-    }
-
-    public function getServiceName($className)
-    {
-        $tmp = explode('\\', $className);
-
-        return (end($tmp));
     }
 
     public function writeResponseLog(array $data)

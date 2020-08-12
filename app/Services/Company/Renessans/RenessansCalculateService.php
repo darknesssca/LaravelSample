@@ -48,22 +48,14 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
         $this->setAuth($attributes);
         $url = $this->getUrl();
         $data = $this->prepareData($company, $attributes);
-        $this->companyName = $this->getCompanyName(__NAMESPACE__);
-        $this->serviceName = $this->getServiceName(__CLASS__);
+        $this->companyName = $this->getName(__NAMESPACE__);
+        $this->serviceName = $this->getName(__CLASS__);
 
         $this->writeRequestLog([
             'url' => $url,
             'payload' => $data
         ]);
 
-        $this->writeDatabaseLog(
-            $attributes['token'],
-            $data,
-            config('api_sk.logMicroserviceCode'),
-            $this->companyName,
-            $this->serviceName,
-            'request',
-        );
 
         $response = $this->postRequest($url, $data, [], false);
 
@@ -71,11 +63,14 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
 
         $this->writeDatabaseLog(
             $attributes['token'],
+            [
+                'url' => $this->$url,
+                'payload' => $data
+            ],
             $response,
             config('api_sk.logMicroserviceCode'),
             $this->companyName,
             $this->serviceName,
-            'response',
         );
 
         if (!$response) {

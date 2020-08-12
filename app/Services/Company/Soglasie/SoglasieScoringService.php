@@ -57,8 +57,8 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
                 'partial' => $this->transformAnyToBoolean(false),
             ],
         ];
-        $this->companyName = $this->getCompanyName(__NAMESPACE__);
-        $this->serviceName = $this->getServiceName(__CLASS__);
+        $this->companyName = $this->getName(__NAMESPACE__);
+        $this->serviceName = $this->getName(__CLASS__);
 
         $this->writeRequestLog([
             'url' => $this->apiWsdlUrl,

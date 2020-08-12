@@ -28,6 +28,8 @@ class RenessansCheckCreateService extends RenessansService implements RenessansC
         $data = [];
         $this->setAuth($data);
         $url = $this->getUrl($attributes);
+        $this->companyName = $this->getName(__NAMESPACE__);
+        $this->serviceName = $this->getName(__CLASS__);
 
         $this->writeRequestLog([
             'url' => $url,
@@ -37,6 +39,18 @@ class RenessansCheckCreateService extends RenessansService implements RenessansC
         $response = $this->getRequest($url, $data, [], false);
 
         $this->writeResponseLog($response);
+
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            [
+                'url' => $this->$url,
+                'payload' => $data
+            ],
+            $response,
+            config('api_sk.logMicroserviceCode'),
+            $this->companyName,
+            $this->serviceName,
+        );
 
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');

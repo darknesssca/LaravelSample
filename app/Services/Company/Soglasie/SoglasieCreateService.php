@@ -64,8 +64,8 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         $data = $this->prepareData($company, $attributes);
         $headers = $this->getHeaders();
         $url = $this->getUrl();
-        $this->companyName = $this->getCompanyName(__NAMESPACE__);
-        $this->serviceName = $this->getServiceName(__CLASS__);
+        $this->companyName = $this->getName(__NAMESPACE__);
+        $this->serviceName = $this->getName(__CLASS__);
 
         $this->writeRequestLog([
             'url' => $url,
