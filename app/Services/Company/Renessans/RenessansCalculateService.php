@@ -48,8 +48,6 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
         $this->setAuth($attributes);
         $url = $this->getUrl();
         $data = $this->prepareData($company, $attributes);
-        $this->companyName = $this->getName(__NAMESPACE__);
-        $this->serviceName = $this->getName(__CLASS__);
 
         $this->writeRequestLog([
             'url' => $url,
@@ -69,8 +67,8 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             ],
             $response,
             config('api_sk.logMicroserviceCode'),
-            $this->companyName,
-            $this->serviceName,
+            static::companyCode,
+            $this->getName(__CLASS__),
         );
 
         if (!$response) {
