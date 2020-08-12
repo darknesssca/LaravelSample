@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Models\IntermediateData;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Console\Command;
 
 class ClearIntermediateData extends Command
@@ -42,8 +43,15 @@ class ClearIntermediateData extends Command
      */
     public function handle()
     {
-        IntermediateData::query()
-            ->where('created_at', '<', Carbon::now()->subDay()->format('Y-m-d H:i:s'))
-            ->delete();
+        echo 'Начало удаления записей из таблицы intermediate_data';
+        try {
+            IntermediateData::query()
+                ->where('created_at', '<', Carbon::now()->subDay()->format('Y-m-d H:i:s'))
+                ->delete();
+            echo 'Записи из таблицы intermediate_data успешно удалены';
+        } catch (Exception $exception) {
+            echo 'Ошибка удаления записей из таблицы intermediate_data: ' . $exception->getMessage();
+        }
+
     }
 }
