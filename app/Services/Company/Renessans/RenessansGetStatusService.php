@@ -41,7 +41,7 @@ class RenessansGetStatusService extends RenessansService implements RenessansGet
         $this->writeDatabaseLog(
             $attributes['token'],
             [
-                'url' => $this->$url,
+                'url' => $url,
                 'payload' => $data
             ],
             $response,

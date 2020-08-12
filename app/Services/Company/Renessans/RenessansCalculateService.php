@@ -64,7 +64,7 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
         $this->writeDatabaseLog(
             $attributes['token'],
             [
-                'url' => $this->$url,
+                'url' => $url,
                 'payload' => $data
             ],
             $response,

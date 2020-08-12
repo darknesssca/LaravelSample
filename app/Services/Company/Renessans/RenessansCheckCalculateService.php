@@ -28,6 +28,8 @@ class RenessansCheckCalculateService extends RenessansService implements Renessa
         $data = [];
         $this->setAuth($data);
         $url = $this->getUrl($attributes['data']);
+        $this->companyName = $this->getName(__NAMESPACE__);
+        $this->serviceName = $this->getName(__CLASS__);
 
         $this->writeRequestLog([
             'url' => $url,
@@ -35,6 +37,18 @@ class RenessansCheckCalculateService extends RenessansService implements Renessa
         ]);
 
         $response = $this->getRequest($url, $data, [], false);
+
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            [
+                'url' => $url,
+                'payload' => $data
+            ],
+            $response,
+            config('api_sk.logMicroserviceCode'),
+            $this->companyName,
+            $this->serviceName,
+        );
 
         $this->writeResponseLog($response);
 

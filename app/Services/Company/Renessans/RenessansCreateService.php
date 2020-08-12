@@ -66,7 +66,7 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
         $this->writeDatabaseLog(
             $attributes['token'],
             [
-                'url' => $this->$url,
+                'url' => $url,
                 'payload' => $data
             ],
             $response,

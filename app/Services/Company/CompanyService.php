@@ -197,11 +197,8 @@ abstract class CompanyService
      * @param string $serviceName
      * @param int|null $user_id
      */
-    public function writeDatabaseLog(string $token,
-                                     $requestData, $responseData,
-                                     string $code, string $companyName,
-                                     string $serviceName,
-                                     int $user_id = null)
+    public function writeDatabaseLog(string $token, $requestData, $responseData, string $code, string $companyName,
+                                     string $serviceName, int $user_id = null)
     {
         $logMicroservice = app(LogMicroserviceContract::class);
 
@@ -212,12 +209,12 @@ abstract class CompanyService
         $message = [];
         if (!empty($logs['data'])) {
             $log = array_shift($logs['data']);
-            $message = json_decode($log['message']);
-            $message->$companyName = $message->$companyName ?? new \stdClass();
-            $message->$companyName->$serviceName = $message->$companyName->$serviceName ?? new \stdClass();
+            $message = json_decode($log['message'], true);
 
-            $message->$companyName->$serviceName->request = $requestData;
-            $message->$companyName->$serviceName->response = $responseData;
+            $message[$companyName][$serviceName] = [
+                'request' => $requestData,
+                'response' => $responseData,
+            ];
 
             $logMicroservice->updateLog($message, $log['id']);
         } else {

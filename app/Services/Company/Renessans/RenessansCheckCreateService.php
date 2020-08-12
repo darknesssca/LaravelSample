@@ -43,7 +43,7 @@ class RenessansCheckCreateService extends RenessansService implements RenessansC
         $this->writeDatabaseLog(
             $attributes['token'],
             [
-                'url' => $this->$url,
+                'url' => $url,
                 'payload' => $data
             ],
             $response,
