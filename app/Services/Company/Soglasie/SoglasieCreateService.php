@@ -64,8 +64,6 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         $data = $this->prepareData($company, $attributes);
         $headers = $this->getHeaders();
         $url = $this->getUrl();
-        $this->companyName = $this->getName(__NAMESPACE__);
-        $this->serviceName = $this->getName(__CLASS__);
 
         $this->writeRequestLog([
             'url' => $url,
@@ -84,8 +82,8 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
             ],
             $response,
             config('api_sk.logMicroserviceCode'),
-            $this->companyName,
-            $this->serviceName,
+            static::companyCode,
+            $this->getName(__CLASS__),
         );
 
         if (!$response) {

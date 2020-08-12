@@ -57,8 +57,6 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
                 'partial' => $this->transformAnyToBoolean(false),
             ],
         ];
-        $this->companyName = $this->getName(__NAMESPACE__);
-        $this->serviceName = $this->getName(__CLASS__);
 
         $this->writeRequestLog([
             'url' => $this->apiWsdlUrl,
@@ -77,8 +75,8 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
             ],
             $response,
             config('api_sk.logMicroserviceCode'),
-            $this->companyName,
-            $this->serviceName,
+            static::companyCode,
+            $this->getName(__CLASS__),
         );
 
         if (isset($response['fault']) && $response['fault']) {

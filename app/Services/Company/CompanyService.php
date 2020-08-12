@@ -31,10 +31,6 @@ abstract class CompanyService
     protected $requestProcessService;
     protected $policyService;
 
-    protected $companyName;
-    protected $serviceName;
-
-
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         RequestProcessServiceContract $requestProcessService,

@@ -35,8 +35,6 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
         $data = $this->prepareData($company, $attributes);
         $headers = $this->getHeaders();
         $auth = $this->getAuth();
-        $this->companyName = $this->getName(__NAMESPACE__);
-        $this->serviceName = $this->getName(__CLASS__);
 
         $this->writeRequestLog([
             'url' => $this->apiWsdlUrl,
@@ -53,8 +51,8 @@ class SoglasieKbmService extends SoglasieService implements SoglasieKbmServiceCo
             ],
             $response,
             config('api_sk.logMicroserviceCode'),
-            $this->companyName,
-            $this->serviceName,
+            static::companyCode,
+            $this->getName(__CLASS__),
         );
 
         $this->writeResponseLog($response);
