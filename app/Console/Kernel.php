@@ -4,6 +4,7 @@ namespace App\Console;
 
 
 use App\Console\Commands\CheckFreezeReportsCommand;
+use App\Console\Commands\ClearIntermediateData;
 use App\Console\Commands\DispatchProcessing;
 use App\Console\Commands\RefreshInsuranceGuidesCommand;
 use Illuminate\Console\Scheduling\Schedule;
@@ -20,6 +21,7 @@ class Kernel extends ConsoleKernel
         DispatchProcessing::class,
         RefreshInsuranceGuidesCommand::class,
         CheckFreezeReportsCommand::class,
+        ClearIntermediateData::class
     ];
 
     /**
@@ -32,5 +34,6 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command("benfin:guides")->weekly()->mondays();
         $schedule->command("benfin:check_freeze")->daily();
+        $schedule->command("benfin:clear-intermediate")->daily();
     }
 }
