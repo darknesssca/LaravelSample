@@ -85,10 +85,7 @@ $app->routeMiddleware([
     'restriction.policy' => Benfin\Restrictions\Http\Middleware\RestrictionPolicy::class,
     'restriction.money' => Benfin\Restrictions\Http\Middleware\RestrictionMoney::class,
     'admin' => Benfin\Auth\Http\Middleware\Admin::class,
-    'restriction.policy' => Benfin\Restrictions\Http\Middleware\RestrictionPolicy::class,
-    'restriction.money' => Benfin\Restrictions\Http\Middleware\RestrictionMoney::class,
     ]);
-$app->routeMiddleware([ 'admin' => Benfin\Auth\Http\Middleware\Admin::class, ]);
 /*
 |--------------------------------------------------------------------------
 | Register Service Providers
