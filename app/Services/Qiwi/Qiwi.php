@@ -1,11 +1,14 @@
 <?php
 
-
 namespace App\Services\Qiwi;
 
-
-use App\Exceptions\QiwiCreatePayoutException;
-use App\Exceptions\QiwiResolutionException;
+use App\Contracts\Repositories\ErrorRepositoryContract;
+use App\Exceptions\Qiwi\BillingDeclinedException;
+use App\Exceptions\Qiwi\CreatePayoutException;
+use App\Exceptions\Qiwi\ExecutePayoutException;
+use App\Exceptions\Qiwi\PayoutAlreadyExistException;
+use App\Exceptions\Qiwi\PayoutInsufficientFundsException;
+use App\Exceptions\Qiwi\ResolutionException;
 use App\Exceptions\TaxStatusNotServiceException;
 use Benfin\Api\Contracts\AuthMicroserviceContract;
 use Benfin\Log\Facades\Log;
@@ -18,6 +21,9 @@ class Qiwi
     private $payoutParams;
     private $payoutRecipient;
     private $commonParams;
+
+    /** @var ErrorRepositoryContract $errorRepository */
+    private $errorRepository;
 
     /**
      * Qiwi constructor.
@@ -41,6 +47,8 @@ class Qiwi
             'tax_status' => $tax_status_code,
             'description' => $description,
         ];
+
+        $this->errorRepository = app(ErrorRepositoryContract::class);
     }
 
     //Методы запросов к api
@@ -96,8 +104,12 @@ class Qiwi
     /**
      * @param $amount
      * @return string
+     * @throws BillingDeclinedException
+     * @throws CreatePayoutException
+     * @throws PayoutAlreadyExistException
+     * @throws PayoutInsufficientFundsException
+     * @throws ResolutionException
      * @throws TaxStatusNotServiceException
-     * @throws Exception
      */
     public function createPayout($amount)
     {
@@ -124,25 +136,27 @@ class Qiwi
                 'qiwi',
                 'createPayoutResponse'
             );
-        } catch (\Exception $e) {
+
+        } catch (Exception $e) {
             Log::daily(
                 $e->getMessage(),
                 'qiwi',
                 'createPayoutException'
             );
 
-            throw new QiwiCreatePayoutException($e->getMessage());
+            throw new CreatePayoutException($e->getMessage());
         }
 
         $response = json_decode($response['content'], true);
 
+        // check billing declined !first!
         if (
             isset($response['status']['value']) && ($response['status']['value'] == 'FAILED') &&
             isset($response['status']['errorCode']) && ($response['status']['errorCode'] == 'BILLING_DECLINED')
         ) {
             try {
                 app(AuthMicroserviceContract::class)->qiwiReset();
-            } catch (\Exception $exception) {
+            } catch (Exception $exception) {
                 // todo: should make custom exception for api error
             }
 
@@ -153,13 +167,26 @@ class Qiwi
                     'партнер не привязан к налогоплательщику'
                 ) !== false
             ) {
-                throw new QiwiResolutionException('Уважаемый Пользователь, Вы не предоставили Киви-банку разрешение на обработку ИНН и регистрацию дохода. Повторно ознакомьтесь с инструкцией в Профайле и предоставьте разрешение в Мой налог.');
+                throw new ResolutionException($this->errorRepository->getReportErrorByCode(1002));
             }
-            throw new QiwiResolutionException('Уважаемый Пользователь, проверьте корректность платежных данных (ИНН, номер карты) в Профайле и предоставьте разрешение Киви-банку на обработку ИНН и регистрацию дохода в Мой налог.');
+            throw new BillingDeclinedException($this->errorRepository->getReportErrorByCode(1001));
         }
 
+        // check gate errors
+        if (!empty($response['errorCode'])) {
+            switch ($response['errorCode']) {
+                case 'payout.payment.already-exist':
+                    throw new PayoutAlreadyExistException();
+                    break;
+                case 'payout.insufficient_funds':
+                    throw new PayoutInsufficientFundsException();
+                    break;
+            }
+        }
+
+        // check status
         if ($response['status']['value'] != 'READY') {
-            throw new QiwiCreatePayoutException('Не удалось создать выплату');
+            throw new CreatePayoutException('Не удалось создать выплату');
         }
 
         return $this->commonParams['payout_id'];
@@ -193,14 +220,46 @@ class Qiwi
 
         $response = json_decode($response['content'], true);
 
-        if ($response['status']['value'] != 'COMPLETED') {
-            throw new Exception('Не удалось исполнить выплату');
+        if (!empty($response['errorCode'])) {
+            switch ($response['errorCode']) {
+                case 'payout.insufficient_funds':
+                    throw new PayoutInsufficientFundsException();
+                    break;
+            }
+        } elseif ($response['status']['value'] != 'COMPLETED') {
+            throw new ExecutePayoutException('Не удалось исполнить выплату');
         }
 
         return [
             'status' => true,
             'checkUrl' => $response['billingDetails']['receiptUrl'] ?? null,
         ];
+    }
+
+    public function getBalance()
+    {
+        $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/balance";
+
+        Log::daily(
+            [
+                'url' => $url,
+                'payload' => [],
+            ],
+            'qiwi',
+            'getBalanceRequest'
+        );
+
+        $response = $this->sendRequest('GET', $url);
+
+        Log::daily(
+            $response,
+            'qiwi',
+            'getBalanceResponse'
+        );
+
+        $response = json_decode($response['content'], true);
+
+        return $response;
     }
 
 
@@ -229,6 +288,7 @@ class Qiwi
     private function setPayoutRecipientParams()
     {
         switch ($this->commonParams['tax_status']) {
+            case 'physical_no_limit':
             case 'physical':
                 $this->payoutRecipient = [
                     'providerCode' => 'bank-card-russia',

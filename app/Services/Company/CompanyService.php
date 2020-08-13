@@ -148,7 +148,9 @@ abstract class CompanyService
         $params = [
             'insurance_company_id' => $companyId,
             'policy_date' => Carbon::now()->format('Y-m-d'),
-            'kladr_id' => $needleAddress['regionKladr']
+            'kladr_id' => $needleAddress['regionKladr'],
+            'car_category_id' => $formData['car']['category'],
+            'car_usage_target_id' => $formData['car']['vehicleUsage'],
         ];
 
         /** @var CommissionCalculationMicroserviceContract $calc_service */
@@ -171,7 +173,7 @@ abstract class CompanyService
     public function writeRequestLog(array $data)
     {
         $this->logTag = md5(time() . random_int(000000, 999999));
-        if (!config('api_sk.debugLog')) {
+        if (!config('api.debugLog')) {
             return;
         }
         $class = explode('\\', get_called_class());
@@ -185,7 +187,7 @@ abstract class CompanyService
 
     public function writeResponseLog(array $data)
     {
-        if (!config('api_sk.debugLog')) {
+        if (!config('api.debugLog')) {
             return;
         }
         $class = explode('\\', get_called_class());

@@ -29,6 +29,10 @@ class PolicyRepository implements PolicyRepositoryContract
                 $query = $query->whereIn('id', $policyIds);
             }
 
+            if (!empty($filter['insurance_company_ids'])) {
+                $query = $query->whereIn('insurance_company_id', $filter['insurance_company_ids']);
+            }
+
             if ($excludePolicyIds = $filter['exclude_policy_ids'] ?? null) {
                 $query = $query->whereNotIn('id', $excludePolicyIds);
             }
@@ -124,5 +128,18 @@ class PolicyRepository implements PolicyRepositoryContract
 
     public function getById($id) {
         return Policy::where('id', $id)->first();
+    }
+
+    public function getUserListByPolicies($filter)
+    {
+        $query = Policy::select('agent_id')->groupBy('agent_id');
+        if (!empty($filter['from'])) {
+            $query = $query->where('registration_date', '>=', Carbon::parse($filter['from']));
+        }
+
+        if (!empty($filter['to'])) {
+            $query = $query->where('registration_date', '<=', Carbon::parse($filter['to']));
+        }
+        return $query->get();
     }
 }
