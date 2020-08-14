@@ -14,12 +14,15 @@ class ChangeProcessingReportField extends Migration
     public function up()
     {
         Schema::table('reports', function (Blueprint $table){
+            $table->dropColumn('processing');
+        });
+        Schema::table('reports', function (Blueprint $table) {
             /**
              * 1-1000           processing states
              * 1001-2000        error states
              * 2001+            reserved states
              */
-            $table->unsignedInteger('processing')->default(1)->change();
+            $table->unsignedInteger('processing')->default(1);
         });
     }
 
@@ -31,7 +34,11 @@ class ChangeProcessingReportField extends Migration
     public function down()
     {
         Schema::table('reports', function (Blueprint $table){
-            $table->boolean('processing')->default(true)->change();
+            $table->dropColumn('processing');
+        });
+
+        Schema::table('reports', function (Blueprint $table){
+            $table->boolean('processing')->default(true);
         });
     }
 }
