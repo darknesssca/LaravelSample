@@ -11,6 +11,7 @@ use App\Exceptions\Qiwi\PayoutInsufficientFundsException;
 use App\Exceptions\Qiwi\ResolutionException;
 use App\Exceptions\TaxStatusNotServiceException;
 use Benfin\Api\Contracts\AuthMicroserviceContract;
+use Benfin\Api\GlobalStorage;
 use Benfin\Log\Facades\Log;
 use Exception;
 use GuzzleHttp\Client;
@@ -220,18 +221,69 @@ class Qiwi
 
         $response = json_decode($response['content'], true);
 
+        return $this->getResponseStatus($response);
+    }
+
+    public function getPayoutStatus($payout_id)
+    {
+        $url = "agents/{$this->connectionParams['agent_id']}/points/{$this->connectionParams['point_id']}/payments/{$payout_id}";
+
+        Log::daily(
+            [
+                'url' => $url,
+                'payload' => [],
+            ],
+            'qiwi',
+            'getPayoutStatusRequest'
+        );
+
+        $response = $this->sendRequest('GET', $url);
+
+        Log::daily(
+            $response,
+            'qiwi',
+            'getPayoutStatusResponse'
+        );
+
+        $response = json_decode($response['content'], true);
+
+        return $this->getResponseStatus($response);
+    }
+
+    private function getResponseStatus($response)
+    {
         if (!empty($response['errorCode'])) {
             switch ($response['errorCode']) {
                 case 'payout.insufficient_funds':
                     throw new PayoutInsufficientFundsException();
                     break;
+                case 'BILLING_DECLINED':
+                    $taxStatus = GlobalStorage::getUserTaxStatus();
+                    $erCode = $taxStatus === 'self_employed' ? 1001 : 1003;
+                    throw new BillingDeclinedException($this->errorRepository->getReportErrorByCode($erCode));
             }
-        } elseif ($response['status']['value'] != 'COMPLETED') {
-            throw new ExecutePayoutException('Не удалось исполнить выплату');
+        }
+
+        $responseStatus =  $response['status']['value'] ?? false;
+
+        $resultStatus = '';
+
+        switch ($responseStatus) {
+            case 'IN_PROGRESS':
+                $resultStatus = 'progress';
+                break;
+            case 'EXPIRED':
+                $resultStatus = 'expired';
+                break;
+            case 'COMPLETED':
+                $resultStatus = 'done';
+                break;
+            default:
+                throw new ExecutePayoutException('Не удалось исполнить выплату');
         }
 
         return [
-            'status' => true,
+            'status' => $resultStatus,
             'checkUrl' => $response['billingDetails']['receiptUrl'] ?? null,
         ];
     }
