@@ -11,6 +11,7 @@ use App\Exceptions\Qiwi\PayoutInsufficientFundsException;
 use App\Exceptions\Qiwi\ResolutionException;
 use App\Exceptions\TaxStatusNotServiceException;
 use Benfin\Api\Contracts\AuthMicroserviceContract;
+use Benfin\Api\GlobalStorage;
 use Benfin\Log\Facades\Log;
 use Exception;
 use GuzzleHttp\Client;
@@ -256,6 +257,10 @@ class Qiwi
                 case 'payout.insufficient_funds':
                     throw new PayoutInsufficientFundsException();
                     break;
+                case 'BILLING_DECLINED':
+                    $taxStatus = GlobalStorage::getUserTaxStatus();
+                    $erCode = $taxStatus === 'self_employed' ? 1001 : 1003;
+                    throw new BillingDeclinedException($this->errorRepository->getReportErrorByCode($erCode));
             }
         }
 

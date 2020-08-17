@@ -24,6 +24,8 @@ use Benfin\Api\Contracts\NotifyMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 use Exception;
 use Illuminate\Http\Response;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
@@ -463,7 +465,12 @@ class ReportService implements ReportServiceContract
         ];
 
         if ($executeResult['status'] === 'progress') {
-            dispatch(new QiwiGetPayoutStatusJob($queueParams))->onQueue('QiwiGetPayoutStatus');
+            Queue::later(
+                Carbon::now()->addSeconds(config('api.qiwi.requestInterval')),
+                new QiwiGetPayoutStatusJob($queueParams),
+                '',
+                'QiwiGetPayoutStatus'
+            );
         } elseif ($executeResult['status'] === 'expired') {
             dispatch(new QiwiCreatePayoutJob($queueParams))->onQueue('QiwiCreatePayoutJob');
         } elseif ($executeResult['status'] === 'done') {
@@ -509,7 +516,12 @@ class ReportService implements ReportServiceContract
         ];
 
         if ($result['status'] === 'progress') {
-            dispatch(new QiwiGetPayoutStatusJob($queueParams))->onQueue('QiwiGetPayoutStatus');
+            Queue::later(
+                Carbon::now()->addSeconds(config('api.qiwi.requestInterval')),
+                new QiwiGetPayoutStatusJob($queueParams),
+                '',
+                'QiwiGetPayoutStatus'
+            );
         } elseif ($result['status'] === 'expired') {
             dispatch(new QiwiCreatePayoutJob($queueParams))->onQueue('QiwiCreatePayoutJob');
         } elseif ($result['status'] === 'done') {
