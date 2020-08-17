@@ -7,6 +7,7 @@ namespace App\Jobs\Qiwi;
 use App\Contracts\Services\ReportServiceContract;
 use App\Contracts\Utils\DeferredResultContract;
 use App\Exceptions\Qiwi\PayoutInsufficientFundsException;
+use App\Exceptions\QiwiCreatePayoutException;
 use Benfin\Api\GlobalStorage;
 use Exception;
 use Illuminate\Support\Carbon;
@@ -36,7 +37,12 @@ class QiwiExecutePayoutJob extends QiwiJob
             $report = $this->getReport($this->params['report_id']);
 
             try {
-                $reportService->executePayout($report);
+                $execResult = $reportService->executePayout($report);
+
+                if (!$execResult) {
+                    return;
+                }
+
                 $deferredResultUtil = app(DeferredResultContract::class);
                 $deferredResultId = $deferredResultUtil->getId('report', $report->id);
                 if ($deferredResultUtil->exist($deferredResultId)) {

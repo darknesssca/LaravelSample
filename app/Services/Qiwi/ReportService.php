@@ -12,6 +12,7 @@ use App\Exceptions\ReportNotFoundException;
 use App\Exceptions\TaxStatusNotServiceException;
 use App\Jobs\Qiwi\QiwiCreatePayoutJob;
 use App\Jobs\Qiwi\QiwiExecutePayoutJob;
+use App\Jobs\Qiwi\QiwiGetPayoutStatusJob;
 use App\Models\File;
 use App\Models\Report;
 use App\Repositories\PolicyRepository;
@@ -456,7 +457,16 @@ class ReportService implements ReportServiceContract
 
         $executeResult = $this->qiwi->executePayout($report->payout_id);
 
-        if ($executeResult['status']) {
+        $queueParams = [
+            'user' => GlobalStorage::getUser(),
+            'report_id' => $report->id
+        ];
+
+        if ($executeResult['status'] === 'progress') {
+            dispatch(new QiwiGetPayoutStatusJob($queueParams))->onQueue('QiwiGetPayoutStatus');
+        } elseif ($executeResult['status'] === 'expired') {
+            dispatch(new QiwiCreatePayoutJob($queueParams))->onQueue('QiwiCreatePayoutJob');
+        } elseif ($executeResult['status'] === 'done') {
             $this->sendCheckToAdmin($executeResult['checkUrl']);
             $report->is_payed = true;
             $report->save();
@@ -473,9 +483,56 @@ class ReportService implements ReportServiceContract
             ];
 
             $this->commission_mks->massUpdateRewards($fields);
+            return true;
         }
+        return false;
     }
 
+    public function getPayoutStatus($report)
+    {
+        if (is_integer($report)) {
+            $report = $this->reportRepository->getById($report);
+        }
+        if ($report->is_payed || $report->creator_id !== GlobalStorage::getUserId()) {
+            throw new Exception('По этому отчету уже была произведена выплата или вы не являетесь создателем отчета');
+        }
+
+        if (!$this->qiwi) {
+            $this->initQiwi([], '');
+        }
+
+        $result = $this->qiwi->getPayoutStatus($report->payout_id);
+
+        $queueParams = [
+            'user' => GlobalStorage::getUser(),
+            'report_id' => $report->id
+        ];
+
+        if ($result['status'] === 'progress') {
+            dispatch(new QiwiGetPayoutStatusJob($queueParams))->onQueue('QiwiGetPayoutStatus');
+        } elseif ($result['status'] === 'expired') {
+            dispatch(new QiwiCreatePayoutJob($queueParams))->onQueue('QiwiCreatePayoutJob');
+        } elseif ($result['status'] === 'done') {
+            $this->sendCheckToAdmin($result['checkUrl']);
+            $report->is_payed = true;
+            $report->save();
+
+            if (empty($this->rewards)) {
+                $policies_ids = array_column($report->policies()->get(['id'])->toArray(), 'id');
+                $this->rewards = $this->getRewardsList($policies_ids);
+            }
+
+            $fields = [
+                'reward_id' => array_column($this->rewards, 'id'),
+                'paid' => true,
+                'processing' => 20,
+            ];
+
+            $this->commission_mks->massUpdateRewards($fields);
+            return true;
+        }
+        return false;
+    }
     /**
      * @param $report
      * @return mixed
