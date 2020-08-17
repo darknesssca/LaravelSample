@@ -6,7 +6,10 @@ namespace App\Jobs\Qiwi;
 
 use App\Contracts\Services\ReportServiceContract;
 use App\Contracts\Utils\DeferredResultContract;
+use App\Exceptions\Qiwi\BillingDeclinedException;
+use App\Exceptions\Qiwi\ExecutePayoutException;
 use App\Exceptions\Qiwi\PayoutInsufficientFundsException;
+use App\Exceptions\QiwiCreatePayoutException;
 use Benfin\Api\GlobalStorage;
 use Exception;
 use Illuminate\Support\Carbon;
@@ -36,7 +39,12 @@ class QiwiExecutePayoutJob extends QiwiJob
             $report = $this->getReport($this->params['report_id']);
 
             try {
-                $reportService->executePayout($report);
+                $execResult = $reportService->executePayout($report);
+
+                if (!$execResult) {
+                    return;
+                }
+
                 $deferredResultUtil = app(DeferredResultContract::class);
                 $deferredResultId = $deferredResultUtil->getId('report', $report->id);
                 if ($deferredResultUtil->exist($deferredResultId)) {
@@ -53,6 +61,30 @@ class QiwiExecutePayoutJob extends QiwiJob
                     '',
                     'QiwiExecutePayout'
                 );
+            } catch (BillingDeclinedException $exception) {
+                $this->stopProcessing($this->params['report_id'], 1001);
+                $deferredResultUtil = app(DeferredResultContract::class);
+                $deferredResultId = $deferredResultUtil->getId('report', $report->id);
+                if ($deferredResultUtil->exist($deferredResultId)) {
+                    $deferredResultUtil->error($deferredResultId, [
+                        'errorCode' => 1001,
+                        'errorMessage' => $exception->getMessageData(),
+                        'fail' => true,
+                        'redirect' => true,
+                    ]);
+                }
+            } catch (ExecutePayoutException $exception) {
+                $this->stopProcessing($this->params['report_id'], 1001);
+                $deferredResultUtil = app(DeferredResultContract::class);
+                $deferredResultId = $deferredResultUtil->getId('report', $report->id);
+                if ($deferredResultUtil->exist($deferredResultId)) {
+                    $deferredResultUtil->error($deferredResultId, [
+                        'errorCode' => 1010,
+                        'errorMessage' => 'Произошла ошибка',
+                        'fail' => true,
+                        'redirect' => false,
+                    ]);
+                }
             }
         } else {
             Queue::later(
