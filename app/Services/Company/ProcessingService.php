@@ -187,7 +187,6 @@ class ProcessingService extends CompanyService implements ProcessingServiceContr
         foreach ($policies as $policy) {
             try {
                 $policyArray = $policy->toArray();
-                if (!$policyArray['bill']) continue;
                 $company = $this->getCompanyById($policyArray['insurance_company_id']);
                 $this->runService($company, $policyArray, $method);
             } catch (\Exception $exception) {
