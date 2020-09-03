@@ -20,16 +20,17 @@ class AutocodReportService extends AutocodService
     }
 
     /**запросить генерацию отчета для автозаполнения
-     * @param string $vin
+     * @param string $value
+     * @param string $queryType
      * @param string $uid
      * @return array
      * @throws \Exception
      */
-    public function getReport(string $vin, string $uid): array
+    public function getReport(string $value, string $queryType , string $uid): array
     {
         $data = [
-            "query_type" => "VIN",
-            "query" => $vin,
+            "queryType" => $queryType,
+            "query" => $value,
         ];
         $headers = [
             'Authorization' => 'AR-REST ' . $this->token,
@@ -44,11 +45,11 @@ class AutocodReportService extends AutocodService
         }
         if($res['state'] !== 'ok') {
             if ($res['event']['type'] == 'ValidationFailed') {
-                throw new \Exception('Некорректный формат VIN-номера');
+                throw new \Exception("Некорректный формат $queryType номера");
             }
             throw new \Exception($res['event']['message']);
         }
-        $this->logger->sendLog("Запрошен отчет autocod: vin=$vin, uid=$uid", env("LOG_MICROSERVICE_CODE"));
+        $this->logger->sendLog("Запрошен отчет autocod: value=$value, queryType=$queryType, uid=$uid", env("LOG_MICROSERVICE_CODE"));
         return ['report_id' => $res['data'][0]['uid'], 'suggest_get' => $res['data'][0]['suggest_get']];
     }
 
@@ -74,15 +75,16 @@ class AutocodReportService extends AutocodService
     }
 
     /**запросить генерацию отчета и вернуть готовый отчет
-     * @param string $vin
+     * @param string $value
+     * @param string $queryType
      * @param bool $eosago
      * @return array
      * @throws \Exception
      */
-    public function readReportAutocompleteSync(string $vin, bool $eosago = false): array
+    public function readReportAutocompleteSync(string $value, string $queryType, bool $eosago = false): array
     {
         $wait = 9999;
-        $result = $this->getReport($vin, $this->uid_autocomplete);
+        $result = $this->getReport($value, $queryType, $this->uid_autocomplete);
         while ($wait > 0) { //если все операции завершены, то выводим отчет
             $r2 = $this->readReport($result['report_id']); //запрашиваем отчет
             $wait = intval($r2['data'][0]['progress_wait']); //количество ожидающих операций
@@ -90,7 +92,7 @@ class AutocodReportService extends AutocodService
         }
         if(empty($r2['data'][0]['content'])) {
             $this->put(
-                $this->getId('autocod', GlobalStorage::getUserId(), $vin, 'isExist'),
+                $this->getId('autocod', GlobalStorage::getUserId(), $queryType, $value, 'isExist'),
                 ['status' => false]
             );
             if ($eosago) {
@@ -100,7 +102,7 @@ class AutocodReportService extends AutocodService
             throw new \Exception("По заданному VIN ничего не найдено");
         }
         $this->put(
-            $this->getId('autocod', GlobalStorage::getUserId(), $vin, 'isExist'),
+            $this->getId('autocod', GlobalStorage::getUserId(), $queryType, $value, 'isExist'),
             ['status' => true]
         );
         $r2['found'] = true;
@@ -108,15 +110,16 @@ class AutocodReportService extends AutocodService
     }
 
     /**проверка лицензии такси
-     * @param $vin
-     * @param $eosago
+     * @param $value
+     * @param $queryType
+     * @param bool $eosago
      * @return bool
      * истина, если есть записи такси
      * @throws \Exception
      */
-    public function checkTaxi($vin, $eosago = false)
+    public function checkTaxi($value, $queryType, $eosago = false)
     {
-        $result = $this->getReport($vin, $this->uid_taxi); //запрашиваем отчет
+        $result = $this->getReport($value, $queryType ,$this->uid_taxi); //запрашиваем отчет
         $wait = 9999;
         while ($wait > 0) { //если все операции завершены, то выводим отчет
             $r2 = $this->readReport($result['report_id']);
@@ -137,7 +140,7 @@ class AutocodReportService extends AutocodService
             foreach ($r2['data'][0]['content']['taxi']['history']['items'] as $item) {
                 if ($item['license']['status'] == "ACTIVE") {
                     $this->put(
-                        $this->getId('autocod', GlobalStorage::getUserId(), $vin, 'isTaxi'),
+                        $this->getId('autocod', GlobalStorage::getUserId(), $queryType, $value, 'isTaxi'),
                         ['status' => true]
                     );
                     return true;
@@ -145,7 +148,7 @@ class AutocodReportService extends AutocodService
             }
         }
         $this->put(
-            $this->getId('autocod', GlobalStorage::getUserId(), $vin, 'isTaxi'),
+            $this->getId('autocod', GlobalStorage::getUserId(), $queryType, $value, 'isTaxi'),
             ['status' => false]
         );
         return false;
