@@ -20,6 +20,18 @@ class TinkoffBillLinkService extends TinkoffService implements TinkoffBillLinkSe
 
         $this->writeResponseLog($response);
 
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            [
+                'url' => $this->apiWsdlUrl,
+                'payload' => $data
+            ],
+            $response,
+            config('api_sk.logMicroserviceCode'),
+            static::companyCode,
+            $this->getName(__CLASS__),
+        );
+
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(
                 'API страховой компании вернуло ошибку: ' .

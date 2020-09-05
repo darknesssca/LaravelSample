@@ -196,31 +196,35 @@ abstract class CompanyService
     public function writeDatabaseLog(string $token, $requestData, $responseData, string $code, string $companyName,
                                      string $serviceName, int $user_id = null)
     {
-        $logMicroservice = app(LogMicroserviceContract::class);
+        try {
+            $logMicroservice = app(LogMicroserviceContract::class);
 
-        $logs = $logMicroservice->getLogsList([
-            'message' => $token,
-        ]);
+            $logs = $logMicroservice->getLogsList([
+                'message' => $token,
+            ]);
 
-        $message = [];
-        if (!empty($logs['data'])) {
-            $log = array_shift($logs['data']);
-            $message = json_decode($log['message'], true);
+            $message = [];
+            if (!empty($logs['data'])) {
+                $log = array_shift($logs['data']);
+                $message = json_decode($log['message'], true);
 
-            $message[$companyName][$serviceName] = [
-                'request' => $requestData,
-                'response' => $responseData,
-            ];
+                $message[$companyName][$serviceName] = [
+                    'request' => $requestData,
+                    'response' => $responseData,
+                ];
 
-            $logMicroservice->updateLog($message, $log['id']);
-        } else {
-            $message['car_insurance_request_token'] = $token;
-            $message[$companyName][$serviceName] = [
-                'request' => $requestData,
-                'response' => $responseData,
-            ];
+                $logMicroservice->updateLog($message, $log['id']);
+            } else {
+                $message['car_insurance_request_token'] = $token;
+                $message[$companyName][$serviceName] = [
+                    'request' => $requestData,
+                    'response' => $responseData,
+                ];
 
-            $logMicroservice->sendLog($message, $code, $user_id ?? GlobalStorage::getUserId());
+                $logMicroservice->sendLog($message, $code, $user_id ?? GlobalStorage::getUserId());
+            }
+        } catch (\Exception $ex) {
+            //ignore
         }
     }
 

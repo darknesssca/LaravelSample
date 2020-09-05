@@ -65,6 +65,18 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
 
         $this->writeResponseLog($response);
 
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            [
+                'url' => $this->apiWsdlUrl,
+                'payload' => $data
+            ],
+            $response,
+            config('api_sk.logMicroserviceCode'),
+            static::companyCode,
+            $this->getName(__CLASS__),
+        );
+
         $data = [
             'setNumber' => $response['response']->setNumber ?? null,
             'quoteNumber' => $response['response']->OSAGOFQ->quoteNumber ?? null,
