@@ -21,7 +21,7 @@ class AutocodRequestReportRequest extends AbstractRequest
             ],
             'queryType' => [
                 'required',
-                'regex:/^(^|\s)VIN(\s|$)|(^|\s)GRZ(\s|$)/'
+                'in:VIN,GRZ'
             ],
             'eosago' => 'boolean'
         ];

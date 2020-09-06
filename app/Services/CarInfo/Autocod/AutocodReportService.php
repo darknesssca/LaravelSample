@@ -45,6 +45,9 @@ class AutocodReportService extends AutocodService
         }
         if($res['state'] !== 'ok') {
             if ($res['event']['type'] == 'ValidationFailed') {
+                if($queryType == 'GRZ') {
+                    throw new \Exception("Некорректный формат госномера");
+                }
                 throw new \Exception("Некорректный формат $queryType номера");
             }
             throw new \Exception($res['event']['message']);
