@@ -30,6 +30,9 @@ return [
         'subPassword' => env('SOGLASIE_API_SUB_PASSWORD'),
         'isTest' => env('SOGLASIE_API_TEST_MODE'),
     ],
+    'vsk' => [
+        'apiUrl' => env('VSK_API_URL'),
+    ],
     'authMicroserviceUrl' => env('AUTH_MICROSERVICE_URL'),
     'logMicroserviceUrl' => env('LOG_MICROSERVICE_URL'),
     'logMicroserviceCode' => env('LOG_MICROSERVICE_CODE'),
