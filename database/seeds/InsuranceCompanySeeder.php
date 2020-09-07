@@ -36,6 +36,13 @@ class InsuranceCompanySeeder extends Seeder
             'content_type' => 'image/svg+xml',
             'size' => 3728,
         ],
+        [
+            'id' => 5,
+            'name' => 'vsk.svg',
+            'dir' => '/insurance-companies_logo/vsk.svg',
+            'content_type' => 'image/svg+xml',
+            'size' => 3728,
+        ],
     ];
 
     protected static $insuranceCompanies = [
@@ -66,6 +73,13 @@ class InsuranceCompanySeeder extends Seeder
             'logo_id' => 4,
             'code' => 'tinkoff',
             'name' => 'Тинькофф',
+        ],
+        [
+            'id' => 5,
+            'active' => true,
+            'logo_id' => 5,
+            'code' => 'vsk',
+            'name' => 'ВСК',
         ],
     ];
 
