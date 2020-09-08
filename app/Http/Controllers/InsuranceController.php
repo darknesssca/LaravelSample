@@ -18,6 +18,8 @@ use App\Http\Requests\ProcessRequest;
 use App\Traits\CacheStore;
 use App\Traits\CompanyServicesTrait;
 use App\Traits\TokenTrait;
+use App\Traits\UserTrait;
+use Benfin\Api\Contracts\AuthMicroserviceContract;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 use Exception;
@@ -26,21 +28,24 @@ use Illuminate\Support\Carbon;
 
 class InsuranceController extends Controller
 {
-    use TokenTrait, CompanyServicesTrait, CacheStore;
+    use TokenTrait, CompanyServicesTrait, CacheStore, UserTrait;
 
     protected $intermediateDataService;
     protected $insuranceCompanyService;
     protected $draftService;
+    protected $authMsk;
 
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         InsuranceCompanyServiceContract $insuranceCompanyService,
-        DraftServiceContract $draftService
+        DraftServiceContract $draftService,
+        AuthMicroserviceContract $authMsk
     )
     {
         $this->intermediateDataService = $intermediateDataService;
         $this->insuranceCompanyService = $insuranceCompanyService;
         $this->draftService = $draftService;
+        $this->authMsk = $authMsk;
     }
 
     /**
@@ -111,6 +116,58 @@ class InsuranceController extends Controller
         return Response::success([
             'token' => $token->token,
             'draftId' => $draftId
+        ]);
+    }
+
+    /**
+     * @param FormSendRequest $request
+     * @return mixed
+     * @throws AutocodException
+     * @throws TokenException
+     */
+    public function storeWithRegister(FormSendRequest $request)
+    {
+        $validatedRequest = $request->validated();
+
+        $registerUserData = $this->prepareUserRegistrationData($validatedRequest);
+
+        $registerToken = $this->authMsk->register($registerUserData)['content'];
+        GlobalStorage::setUser($registerUserData);
+
+        if (isset($validatedRequest['draftId']) && $validatedRequest['draftId'] > 0) {
+            $this->draftService->update($validatedRequest['draftId'], $validatedRequest);
+            $draftId = $validatedRequest['draftId'];
+        } else {
+            $draftId = $this->draftService->create($validatedRequest);
+        }
+
+        $data = [
+            'form' => $validatedRequest,
+        ];
+        $this->setStoredKeys($data['form']);
+        if (isset($validatedRequest['prevToken']) && $validatedRequest['prevToken']) {
+            try {
+                $oldToken = $this->getTokenData($validatedRequest['prevToken']);
+                if ($oldToken) {
+                    unset($oldToken['form']);
+                    if ($oldToken) {
+                        $data['prevData'] = $oldToken;
+                    }
+                }
+            } catch (Exception $exception) {
+                // ignore
+            }
+        }
+        $formToken = $this->createToken($data);
+        $logger = app(LogMicroserviceContract::class);
+        $logger->sendLog(
+            'Пользователь отправил форму со следующими полями: ' . json_encode($data['form'], JSON_UNESCAPED_UNICODE),
+            config('api_sk.logMicroserviceCode'),
+            GlobalStorage::getUserId()
+        );
+        return Response::success([
+            'form_token' => $formToken->token,
+            'auth_token' => $registerToken
         ]);
     }
 
