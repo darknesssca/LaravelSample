@@ -20,6 +20,23 @@ use Illuminate\Support\Facades\Route;
 $router->group(
     [
         'prefix' => 'v1',
+    ],
+    function () use ($router) {
+        $router->group(
+            [
+                'prefix' => 'car-insurance',
+            ],
+            function () use ($router) {
+                $router->group(['prefix' => 'autocod'], function () use ($router) {
+                    $router->post('/unauthorized-report', 'AutocodController@requestReportUnauthorized');
+                });
+            }
+        );
+    }
+);
+$router->group(
+    [
+        'prefix' => 'v1',
         'middleware' => 'auth',
     ],
     function () use ($router) {
