@@ -32,6 +32,7 @@ return [
     ],
     'vsk' => [
         'apiUrl' => env('VSK_API_URL'),
+        'replyTo' => env('APP_URL') . env('VSK_REPLY_TO'),
     ],
     'authMicroserviceUrl' => env('AUTH_MICROSERVICE_URL'),
     'logMicroserviceUrl' => env('LOG_MICROSERVICE_URL'),
