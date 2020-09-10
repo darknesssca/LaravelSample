@@ -42,42 +42,17 @@ $router->group(
                     $router->get('/insurance-companies', 'GuidesController@insuranceCompanies');
                     $router->get('/insurance-companies/{id}', 'GuidesController@insuranceCompany');
                     $router->get('/source-acquisitions', 'GuidesController@sourceAcquisitions');
-                }
+                    }
                 );
-            }
-        );
-    }
-);
 
-$router->group(
-    [
-        'prefix' => 'v1',
-    ],
-    function () use ($router) {
-        $router->group(
-            [
-                'prefix' => 'car-insurance',
-            ],
-            function () use ($router) {
+                //policy with register
                 $router->group(['middleware' => 'restriction.policy'], function () use ($router) {
                     $router->group(['prefix' => 'registration'], function () use ($router) {
                         $router->post('send-with-register', 'InsuranceController@storeWithRegister');
                     });
                 });
-            }
-        );
-    }
-);
-$router->group(
-    [
-        'prefix' => 'v1',
-    ],
-    function () use ($router) {
-        $router->group(
-            [
-                'prefix' => 'car-insurance',
-            ],
-            function () use ($router) {
+
+                //Autocod
                 $router->group(['prefix' => 'autocod'], function () use ($router) {
                     $router->post('/unauthorized-report', 'AutocodController@requestReportUnauthorized');
                 });
