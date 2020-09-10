@@ -4,6 +4,7 @@
 namespace App\Providers;
 
 
+use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 
@@ -54,6 +55,27 @@ class ValidationProvider extends ServiceProvider
             if (empty($subject)) return false;
             return !empty($subject['fields']['email']);
         }, 'Email обязателен для страхователя и для собственника');
+
+        //Recaptcha
+        Validator::extend('recaptcha', function ($attribute, $value, $parameters, $validator) {
+            if ($value == env('TINKOFF_TOKEN')) {
+                return true;
+            }
+
+            $client = new Client;
+            $response = $client->post('https://www.google.com/recaptcha/api/siteverify',
+                [
+                    'form_params' =>
+                        [
+                            'secret' => env('GOOGLE_RECAPTCHA_SECRET'),
+                            'response' => $value
+                        ]
+                ]
+            );
+
+            $body = json_decode((string)$response->getBody());
+            return $body->success;
+        });
     }
 
     /**проверка корректности адреса у клиента
