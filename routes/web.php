@@ -52,6 +52,25 @@ $router->group(
 $router->group(
     [
         'prefix' => 'v1',
+    ],
+    function () use ($router) {
+        $router->group(
+            [
+                'prefix' => 'car-insurance',
+            ],
+            function () use ($router) {
+                $router->group(['middleware' => 'restriction.policy'], function () use ($router) {
+                    $router->group(['prefix' => 'registration'], function () use ($router) {
+                        $router->post('send-with-register', 'InsuranceController@storeWithRegister');
+                    });
+                });
+            }
+        );
+    }
+);
+$router->group(
+    [
+        'prefix' => 'v1',
         'middleware' => 'auth',
     ],
     function () use ($router) {
