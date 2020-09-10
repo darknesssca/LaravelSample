@@ -58,10 +58,6 @@ class ValidationProvider extends ServiceProvider
 
         //Recaptcha
         Validator::extend('recaptcha', function ($attribute, $value, $parameters, $validator) {
-            if ($value == env('TINKOFF_TOKEN')) {
-                return true;
-            }
-
             $client = new Client;
             $response = $client->post('https://www.google.com/recaptcha/api/siteverify',
                 [
