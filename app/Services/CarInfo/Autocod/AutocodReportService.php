@@ -81,10 +81,11 @@ class AutocodReportService extends AutocodService
      * @param string $value
      * @param string $queryType
      * @param bool $eosago
+     * @param bool $unauthorized
      * @return array
      * @throws \Exception
      */
-    public function readReportAutocompleteSync(string $value, string $queryType, bool $eosago = false): array
+    public function readReportAutocompleteSync(string $value, string $queryType, bool $eosago = false, $unauthorized = false): array
     {
         $wait = 9999;
         $result = $this->getReport($value, $queryType, $this->uid_autocomplete);
@@ -94,20 +95,24 @@ class AutocodReportService extends AutocodService
             sleep(0.2);
         }
         if(empty($r2['data'][0]['content'])) {
-            $this->put(
-                $this->getId('autocod', GlobalStorage::getUserId(), $queryType, $value, 'isExist'),
-                ['status' => false]
-            );
+            if(!$unauthorized) {
+                $this->put(
+                    $this->getId('autocod', GlobalStorage::getUserId(), $queryType, $value, 'isExist'),
+                    ['status' => false]
+                );
+            }
             if ($eosago) {
                 $r2['found'] = false;
                 return $r2;
             }
             throw new \Exception("По заданному VIN ничего не найдено");
         }
-        $this->put(
-            $this->getId('autocod', GlobalStorage::getUserId(), $queryType, $value, 'isExist'),
-            ['status' => true]
-        );
+        if(!$unauthorized) {
+            $this->put(
+                $this->getId('autocod', GlobalStorage::getUserId(), $queryType, $value, 'isExist'),
+                ['status' => true]
+            );
+        }
         $r2['found'] = true;
         return $r2;
     }
@@ -116,11 +121,12 @@ class AutocodReportService extends AutocodService
      * @param $value
      * @param $queryType
      * @param bool $eosago
+     * @param bool $unauthorized
      * @return bool
      * истина, если есть записи такси
      * @throws \Exception
      */
-    public function checkTaxi($value, $queryType, $eosago = false)
+    public function checkTaxi($value, $queryType, $eosago = false, $unauthorized = false)
     {
         $result = $this->getReport($value, $queryType ,$this->uid_taxi); //запрашиваем отчет
         $wait = 9999;
@@ -142,18 +148,22 @@ class AutocodReportService extends AutocodService
         if ($cnt > 0) {
             foreach ($r2['data'][0]['content']['taxi']['history']['items'] as $item) {
                 if ($item['license']['status'] == "ACTIVE") {
-                    $this->put(
-                        $this->getId('autocod', GlobalStorage::getUserId(), $queryType, $value, 'isTaxi'),
-                        ['status' => true]
-                    );
+                    if(!$unauthorized) {
+                        $this->put(
+                            $this->getId('autocod', GlobalStorage::getUserId(), $queryType, $value, 'isTaxi'),
+                            ['status' => true]
+                        );
+                    }
                     return true;
                 }
             }
         }
-        $this->put(
-            $this->getId('autocod', GlobalStorage::getUserId(), $queryType, $value, 'isTaxi'),
-            ['status' => false]
-        );
+        if(!$unauthorized) {
+            $this->put(
+                $this->getId('autocod', GlobalStorage::getUserId(), $queryType, $value, 'isTaxi'),
+                ['status' => false]
+            );
+        }
         return false;
     }
 }

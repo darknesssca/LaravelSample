@@ -25,7 +25,7 @@ class CarModelRepository implements CarModelRepositoryContract
         return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, function () use ($mark_id, $categoryId) {
             $query = CarModel::select(["id", "code", "name", "category_id", "mark_id"])
                 ->where("mark_id", $mark_id);
-            if ($categoryId) {
+            if ($categoryId !== null) {
                 $query->where('category_id', $categoryId);
             }
             return $query->orderBy('name', 'asc')->get();

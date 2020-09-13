@@ -46,15 +46,14 @@ $router->group(
                 );
 
                 //policy with register
-                $router->group(['middleware' => 'restriction.policy'], function () use ($router) {
-                    $router->group(['prefix' => 'registration'], function () use ($router) {
-                        $router->post('send-with-register', 'InsuranceController@storeWithRegister');
-                    });
+                $router->group(['prefix' => 'registration'], function () use ($router) {
+                    $router->post('send-with-register', 'InsuranceController@storeWithRegister');
                 });
 
                 //Autocod
                 $router->group(['prefix' => 'autocod'], function () use ($router) {
                     $router->post('/unauthorized-report', 'AutocodController@requestReportUnauthorized');
+                    $router->post('/unauthorized-check-taxi', 'AutocodController@unauthorizedCheckTaxi');
                 });
             }
         );

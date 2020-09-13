@@ -21,11 +21,11 @@ trait UserTrait
         $user['offer_accepted'] = true;
         $user['personal_data_agree'] = true;
         $user['phone_confirm'] = $formData['phone_confirm'];
-        $user['city'] = \GuzzleHttp\json_decode($insurer['addresses'])['city'];
-        $user['city_kladr'] = \GuzzleHttp\json_decode($insurer['addresses'])['cityKladr'];
+        $user['city'] = $insurer['addresses'][0]['address']['city'];
+        $user['city_kladr'] = $insurer['addresses'][0]['address']['cityKladr'];
         $user['password'] = $this->generatePassword();
         $user['confirm_password'] = $user['password'];
-
+        $user['temp_user'] = true;
         return $user;
     }
 
@@ -37,7 +37,7 @@ trait UserTrait
         $length = 8;
         $max = mb_strlen($allowedCharacters, '8bit') - 1;
         while(!$checkPass) {
-            for ($i = 0; $i < $length; ++$i) {
+            for ($i = 0; $i < $length; $i++) {
                 $pass .= $allowedCharacters[random_int(0, $max)];
             }
             $checkPass = $this->checkPassword($pass);
@@ -47,13 +47,13 @@ trait UserTrait
 
     private function checkPassword($pass)
     {
-        if (!preg_match("/[a-z]+/g", $pass))
+        if (!preg_match_all("/[a-z]+/", $pass))
             return false;
-        if (!preg_match("/[A-Z]+/g", $pass))
+        if (!preg_match_all("/[A-Z]+/", $pass))
             return false;
-        if (!preg_match("/[0-9]+/g", $pass))
+        if (!preg_match_all("/[0-9]+/", $pass))
             return false;
-        if (!preg_match("/[\.\,\:\;\?\!\*\+\%\-\<\>\@\[\]\{\}\/\\\_\{\}\$\#]+/g", $pass))
+        if (!preg_match_all("/[\.\,\:\;\?\!\*\+\%\-\<\>\@\[\]\{\}\/\\\_\{\}\$\#]+/", $pass))
             return false;
         return true;
     }
