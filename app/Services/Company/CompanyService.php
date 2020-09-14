@@ -16,7 +16,6 @@ use Benfin\Api\Traits\HttpRequest;
 use Benfin\Api\Traits\SoapRequest;
 use Benfin\Log\Facades\Log;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Storage;
 
 abstract class CompanyService
 {
@@ -198,5 +197,15 @@ abstract class CompanyService
             static::companyCode,
             $tag
         );
+    }
+
+    protected function RubToCop($rub)
+    {
+        return (float)$rub * 100;
+    }
+
+    protected function CopToRub($cop)
+    {
+        return (int)$cop / 100;
     }
 }
