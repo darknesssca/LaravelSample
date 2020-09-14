@@ -228,18 +228,27 @@ class InsuranceController extends Controller
      */
     private function setStoredKeys(&$formData)
     {
-        $autocodIsTaxiId = $this->getId('autocod', GlobalStorage::getUserId(), $formData['car']['vin'], 'isTaxi');
-        $autocodIsExistId = $this->getId('autocod', GlobalStorage::getUserId(), $formData['car']['vin'], 'isExist');
+        $autocodVinIsTaxiId = $this->getId('autocod', GlobalStorage::getUserId(), 'VIN', $formData['car']['vin'], 'isTaxi');
+        $autocodVinIsExistId = $this->getId('autocod', GlobalStorage::getUserId(), 'VIN', $formData['car']['vin'], 'isExist');
+        $autocodGrzIsTaxiId = $this->getId('autocod', GlobalStorage::getUserId(), 'GRZ', $formData['car']['vin'], 'isTaxi');
+        $autocodGrzIsExistId = $this->getId('autocod', GlobalStorage::getUserId(), 'GRZ', $formData['car']['vin'], 'isExist');
         if(
-            !$this->exist($autocodIsTaxiId) ||
-            !$this->exist($autocodIsExistId)
+            (!$this->exist($autocodVinIsTaxiId) || !$this->exist($autocodVinIsExistId)) &&
+            (!$this->exist($autocodGrzIsTaxiId) || !$this->exist($autocodGrzIsExistId))
         ) {
             throw new AutocodException('Проверка на использование ТС в такси не выполнялась');
         }
-        $formData['autocod'] = [
-            'isTaxi' => $this->look($autocodIsTaxiId)['status'],
-            'isExist' => $this->look($autocodIsExistId)['status'],
-        ];
+        if($autocodVinIsExistId != null) {
+            $formData['autocod'] = [
+                'isTaxi' => $this->look($autocodVinIsTaxiId)['status'],
+                'isExist' => $this->look($autocodVinIsExistId)['status'],
+            ];
+        } else {
+            $formData['autocod'] = [
+                'isTaxi' => $this->look($autocodGrzIsTaxiId)['status'],
+                'isExist' => $this->look($autocodGrzIsExistId)['status'],
+            ];
+        }
     }
 
     /**
