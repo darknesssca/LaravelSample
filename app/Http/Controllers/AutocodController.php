@@ -40,7 +40,7 @@ class AutocodController extends Controller
     {
         try {
             $params = $request->validated();
-            $result = $this->engine->readReportAutocompleteSync($params['value'], 'GRZ', false);
+            $result = $this->engine->readReportAutocompleteSync($params['value'], 'GRZ', false, true);
             return Response::success($result);
         } catch (\Exception $exception) {
             return Response::error($exception->getMessage(), 500);
@@ -75,6 +75,19 @@ class AutocodController extends Controller
         try {
             $params = $request->validated();
             $result = $this->engine->checkTaxi($params['value'], $params['queryType'],$params['eosago'] ?? false);
+            return Response::success($result);
+        } catch (ClientException $cle) {
+            return Response::error($cle->getMessage(), 500);
+        } catch (\Exception $e) {
+            return Response::error($e->getMessage(), 500);
+        }
+    }
+
+    public function unauthorizedCheckTaxi(AutocodUnauthorizedRequest $request)
+    {
+        try {
+            $params = $request->validated();
+            $result = $this->engine->checkTaxi($params['value'], 'GRZ',false, true);
             return Response::success($result);
         } catch (ClientException $cle) {
             return Response::error($cle->getMessage(), 500);

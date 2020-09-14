@@ -21,10 +21,12 @@ use App\Traits\TokenTrait;
 use App\Traits\UserTrait;
 use Benfin\Api\Contracts\AuthMicroserviceContract;
 use Benfin\Api\Contracts\LogMicroserviceContract;
+use Benfin\Api\Contracts\NotifyMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
+use Nowakowskir\JWT\TokenEncoded;
 
 class InsuranceController extends Controller
 {
@@ -34,18 +36,21 @@ class InsuranceController extends Controller
     protected $insuranceCompanyService;
     protected $draftService;
     protected $authMsk;
+    protected $notifyMsk;
 
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
         InsuranceCompanyServiceContract $insuranceCompanyService,
         DraftServiceContract $draftService,
-        AuthMicroserviceContract $authMsk
+        AuthMicroserviceContract $authMsk,
+        NotifyMicroserviceContract $notifyMsk
     )
     {
         $this->intermediateDataService = $intermediateDataService;
         $this->insuranceCompanyService = $insuranceCompanyService;
         $this->draftService = $draftService;
         $this->authMsk = $authMsk;
+        $this->notifyMsk = $notifyMsk;
     }
 
     /**
@@ -127,48 +132,74 @@ class InsuranceController extends Controller
      */
     public function storeWithRegister(FormSendRequest $request)
     {
-        $validatedRequest = $request->validated();
+        try {
+            $validatedRequest = $request->validated();
 
-        $registerUserData = $this->prepareUserRegistrationData($validatedRequest);
+            $registerUserData = $this->prepareUserRegistrationData($validatedRequest);
 
-        $registerToken = $this->authMsk->register($registerUserData)['content'];
-        GlobalStorage::setUser($registerUserData);
+            $registerToken = $this->authMsk->register($registerUserData)['content'];
+            $payload = (new TokenEncoded($registerToken))->decode()->getPayload();
 
-        if (isset($validatedRequest['draftId']) && $validatedRequest['draftId'] > 0) {
-            $this->draftService->update($validatedRequest['draftId'], $validatedRequest);
-            $draftId = $validatedRequest['draftId'];
-        } else {
-            $draftId = $this->draftService->create($validatedRequest);
-        }
+            $userEmailData = [
+                'password' => $payload['password'],
+                'link' => $payload['link']
+            ];
 
-        $data = [
-            'form' => $validatedRequest,
-        ];
-        $this->setStoredKeys($data['form']);
-        if (isset($validatedRequest['prevToken']) && $validatedRequest['prevToken']) {
-            try {
-                $oldToken = $this->getTokenData($validatedRequest['prevToken']);
-                if ($oldToken) {
-                    unset($oldToken['form']);
-                    if ($oldToken) {
-                        $data['prevData'] = $oldToken;
-                    }
-                }
-            } catch (Exception $exception) {
-                // ignore
+            unset($payload['password'], $payload['link']);
+
+            $payload["access_token"] = $registerToken;
+            GlobalStorage::setUser($payload);
+            $this->put(
+                $this->getId('autocod', GlobalStorage::getUserId(), $validatedRequest['car']['vin'], 'isExist'),
+                ['status' => true]
+            );
+            $this->put(
+                $this->getId('autocod', GlobalStorage::getUserId(), $validatedRequest['car']['vin'], 'isTaxi'),
+                ['status' => $validatedRequest['isTaxi']]
+            );
+
+            if (isset($validatedRequest['draftId']) && $validatedRequest['draftId'] > 0) {
+                $this->draftService->update($validatedRequest['draftId'], $validatedRequest);
+                $draftId = $validatedRequest['draftId'];
+            } else {
+                $draftId = $this->draftService->create($validatedRequest);
             }
+
+            $userEmailData['link'] .= "&draft_id=$draftId";
+
+            $this->notifyMsk->sendMail($registerUserData['email'], $userEmailData, 'register');
+
+            $data = [
+                'form' => $validatedRequest,
+            ];
+            $this->setStoredKeys($data['form']);
+            if (isset($validatedRequest['prevToken']) && $validatedRequest['prevToken']) {
+                try {
+                    $oldToken = $this->getTokenData($validatedRequest['prevToken']);
+                    if ($oldToken) {
+                        unset($oldToken['form']);
+                        if ($oldToken) {
+                            $data['prevData'] = $oldToken;
+                        }
+                    }
+                } catch (Exception $exception) {
+                    // ignore
+                }
+            }
+            $formToken = $this->createToken($data);
+            $logger = app(LogMicroserviceContract::class);
+            $logger->sendLog(
+                'Пользователь отправил форму со следующими полями: ' . json_encode($data['form'], JSON_UNESCAPED_UNICODE),
+                config('api_sk.logMicroserviceCode'),
+                GlobalStorage::getUserId()
+            );
+            return Response::success([
+                'form_token' => $formToken->token,
+                'auth_token' => $registerToken
+            ]);
+        } catch (\Throwable $ex) {
+            return Response::error($ex->getMessage());
         }
-        $formToken = $this->createToken($data);
-        $logger = app(LogMicroserviceContract::class);
-        $logger->sendLog(
-            'Пользователь отправил форму со следующими полями: ' . json_encode($data['form'], JSON_UNESCAPED_UNICODE),
-            config('api_sk.logMicroserviceCode'),
-            GlobalStorage::getUserId()
-        );
-        return Response::success([
-            'form_token' => $formToken->token,
-            'auth_token' => $registerToken
-        ]);
     }
 
     /**
