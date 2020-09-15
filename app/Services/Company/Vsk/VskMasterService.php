@@ -4,12 +4,23 @@
 namespace App\Services\Company\Vsk;
 
 
+use App\Contracts\Company\Vsk\VskCalculatePolicyServiceContract;
+use App\Contracts\Company\Vsk\VskLoginServiceContract;
 use App\Contracts\Company\Vsk\VskMasterServiceContract;
+use App\Exceptions\ApiRequestsException;
 use App\Exceptions\MethodForbiddenException;
+use App\Exceptions\TokenException;
 use App\Models\InsuranceCompany;
 
 class VskMasterService extends VskService implements VskMasterServiceContract
 {
+
+    /**
+     * Чтобы не дописывать логику на фронте поменял ее здесь:
+     * метод calculate производит авторизацию пользователя
+     * метод preCalculating производит расчет премии
+     * все остальные методы работают согласно названиям
+     */
 
     /**
      * Метод рассчитывает премию за страховку, либо отправляет запрос в шину СК (в зависимости от того, как работает СК)
@@ -17,10 +28,29 @@ class VskMasterService extends VskService implements VskMasterServiceContract
      * @param InsuranceCompany $company - объект выбранной компании
      * @param $attributes - массив атрибутов, прошедших валидацию
      * @return array
+     * @throws TokenException
      */
     public function calculate(InsuranceCompany $company, $attributes): array
     {
-        // TODO: Implement calculate() method.
+        $this->pushForm($attributes);
+
+        /** @var VskLoginServiceContract $loginService */
+        $loginService = app(VskLoginServiceContract::class);
+        $loginData = $loginService->run($company, $attributes);
+
+        $tokenData = $this->getTokenData($attributes['token'], true);
+        $tokenData[$company->code] = [
+            'status' => 'calculating',
+            'stage' => 'login',
+            'loginUniqueId' => $loginData['uniqueId']
+        ];
+        $this->intermediateDataService->update($attributes['token'], [
+            'data' => json_encode($tokenData),
+        ]);
+
+        return [
+            'status' => 'calculating',
+        ];
     }
 
     /**
@@ -55,12 +85,23 @@ class VskMasterService extends VskService implements VskMasterServiceContract
      * @param InsuranceCompany $company - объект выбранной компании
      * @param $attributes - массив атрибутов, прошедших валидацию
      * @return void
-     * @throws MethodForbiddenException - выбрасывается в случаях, когда метод не требуется для данного СК и не был
-     * реализован, но его все равно пытаются вызвать
+     * @throws TokenException
      */
     public function preCalculating(InsuranceCompany $company, $attributes): void
     {
-        // TODO: Implement preCalculating() method.
+        $this->pushForm($attributes);
+
+        /** @var VskCalculatePolicyServiceContract $calcService */
+        $calcService = app(VskCalculatePolicyServiceContract::class);
+        $calcData = $calcService->run($company, $attributes);
+
+        $tokenData = $this->getTokenData($attributes['token'], true);
+        $tokenData[$company->code]['stage'] = 'calculate';
+        $tokenData[$company->code]['calculateUniqueId'] = $calcData['uniqueId'];
+
+        $this->intermediateDataService->update($attributes['token'], [
+            'data' => json_encode($tokenData),
+        ]);
     }
 
     /**
@@ -125,12 +166,33 @@ class VskMasterService extends VskService implements VskMasterServiceContract
      * @param InsuranceCompany $company - объект выбранной компании
      * @param $attributes - массив атрибутов, прошедших валидацию
      * @return array
-     * @throws MethodForbiddenException - выбрасывается в случаях, когда метод не требуется для данного СК и не был
-     * реализован, но его все равно пытаются вызвать
+     * @throws TokenException
+     * @throws ApiRequestsException
      */
     public function calculating(InsuranceCompany $company, $attributes): array
     {
-        // TODO: Implement calculating() method.
+        $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);
+
+        if (!(isset($tokenData['status']) && $tokenData['status'])) {
+            throw new TokenException('Нет данных о статусе рассчета в токене');
+        }
+
+        switch ($tokenData['status']) {
+            case 'calculating':
+                return [
+                    'status' => 'calculating',
+                ];
+            case 'calculated':
+                return [
+                    'status' => 'done',
+                    'premium' => $tokenData['premium'],
+                    'reward' => $tokenData['reward']
+                ];
+            case 'error':
+                throw new ApiRequestsException($tokenData['errorMessages']);
+            default:
+                throw new TokenException('Статус рассчета не валиден');
+        }
     }
 
     /**
