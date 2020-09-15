@@ -137,24 +137,25 @@ class InsuranceController extends Controller
 
             $registerUserData = $this->prepareUserRegistrationData($validatedRequest);
 
-            $registerToken = $this->authMsk->register($registerUserData)['content'];
+            $registerData = $this->authMsk->register($registerUserData);
+            if (!array_key_exists('content', $registerData))
+                return Response::error($registerData['errors'], 500);
+            $registerToken = $registerData['content'];
             $payload = (new TokenEncoded($registerToken))->decode()->getPayload();
-
             $userEmailData = [
                 'password' => $payload['password'],
                 'link' => $payload['link']
             ];
 
             unset($payload['password'], $payload['link']);
-
             $payload["access_token"] = $registerToken;
             GlobalStorage::setUser($payload);
             $this->put(
-                $this->getId('autocod', GlobalStorage::getUserId(), $validatedRequest['car']['vin'], 'isExist'),
+                $this->getId('autocod', GlobalStorage::getUserId(), 'VIN', $validatedRequest['car']['vin'], 'isExist'),
                 ['status' => true]
             );
             $this->put(
-                $this->getId('autocod', GlobalStorage::getUserId(), $validatedRequest['car']['vin'], 'isTaxi'),
+                $this->getId('autocod', GlobalStorage::getUserId(), 'VIN', $validatedRequest['car']['vin'], 'isTaxi'),
                 ['status' => $validatedRequest['isTaxi']]
             );
 
@@ -197,8 +198,8 @@ class InsuranceController extends Controller
                 'form_token' => $formToken->token,
                 'auth_token' => $registerToken
             ]);
-        } catch (\Throwable $ex) {
-            return Response::error($ex->getMessage());
+        } catch (\Exception $ex) {
+            return Response::error($ex->getMessage(), 500);
         }
     }
 
@@ -228,18 +229,27 @@ class InsuranceController extends Controller
      */
     private function setStoredKeys(&$formData)
     {
-        $autocodIsTaxiId = $this->getId('autocod', GlobalStorage::getUserId(), $formData['car']['vin'], 'isTaxi');
-        $autocodIsExistId = $this->getId('autocod', GlobalStorage::getUserId(), $formData['car']['vin'], 'isExist');
-        if(
-            !$this->exist($autocodIsTaxiId) ||
-            !$this->exist($autocodIsExistId)
+        $autocodVinIsTaxiId = $this->getId('autocod', GlobalStorage::getUserId(), 'VIN', $formData['car']['vin'], 'isTaxi');
+        $autocodVinIsExistId = $this->getId('autocod', GlobalStorage::getUserId(), 'VIN', $formData['car']['vin'], 'isExist');
+        $autocodGrzIsTaxiId = $this->getId('autocod', GlobalStorage::getUserId(), 'GRZ', $formData['car']['vin'], 'isTaxi');
+        $autocodGrzIsExistId = $this->getId('autocod', GlobalStorage::getUserId(), 'GRZ', $formData['car']['vin'], 'isExist');
+        if (
+            (!$this->exist($autocodVinIsTaxiId) || !$this->exist($autocodVinIsExistId)) &&
+            (!$this->exist($autocodGrzIsTaxiId) || !$this->exist($autocodGrzIsExistId))
         ) {
             throw new AutocodException('Проверка на использование ТС в такси не выполнялась');
         }
-        $formData['autocod'] = [
-            'isTaxi' => $this->look($autocodIsTaxiId)['status'],
-            'isExist' => $this->look($autocodIsExistId)['status'],
-        ];
+        if ($autocodVinIsExistId != null) {
+            $formData['autocod'] = [
+                'isTaxi' => $this->look($autocodVinIsTaxiId)['status'],
+                'isExist' => $this->look($autocodVinIsExistId)['status'],
+            ];
+        } else {
+            $formData['autocod'] = [
+                'isTaxi' => $this->look($autocodGrzIsTaxiId)['status'],
+                'isExist' => $this->look($autocodGrzIsExistId)['status'],
+            ];
+        }
     }
 
     /**
