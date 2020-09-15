@@ -29,7 +29,10 @@ class VskCallbackService extends VskService implements VskCallbackServiceContrac
         $processService = app($contract);
         $process_data = $processService->processCallback($token_data, $callback_info);
         $company = $this->getCompany(self::companyCode);
-        $this->runService($company, $token_data, $process_data['nextMethod']);
+
+        if (!empty($process_data['nextMethod'])){
+            $this->runService($company, $token_data, $process_data['nextMethod']);
+        }
     }
 
     private function parseContent($content)
