@@ -98,7 +98,7 @@ class FormSendRequest extends AbstractRequest
             'drivers.*.driver.driverId' => "required|integer|driver_foreign_license",
             'drivers.*.driver.drivingLicenseIssueDateOriginal' => "required|date|date_format:Y-m-d",
             'prevToken' => 'string|size:32',
-            'phone_confirm' => 'sometimes|regex:/^\d{6}',
+            'phone_confirm' => 'sometimes|regex:/^\d{6}/',
             'isTaxi' => 'sometimes|boolean'
         ];
     }
