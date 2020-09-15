@@ -157,6 +157,9 @@ abstract class CompanyService
         $response = $calc_service->getCommissionsList($params);
 
         if (count($response['content']['data']) > 0) {
+
+            $percent_reward = intval($response['content']['data'][0]['user_reward']);
+
             if (GlobalStorage::userIsAgent()) {
                 $percent_reward = intval($response['content']['data'][0]['agent_reward']);
             }
