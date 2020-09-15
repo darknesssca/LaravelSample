@@ -32,7 +32,7 @@ class VskLoginService extends VskService implements VskLoginServiceContract
             ]);
 
         try {
-            $data['uniqueId'] = $response->getHeader('X-VSK-CorrelationId');
+            $data['uniqueId'] = $response->getHeader('X-VSK-CorrelationId')[0];
         } catch (Exception $exception) {
             //ignore
         }
