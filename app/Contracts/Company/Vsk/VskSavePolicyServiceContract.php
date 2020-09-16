@@ -4,9 +4,7 @@
 namespace App\Contracts\Company\Vsk;
 
 
-use App\Contracts\Company\CompanyMethodServiceInterface;
-
-interface VskSavePolicyServiceContract extends CompanyMethodServiceInterface
+interface VskSavePolicyServiceContract extends VskMethodServiceInterface
 {
 
 }
