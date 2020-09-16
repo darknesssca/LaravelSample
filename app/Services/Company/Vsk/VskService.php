@@ -160,7 +160,7 @@ abstract class VskService extends CompanyService
                 ],
                 'model:model' => [
                     'model:mark' => [
-                        'model:name' => 'ВАЗ'//todo
+                        'model:name' => $attributes['car']['maker_name']
                     ],
                     'model:type' => [
                         'model:vehicleTypeCode' => $category['name']
@@ -267,29 +267,31 @@ abstract class VskService extends CompanyService
         return $data;
     }
 
-    protected function fillDrivers($company, array $drivers): array
+    protected function getDriversArray($company, array $attributes): array
     {
         $data = [];
 
-        foreach ($drivers as $driver) {
-            $data['model:policyObjects'][] = [
-                'model:object' => [
-                    '_attributes' => [
-                        'xsi:type' => 'model:IndividualsXT'
-                    ],
-                    'model:objectType' => [
-                        'model:code' => 'DRIVER'
-                    ],
-//                    $this->fillDocs($company, $driver['documents']),
-                    'model:contractorType' => [
-                        'model:contractorTypeCode' => 'INDIVIDUAL'
-                    ],
-                    'model:firstName' => $driver['firstName'],
-                    'model:surname' => $driver['lastName'],
-                    'model:secondName' => $driver['middleName'],
-                    'model:birthDate' => $driver['birthdate'],
-                ]
-
+        foreach ($attributes['drivers'] as $driver) {
+            $driver_subject = $this->searchSubjectById($attributes, $driver['driver']['driverId']);
+            $full_name = sprintf('%s %s %s', $driver_subject['lastName'], $driver_subject['middleName'], $driver_subject['lastName']);
+            $data['model:object'][] = [
+                '_attributes' => [
+                    'xsi:type' => 'model:IndividualsXT'
+                ],
+                'model:objectType' => [
+                    'model:code' => 'DRIVER'
+                ],
+                'model:docs' => $this->getDocs($company, $driver_subject['documents']),
+                'model:contractorType' => [
+                    'model:contractorTypeCode' => 'INDIVIDUAL'
+                ],
+                'model:firstName' => $driver_subject['firstName'],
+                'model:surname' => $driver_subject['lastName'],
+                'model:secondName' => $driver_subject['middleName'],
+                'model:birthDate' => $driver_subject['birthdate'],
+                'model:gender' => $this->genderService->getCompanyGender($driver_subject['gender'], $company->id),
+                'model:fullName' => $full_name,
+                'model:driveExperience' => $driver['driver']['drivingLicenseIssueDateOriginal']
             ];
         }
 
@@ -341,7 +343,7 @@ abstract class VskService extends CompanyService
                 'model:flat' => $address['address']['flat'],
                 'model:okato' => '',
                 'model:addressStr' => '',
-                'model:fias' => '4b72fe92-dcd5-4958-b53d-b84c54e9feb3',//todo
+                'model:fias' => $address['address']['streetFias'],
             ];
         }
 
@@ -387,7 +389,10 @@ abstract class VskService extends CompanyService
                 'model:dateIssue' => Carbon::now()->format('Y-m-d'),
                 'model:dateCalc' => $this->formatDateToIso(''),
                 'model:previousPolicyNumber' => $computed_data['previousPolicyNumber'],
-                'model:policyObjects' => $this->getVehicleArray($company, $attributes),
+                'model:policyObjects' => [
+                    $this->getVehicleArray($company, $attributes),
+                    $this->getDriversArray($company, $attributes),
+                ],
                 'model:participant' => $this->getInsurerArray($company, $attributes),
             ]
         ];
