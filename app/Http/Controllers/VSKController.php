@@ -32,6 +32,7 @@ class VSKController extends Controller
     {
         $fields = $request->validate();
         $company = $this->getCompany('vsk');
-        return Response::success($this->runService($company, $fields, 'creating'));
+        $this->runService($company, $fields, 'creating');
+        return Response::success(['status' => 'processing']);
     }
 }
