@@ -6,10 +6,14 @@ namespace App\Http\Controllers;
 
 use App\Contracts\Company\Vsk\VskCallbackServiceContract;
 use App\Http\Requests\VSK\CallbackRequest;
+use App\Http\Requests\VSK\SignRequest;
+use App\Traits\CompanyServicesTrait;
 use Illuminate\Http\Response;
 
 class VSKController extends Controller
 {
+    use CompanyServicesTrait;
+
     private $callbackService;
 
     public function __construct(VskCallbackServiceContract $callbackService)
@@ -22,5 +26,12 @@ class VSKController extends Controller
         $fields = $request->validated();
         $this->callbackService->runNextStep($fields);
         Response::success(true);
+    }
+
+    public function sign(SignRequest $request)
+    {
+        $fields = $request->validate();
+        $company = $this->getCompany('vsk');
+        return Response::success($this->runService($company, $fields, 'creating'));
     }
 }
