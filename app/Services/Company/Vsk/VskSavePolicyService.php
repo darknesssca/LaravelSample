@@ -89,9 +89,24 @@ class VskSavePolicyService extends VskService implements VskSavePolicyServiceCon
      * @param array $token_data - информация о токене (метод и сам токен)
      * @param array $parsed_response - ответ в виде массива
      * @return array
+     * @throws TokenException
      */
     public function processCallback(InsuranceCompany $company, array $token_data, array $parsed_response): array
     {
+        $tokenData = $this->getTokenData($token_data['token'], true);
+
+        foreach ($parsed_response as $tag) {
+            if ($tag['tag'] == 'POL:AMOUNT') {
+                $tokenData[self::companyCode]['finalPremium'] = $this->CopToRub($tag['value']);
+            }
+        }
+
+        $tokenData[self::companyCode]['status'] = 'signing';
+
+        $this->intermediateDataService->update($token_data['token'], [
+            'data' => json_encode($tokenData),
+        ]);
+
         return [];
     }
 }
