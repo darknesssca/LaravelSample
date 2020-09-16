@@ -85,13 +85,14 @@ class VskCalculatePolicyService extends VskService implements VskCalculatePolicy
     {
         $tokenData = $this->getTokenData($token_data['token'], true);
 
-        foreach ($parsed_response as $tag){
+        foreach ($parsed_response as $tag) {
             if ($tag['tag'] == 'POL:AMOUNT') {
                 $tokenData[self::companyCode]['premium'] = $this->CopToRub($tag['value']);
             }
         }
 
-        $tokenData[self::companyCode]['reward'] = $this->getReward($company->id, $tokenData['form'], $tokenData[self::companyCode]['premium']);
+        $tokenData[self::companyCode]['reward'] = $this->getReward($company->id, $tokenData['form'],
+            $tokenData[self::companyCode]['premium']);
         $tokenData[self::companyCode]['status'] = 'calculated';
 
         $this->intermediateDataService->update($token_data['token'], [
