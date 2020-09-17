@@ -144,7 +144,8 @@ class InsuranceController extends Controller
             $payload = (new TokenEncoded($registerToken))->decode()->getPayload();
             $userEmailData = [
                 'password' => $payload['password'],
-                'link' => $payload['link']
+                'link' => $payload['link'],
+                'login' => $registerUserData['email']
             ];
 
             unset($payload['password'], $payload['link']);
