@@ -105,7 +105,10 @@ class AutocodReportService extends AutocodService
                 $r2['found'] = false;
                 return $r2;
             }
-            throw new \Exception("По заданному VIN ничего не найдено");
+            if($queryType == 'VIN')
+                throw new \Exception("По заданному VIN ничего не найдено");
+            if($queryType == 'GRZ')
+                throw new \Exception("По заданному госномеру ничего не найдено. Заполните данные о ТС вручную");
         }
         if(!$unauthorized) {
             $this->put(
