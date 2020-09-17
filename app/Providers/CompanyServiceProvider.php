@@ -38,10 +38,13 @@ use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCreateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffGuidesSourceContract;
 use App\Contracts\Company\Tinkoff\TinkoffMasterServiceContract;
+use App\Contracts\Company\Vsk\VskBuyPolicyServiceContract;
 use App\Contracts\Company\Vsk\VskCalculatePolicyServiceContract;
 use App\Contracts\Company\Vsk\VskCallbackServiceContract;
 use App\Contracts\Company\Vsk\VskLoginServiceContract;
 use App\Contracts\Company\Vsk\VskMasterServiceContract;
+use App\Contracts\Company\Vsk\VskSavePolicyServiceContract;
+use App\Contracts\Company\Vsk\VskSignPolicyServiceContract;
 use App\Services\Company\Ingosstrah\IngosstrahBillLinkService;
 use App\Services\Company\Ingosstrah\IngosstrahBillService;
 use App\Services\Company\Ingosstrah\IngosstrahBillStatusService;
@@ -76,10 +79,13 @@ use App\Services\Company\Tinkoff\TinkoffCalculateService;
 use App\Services\Company\Tinkoff\TinkoffCreateService;
 use App\Services\Company\Tinkoff\TinkoffGuidesService;
 use App\Services\Company\Tinkoff\TinkoffMasterService;
+use App\Services\Company\Vsk\VskBuyPolicyService;
 use App\Services\Company\Vsk\VskCalculatePolicyService;
 use App\Services\Company\Vsk\VskCallbackService;
 use App\Services\Company\Vsk\VskLoginService;
 use App\Services\Company\Vsk\VskMasterService;
+use App\Services\Company\Vsk\VskSavePolicyService;
+use App\Services\Company\Vsk\VskSignPolicyService;
 use Illuminate\Support\ServiceProvider;
 
 class CompanyServiceProvider extends ServiceProvider
@@ -180,5 +186,9 @@ class CompanyServiceProvider extends ServiceProvider
         $this->app->singleton(VskLoginServiceContract::class, VskLoginService::class);
         //calculate
         $this->app->singleton(VskCalculatePolicyServiceContract::class, VskCalculatePolicyService::class);
+        //create
+        $this->app->singleton(VskSavePolicyServiceContract::class, VskSavePolicyService::class);
+        $this->app->singleton(VskSignPolicyServiceContract::class, VskSignPolicyService::class);
+        $this->app->singleton(VskBuyPolicyServiceContract::class, VskBuyPolicyService::class);
     }
 }
