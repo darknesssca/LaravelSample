@@ -4,9 +4,12 @@
 namespace App\Services\Company\Vsk;
 
 
+use App\Contracts\Company\Vsk\VskBuyPolicyServiceContract;
 use App\Contracts\Company\Vsk\VskCalculatePolicyServiceContract;
 use App\Contracts\Company\Vsk\VskLoginServiceContract;
 use App\Contracts\Company\Vsk\VskMasterServiceContract;
+use App\Contracts\Company\Vsk\VskSavePolicyServiceContract;
+use App\Contracts\Company\Vsk\VskSignPolicyServiceContract;
 use App\Exceptions\ApiRequestsException;
 use App\Exceptions\MethodForbiddenException;
 use App\Exceptions\TokenException;
@@ -59,10 +62,27 @@ class VskMasterService extends VskService implements VskMasterServiceContract
      * @param InsuranceCompany $company - объект выбранной компании
      * @param $attributes - массив атрибутов, прошедших валидацию
      * @return array
+     * @throws TokenException
      */
     public function create(InsuranceCompany $company, $attributes): array
     {
-        // TODO: Implement create() method.
+        $this->pushForm($attributes);
+
+        /** @var VskSavePolicyServiceContract $savePolicyService */
+        $savePolicyService = app(VskSavePolicyServiceContract::class);
+        $savePolicyData = $savePolicyService->run($company, $attributes);
+
+        $tokenData = $this->getTokenData($attributes['token'], true);
+        $tokenData[$company->code]['status'] = 'processing';
+        $tokenData[$company->code]['stage'] = 'create';
+        $tokenData[$company->code]['savePolicyUniqueId'] = $savePolicyData['uniqueId'];
+        $this->intermediateDataService->update($attributes['token'], [
+            'data' => json_encode($tokenData),
+        ]);
+
+        return [
+            'status' => 'processing',
+        ];
     }
 
     /**
@@ -124,12 +144,23 @@ class VskMasterService extends VskService implements VskMasterServiceContract
      * @param InsuranceCompany $company - объект выбранной компании
      * @param $attributes - массив атрибутов, прошедших валидацию
      * @return void
-     * @throws MethodForbiddenException - выбрасывается в случаях, когда метод не требуется для данного СК и не был
-     * реализован, но его все равно пытаются вызвать
+     * @throws TokenException
      */
     public function segmentCalculating(InsuranceCompany $company, $attributes): void
     {
-        // TODO: Implement segmentCalculating() method.
+        $this->pushForm($attributes);
+
+        /** @var VskBuyPolicyServiceContract $buyPolicyService */
+        $buyPolicyService = app(VskBuyPolicyServiceContract::class);
+        $buyPolicyData = $buyPolicyService->run($company, $attributes);
+
+        $tokenData = $this->getTokenData($attributes['token'], true);
+        $tokenData[$company->code]['stage'] = 'buy';
+        $tokenData[$company->code]['buyUniqueId'] = $buyPolicyData['uniqueId'];
+
+        $this->intermediateDataService->update($attributes['token'], [
+            'data' => json_encode($tokenData),
+        ]);
     }
 
     /**
@@ -138,12 +169,22 @@ class VskMasterService extends VskService implements VskMasterServiceContract
      * @param InsuranceCompany $company - объект выбранной компании
      * @param $attributes - массив атрибутов, прошедших валидацию
      * @return void
-     * @throws MethodForbiddenException - выбрасывается в случаях, когда метод не требуется для данного СК и не был
-     * реализован, но его все равно пытаются вызвать
+     * @throws TokenException
      */
     public function creating(InsuranceCompany $company, $attributes): void
     {
-        // TODO: Implement creating() method.
+        /** @var VskSignPolicyServiceContract $signPolicyService */
+        $signPolicyService = app(VskSignPolicyServiceContract::class);
+        $signPolicyData = $signPolicyService->run($company, $attributes);
+
+        $tokenData = $this->getTokenData($attributes['token'], true);
+        $tokenData[$company->code]['status'] = 'processing';
+        $tokenData[$company->code]['stage'] = 'sign';
+        $tokenData[$company->code]['signUniqueId'] = $signPolicyData['uniqueId'];
+
+        $this->intermediateDataService->update($attributes['token'], [
+            'data' => json_encode($tokenData),
+        ]);
     }
 
     /**
@@ -201,12 +242,35 @@ class VskMasterService extends VskService implements VskMasterServiceContract
      * @param InsuranceCompany $company - объект выбранной компании
      * @param $attributes - массив атрибутов, прошедших валидацию
      * @return array
-     * @throws MethodForbiddenException - выбрасывается в случаях, когда метод не требуется для данного СК и не был
-     * реализован, но его все равно пытаются вызвать
+     * @throws ApiRequestsException
+     * @throws TokenException
      */
     public function processing(InsuranceCompany $company, $attributes): array
     {
-        // TODO: Implement processing() method.
+        $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);
+        if (!(isset($tokenData['status']) && $tokenData['status'])) {
+            throw new TokenException('Нет данных о статусе рассчета в токене');
+        }
+
+        switch ($tokenData['status']) {
+            case 'processing':
+                return [
+                    'status' => 'processing',
+                ];
+            case 'signing':
+                return [
+                    'status' => 'done',
+                    'sign' => true
+                ];
+            case 'buying':
+                return [
+                    'status' => 'done',
+                ];
+            case 'error':
+                throw new ApiRequestsException($tokenData['errorMessages']);
+            default:
+                throw new TokenException('Статус рассчета не валиден');
+        }
     }
 
     /**

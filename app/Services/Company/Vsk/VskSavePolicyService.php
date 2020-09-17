@@ -26,6 +26,13 @@ class VskSavePolicyService extends VskService implements VskSavePolicyServiceCon
     {
         $data = [];
         $xml = $this->prepareXml($company, $attributes);
+
+        $this->writeRequestLog(
+            [
+                'data' => $xml
+            ]
+        );
+
         $response = $this->client->post(
             '/cxf/rest/partners/api/v2/osago/Policy/SavePolicy',
             [
@@ -93,6 +100,10 @@ class VskSavePolicyService extends VskService implements VskSavePolicyServiceCon
      */
     public function processCallback(InsuranceCompany $company, array $token_data, array $parsed_response): array
     {
+        $this->writeResponseLog([
+            'data' => $parsed_response
+        ]);
+
         $tokenData = $this->getTokenData($token_data['token'], true);
 
         foreach ($parsed_response as $tag) {

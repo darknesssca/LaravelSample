@@ -5,10 +5,15 @@ namespace App\Services\Company\Vsk;
 
 
 use App\Contracts\Company\Vsk\VskBuyPolicyServiceContract;
+use App\Exceptions\PolicyNotFoundException;
+use App\Exceptions\TokenException;
 use App\Models\InsuranceCompany;
-use App\Services\Company\CompanyService;
+use Benfin\Api\Contracts\LogMicroserviceContract;
+use Benfin\Api\GlobalStorage;
+use Exception;
+use Spatie\ArrayToXml\ArrayToXml;
 
-class VskBuyPolicyService extends CompanyService implements VskBuyPolicyServiceContract
+class VskBuyPolicyService extends VskService implements VskBuyPolicyServiceContract
 {
 
     /**
@@ -21,6 +26,126 @@ class VskBuyPolicyService extends CompanyService implements VskBuyPolicyServiceC
      */
     public function run(InsuranceCompany $company, $attributes): array
     {
-        // TODO: Implement run() method.
+        $data = [];
+        $xml = $this->prepareXml($company, $attributes)->prettify()->toXml();
+
+        $this->writeRequestLog(
+            [
+                'data' => $xml
+            ]
+        );
+
+        $response = $this->client->post(
+            '/cxf/rest/partners/api/v2/osago/Policy/BuyPolicy',
+            [
+                'body' => $xml,
+            ]);
+
+        try {
+            $data['uniqueId'] = $response->getHeader('X-VSK-CorrelationId')[0];
+        } catch (Exception $exception) {
+            //ignore
+        }
+
+        return $data;
+    }
+
+    private function prepareXml($company, $attributes)
+    {
+        $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code, true);
+
+        $fields = [
+            'common:messageId' => 'BuyPolicy.' . $attributes['token'],
+            'common:bpId' => $tokenData['bpId'],
+            'common:sessionId' => $tokenData['sessionId'],
+            'policy:policyNumber' => $tokenData['policyNumber'],
+            'policy:returnUrl' => config('api_sk.billSuccessUrl'),
+            'policy:failUrl' => config('api_sk.billFailUrl'),
+            'policy:amount' => $this->RubToCop($tokenData['finalPremium']),
+        ];
+
+        return new ArrayToXml($fields, [
+            'rootElementName' => 'policy:buyPolicyRequest',
+            '_attributes' => [
+                'xmlns:common' => 'http://www.vsk.ru/schema/partners/common',
+                'xmlns:policy' => 'http://www.vsk.ru/schema/partners/policy',
+            ]
+        ], true, null, '1.0', [
+            'encoding' => 'UTF-8',
+            'standalone' => true
+        ]);
+    }
+
+    /**
+     * Метод обработки колбеков от ВСК
+     * Для каждого сервиса свой метод обработки колбека
+     *
+     * @param InsuranceCompany $company - объект компании
+     * @param array $token_data - информация о токене (метод и сам токен)
+     * @param array $parsed_response - ответ в виде массива
+     * @return array
+     * @throws TokenException
+     * @throws PolicyNotFoundException
+     * @throws Exception
+     */
+    public function processCallback(InsuranceCompany $company, array $token_data, array $parsed_response): array
+    {
+        $this->writeResponseLog([
+            'data' => $parsed_response
+        ]);
+
+        $tokenData = $this->getTokenData($token_data['token'], true);
+        $callbackNumber = 1;
+
+        foreach ($parsed_response as $tag) {
+            if ($tag['tag'] == 'PAY:ORDERID') {
+                $callbackNumber = 1;
+                $tokenData[self::companyCode]['orderId'] = $tag['value'];
+            }
+            if ($tag['tag'] == 'PAY:FORMURL') {
+                $callbackNumber = 1;
+                $tokenData[self::companyCode]['formUrl'] = $tag['value'];
+            }
+            if ($tag['tag'] == 'POL:POLICYID') {
+                $callbackNumber = 2;
+                $tokenData[self::companyCode]['policyId'] = $tag['value'];
+            }
+            if ($tag['tag'] == 'POL:POLICYNUMBER') {
+                $callbackNumber = 2;
+            }
+        }
+
+        $this->intermediateDataService->update($token_data['token'], [
+            'data' => json_encode($tokenData),
+        ]);
+
+        if ($callbackNumber == 1) {
+            $attributes = $token_data;
+            $this->pushForm($attributes);
+            $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
+            $this->sendBillUrl($insurer['email'], $tokenData[self::companyCode]['formUrl']);
+            $attributes['number'] = $tokenData['policyNumber'];
+            $attributes['premium'] = $tokenData['finalPremium'];
+            $this->createPolicy($company, $attributes);
+            $logger = app(LogMicroserviceContract::class);
+            $logger->sendLog(
+                'пользователь отправил запрос на создание заявки в компанию ' . $company->name,
+                config('api_sk.logMicroserviceCode'),
+                GlobalStorage::getUserId()
+            );
+            return [
+                'status' => 'done',
+                'billUrl' => $tokenData[self::companyCode]['formUrl'],
+            ];
+        } elseif ($callbackNumber == 2) {
+            $policy = $this->policyService->getNotPaidPolicyByPaymentNumber($tokenData['policyNumber']);
+            if (!$policy) {
+                throw new PolicyNotFoundException('Нет полиса с таким номером');
+            }
+            $this->policyService->update($policy->id, [
+                'paid' => true,
+            ]);
+            $this->destroyToken($token_data['token']);
+        }
     }
 }

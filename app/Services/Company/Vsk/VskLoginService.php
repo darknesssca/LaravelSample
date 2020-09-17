@@ -24,11 +24,18 @@ class VskLoginService extends VskService implements VskLoginServiceContract
     public function run(InsuranceCompany $company, $attributes): array
     {
         $data = [];
+        $xml = $this->prepareXml($attributes)->toXml();
+
+        $this->writeRequestLog(
+            [
+                'data' => $xml
+            ]
+        );
 
         $response = $this->client->post(
             '/cxf/rest/partners/api/v2/osago/Auth/Login',
             [
-                'body' => $this->prepareXml($attributes)->toXml(),
+                'body' => $xml,
             ]);
 
         try {
@@ -73,6 +80,10 @@ class VskLoginService extends VskService implements VskLoginServiceContract
      */
     public function processCallback(InsuranceCompany $company, array $token_data, array $parsed_response): array
     {
+        $this->writeResponseLog([
+            'data' => $parsed_response
+        ]);
+
         $tokenData = $this->getTokenData($token_data['token'], true);
 
         foreach ($parsed_response as $tag) {
