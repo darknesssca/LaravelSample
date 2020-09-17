@@ -37,7 +37,7 @@ class InsuranceCompanySeeder extends Seeder
             'size' => 3728,
         ],
         [
-            'id' => 5,
+
             'name' => 'vsk.svg',
             'dir' => '/insurance-companies_logo/vsk.svg',
             'content_type' => 'image/svg+xml',
@@ -85,14 +85,16 @@ class InsuranceCompanySeeder extends Seeder
 
     public function run()
     {
-        foreach (self::$files as &$file) {
+        foreach (self::$files as $key => &$file) {
             $file['dir'] = config('filesystems.disks.minio.bucket') . $file['dir'];
-            File::updateOrCreate(
+            $file_object = File::updateOrCreate(
                 [
-                    'id' => $file['id']
+                    'name' => $file['name']
                 ],
                 $file
             );
+            
+            self::$insuranceCompanies[$key]['logo_id'] = $file_object->id;
         }
         foreach (self::$insuranceCompanies as $insuranceCompany) {
             InsuranceCompany::updateOrCreate(
