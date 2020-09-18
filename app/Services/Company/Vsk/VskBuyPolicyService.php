@@ -115,6 +115,7 @@ class VskBuyPolicyService extends VskService implements VskBuyPolicyServiceContr
             }
         }
 
+        $tokenData[self::companyCode]['status'] = 'buying';
         $this->intermediateDataService->update($token_data['token'], [
             'data' => json_encode($tokenData),
         ]);
@@ -124,8 +125,8 @@ class VskBuyPolicyService extends VskService implements VskBuyPolicyServiceContr
             $this->pushForm($attributes);
             $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
             $this->sendBillUrl($insurer['email'], $tokenData[self::companyCode]['formUrl']);
-            $attributes['number'] = $tokenData['policyNumber'];
-            $attributes['premium'] = $tokenData['finalPremium'];
+            $attributes['number'] = $tokenData[self::companyCode]['policyNumber'];
+            $attributes['premium'] = $tokenData[self::companyCode]['finalPremium'];
             $this->createPolicy($company, $attributes);
             $logger = app(LogMicroserviceContract::class);
             $logger->sendLog(
@@ -138,7 +139,7 @@ class VskBuyPolicyService extends VskService implements VskBuyPolicyServiceContr
                 'billUrl' => $tokenData[self::companyCode]['formUrl'],
             ];
         } elseif ($callbackNumber == 2) {
-            $policy = $this->policyService->getNotPaidPolicyByPaymentNumber($tokenData['policyNumber']);
+            $policy = $this->policyService->getNotPaidPolicyByPaymentNumber($tokenData[self::companyCode]['policyNumber']);
             if (!$policy) {
                 throw new PolicyNotFoundException('Нет полиса с таким номером');
             }
@@ -147,5 +148,7 @@ class VskBuyPolicyService extends VskService implements VskBuyPolicyServiceContr
             ]);
             $this->destroyToken($token_data['token']);
         }
+
+        return [];
     }
 }

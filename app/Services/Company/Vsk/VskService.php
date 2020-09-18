@@ -113,9 +113,6 @@ abstract class VskService extends CompanyService
             'model:gender' => $this->genderService->getCompanyGender($owner['gender'], $company->id),
             'model:fullName' => $full_name,
             'model:latName' => '',
-            'model:familyState' => [
-                'model:familyStateTypeCode' => 'MARRIED'
-            ]
         ];
 
         return $data;
@@ -195,15 +192,6 @@ abstract class VskService extends CompanyService
                 'model:engineNumber' => '',
                 'model:keysCount' => '0',
                 'model:yearIssue' => $attributes['car']['year'],
-                'model:bodyType' => [
-                    'model:bodyTypeCode' => 'SEDAN'
-                ],
-                'model:transmissionType' => [
-                    'model:transmissionCode' => 'M'
-                ],
-                'model:engineType' => [
-                    'model:engineTypeCode' => 'B'
-                ],
             ],
             'model:objectType' => [
                 'model:code' => 'VEHICLE'
