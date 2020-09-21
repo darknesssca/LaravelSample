@@ -148,19 +148,6 @@ class VskMasterService extends VskService implements VskMasterServiceContract
      */
     public function segmentCalculating(InsuranceCompany $company, $attributes): void
     {
-        $this->pushForm($attributes);
-
-        /** @var VskBuyPolicyServiceContract $buyPolicyService */
-        $buyPolicyService = app(VskBuyPolicyServiceContract::class);
-        $buyPolicyData = $buyPolicyService->run($company, $attributes);
-
-        $tokenData = $this->getTokenData($attributes['token'], true);
-        $tokenData[$company->code]['stage'] = 'buy';
-        $tokenData[$company->code]['buyUniqueId'] = $buyPolicyData['uniqueId'];
-
-        $this->intermediateDataService->update($attributes['token'], [
-            'data' => json_encode($tokenData),
-        ]);
     }
 
     /**
@@ -173,14 +160,29 @@ class VskMasterService extends VskService implements VskMasterServiceContract
      */
     public function creating(InsuranceCompany $company, $attributes): void
     {
-        /** @var VskSignPolicyServiceContract $signPolicyService */
-        $signPolicyService = app(VskSignPolicyServiceContract::class);
-        $signPolicyData = $signPolicyService->run($company, $attributes);
+        switch ($attributes['method']) { //предыдущий метод
+            case 'SavePolicy':
+                /** @var VskSignPolicyServiceContract $signPolicyService */
+                $signPolicyService = app(VskSignPolicyServiceContract::class);
+                $signPolicyData = $signPolicyService->run($company, $attributes);
 
-        $tokenData = $this->getTokenData($attributes['token'], true);
-        $tokenData[$company->code]['status'] = 'processing';
-        $tokenData[$company->code]['stage'] = 'sign';
-        $tokenData[$company->code]['signUniqueId'] = $signPolicyData['uniqueId'];
+                $tokenData = $this->getTokenData($attributes['token'], true);
+                $tokenData[$company->code]['status'] = 'processing';
+                $tokenData[$company->code]['stage'] = 'sign';
+                $tokenData[$company->code]['signUniqueId'] = $signPolicyData['uniqueId'];
+                break;
+            case 'SignPolicy':
+                $this->pushForm($attributes);
+
+                /** @var VskBuyPolicyServiceContract $buyPolicyService */
+                $buyPolicyService = app(VskBuyPolicyServiceContract::class);
+                $buyPolicyData = $buyPolicyService->run($company, $attributes);
+
+                $tokenData = $this->getTokenData($attributes['token'], true);
+                $tokenData[$company->code]['stage'] = 'buy';
+                $tokenData[$company->code]['buyUniqueId'] = $buyPolicyData['uniqueId'];
+                break;
+        }
 
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),

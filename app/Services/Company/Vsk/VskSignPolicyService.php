@@ -100,7 +100,7 @@ class VskSignPolicyService extends VskService implements VskSignPolicyServiceCon
         ]);
 
         return [
-            'nextMethod' => 'segmentCalculating'
+            'nextMethod' => 'calculating'
         ];
     }
 }
