@@ -101,6 +101,9 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
         }
         $data['error'] = false;
         $data['premium'] = $response['response']->OSAGOFQ->totalPremium;
+        if(isset($response['response']->OSAGOFQ->OSAGORatingFactors->KBM)) {
+            $data['kbm'] = $response['response']->OSAGOFQ->OSAGORatingFactors->KBM;
+        }
         return $data;
     }
 
