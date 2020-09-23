@@ -49,7 +49,7 @@ class RenessansCheckCalculateService extends RenessansService implements Renessa
         }
         return [
             'premium' => $response['data']['response']['Premium'],
-            'kbm' => $response['data']['response']['KBM'][0]['KBM'],
+            'kbm' => $response['data']['response']['KBM'][0]['KBM'] ?? '',
         ];
     }
 

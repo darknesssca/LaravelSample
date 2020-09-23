@@ -69,7 +69,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
         return [
             'status' => 'calculated',
             'premium' => $dataCalculate['premium'],
-            'kbm' => $tokenData[$company->code]['kbmId'],
+            'kbm' => $tokenData[$company->code]['kbmId'] ?? '',
             'reward' => $tokenData[$company->code]['reward'],
         ];
     }
