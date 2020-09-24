@@ -388,18 +388,37 @@ class PolicyService implements PolicyServiceContract
         /** * @var Collection $policies */
         $policies = $this->policyRepository->getList($filter)->sortBy('registration_date');
 
+        $user_ids = [];
         if ($policies->isNotEmpty()) {
+            $ids = $policies->pluck('agent_id')->unique()->all();
+            $user_ids = array_merge($user_ids, $ids);
+        }
+
+        if ($user_ids) {
+            $usersInfo = app(AuthMicroserviceContract::class)->usersInfo($user_ids);
+        } else {
+            $usersInfo = [];
+        }
+
+        if ($policies->isNotEmpty()) {
+            $organizedPolicies = $this->organizePolicies($policies, $userId, $subagentIds);
+
             $startDate = Carbon::parse($filter["from"]);
             $endDate = Carbon::parse($filter["to"]);
-            $needSortByMonth = $startDate->diffInMonths($endDate) > 0;
+            $sort = [
+                'needSortByMonth' => $startDate->diffInMonths($endDate) > 0,
+                'from' => $filter['from'],
+                'to' => $filter['to'],
+                'groupedByUserOrderBy' => $filter['grouped_by_user_order_by'] ?? 'count',
+            ];
 
-            $organizedPolicies = $this->organizePolicies($policies, $userId, $subagentIds);
-            $organizedStatistics = $this->makeStatistic($organizedPolicies, $needSortByMonth, $filter['from'], $filter['to']);
+            $organizedStatistics = $this->makeStatistic($organizedPolicies, $sort, $usersInfo);
         }
 
         if (empty($organizedStatistics)) {
             throw new StatisticsNotFoundException('За выбранный период не продано ни одного полиса');
         }
+
         return $organizedStatistics;
     }
 
@@ -415,6 +434,7 @@ class PolicyService implements PolicyServiceContract
         $organized = [];
 
         foreach ($policies as $policy) {
+            $policy->product_id = 1; //костыль, на данный момент отсутствует поле
             if ($policy->agent_id == $userId) {
                 $organized["self"][] = $policy;
             } else {
@@ -430,16 +450,15 @@ class PolicyService implements PolicyServiceContract
 
     /**
      * @param array $organizedArray
-     * @param bool $needSortByMonth
-     * @param $from
-     * @param $to
+     * @param $sort
+     * @param $usersInfo
      * @return array
      */
-    private function makeStatistic($organizedArray, $needSortByMonth, $from, $to)
+    private function makeStatistic($organizedArray, $sort, $usersInfo)
     {
         $statistics = [];
         foreach ($organizedArray as $key => $policies) {
-            $statistics[$key] = $this->makeStatisticFromPoliciesList($policies, $needSortByMonth, $from, $to);
+            $statistics[$key] = $this->makeStatisticFromPoliciesList($policies, $sort, $usersInfo);
         }
         return $statistics;
     }
@@ -447,32 +466,31 @@ class PolicyService implements PolicyServiceContract
     /**
      * Группировка статистики продаж по датам
      * @param Collection $policiesList
-     * @param bool $needSortByMonth
-     * @param $from
-     * @param $to
+     * @param $sort
+     * @param $usersInfo
      * @return array
      */
-    private function makeStatisticFromPoliciesList($policiesList, $needSortByMonth, $from, $to): array
+    private function makeStatisticFromPoliciesList($policiesList, $sort, $usersInfo): array
     {
         //группировка по страховым компаниям
         $policiesList = collect($policiesList);
-        $byInsuranceCompany = $policiesList
-            ->groupBy('insurance_company_id')
-            ->map(function ($item, $index) {
-                $tmp = collect($item);
-                return [
-                    "count" => $tmp->count(),
-                    "sum" => round($tmp->sum("premium"), 2)
-                ];
-            });
         $result = [
             "count" => $policiesList->count(),
             "sum" => round($policiesList->sum('premium'), 2),
-            "by_insurance_company" => $byInsuranceCompany
+            "by_insurance_company" => $this->collectBy($policiesList, ['group_by' => 'insurance_company_id']),
+            "by_user" => $this->collectByUser($policiesList, $sort['groupedByUserOrderBy']),
         ];
 
+        $result['by_user'] = $result['by_user']->map(function ($user, $userId) use ($usersInfo) {
+            return array_merge($user, [
+                'first_name' => $usersInfo[$userId]['first_name'] ?? null,
+                'last_name' => $usersInfo[$userId]['last_name'] ?? null,
+                'patronymic' => $usersInfo[$userId]['patronymic'] ?? null,
+                'tax_status' => $usersInfo[$userId]['tax_status']['name'] ?? null,
+            ]);
+        });
 
-        if ($needSortByMonth) {
+        if ($sort['needSortByMonth']) {
             $result["detail"] = $policiesList
                 ->groupBy(function ($item, $index) {
                     $d = Carbon::parse($item['registration_date']);
@@ -489,7 +507,7 @@ class PolicyService implements PolicyServiceContract
                 });
 
             //добавление несуществующих в выборке дат
-            $period = CarbonPeriod::create($from, '1 months', $to)->locale('ru');
+            $period = CarbonPeriod::create($sort['from'], '1 months', $sort['to'])->locale('ru');
             foreach ($period as $date) {
                 /** @var CarbonInterface $date */
                 $formatted = $date->year . " " . $date->month;
@@ -515,7 +533,7 @@ class PolicyService implements PolicyServiceContract
                         'label' => $d->format('d.m.Y'),
                     ];
                 });
-            $period = CarbonPeriod::create($from, $to)->locale('ru');
+            $period = CarbonPeriod::create($sort['from'], $sort['to'])->locale('ru');
 
             //добавление несуществующих в выборке дат
             foreach ($period as $date) {
@@ -530,11 +548,52 @@ class PolicyService implements PolicyServiceContract
                         ]);
                 }
             }
+        }
 
-            //сортировка по датам
-            $result['detail'] = $result['detail']->sortKeys();
+        //сортировка по датам
+        $result['detail'] = $result['detail']->sortKeys(SORT_NATURAL);
+
+
+        return $result;
+    }
+
+    private function collectBy($policies, $struct)
+    {
+        $result = $policies
+            ->groupBy($struct['group_by'])
+            ->map(function ($groupedPolicies, $index) use ($struct) {
+                $result = [
+                    "count" => $groupedPolicies->count(),
+                    "sum" => round($groupedPolicies->sum("premium"), 2)
+                ];
+                if (isset($struct['subGroup'])) {
+                    $result[$struct['subGroup']['key']] = $this->collectBy($groupedPolicies, $struct['subGroup']);
+                }
+                return $result;
+            });
+        if (!empty($struct['order_by'])) {
+            return $result->sortByDesc($struct['order_by']);
         }
         return $result;
+    }
+
+    private function collectByUser($policiesList, $orderBy)
+    {
+        $struct = [
+            'group_by' => 'agent_id',
+            'order_by' => $orderBy,
+            'subGroup' => [
+                'group_by' => 'insurance_company_id',
+                'key' => 'by_insurance_company',
+                'order_by' => $orderBy,
+                'subGroup' => [
+                    'group_by' => 'product_id',
+                    'key' => 'by_product',
+                    'order_by' => $orderBy,
+                ],
+            ],
+        ];
+        return $this->collectBy($policiesList, $struct);
     }
 
     public function createPolicyFromCustomData($companyId, $attributes)
@@ -615,6 +674,7 @@ class PolicyService implements PolicyServiceContract
             'vehicle_unladen_mass' => 'minWeight',
             'vehicle_loaded_mass' => 'maxWeight',
             'vehicle_count_seats' => 'seats',
+            'vehicle_category_id' => 'category',
         ], $attributes['car']);
         $docTypeService = app(DocTypeServiceContract::class);
         $docTypeId = $docTypeService->getDocTypeByCode($attributes['car']['document']['documentType']);
@@ -702,14 +762,18 @@ class PolicyService implements PolicyServiceContract
 
     /**
      * возвращает список пользователей, которые оформляли полисы
+     * @param array $filter
+     * @return array
      */
-    public function usersWithPolicies()
+    public function usersWithPolicies(array $filter = [])
     {
-        $policies = Policy::select('agent_id')->get();
-        $ids = [];
-        foreach ($policies as $pol)
-            $ids[] = $pol['agent_id'];
-        return $this->authService->getUsersList(['user_id' => array_unique($ids)]);
+        $agentList = $this->policyRepository->getUserListByPolicies($filter);
+
+        if ($agentList->isNotEmpty()) {
+            $ids = $agentList->pluck('agent_id')->all();
+            return $this->authService->getUsersList(['user_id' => $ids]);
+        }
+        return [];
     }
 
     /**

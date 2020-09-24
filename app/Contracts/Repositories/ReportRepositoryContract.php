@@ -15,4 +15,6 @@ interface ReportRepositoryContract
     public function getByCreatorId(int $creator_id, array $filter);
 
     public function create(array $fields): Report;
+
+    public function getProcessingReports();
 }

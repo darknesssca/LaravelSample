@@ -47,4 +47,12 @@ class DraftClient extends Model
         return $this->belongsTo('App\Models\Country');
     }
 
+    /**
+     * Мутатор для email-адреса
+     * @param $value
+     */
+    public function setEmailAttribute($value)
+    {
+        $this->attributes['email'] = strtolower($value);
+    }
 }

@@ -80,14 +80,12 @@ $app->configure('api');
 |
 */
 
-// $app->middleware([
-//     App\Http\Middleware\ExampleMiddleware::class
-// ]);
-
-// $app->routeMiddleware([
-//     'auth' => App\Http\Middleware\Authenticate::class,
-// ]);
-$app->routeMiddleware(['auth' => Benfin\Auth\Http\Middleware\Authenticate::class,]);
+$app->routeMiddleware([
+    'auth' => Benfin\Auth\Http\Middleware\Authenticate::class,
+    'restriction.policy' => Benfin\Restrictions\Http\Middleware\RestrictionPolicy::class,
+    'restriction.money' => Benfin\Restrictions\Http\Middleware\RestrictionMoney::class,
+    'admin' => Benfin\Auth\Http\Middleware\Admin::class,
+    ]);
 /*
 |--------------------------------------------------------------------------
 | Register Service Providers
@@ -99,6 +97,7 @@ $app->routeMiddleware(['auth' => Benfin\Auth\Http\Middleware\Authenticate::class
 |
 */
 
+$app->register(App\Providers\AppServiceProvider::class);
 $app->register(ValidationProvider::class);
 $app->register(App\Providers\CompanyServiceProvider::class);
 $app->register(App\Providers\RepositoryServiceProvider::class);

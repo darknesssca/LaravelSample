@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "876465c359349e030f8fb9fac40da185",
+    "content-hash": "0c61fb29bea3d3c9e91bb12be6122d91",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -194,6 +194,41 @@
             "time": "2020-04-16T15:24:14+00:00"
         },
         {
+            "name": "benfin/packages/check-admin",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/check-admin.git",
+                "reference": "a4db0b8f98d3264e34369a25594b81cd28a7ae26"
+            },
+            "require": {
+                "benfin/packages/api-communication": ">=1.4",
+                "ext-soap": "*",
+                "laravel/lumen-framework": ">=6.0",
+                "nowakowskir/php-jwt": "^1.1",
+                "php": "^7.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Benfin\\Auth\\": [
+                        "src/"
+                    ]
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Alexandr Vasilev",
+                    "email": "a.vasilev@qsoft.ru"
+                }
+            ],
+            "description": "BENFIN check admin",
+            "time": "2020-04-20T12:57:04+00:00"
+        },
+        {
             "name": "benfin/packages/log",
             "version": "v1.1.0",
             "source": {
@@ -259,6 +294,40 @@
             ],
             "description": "BENFIN Requests",
             "time": "2020-03-30T18:22:13+00:00"
+        },
+        {
+            "name": "benfin/packages/restrictions",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/restrictions.git",
+                "reference": "c9a81638a7d86a9bfb1fc8d741795fc3f24d17a5"
+            },
+            "require": {
+                "benfin/packages/api-communication": ">=1.4",
+                "laravel/lumen-framework": ">=6.0",
+                "nowakowskir/php-jwt": "^1.1",
+                "php": "^7.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Benfin\\Restrictions\\": [
+                        "src/"
+                    ]
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nikolay Demchenko",
+                    "email": "ni.demchenko@qsoft.ru"
+                }
+            ],
+            "description": "BENFIN Middleware for check restrictions",
+            "time": "2020-06-22T15:23:46+00:00"
         },
         {
             "name": "coraxster/flysystem-aws-s3-v3-minio",

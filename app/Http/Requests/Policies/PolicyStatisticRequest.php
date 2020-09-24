@@ -13,6 +13,11 @@ class PolicyStatisticRequest extends  AbstractRequest
        return [
            "from" => "required|date",
            "to" => "required|date",
+           'agent_ids' => 'array',
+           'agent_ids.*' => 'required|integer',
+           'insurance_company_ids' => 'array',
+           'insurance_company_ids.*' => 'required|integer',
+           'grouped_by_user_order_by' => 'string|in:count,sum',
        ];
     }
 
