@@ -39,11 +39,11 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
     public function calculate($company, $attributes): array
     {
         $serviceLogin = app(IngosstrahLoginServiceContract::class);
-        $loginData = $serviceLogin->run($company, $attributes);
+        $loginData = $serviceLogin->run($company, $attributes, $attributes['token']);
         $this->pushForm($attributes);
         $attributes['sessionToken'] = $loginData['sessionToken'];
         $serviceCalculate = app(IngosstrahCalculateServiceContract::class);
-        $dataCalculate = $serviceCalculate->run($company, $attributes);
+        $dataCalculate = $serviceCalculate->run($company, $attributes, $attributes['token']);
         $tokenData = $this->getTokenData($attributes['token'], true);
         $tokenData[$company->code] = [
             'status' => 'calculated',
@@ -67,13 +67,13 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         $newSessionToken = $tokenData['sessionToken'];
         $attributes['sessionToken'] = $newSessionToken;
         $serviceCreate = app(IngosstrahCreateServiceContract::class);
-        $dataCreate = $serviceCreate->run($company, $attributes);
+        $dataCreate = $serviceCreate->run($company, $attributes, $attributes['token']);
         if (isset($dataCreate['tokenError'])) {
             $serviceLogin = app(IngosstrahLoginServiceContract::class);
-            $loginData = $serviceLogin->run($company, $attributes);
+            $loginData = $serviceLogin->run($company, $attributes, $attributes['token']);
             $newSessionToken = $loginData['sessionToken'];
             $attributes['sessionToken'] = $newSessionToken;
-            $dataCreate = $serviceCreate->run($company, $attributes);
+            $dataCreate = $serviceCreate->run($company, $attributes, $attributes['token']);
         }
         $tokenData = $this->getTokenData($attributes['token'], true);
         $tokenData[$company->code]['policyId'] = $dataCreate['policyId'];
@@ -203,14 +203,14 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         $newSessionToken = $processData['data']['sessionToken'];
         $isNeedUpdateToken = false;
         $checkService = app(IngosstrahCheckCreateServiceContract::class);
-        $checkData = $checkService->run($company, $processData);
+        $checkData = $checkService->run($company, $processData, $processData['token']);
         if (isset($checkData['tokenError'])) {
             $serviceLogin = app(IngosstrahLoginServiceContract::class);
-            $loginData = $serviceLogin->run($company, []);
+            $loginData = $serviceLogin->run($company, [], $processData['token']);
             $newSessionToken = $loginData['sessionToken'];
             $isNeedUpdateToken = true;
             $processData['data']['sessionToken'] = $newSessionToken;
-            $checkData = $checkService->run($company, $processData);
+            $checkData = $checkService->run($company, $processData, $processData['token']);
         }
         switch ($checkData['state']) {
             case 'аннулирован':
@@ -247,7 +247,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
                     }
                 }
                 $eosagoService = app(IngosstrahEosagoServiceContract::class);
-                $eosagoData = $eosagoService->run($company, $processData);
+                $eosagoData = $eosagoService->run($company, $processData, $processData['token']);
                 if (!$eosagoData['isEosago'] && $eosagoData['hold']) {
                     $processData['data']['status'] = 'hold';
                     $processData['data']['sessionToken'] = $newSessionToken;
@@ -290,14 +290,14 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         $isNeedUpdateToken = false;
         $newSessionToken = $processData['data']['sessionToken'];
         $checkService = app(IngosstrahCheckCreateServiceContract::class);
-        $checkData = $checkService->run($company, $processData);
+        $checkData = $checkService->run($company, $processData, $processData['token']);
         if (isset($checkData['tokenError'])) {
             $serviceLogin = app(IngosstrahLoginServiceContract::class);
-            $loginData = $serviceLogin->run($company, []);
+            $loginData = $serviceLogin->run($company, [], $processData['token']);
             $newSessionToken = $loginData['sessionToken'];
             $isNeedUpdateToken = true;
             $data['data']['sessionToken'] = $newSessionToken;
-            $checkData = $checkService->run($company, $data);
+            $checkData = $checkService->run($company, $data, $processData['token']);
         }
         if (
             isset($checkData['policySerial']) && $checkData['policySerial'] &&
@@ -323,7 +323,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
     {
         $this->requestProcessService->delete($processData['token'], $company->code);
         $billService = app(IngosstrahBillServiceContract::class);
-        $billData = $billService->run($company, $processData);
+        $billData = $billService->run($company, $processData, $processData['token']);
         $processData['data']['billIsn'] = $billData['billIsn'];
         $form = [
             'token' => $processData['token'],
@@ -333,7 +333,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
         $insurer = $this->searchSubjectById($form, $form['policy']['insurantId']);
         $processData['data']['insurerEmail'] = $insurer['email'];
         $billLinkService = app(IngosstrahBillLinkServiceContract::class);
-        $billLinkData = $billLinkService->run($company, $processData);
+        $billLinkData = $billLinkService->run($company, $processData, $processData['token']);
         if ($destroyToken) {
             $this->destroyToken($processData['token']);
         } else {
@@ -361,7 +361,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
     public function getPayment($company, $processData): void
     {
         $serviceLogin = app(IngosstrahLoginServiceContract::class);
-        $loginData = $serviceLogin->run($company, []);
+        $loginData = $serviceLogin->run($company, [], $processData['token']);
         $attributes = [
             'data' => [
                 'BillISN' => $processData['bill']['bill_id'],
@@ -369,7 +369,7 @@ class IngosstrahMasterService extends IngosstrahService implements IngosstrahMas
             ]
         ];
         $serviceStatus = app(IngosstrahBillStatusServiceContract::class);
-        $dataStatus = $serviceStatus->run($company, $attributes);
+        $dataStatus = $serviceStatus->run($company, $attributes, $processData['token']);
         if (isset($dataStatus['paid']) && $dataStatus['paid']) {
             $this->policyService->update($processData['id'], [
                 'paid' => true,

@@ -47,18 +47,31 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
         parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
-    public function run($company, $attributes): array
+    public function run($company, $attributes, $token = false): array
     {
         $data = $this->prepareData($company, $attributes);
 
-        $this->writeRequestLog([
+        $requestLogData = [
             'url' => $this->apiWsdlUrl,
             'payload' => $data
-        ]);
+        ];
+
+        $this->writeRequestLog($requestLogData);
 
         $response = $this->requestBySoap($this->apiWsdlUrl, 'GetTariff', $data);
 
         $this->writeResponseLog($response);
+
+        if ($token !== false) {
+            $this->writeDatabaseLog(
+                $token,
+                $requestLogData,
+                $response,
+                config('api_sk.logMicroserviceCode'),
+                static::companyCode,
+                $this->getName(__CLASS__)
+            );
+        }
 
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(

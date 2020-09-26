@@ -8,18 +8,31 @@ use App\Exceptions\ApiRequestsException;
 class IngosstrahBillService extends IngosstrahService implements IngosstrahBillServiceContract
 {
 
-    public function run($company, $processData): array
+    public function run($company, $processData, $token = false): array
     {
         $data = $this->prepareData($processData);
 
-        $this->writeRequestLog([
+        $requestLogData = [
             'url' => $this->apiWsdlUrl,
             'payload' => $data
-        ]);
+        ];
+
+        $this->writeRequestLog($requestLogData);
 
         $response = $this->requestBySoap($this->apiWsdlUrl, 'CreateBill', $data);
 
         $this->writeResponseLog($response);
+
+        if ($token !== false) {
+            $this->writeDatabaseLog(
+                $token,
+                $requestLogData,
+                $response,
+                config('api_sk.logMicroserviceCode'),
+                static::companyCode,
+                $this->getName(__CLASS__)
+            );
+        }
 
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(
