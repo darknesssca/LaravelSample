@@ -7,30 +7,31 @@ use App\Exceptions\ApiRequestsException;
 
 class TinkoffBillLinkService extends TinkoffService implements TinkoffBillLinkServiceContract
 {
-    public function run($company, $attributes): array
+    public function run($company, $attributes, $token = false): array
     {
         $data = $this->prepareData($attributes);
 
-        $this->writeRequestLog([
+        $requestLogData = [
             'url' => $this->apiWsdlUrl,
             'payload' => $data
-        ]);
+        ];
+
+        $this->writeRequestLog($requestLogData);
 
         $response = $this->requestBySoap($this->apiWsdlUrl, 'getPaymentReferencePartner', $data);
 
         $this->writeResponseLog($response);
 
-        $this->writeDatabaseLog(
-            $attributes['token'],
-            [
-                'url' => $this->apiWsdlUrl,
-                'payload' => $data
-            ],
-            $response,
-            config('api_sk.logMicroserviceCode'),
-            static::companyCode,
-            $this->getName(__CLASS__),
+        if ($token !== false) {
+            $this->writeDatabaseLog(
+                $token,
+                $requestLogData,
+                $response,
+                config('api_sk.logMicroserviceCode'),
+                static::companyCode,
+                $this->getName(__CLASS__)
         );
+        }
 
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(
