@@ -23,32 +23,33 @@ class RenessansCheckCreateService extends RenessansService implements RenessansC
         parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
-    public function run($company, $attributes): array
+    public function run($company, $attributes, $token = false): array
     {
         $data = [];
         $this->setAuth($data);
         $url = $this->getUrl($attributes);
 
-        $this->writeRequestLog([
+        $requestLogData = [
             'url' => $url,
             'payload' => $data
-        ]);
+        ];
+
+        $this->writeRequestLog($requestLogData);
 
         $response = $this->getRequest($url, $data, [], false);
 
         $this->writeResponseLog($response);
 
-        $this->writeDatabaseLog(
-            $attributes['token'],
-            [
-                'url' => $url,
-                'payload' => $data
-            ],
-            $response,
-            config('api_sk.logMicroserviceCode'),
-            static::companyCode,
-            $this->getName(__CLASS__),
-        );
+        if ($token !== false) {
+            $this->writeDatabaseLog(
+                $token,
+                $requestLogData,
+                $response,
+                config('api_sk.logMicroserviceCode'),
+                static::companyCode,
+                $this->getName(__CLASS__)
+            );
+        }
 
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');

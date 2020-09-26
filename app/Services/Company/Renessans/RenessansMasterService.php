@@ -25,7 +25,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $this->pushForm($attributes);
 
         $serviceCalculate = app(RenessansCalculateServiceContract::class);
-        $dataCalculate = $serviceCalculate->run($company, $attributes);
+        $dataCalculate = $serviceCalculate->run($company, $attributes, $attributes['token']);
         $dataCalculate['user'] = GlobalStorage::getUser();
         $this->requestProcessService->create([
             'token' => $attributes['token'],
@@ -51,7 +51,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);
         $attributes['calcId'] = $tokenData['calcId'];
         $createService = app(RenessansCreateServiceContract::class);
-        $dataCreate = $createService->run($company, $attributes);
+        $dataCreate = $createService->run($company, $attributes, $attributes['token']);
         $tokenData = $this->getTokenData($attributes['token'], true);
         $tokenData[$company->code]['policyId'] = $dataCreate['policyId'];
         $tokenData[$company->code]['status'] = 'processing';
@@ -148,7 +148,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
     public function preCalculating($company, $processData):void
     {
         $serviceCalculate = app(RenessansCheckCalculateServiceContract::class);
-        $dataCalculate = $serviceCalculate->run($company, $processData);
+        $dataCalculate = $serviceCalculate->run($company, $processData, $processData['token']);
         $processData['data']['premium'] = $dataCalculate['premium'];
         $attributes = [
             'token' => $processData['token'],
@@ -157,7 +157,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $attributes['calcId'] = $processData['data']['calcId'];
         $attributes['CheckSegment'] = true;
         $serviceCreate = app(RenessansCreateServiceContract::class);
-        $dataSegment = $serviceCreate->run($company, $attributes);
+        $dataSegment = $serviceCreate->run($company, $attributes, $processData['token']);
         $processData['data']['segmentPolicyId'] = $dataSegment['policyId'];
         $this->requestProcessService->update($processData['token'], $company->code, [
             'state' => 5,
@@ -172,7 +172,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
             'policyId' => $processData['data']['segmentPolicyId']
         ];
         $serviceCreate = app(RenessansCheckCreateServiceContract::class);
-        $dataCreate = $serviceCreate->run($company, $segmentAttributes);
+        $dataCreate = $serviceCreate->run($company, $segmentAttributes, $processData['token']);
         if ($dataCreate['result'] && $dataCreate['status'] != 'ok') {
             $this->requestProcessService->delete($processData['token'], $company->code);
             $tokenData = $this->getTokenData($processData['token'], true);
@@ -189,7 +189,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         ];
         $this->pushForm($attributes);
         $serviceCalculate = app(RenessansCalculateServiceContract::class);
-        $dataCalculate = $serviceCalculate->run($company, $attributes);
+        $dataCalculate = $serviceCalculate->run($company, $attributes, $processData['token']);
         $processData['data']['finalCalcId'] = $dataCalculate['calcId'];
         $processData['data']['finalPremium'] = $dataCalculate['premium'];
         $this->requestProcessService->update($processData['token'], $company->code, [
@@ -208,7 +208,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         ];
         GlobalStorage::setUser($processData['data']['user']);
         $serviceCalculate = app(RenessansCheckCalculateServiceContract::class);
-        $dataCalculate = $serviceCalculate->run($company, $calculateAttributes);
+        $dataCalculate = $serviceCalculate->run($company, $calculateAttributes, $processData['token']);
         $this->requestProcessService->delete($processData['token'], $company->code);
         $tokenData = $this->getTokenData($processData['token'], true);
         $tokenData[$company->code]['status'] = 'calculated';
@@ -226,7 +226,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
             'policyId' => $processData['data']['policyId']
         ];
         $serviceCreate = app(RenessansCheckCreateServiceContract::class);
-        $dataCreate = $serviceCreate->run($company, $attributes);
+        $dataCreate = $serviceCreate->run($company, $attributes, $processData['token']);
         if ($dataCreate['result'] && $dataCreate['status'] != 'ok') {
             $this->requestProcessService->delete($processData['token'], $company->code);
             $tokenData = $this->getTokenData($processData['token'], true);
@@ -238,7 +238,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
             return;
         }
         $serviceStatus = app(RenessansGetStatusServiceContract::class);
-        $dataStatus = $serviceStatus->run($company, $attributes);
+        $dataStatus = $serviceStatus->run($company, $attributes, $processData['token']);
         if (!($dataStatus['result'] && $dataStatus['createStatus'])) {
             if ($dataStatus['status'] == 'error') {
                 $this->requestProcessService->delete($processData['token'], $company->code);
@@ -270,7 +270,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
             return;
         }
         $serviceBill = app(RenessansBillLinkServiceContract::class);
-        $dataBill = $serviceBill->run($company, $attributes);
+        $dataBill = $serviceBill->run($company, $attributes, $processData['token']);
         $attributes['token'] = $processData['token'];
         $this->pushForm($attributes);
         $attributes['number'] = $attributes['policyId'];
@@ -295,7 +295,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
             'policyId' => $processData['data']['policyId']
         ];
         $serviceStatus = app(RenessansGetStatusServiceContract::class);
-        $dataStatus = $serviceStatus->run($company, $attributes);
+        $dataStatus = $serviceStatus->run($company, $attributes, $processData['token']);
         if (!($dataStatus['result'] && $dataStatus['createStatus'])) {
             if ($dataStatus['status'] == 'error') {
                 $this->requestProcessService->delete($processData['token'], $company->code);
@@ -328,10 +328,10 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
             'policyId' => (int)$processData['number']
         ];
         $serviceStatus = app(RenessansGetStatusServiceContract::class);
-        $dataStatus = $serviceStatus->run($company, $attributes);
+        $dataStatus = $serviceStatus->run($company, $attributes, $processData['token']);
         if ($dataStatus['result'] && $dataStatus['payStatus'] && $dataStatus['policyNumber']) {
             $serviceGetPdf = app(RenessansGetPdfServiceContract::class);
-            $serviceGetPdf->run($company, $attributes);
+            $serviceGetPdf->run($company, $attributes, $processData['token']);
             $this->policyService->update($processData['id'], [
                 'paid' => true,
                 'number' => $dataStatus['policyNumber'],
