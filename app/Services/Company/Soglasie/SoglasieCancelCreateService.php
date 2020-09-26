@@ -26,21 +26,34 @@ class SoglasieCancelCreateService extends SoglasieService implements SoglasieCan
         parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
-    public function run($company, $processData): array
+    public function run($company, $processData, $token = false): array
     {
         $url = $this->getUrl([
             'policyId' => $processData['data']['policyId'],
         ]);
         $headers = $this->getHeaders();
 
-        $this->writeRequestLog([
+        $requestLogData = [
             'url' => $url,
             'payload' => []
-        ]);
+        ];
+
+        $this->writeRequestLog($requestLogData);
 
         $response = $this->putRequest($url, [], $headers, false);
 
         $this->writeResponseLog($response ?? ['Нет ответа']);
+
+        if ($token !== false) {
+            $this->writeDatabaseLog(
+                $token,
+                $requestLogData,
+                $response,
+                config('api_sk.logMicroserviceCode'),
+                static::companyCode,
+                $this->getName(__CLASS__)
+            );
+        }
 
         return $response; // нам без разницы что там произошло в результате, поэтому никаких эксепшенов отлавливать не будем
     }

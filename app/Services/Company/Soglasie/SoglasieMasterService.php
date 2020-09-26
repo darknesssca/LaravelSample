@@ -41,20 +41,20 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
         $this->pushForm($attributes);
         if (!$attributes['policy']['isMultidrive']) {
             $serviceKbm = app(SoglasieKbmServiceContract::class);
-            $dataKbm = $serviceKbm->run($company, $attributes);
+            $dataKbm = $serviceKbm->run($company, $attributes, $attributes['token']);
         } else {
             $dataKbm = [
                 'kbmId' => 1,
             ];
         }
         $serviceScoring = app(SoglasieScoringServiceContract::class);
-        $dataScoring = $serviceScoring->run($company, $attributes);
+        $dataScoring = $serviceScoring->run($company, $attributes, $attributes['token']);
         $attributes['serviceData'] = [
             'kbmId' => $dataKbm['kbmId'],
             'scoringId' => $dataScoring['scoringId'],
         ];
         $serviceCalculate = app(SoglasieCalculateServiceContract::class);
-        $dataCalculate = $serviceCalculate->run($company, $attributes);
+        $dataCalculate = $serviceCalculate->run($company, $attributes, $attributes['token']);
         $tokenData = $this->getTokenData($attributes['token'], true);
         $tokenData[$company->code] = [
             'status' => 'calculated',
@@ -82,7 +82,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
             'scoringId' => $tokenData['scoringId'],
         ];
         $serviceCreate = app(SoglasieCreateServiceContract::class);
-        $dataCreate = $serviceCreate->run($company, $attributes);
+        $dataCreate = $serviceCreate->run($company, $attributes, $attributes['token']);
         $tokenData = $this->getTokenData($attributes['token'], true);
         $tokenData[$company->code]['policyId'] = $dataCreate['policyId'];
         $tokenData[$company->code]['status'] = 'processing';
@@ -136,7 +136,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
     public function creating($company, $processData): void
     {
         $checkService = app(SoglasieCheckCreateServiceContract::class);
-        $checkData = $checkService->run($company, $processData);
+        $checkData = $checkService->run($company, $processData, $processData['token']);
         switch ($checkData['status']) {
             case 'error':
                 $this->requestProcessService->delete($processData['token'], $company->code);
@@ -155,7 +155,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
                     case 'RSA_CHECK_OK':
                         $this->requestProcessService->delete($processData['token'], $company->code);
                         $billLinkService = app(SoglasieBillLinkServiceContract::class);
-                        $billLinkData = $billLinkService->run($company, $processData);
+                        $billLinkData = $billLinkService->run($company, $processData, $processData['token']);
                         $form = [
                             'token' => $processData['token'],
                         ];
@@ -195,7 +195,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
     public function cancelCreate($company, $processData)
     {
         $cancelService = app(SoglasieCancelCreateServiceContract::class);
-        return $cancelService->run($company, $processData);
+        return $cancelService->run($company, $processData, $processData['token']);
     }
 
     protected function dropCreate($company, $token, $error)
@@ -298,7 +298,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
             ]
         ];
         $checkService = app(SoglasieCheckCreateServiceContract::class);
-        $dataStatus = $checkService->run($company, $attributes);
+        $dataStatus = $checkService->run($company, $attributes, $attributes['token']);
         if (
             $dataStatus['policyStatus'] == 'SIGNED' &&
             isset($dataStatus['policySerial']) && $dataStatus['policySerial'] &&
