@@ -47,6 +47,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
 
     public function create($company, $attributes):array
     {
+        GlobalStorage::setUser($attributes['data']['user']);
         $this->pushForm($attributes);
         $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);
         $attributes['calcId'] = $tokenData['calcId'];
@@ -147,6 +148,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
 
     public function preCalculating($company, $processData):void
     {
+        GlobalStorage::setUser($processData['data']['user']);
         $serviceCalculate = app(RenessansCheckCalculateServiceContract::class);
         $dataCalculate = $serviceCalculate->run($company, $processData, $processData['token']);
         $processData['data']['premium'] = $dataCalculate['premium'];
@@ -171,6 +173,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $segmentAttributes = [
             'policyId' => $processData['data']['segmentPolicyId']
         ];
+        GlobalStorage::setUser($processData['data']['user']);
         $serviceCreate = app(RenessansCheckCreateServiceContract::class);
         $dataCreate = $serviceCreate->run($company, $segmentAttributes, $processData['token']);
         if ($dataCreate['result'] && $dataCreate['status'] != 'ok') {
@@ -225,6 +228,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $attributes = [
             'policyId' => $processData['data']['policyId']
         ];
+        GlobalStorage::setUser($processData['data']['user']);
         $serviceCreate = app(RenessansCheckCreateServiceContract::class);
         $dataCreate = $serviceCreate->run($company, $attributes, $processData['token']);
         if ($dataCreate['result'] && $dataCreate['status'] != 'ok') {
@@ -294,6 +298,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $attributes = [
             'policyId' => $processData['data']['policyId']
         ];
+        GlobalStorage::setUser($processData['data']['user']);
         $serviceStatus = app(RenessansGetStatusServiceContract::class);
         $dataStatus = $serviceStatus->run($company, $attributes, $processData['token']);
         if (!($dataStatus['result'] && $dataStatus['createStatus'])) {
@@ -327,6 +332,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $attributes = [
             'policyId' => (int)$processData['number']
         ];
+        GlobalStorage::setUser($processData['data']['user']);
         $serviceStatus = app(RenessansGetStatusServiceContract::class);
         $dataStatus = $serviceStatus->run($company, $attributes, $processData['token']);
         if ($dataStatus['result'] && $dataStatus['payStatus'] && $dataStatus['policyNumber']) {
