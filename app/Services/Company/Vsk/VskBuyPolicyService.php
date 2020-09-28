@@ -35,17 +35,7 @@ class VskBuyPolicyService extends VskService implements VskBuyPolicyServiceContr
             ]
         );
 
-        $response = $this->client->post(
-            '/cxf/rest/partners/api/v2/osago/Policy/BuyPolicy',
-            [
-                'body' => $xml,
-            ]);
-
-        try {
-            $data['uniqueId'] = $response->getHeader('X-VSK-CorrelationId')[0];
-        } catch (Exception $exception) {
-            //ignore
-        }
+        $data = $this->sendRequest('/Policy/BuyPolicy', $xml);
 
         return $data;
     }

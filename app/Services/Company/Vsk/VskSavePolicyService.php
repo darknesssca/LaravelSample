@@ -33,18 +33,7 @@ class VskSavePolicyService extends VskService implements VskSavePolicyServiceCon
             ]
         );
 
-        $response = $this->client->post(
-            '/cxf/rest/partners/api/v2/osago/Policy/SavePolicy',
-            [
-                'body' => $xml,
-            ]
-        );
-
-        try {
-            $data['uniqueId'] = $response->getHeader('X-VSK-CorrelationId')[0];
-        } catch (Exception $exception) {
-            //ignore
-        }
+        $data = $this->sendRequest('/Policy/SavePolicy', $xml);
 
         return $data;
     }

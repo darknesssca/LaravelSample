@@ -387,4 +387,25 @@ abstract class VskService extends CompanyService
 
         return $data;
     }
+
+
+    protected function sendRequest($url, $body) {
+        $data = [];
+        $url = '/cxf/rest/partners/api/v2/osago' . $url;
+
+        $response = $this->client->post(
+            $url,
+            [
+                'body' => $body,
+            ]
+        );
+
+        try {
+            $data['uniqueId'] = $response->getHeader('X-VSK-CorrelationId')[0];
+        } catch (Exception $exception) {
+            //ignore
+        }
+
+        return $data;
+    }
 }

@@ -32,17 +32,7 @@ class VskSignPolicyService extends VskService implements VskSignPolicyServiceCon
             ]
         );
 
-        $response = $this->client->post(
-            '/cxf/rest/partners/api/v2/osago/Policy/SignPolicy',
-            [
-                'body' => $xml,
-            ]);
-
-        try {
-            $data['uniqueId'] = $response->getHeader('X-VSK-CorrelationId')[0];
-        } catch (Exception $exception) {
-            //ignore
-        }
+        $data = $this->sendRequest('/Policy/SignPolicy', $xml);
 
         return $data;
     }

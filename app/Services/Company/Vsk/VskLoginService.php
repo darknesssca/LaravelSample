@@ -32,17 +32,7 @@ class VskLoginService extends VskService implements VskLoginServiceContract
             ]
         );
 
-        $response = $this->client->post(
-            '/cxf/rest/partners/api/v2/osago/Auth/Login',
-            [
-                'body' => $xml,
-            ]);
-
-        try {
-            $data['uniqueId'] = $response->getHeader('X-VSK-CorrelationId')[0];
-        } catch (Exception $exception) {
-            //ignore
-        }
+        $data = $this->sendRequest('/Auth/Login', $xml);
 
         return $data;
     }

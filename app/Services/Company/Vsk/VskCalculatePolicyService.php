@@ -32,18 +32,7 @@ class VskCalculatePolicyService extends VskService implements VskCalculatePolicy
             ]
         );
 
-        $response = $this->client->post(
-            '/cxf/rest/partners/api/v2/osago/Policy/CalculatePolicy',
-            [
-                'body' => $xml,
-            ]
-        );
-
-        try {
-            $data['uniqueId'] = $response->getHeader('X-VSK-CorrelationId')[0];
-        } catch (Exception $exception) {
-            //ignore
-        }
+        $data = $this->sendRequest('/Policy/CalculatePolicy', $xml);
 
         return $data;
     }
