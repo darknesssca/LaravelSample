@@ -47,7 +47,7 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
         $attributes['CheckSegment'] = intval(isset($attributes['CheckSegment']) && $attributes['CheckSegment']);
     }
 
-    public function run($company, $attribute, $token = false): array
+    public function run($company, $attributes, $token = false): array
     {
         $this->setAdditionalFields($attributes);
         $this->setAuth($attributes);
