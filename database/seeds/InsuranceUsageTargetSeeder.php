@@ -32,6 +32,12 @@ class InsuranceUsageTargetSeeder extends Seeder
             'reference_usage_target_code' => 'personal',
             'reference_usage_target_code2' => 'personal',
         ],
+        [
+            'target_id' => 1,
+            'insurance_company_id' => 5,
+            'reference_usage_target_code' => 'PERSONAL',
+            'reference_usage_target_code2' => 'PERSONAL',
+        ],
         // Такси
 //        [
 //            'target_id' => 2,
@@ -82,6 +88,12 @@ class InsuranceUsageTargetSeeder extends Seeder
             'reference_usage_target_code' => 'rental',
             'reference_usage_target_code2' => 'rental',
         ],
+        [
+            'target_id' => 3,
+            'insurance_company_id' => 5,
+            'reference_usage_target_code' => 'RENTAL',
+            'reference_usage_target_code2' => 'RENTAL',
+        ],
         // Учебная езда
         [
             'target_id' => 4,
@@ -106,6 +118,12 @@ class InsuranceUsageTargetSeeder extends Seeder
             'insurance_company_id' => 4,
             'reference_usage_target_code' => 'training_driving',
             'reference_usage_target_code2' => 'training_driving',
+        ],
+        [
+            'target_id' => 4,
+            'insurance_company_id' => 5,
+            'reference_usage_target_code' => 'TRAINING',
+            'reference_usage_target_code2' => 'TRAINING',
         ],
         // Перевозка опасных и легковоспламеняющихся грузов
         [
@@ -132,6 +150,12 @@ class InsuranceUsageTargetSeeder extends Seeder
             'reference_usage_target_code' => 'dangerous_goods',
             'reference_usage_target_code2' => 'dangerous_goods',
         ],
+        [
+            'target_id' => 5,
+            'insurance_company_id' => 5,
+            'reference_usage_target_code' => 'DANGEROUS_TRANSPORTATION',
+            'reference_usage_target_code2' => 'DANGEROUS_TRANSPORTATION',
+        ],
         // Пассажирские перевозки
         [
             'target_id' => 6,
@@ -156,6 +180,12 @@ class InsuranceUsageTargetSeeder extends Seeder
             'insurance_company_id' => 4,
             'reference_usage_target_code' => 'passenger_transportation',
             'reference_usage_target_code2' => 'passenger_transportation',
+        ],
+        [
+            'target_id' => 6,
+            'insurance_company_id' => 5,
+            'reference_usage_target_code' => 'PASSENGER_TRANSPORT',
+            'reference_usage_target_code2' => 'PASSENGER_TRANSPORT',
         ],
         // Экстренные и коммунальные службы
         [
@@ -182,6 +212,12 @@ class InsuranceUsageTargetSeeder extends Seeder
             'reference_usage_target_code' => 'emergency_services',
             'reference_usage_target_code2' => 'emergency_services',
         ],
+        [
+            'target_id' => 7,
+            'insurance_company_id' => 5,
+            'reference_usage_target_code' => 'EMEDGENCY',
+            'reference_usage_target_code2' => 'EMEDGENCY',
+        ],
         // Дорожные и специальные ТС
         [
             'target_id' => 8,
@@ -206,6 +242,12 @@ class InsuranceUsageTargetSeeder extends Seeder
             'insurance_company_id' => 4,
             'reference_usage_target_code' => 'road_and_special_vehicles',
             'reference_usage_target_code2' => 'road_and_special_vehicles',
+        ],
+        [
+            'target_id' => 8,
+            'insurance_company_id' => 5,
+            'reference_usage_target_code' => 'SPECIAL',
+            'reference_usage_target_code2' => 'SPECIAL',
         ],
         // Инкассация
         [
@@ -232,6 +274,12 @@ class InsuranceUsageTargetSeeder extends Seeder
             'reference_usage_target_code' => 'other',
             'reference_usage_target_code2' => 'other',
         ],
+        [
+            'target_id' => 9,
+            'insurance_company_id' => 5,
+            'reference_usage_target_code' => 'OTHER',
+            'reference_usage_target_code2' => 'OTHER',
+        ],
         // Скорая помощь
         [
             'target_id' => 10,
@@ -257,6 +305,12 @@ class InsuranceUsageTargetSeeder extends Seeder
             'reference_usage_target_code' => 'emergency_services',
             'reference_usage_target_code2' => 'emergency_services',
         ],
+        [
+            'target_id' => 10,
+            'insurance_company_id' => 5,
+            'reference_usage_target_code' => 'EMEDGENCY',
+            'reference_usage_target_code2' => 'EMEDGENCY',
+        ],
         // Прочее
         [
             'target_id' => 11,
@@ -281,6 +335,12 @@ class InsuranceUsageTargetSeeder extends Seeder
             'insurance_company_id' => 4,
             'reference_usage_target_code' => 'other',
             'reference_usage_target_code2' => 'other',
+        ],
+        [
+            'target_id' => 11,
+            'insurance_company_id' => 5,
+            'reference_usage_target_code' => 'OTHER',
+            'reference_usage_target_code2' => 'OTHER',
         ],
     ];
 

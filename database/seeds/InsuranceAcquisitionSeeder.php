@@ -23,6 +23,11 @@ class InsuranceAcquisitionSeeder extends Seeder
             'insurance_company_id' => 3,
             'reference_acquisition_code' => 'PURCHASED_FROM_PERSON',
         ],
+        [
+            'acquisition_id' => 1,
+            'insurance_company_id' => 5,
+            'reference_acquisition_code' => 'PURCHASED_FROM_PERSON',
+        ],
 
         //тинькофф
         [
