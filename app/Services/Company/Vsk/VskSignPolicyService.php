@@ -90,7 +90,7 @@ class VskSignPolicyService extends VskService implements VskSignPolicyServiceCon
         ]);
 
         return [
-            'nextMethod' => 'calculating'
+            'nextMethod' => 'creating'
         ];
     }
 }
