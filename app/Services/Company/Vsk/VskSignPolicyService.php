@@ -32,7 +32,7 @@ class VskSignPolicyService extends VskService implements VskSignPolicyServiceCon
             ]
         );
 
-        $data = $this->sendRequest('/Policy/SignPolicy', $xml);
+        $data = $this->sendRequest('/Policy/SignPolicy', $xml, $attributes['token']);
 
         return $data;
     }

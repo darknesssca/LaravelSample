@@ -23,15 +23,17 @@ class VskCallbackService extends VskService implements VskCallbackServiceContrac
     {
         $callback_info = $this->parseContent($callback_response['content']);
         $token_data = $this->getTokenFromCallback($callback_info);
-        $company = $this->getCompany(self::companyCode);
-        $contract = 'App\\Contracts\\Company\\Vsk\\Vsk' . $token_data['method'] . 'ServiceContract';
+        if (!$this->checkError($token_data['token'], $callback_info)){
+            $company = $this->getCompany(self::companyCode);
+            $contract = 'App\\Contracts\\Company\\Vsk\\Vsk' . $token_data['method'] . 'ServiceContract';
 
-        /** @var VskMethodServiceInterface $processService */
-        $processService = app($contract);
-        $process_data = $processService->processCallback($company, $token_data, $callback_info);
+            /** @var VskMethodServiceInterface $processService */
+            $processService = app($contract);
+            $process_data = $processService->processCallback($company, $token_data, $callback_info);
 
-        if (!empty($process_data['nextMethod'])) {
-            $this->runService($company, $token_data, $process_data['nextMethod']);
+            if (!empty($process_data['nextMethod'])) {
+                $this->runService($company, $token_data, $process_data['nextMethod']);
+            }
         }
     }
 
@@ -62,5 +64,30 @@ class VskCallbackService extends VskService implements VskCallbackServiceContrac
             }
         }
         return $token;
+    }
+    private function checkError(string $token, array $parsed_response)
+    {
+        $errors = [];
+        $re = "/Errors:(.*)Warnings:/";
+        foreach ($parsed_response as $tag) {
+            if ($tag['tag'] == 'COM:ERRORCODE') {
+                $errors['codes'][] = $tag['value'];
+            }
+
+            if ($tag['tag'] == 'COM:ERRORMESSAGE') {
+                preg_match_all($re, $tag['value'], $matches, PREG_SET_ORDER, 0);
+                $errors['messages'][] = $matches[1];
+            }
+        }
+
+        $tokenData = $this->getTokenData($token, true);
+
+        $tokenData[self::companyCode]['status'] = 'error';
+        $tokenData[self::companyCode]['errors'] = $errors;
+        $tokenData[self::companyCode]['errorMessages'] = implode(';', $errors['messages']);
+
+        $this->intermediateDataService->update($token, [
+            'data' => json_encode($tokenData),
+        ]);
     }
 }

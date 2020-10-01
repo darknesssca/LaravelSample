@@ -33,7 +33,7 @@ class VskSavePolicyService extends VskService implements VskSavePolicyServiceCon
             ]
         );
 
-        $data = $this->sendRequest('/Policy/SavePolicy', $xml);
+        $data = $this->sendRequest('/Policy/SavePolicy', $xml, $attributes['token']);
 
         return $data;
     }

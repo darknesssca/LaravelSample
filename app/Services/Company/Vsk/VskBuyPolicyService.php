@@ -35,7 +35,7 @@ class VskBuyPolicyService extends VskService implements VskBuyPolicyServiceContr
             ]
         );
 
-        $data = $this->sendRequest('/Policy/BuyPolicy', $xml);
+        $data = $this->sendRequest('/Policy/BuyPolicy', $xml, $attributes['token']);
 
         return $data;
     }
