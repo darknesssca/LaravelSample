@@ -95,7 +95,8 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
                 return [
                     'status' => 'done',
                     'premium' => $tokenData['finalPremium'],
-                    'reward' => $tokenData['reward']
+                    'reward' => $tokenData['reward'],
+                    'kbm' => $tokenData['kbm']
                 ];
             case 'error':
                 throw new ApiRequestsException($tokenData['errorMessages']);
@@ -214,6 +215,7 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $tokenData[$company->code]['status'] = 'calculated';
         $tokenData[$company->code]['calcId'] = $processData['data']['finalCalcId'];
         $tokenData[$company->code]['finalPremium'] = $dataCalculate['premium'];
+        $tokenData[$company->code]['kbm'] = $dataCalculate['kbm'];
         $tokenData[$company->code]['reward'] = $this->getReward($company->id, $tokenData['form'], $dataCalculate['premium']);
         $this->intermediateDataService->update($processData['token'], [
             'data' => json_encode($tokenData),
