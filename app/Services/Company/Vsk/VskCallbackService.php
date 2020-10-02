@@ -75,19 +75,24 @@ class VskCallbackService extends VskService implements VskCallbackServiceContrac
             }
 
             if ($tag['tag'] == 'COM:ERRORMESSAGE') {
-                preg_match_all($re, $tag['value'], $matches, PREG_SET_ORDER, 0);
-                $errors['messages'][] = $matches[1];
+                preg_match_all($re, str_replace(PHP_EOL, '', $tag['value']), $matches, PREG_SET_ORDER, 0);
+                $errors['messages'][] = $matches[0][1];
             }
         }
 
-        $tokenData = $this->getTokenData($token, true);
+        if (!empty($errors)){
+            $tokenData = $this->getTokenData($token, true);
+            $tokenData[self::companyCode]['status'] = 'error';
+            $tokenData[self::companyCode]['errors'] = $errors;
+            $tokenData[self::companyCode]['errorMessages'] = implode(';', $errors['messages']);
 
-        $tokenData[self::companyCode]['status'] = 'error';
-        $tokenData[self::companyCode]['errors'] = $errors;
-        $tokenData[self::companyCode]['errorMessages'] = implode(';', $errors['messages']);
+            $this->intermediateDataService->update($token, [
+                'data' => json_encode($tokenData),
+            ]);
 
-        $this->intermediateDataService->update($token, [
-            'data' => json_encode($tokenData),
-        ]);
+            return true;
+        }
+
+        return false;
     }
 }
