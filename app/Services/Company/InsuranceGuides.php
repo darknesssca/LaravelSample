@@ -26,7 +26,7 @@ abstract class InsuranceGuides
             app(TinkoffGuidesSourceContract::class),
             app(SoglasieGuidesSourceContract::class),
             app(RenessansGuidesSourceContract::class),
-//            app(IngosstrahGuidesSourceContract::class),
+            app(IngosstrahGuidesSourceContract::class),
         ];
 
         self::loadCountries();
