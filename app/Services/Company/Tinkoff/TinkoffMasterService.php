@@ -49,6 +49,7 @@ class TinkoffMasterService extends TinkoffService implements TinkoffMasterServic
         return [
             'premium' => $dataCalculate['premium'],
             'reward' => $tokenData[$company->code]['reward'],
+            'kbm' => $dataCalculate['kbm']
         ];
     }
 
