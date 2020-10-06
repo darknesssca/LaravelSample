@@ -17,6 +17,38 @@
 use Illuminate\Support\Facades\Route;
 
 /**@var Route $router */
+
+$router->group(
+    [
+        'prefix' => 'v1',
+    ],
+    function () use ($router) {
+        $router->group(
+            [
+                'prefix' => 'car-insurance',
+            ],
+            function () use ($router) {
+                //guides
+                $router->group(['prefix' => 'guides'], function () use ($router) {
+                    $router->get('/marks', 'GuidesController@marks');
+                    $router->get('/models/{mark_id:\d+}', 'GuidesController@models');
+                    $router->get('/models', 'GuidesController@modelsAll');
+                    $router->get('/categories', 'GuidesController@categories');
+                    $router->get('/countries', 'GuidesController@countriesAll');
+                    $router->get('/countries/{country_id:\d+}', 'GuidesController@countries');
+                    $router->get('/genders', 'GuidesController@genders');
+                    $router->get('/doc-types', 'GuidesController@docTypes');
+                    $router->get('/usage-targets', 'GuidesController@usageTargets');
+                    $router->get('/insurance-companies', 'GuidesController@insuranceCompanies');
+                    $router->get('/insurance-companies/{id}', 'GuidesController@insuranceCompany');
+                    $router->get('/source-acquisitions', 'GuidesController@sourceAcquisitions');
+                }
+                );
+            }
+        );
+    }
+);
+
 $router->group(
     [
         'prefix' => 'v1',
@@ -88,23 +120,6 @@ $router->group(
                             'middleware' => 'restriction.money'
                         ]);
                         $router->get('{id}', 'ReportController@show');
-                    }
-                );
-
-                //guides
-                $router->group(['prefix' => 'guides'], function () use ($router) {
-                        $router->get('/marks', 'GuidesController@marks');
-                        $router->get('/models/{mark_id:\d+}', 'GuidesController@models');
-                        $router->get('/models', 'GuidesController@modelsAll');
-                        $router->get('/categories', 'GuidesController@categories');
-                        $router->get('/countries', 'GuidesController@countriesAll');
-                        $router->get('/countries/{country_id:\d+}', 'GuidesController@countries');
-                        $router->get('/genders', 'GuidesController@genders');
-                        $router->get('/doc-types', 'GuidesController@docTypes');
-                        $router->get('/usage-targets', 'GuidesController@usageTargets');
-                        $router->get('/insurance-companies', 'GuidesController@insuranceCompanies');
-                        $router->get('/insurance-companies/{id}', 'GuidesController@insuranceCompany');
-                        $router->get('/source-acquisitions', 'GuidesController@sourceAcquisitions');
                     }
                 );
 
