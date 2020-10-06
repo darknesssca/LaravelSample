@@ -3,12 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AutocodRequestReportRequest;
+use App\Http\Requests\AutocodUnauthorizedRequest;
 use App\Services\CarInfo\Autocod\AutocodReportService;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Validation\ValidationException;
 
 class AutocodController extends Controller
 {
@@ -34,6 +33,17 @@ class AutocodController extends Controller
             return Response::error($cle->getMessage(), 500);
         } catch (\Exception $e) {
             return Response::error($e->getMessage(), 500);
+        }
+    }
+
+    public function requestReportUnauthorized(AutocodUnauthorizedRequest $request)
+    {
+        try {
+            $params = $request->validated();
+            $result = $this->engine->readReportAutocompleteSync($params['value'], 'GRZ', false, true);
+            return Response::success($result);
+        } catch (\Exception $exception) {
+            return Response::error($exception->getMessage(), 500);
         }
     }
 
@@ -65,6 +75,19 @@ class AutocodController extends Controller
         try {
             $params = $request->validated();
             $result = $this->engine->checkTaxi($params['value'], $params['queryType'],$params['eosago'] ?? false);
+            return Response::success($result);
+        } catch (ClientException $cle) {
+            return Response::error($cle->getMessage(), 500);
+        } catch (\Exception $e) {
+            return Response::error($e->getMessage(), 500);
+        }
+    }
+
+    public function unauthorizedCheckTaxi(AutocodUnauthorizedRequest $request)
+    {
+        try {
+            $params = $request->validated();
+            $result = $this->engine->checkTaxi($params['value'], 'GRZ',false, true);
             return Response::success($result);
         } catch (ClientException $cle) {
             return Response::error($cle->getMessage(), 500);
