@@ -92,7 +92,7 @@ class ReportRepository implements ReportRepositoryContract
             // Получение всех записей из БД
             $count = !empty($filter['count']) ? $filter['count'] : 10;
             if (isset($filter['count']) && $filter['count'] === false) {
-                $count = null;
+                $count = PHP_INT_MAX;
             }
             $page = !empty($filter['page']) ? $filter['page'] : 1;
             return $query->paginate(
