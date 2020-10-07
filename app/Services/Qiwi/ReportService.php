@@ -586,7 +586,10 @@ class ReportService implements ReportServiceContract
      */
     public function getReportedPoliciesIds(int $agent_id)
     {
-        $reports = $this->reportRepository->getByCreatorId($agent_id, []);
+        $filter = [
+            'count' => false,
+        ];
+        $reports = $this->reportRepository->getByCreatorId($agent_id, $filter);
         $exclude_policy_ids = $reports->reduce(function ($carry, $report) {
             $arr = $report['policies']->map(function ($polic) {
                 return $polic['id'];
