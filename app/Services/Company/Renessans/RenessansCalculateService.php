@@ -5,6 +5,7 @@ namespace App\Services\Company\Renessans;
 
 
 use App\Contracts\Company\Renessans\RenessansCalculateServiceContract;
+use App\Contracts\Repositories\Services\CarCategoryServiceContract;
 use App\Contracts\Repositories\Services\CarMarkServiceContract;
 use App\Contracts\Repositories\Services\CarModelServiceContract;
 use App\Contracts\Repositories\Services\DocTypeServiceContract;
@@ -24,6 +25,7 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
     protected $carModelService;
     protected $docTypeService;
     protected $carMarkService;
+    protected $carCategoryService;
 
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
@@ -32,13 +34,15 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
         UsageTargetServiceContract $usageTargetService,
         CarModelServiceContract $carModelService,
         DocTypeServiceContract $docTypeService,
-        CarMarkServiceContract $carMarkService
+        CarMarkServiceContract $carMarkService,
+        CarCategoryServiceContract $carCategoryService
     )
     {
         $this->usageTargetService = $usageTargetService;
         $this->carModelService = $carModelService;
         $this->docTypeService = $docTypeService;
         $this->carMarkService = $carMarkService;
+        $this->carCategoryService = $carCategoryService;
         $this->init();
         parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
@@ -144,11 +148,17 @@ class RenessansCalculateService extends RenessansService implements RenessansCal
             "dateIssue" => 'dateIssue',
         ], $ownerPassport);
         //car
-        $this->setValuesByArray($data['car'], [
-            "UnladenMass" => 'minWeight',
-            "ResolutionMaxWeight" => 'maxWeight',
-            "NumberOfSeats" => 'seats',
-        ], $attributes['car']);
+        $category = $this->carCategoryService->getCategoryById($attributes['car']['category']);
+        if (strtolower($category['code']) == 'c') {
+            $this->setValuesByArray($data['car'], [
+                "UnladenMass" => 'minWeight',
+                "ResolutionMaxWeight" => 'maxWeight',
+            ], $attributes['car']);
+        } elseif (strtolower($category['code']) == 'd') {
+            $this->setValuesByArray($data['car'], [
+                "NumberOfSeats" => 'seats',
+            ], $attributes['car']);
+        }
         $this->setValuesByArray($data['car']['documents'], [
             "registrationNumber" => 'regNumber',
         ], $attributes['car']);
