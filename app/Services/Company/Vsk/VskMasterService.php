@@ -14,6 +14,7 @@ use App\Exceptions\ApiRequestsException;
 use App\Exceptions\MethodForbiddenException;
 use App\Exceptions\TokenException;
 use App\Models\InsuranceCompany;
+use Benfin\Api\GlobalStorage;
 
 class VskMasterService extends VskService implements VskMasterServiceContract
 {
@@ -45,7 +46,8 @@ class VskMasterService extends VskService implements VskMasterServiceContract
         $tokenData[$company->code] = [
             'status' => 'calculating',
             'stage' => 'login',
-            'loginUniqueId' => $loginData['uniqueId']
+            'loginUniqueId' => $loginData['uniqueId'],
+            'user' => GlobalStorage::getUser(),
         ];
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),

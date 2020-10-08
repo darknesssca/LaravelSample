@@ -111,6 +111,7 @@ class VskBuyPolicyService extends VskService implements VskBuyPolicyServiceContr
         ]);
 
         if ($callbackNumber == 1) {
+            GlobalStorage::setUser($tokenData[self::companyCode]['user']);
             $attributes = $token_data;
             $this->pushForm($attributes);
             $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
