@@ -3,6 +3,7 @@
 namespace App\Services\Company\Ingosstrah;
 
 use App\Contracts\Company\Ingosstrah\IngosstrahCreateServiceContract;
+use App\Contracts\Repositories\Services\CarCategoryServiceContract;
 use App\Contracts\Repositories\Services\CarModelServiceContract;
 use App\Contracts\Repositories\Services\CountryServiceContract;
 use App\Contracts\Repositories\Services\DocTypeServiceContract;
@@ -26,6 +27,7 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
     protected $docTypeService;
     protected $genderService;
     protected $countryService;
+    protected $carCategoryService;
 
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
@@ -35,13 +37,15 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
         CarModelServiceContract $carModelService,
         DocTypeServiceContract $docTypeService,
         GenderServiceContract $genderService,
-        CountryServiceContract $countryService
+        CountryServiceContract $countryService,
+        CarCategoryServiceContract $carCategoryService
     ) {
         $this->usageTargetService = $usageTargetService;
         $this->carModelService = $carModelService;
         $this->docTypeService = $docTypeService;
         $this->genderService = $genderService;
         $this->countryService = $countryService;
+        $this->carCategoryService = $carCategoryService;
         parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
@@ -159,11 +163,18 @@ class IngosstrahCreateService extends IngosstrahService implements IngosstrahCre
             'MobilePhone' => 'phone',
             'Email' => 'email',
         ], $insurer);
-        $this->setValuesByArray($data['Agreement']['Vehicle'], [
-            'NetWeight' => 'minWeight',
-            'GrossWeigh' => 'maxWeight',
-            'Seats' => 'seats',
-        ], $attributes['car']);
+
+        $category = $this->carCategoryService->getCategoryById($attributes['car']['category']);
+        if (strtolower($category['code']) == 'c') {
+            $this->setValuesByArray($data['Agreement']['Vehicle'], [
+                'NetWeight' => 'minWeight',
+                'GrossWeigh' => 'maxWeight',
+            ], $attributes['car']);
+        } elseif (strtolower($category['code']) == 'd') {
+            $this->setValuesByArray($data['Agreement']['Vehicle'], [
+                'Seats' => 'seats',
+            ], $attributes['car']);
+        }
         //SubjectList
         foreach ($attributes['subjects'] as $iSubject => $subject) {
             $pSubject = [
