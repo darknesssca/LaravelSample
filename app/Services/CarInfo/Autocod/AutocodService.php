@@ -4,6 +4,7 @@
 namespace App\Services\CarInfo\Autocod;
 
 use App\Services\CarInfo\CarInfoService;
+use Carbon\Carbon;
 use Exception;
 
 class AutocodService extends CarInfoService
@@ -32,7 +33,7 @@ class AutocodService extends CarInfoService
      */
     protected function createToken(): string
     {
-        $stamp = time();
+        $stamp = Carbon::now()->subHour()->getTimestamp();
         $passHash = base64_encode(md5($this->password, true));
         $saltedHash = base64_encode(md5($stamp . ':' . $this->token_lifetime . ':' . $passHash, true));
         return base64_encode(implode(':', [$this->user, $stamp, $this->token_lifetime, $saltedHash]));
