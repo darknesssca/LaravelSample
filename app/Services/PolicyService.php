@@ -250,6 +250,7 @@ class PolicyService implements PolicyServiceContract
                     $item['client'] = $client;
                 }
             }
+            $item['rewards'] = [];
             foreach ($rewards as $reward) {
                 if ($item['id'] == $reward['policy_id']) {
                     $item['rewards'][] = $reward;
