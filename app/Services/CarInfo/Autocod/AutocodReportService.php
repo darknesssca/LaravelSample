@@ -6,6 +6,7 @@ namespace App\Services\CarInfo\Autocod;
 
 use App\Traits\CacheStore;
 use Benfin\Api\GlobalStorage;
+use Benfin\Log\Facades\Log;
 
 class AutocodReportService extends AutocodService
 {
@@ -44,8 +45,8 @@ class AutocodReportService extends AutocodService
             throw new \Exception('При получени данных из автокода произошла ошибка. Попробуйте еще раз.');
         }
         if ($res['state'] !== 'ok') {
-            if ($res['event']['type'] == 'ValidationFailed') {
-                if ($queryType == 'GRZ') {
+            if ($res['event']['type'] === 'ValidationFailed') {
+                if ($queryType === 'GRZ') {
                     throw new \Exception("Некорректный формат госномера");
                 }
                 throw new \Exception("Некорректный формат $queryType номера");
@@ -91,9 +92,14 @@ class AutocodReportService extends AutocodService
         $result = $this->getReport($value, $queryType, $this->uid_autocomplete);
         while ($wait > 0) { //если все операции завершены, то выводим отчет
             $r2 = $this->readReport($result['report_id']); //запрашиваем отчет
-            $wait = intval($r2['data'][0]['progress_wait']); //количество ожидающих операций
+            $wait = (int)empty($r2['data'][0]) || (int)$r2['data'][0]['progress_wait']; //количество ожидающих операций
             sleep(0.2);
         }
+        Log::daily(
+            $r2,
+            'AutocodReports',
+            "{$queryType}|{$value}|Autocomplete"
+        );
         if (empty($r2['data'][0]['content'])) {
             if (!$unauthorized) {
                 $this->put(
@@ -105,7 +111,7 @@ class AutocodReportService extends AutocodService
                 $r2['found'] = false;
                 return $r2;
             }
-            $exceptionMessage = $queryType == 'VIN' ? "По заданному VIN ничего не найдено" : "По заданному госномеру ничего не найдено. Заполните данные о ТС вручную";
+            $exceptionMessage = $queryType === 'VIN' ? "По заданному VIN ничего не найдено" : "По заданному госномеру ничего не найдено. Заполните данные о ТС вручную";
             throw new \Exception($exceptionMessage);
         }
         if (!$unauthorized) {
@@ -133,9 +139,14 @@ class AutocodReportService extends AutocodService
         $wait = 9999;
         while ($wait > 0) { //если все операции завершены, то выводим отчет
             $r2 = $this->readReport($result['report_id']);
-            $wait = intval($r2['data'][0]['progress_wait']); //количество ожидающих операций
+            $wait = (int)$r2['data'][0]['progress_wait']; //количество ожидающих операций
             sleep(0.2);
         }
+        Log::daily(
+            $r2,
+            'AutocodReports',
+            "{$queryType}|{$value}|checkTaxi"
+        );
         if (empty($r2['data'][0]['content'])) {
             throw new \Exception('Автокод не предоставил данные по ТС. Попробуйте еще раз.');
         }
@@ -145,10 +156,10 @@ class AutocodReportService extends AutocodService
         ) {
             throw new \Exception('При получени данных из автокода произошла ошибка. Попробуйте еще раз.');
         }
-        $cnt = intval($r2['data'][0]['content']['taxi']['history']['count']);
+        $cnt = (int)$r2['data'][0]['content']['taxi']['history']['count'];
         if ($cnt > 0) {
             foreach ($r2['data'][0]['content']['taxi']['history']['items'] as $item) {
-                if ($item['license']['status'] == "ACTIVE") {
+                if ($item['license']['status'] === "ACTIVE") {
                     if (!$unauthorized) {
                         $this->put(
                             $this->getId('autocod', GlobalStorage::getUserId(), $queryType, $value, 'isTaxi'),
