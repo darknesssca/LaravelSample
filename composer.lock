@@ -125,11 +125,7 @@
                 }
             ],
             "description": "BENFIN Api communication",
-<<<<<<< HEAD
-            "time": "2020-09-23T08:47:56+00:00"
-=======
             "time": "2020-09-25T11:11:50+00:00"
->>>>>>> 70286b708b3ece6d5bd13ca5abfc61b471434011
         },
         {
             "name": "benfin/packages/auth",
