@@ -28,6 +28,11 @@ class InsuranceGenderSeeder extends Seeder
             'insurance_company_id' => 4,
             'reference_gender_code' => 'male',
         ],
+        [
+            'gender_id' => 1,
+            'insurance_company_id' => 5,
+            'reference_gender_code' => '1',
+        ],
 
         //Ж
         [
@@ -49,6 +54,11 @@ class InsuranceGenderSeeder extends Seeder
             'gender_id' => 2,
             'insurance_company_id' => 4,
             'reference_gender_code' => 'female',
+        ],
+        [
+            'gender_id' => 2,
+            'insurance_company_id' => 5,
+            'reference_gender_code' => '2',
         ],
     ];
 

@@ -160,28 +160,25 @@ class VskMasterService extends VskService implements VskMasterServiceContract
      */
     public function creating(InsuranceCompany $company, $attributes): void
     {
-        switch ($attributes['method']) { //предыдущий метод
-            case 'SavePolicy':
-                /** @var VskSignPolicyServiceContract $signPolicyService */
-                $signPolicyService = app(VskSignPolicyServiceContract::class);
-                $signPolicyData = $signPolicyService->run($company, $attributes);
+        if (!empty($attributes['method'])){
+            $this->pushForm($attributes);
 
-                $tokenData = $this->getTokenData($attributes['token'], true);
-                $tokenData[$company->code]['status'] = 'processing';
-                $tokenData[$company->code]['stage'] = 'sign';
-                $tokenData[$company->code]['signUniqueId'] = $signPolicyData['uniqueId'];
-                break;
-            case 'SignPolicy':
-                $this->pushForm($attributes);
+            /** @var VskBuyPolicyServiceContract $buyPolicyService */
+            $buyPolicyService = app(VskBuyPolicyServiceContract::class);
+            $buyPolicyData = $buyPolicyService->run($company, $attributes);
 
-                /** @var VskBuyPolicyServiceContract $buyPolicyService */
-                $buyPolicyService = app(VskBuyPolicyServiceContract::class);
-                $buyPolicyData = $buyPolicyService->run($company, $attributes);
+            $tokenData = $this->getTokenData($attributes['token'], true);
+            $tokenData[$company->code]['stage'] = 'buy';
+            $tokenData[$company->code]['buyUniqueId'] = $buyPolicyData['uniqueId'];
+        } else {
+            /** @var VskSignPolicyServiceContract $signPolicyService */
+            $signPolicyService = app(VskSignPolicyServiceContract::class);
+            $signPolicyData = $signPolicyService->run($company, $attributes);
 
-                $tokenData = $this->getTokenData($attributes['token'], true);
-                $tokenData[$company->code]['stage'] = 'buy';
-                $tokenData[$company->code]['buyUniqueId'] = $buyPolicyData['uniqueId'];
-                break;
+            $tokenData = $this->getTokenData($attributes['token'], true);
+            $tokenData[$company->code]['status'] = 'processing';
+            $tokenData[$company->code]['stage'] = 'sign';
+            $tokenData[$company->code]['signUniqueId'] = $signPolicyData['uniqueId'];
         }
 
         $this->intermediateDataService->update($attributes['token'], [

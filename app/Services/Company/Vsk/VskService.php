@@ -122,16 +122,23 @@ abstract class VskService extends CompanyService
     {
         $category = $this->carCategoryService->getCategoryById($attributes['car']['category']);
 
-        if ($category['code'] == 'b') {
+        if (strtolower($category['code']) == 'b') {
             $computed_info['trailer'] = 'false';
             $computed_info['maxWeight'] = '0';
             $computed_info['unladenWeight'] = '0';
             $computed_info['passengers'] = '0';
+        } elseif (strtolower($category['code']) == 'c') {
+            $computed_info['trailer'] = $attributes['car']['isUsedWithTrailer'] == true ? 'true' : 'false';
+            $computed_info['maxWeight'] = $attributes['car']['maxWeight'];
+            $computed_info['unladenWeight'] = $attributes['car']['minWeight'];
+        } elseif (strtolower($category['code']) == 'd') {
+            $computed_info['trailer'] = $attributes['car']['isUsedWithTrailer'] == true ? 'true' : 'false';
+            $computed_info['passengers'] = $attributes['car']['seats'];
         } else {
             $computed_info['trailer'] = $attributes['car']['isUsedWithTrailer'] == true ? 'true' : 'false';
-            $computed_info['maxWeight'] = '0';
-            $computed_info['unladenWeight'] = '0';
-            $computed_info['passengers'] = '0';
+            $computed_info['maxWeight'] = $attributes['car']['maxWeight'];
+            $computed_info['unladenWeight'] = $attributes['car']['minWeight'];
+            $computed_info['passengers'] = $attributes['car']['seats'];
         }
 
         $data = [
