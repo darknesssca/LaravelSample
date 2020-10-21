@@ -32,7 +32,7 @@ class VskCalculatePolicyService extends VskService implements VskCalculatePolicy
             ]
         );
 
-        $data = $this->sendRequest('/Policy/CalculatePolicy', $xml);
+        $data = $this->sendRequest('/Policy/CalculatePolicy', $xml, $attributes['token']);
 
         return $data;
     }

@@ -396,7 +396,7 @@ abstract class VskService extends CompanyService
     }
 
 
-    protected function sendRequest($url, $body) {
+    protected function sendRequest($url, $body, $token) {
         $data = [];
         $url = '/cxf/rest/partners/api/v2/osago' . $url;
 
@@ -410,7 +410,14 @@ abstract class VskService extends CompanyService
         try {
             $data['uniqueId'] = $response->getHeader('X-VSK-CorrelationId')[0];
         } catch (Exception $exception) {
-            //ignore
+            $tokenData = $this->getTokenData($token, true);
+
+            $tokenData[self::companyCode]['status'] = 'error';
+            $tokenData[self::companyCode]['errorMessages'] = 'Нет связи со страховой компанией';
+
+            $this->intermediateDataService->update($token, [
+                'data' => json_encode($tokenData),
+            ]);
         }
 
         return $data;

@@ -32,7 +32,7 @@ class VskLoginService extends VskService implements VskLoginServiceContract
             ]
         );
 
-        $data = $this->sendRequest('/Auth/Login', $xml);
+        $data = $this->sendRequest('/Auth/Login', $xml, $attributes['token']);
 
         return $data;
     }
