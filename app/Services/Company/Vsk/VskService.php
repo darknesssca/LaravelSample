@@ -386,15 +386,17 @@ abstract class VskService extends CompanyService
                 'model:previousPolicyNumber' => $computed_data['previousPolicyNumber'],
                 'model:policyObjects' => [
                     $this->getVehicleArray($company, $attributes),
-                    $this->getDriversArray($company, $attributes),
                 ],
                 'model:participant' => $this->getInsurerArray($company, $attributes),
             ]
         ];
 
+        if (count($attributes['drivers'])) {
+            $data['policy:policy']['model:policyObjects'][] = $this->getDriversArray($company, $attributes);
+        }
+
         return $data;
     }
-
 
     protected function sendRequest($url, $body, $token) {
         $data = [];
