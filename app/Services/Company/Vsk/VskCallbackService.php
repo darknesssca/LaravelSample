@@ -5,14 +5,19 @@ namespace App\Services\Company\Vsk;
 
 
 use App\Contracts\Company\Vsk\VskCallbackServiceContract;
+use App\Contracts\Company\Vsk\VskErrorHandlerServiceContract;
 use App\Contracts\Company\Vsk\VskMethodServiceInterface;
 use App\Exceptions\CompanyException;
 use App\Exceptions\MethodNotFoundException;
 use App\Traits\CompanyServicesTrait;
+use Benfin\Log\Facades\Log;
 
 class VskCallbackService extends VskService implements VskCallbackServiceContract
 {
     use CompanyServicesTrait;
+
+    /** @var VskErrorHandlerServiceContract errorHandlerService */
+    protected $errorHandlerService;
 
     /**
      * @param array $callback_response
@@ -21,9 +26,19 @@ class VskCallbackService extends VskService implements VskCallbackServiceContrac
      */
     public function runNextStep(array $callback_response)
     {
+        $this->errorHandlerService = app(VskErrorHandlerServiceContract::class);
+
         $callback_info = $this->parseContent($callback_response['content']);
         $token_data = $this->getTokenFromCallback($callback_info);
-        if (!$this->checkError($token_data['token'], $callback_info)){
+
+        $tag = sprintf('Vsk%sServiceResponse | %s', $token_data['method'], $token_data['token']);
+        Log::daily(
+            $callback_response['content'],
+            self::companyCode,
+            $tag
+        );
+
+        if (!$this->errorHandlerService->checkError($token_data['token'], $callback_info)){
             $company = $this->getCompany(self::companyCode);
             $contract = 'App\\Contracts\\Company\\Vsk\\Vsk' . $token_data['method'] . 'ServiceContract';
 
@@ -64,35 +79,5 @@ class VskCallbackService extends VskService implements VskCallbackServiceContrac
             }
         }
         return $token;
-    }
-    private function checkError(string $token, array $parsed_response)
-    {
-        $errors = [];
-        $re = "/Errors:(.*)Warnings:/";
-        foreach ($parsed_response as $tag) {
-            if ($tag['tag'] == 'COM:ERRORCODE') {
-                $errors['codes'][] = $tag['value'];
-            }
-
-            if ($tag['tag'] == 'COM:ERRORMESSAGE') {
-                preg_match_all($re, str_replace(PHP_EOL, '', $tag['value']), $matches, PREG_SET_ORDER, 0);
-                $errors['messages'][] = $matches[0][1];
-            }
-        }
-
-        if (!empty($errors)){
-            $tokenData = $this->getTokenData($token, true);
-            $tokenData[self::companyCode]['status'] = 'error';
-            $tokenData[self::companyCode]['errors'] = $errors;
-            $tokenData[self::companyCode]['errorMessages'] = implode(';', $errors['messages']);
-
-            $this->intermediateDataService->update($token, [
-                'data' => json_encode($tokenData),
-            ]);
-
-            return true;
-        }
-
-        return false;
     }
 }

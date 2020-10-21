@@ -16,6 +16,7 @@ use App\Contracts\Repositories\Services\UsageTargetServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Services\Company\CompanyService;
 use Carbon\Carbon;
+use Exception;
 use GuzzleHttp\Client;
 
 abstract class VskService extends CompanyService
@@ -204,7 +205,6 @@ abstract class VskService extends CompanyService
                 'model:code' => 'VEHICLE'
             ],
             'model:product' => [
-                //todo Поменять осаго на динамику с каско
                 'model:productCode' => 'OSAGO'
             ],
             'model:orderNo' => 1,
@@ -386,15 +386,17 @@ abstract class VskService extends CompanyService
                 'model:previousPolicyNumber' => $computed_data['previousPolicyNumber'],
                 'model:policyObjects' => [
                     $this->getVehicleArray($company, $attributes),
-                    $this->getDriversArray($company, $attributes),
                 ],
                 'model:participant' => $this->getInsurerArray($company, $attributes),
             ]
         ];
 
+        if (count($attributes['drivers'])) {
+            $data['policy:policy']['model:policyObjects'][] = $this->getDriversArray($company, $attributes);
+        }
+
         return $data;
     }
-
 
     protected function sendRequest($url, $body, $token) {
         $data = [];
