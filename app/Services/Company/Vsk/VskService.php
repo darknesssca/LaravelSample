@@ -16,6 +16,7 @@ use App\Contracts\Repositories\Services\UsageTargetServiceContract;
 use App\Contracts\Services\PolicyServiceContract;
 use App\Services\Company\CompanyService;
 use Carbon\Carbon;
+use Exception;
 use GuzzleHttp\Client;
 
 abstract class VskService extends CompanyService
@@ -204,7 +205,6 @@ abstract class VskService extends CompanyService
                 'model:code' => 'VEHICLE'
             ],
             'model:product' => [
-                //todo Поменять осаго на динамику с каско
                 'model:productCode' => 'OSAGO'
             ],
             'model:orderNo' => 1,

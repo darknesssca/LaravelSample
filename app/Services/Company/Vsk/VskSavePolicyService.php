@@ -7,6 +7,7 @@ namespace App\Services\Company\Vsk;
 use App\Contracts\Company\Vsk\VskSavePolicyServiceContract;
 use App\Exceptions\TokenException;
 use App\Models\InsuranceCompany;
+use Benfin\Log\Facades\Log;
 use Exception;
 use Spatie\ArrayToXml\ArrayToXml;
 
@@ -27,10 +28,11 @@ class VskSavePolicyService extends VskService implements VskSavePolicyServiceCon
         $data = [];
         $xml = $this->prepareXml($company, $attributes);
 
-        $this->writeRequestLog(
-            [
-                'data' => $xml
-            ]
+        $tag = sprintf('%sRequest | %s', $this->getName(__CLASS__), $attributes['token']);
+        Log::daily(
+            $xml,
+            self::companyCode,
+            $tag
         );
 
         $data = $this->sendRequest('/Policy/SavePolicy', $xml, $attributes['token']);
@@ -55,6 +57,7 @@ class VskSavePolicyService extends VskService implements VskSavePolicyServiceCon
             'common:sessionId' => $tokenData['sessionId']
         ];
         $structure = array_merge($structure, $this->getPolicyArray($company, $attributes));
+
 
         return ArrayToXml::convert($structure,
             [
@@ -89,10 +92,6 @@ class VskSavePolicyService extends VskService implements VskSavePolicyServiceCon
      */
     public function processCallback(InsuranceCompany $company, array $token_data, array $parsed_response): array
     {
-        $this->writeResponseLog([
-            'data' => $parsed_response
-        ]);
-
         $tokenData = $this->getTokenData($token_data['token'], true);
 
         foreach ($parsed_response as $tag) {
@@ -101,7 +100,11 @@ class VskSavePolicyService extends VskService implements VskSavePolicyServiceCon
             }
         }
 
-        $tokenData[self::companyCode]['status'] = 'signing';
+        if (!empty($tokenData[self::companyCode]['nextMethod'])) {
+            $tokenData[self::companyCode]['status'] = 'resendSuccess';
+        } else {
+            $tokenData[self::companyCode]['status'] = 'signing';
+        }
 
         $this->intermediateDataService->update($token_data['token'], [
             'data' => json_encode($tokenData),

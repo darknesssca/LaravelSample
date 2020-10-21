@@ -10,6 +10,7 @@ use App\Exceptions\TokenException;
 use App\Models\InsuranceCompany;
 use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
+use Benfin\Log\Facades\Log;
 use Exception;
 use Spatie\ArrayToXml\ArrayToXml;
 
@@ -29,10 +30,11 @@ class VskBuyPolicyService extends VskService implements VskBuyPolicyServiceContr
         $data = [];
         $xml = $this->prepareXml($company, $attributes)->prettify()->toXml();
 
-        $this->writeRequestLog(
-            [
-                'data' => $xml
-            ]
+        $tag = sprintf('%sRequest | %s', $this->getName(__CLASS__), $attributes['token']);
+        Log::daily(
+            $xml,
+            self::companyCode,
+            $tag
         );
 
         $data = $this->sendRequest('/Policy/BuyPolicy', $xml, $attributes['token']);
@@ -80,10 +82,6 @@ class VskBuyPolicyService extends VskService implements VskBuyPolicyServiceContr
      */
     public function processCallback(InsuranceCompany $company, array $token_data, array $parsed_response): array
     {
-        $this->writeResponseLog([
-            'data' => $parsed_response
-        ]);
-
         $tokenData = $this->getTokenData($token_data['token'], true);
         $callbackNumber = 1;
 

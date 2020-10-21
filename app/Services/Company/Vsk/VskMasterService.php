@@ -49,6 +49,11 @@ class VskMasterService extends VskService implements VskMasterServiceContract
             'loginUniqueId' => $loginData['uniqueId'],
             'user' => GlobalStorage::getUser(),
         ];
+
+        if (!empty($attributes['nextMethod'])) {
+            $tokenData[$company->code]['nextMethod'] = $attributes['nextMethod'];
+        }
+
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
         ]);
@@ -98,7 +103,7 @@ class VskMasterService extends VskService implements VskMasterServiceContract
      */
     public function payment(InsuranceCompany $company, $attributes): void
     {
-        // TODO: Implement payment() method.
+        throw new MethodForbiddenException('Вызов метода запрещен');
     }
 
     /**
@@ -137,7 +142,7 @@ class VskMasterService extends VskService implements VskMasterServiceContract
      */
     public function segmenting(InsuranceCompany $company, $attributes): void
     {
-        // TODO: Implement segmenting() method.
+        throw new MethodForbiddenException('Вызов метода запрещен');
     }
 
     /**
@@ -162,7 +167,7 @@ class VskMasterService extends VskService implements VskMasterServiceContract
      */
     public function creating(InsuranceCompany $company, $attributes): void
     {
-        if (!empty($attributes['method'])){
+        if (!empty($attributes['method'])) {
             $this->pushForm($attributes);
 
             /** @var VskBuyPolicyServiceContract $buyPolicyService */
@@ -199,7 +204,7 @@ class VskMasterService extends VskService implements VskMasterServiceContract
      */
     public function holding(InsuranceCompany $company, $attributes): void
     {
-        // TODO: Implement holding() method.
+        throw new MethodForbiddenException('Вызов метода запрещен');
     }
 
     /**
@@ -255,6 +260,16 @@ class VskMasterService extends VskService implements VskMasterServiceContract
 
         switch ($tokenData['status']) {
             case 'processing':
+                if (isset($tokenData['signSuccess']) && $tokenData['signSuccess'] === true) {
+                    return [
+                        'status' => 'processing',
+                        'signSuccess' => true,
+                    ];
+                }
+                return [
+                    'status' => 'processing',
+                ];
+            case 'calculating':
                 return [
                     'status' => 'processing',
                 ];
@@ -266,6 +281,16 @@ class VskMasterService extends VskService implements VskMasterServiceContract
             case 'buying':
                 return [
                     'status' => 'done',
+                ];
+            case 'signError':
+                return [
+                    'status' => 'signError',
+                    'has_attempts' => $tokenData['has_attempts'],
+                    'errors' => $tokenData['errorMessages'],
+                ];
+            case 'resendSuccess':
+                return [
+                    'status' => 'resendSuccess',
                 ];
             case 'error':
                 throw new ApiRequestsException($tokenData['errorMessages']);
@@ -285,6 +310,6 @@ class VskMasterService extends VskService implements VskMasterServiceContract
      */
     public function getPayment(InsuranceCompany $company, $attributes): void
     {
-        // TODO: Implement getPayment() method.
+        throw new MethodForbiddenException('Вызов метода запрещен');
     }
 }

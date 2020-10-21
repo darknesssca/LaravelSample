@@ -7,6 +7,7 @@ namespace App\Services\Company\Vsk;
 use App\Contracts\Company\Vsk\VskCalculatePolicyServiceContract;
 use App\Exceptions\TokenException;
 use App\Models\InsuranceCompany;
+use Benfin\Log\Facades\Log;
 use Exception;
 use Spatie\ArrayToXml\ArrayToXml;
 
@@ -26,10 +27,11 @@ class VskCalculatePolicyService extends VskService implements VskCalculatePolicy
         $data = [];
         $xml = $this->prepareXml($company, $attributes);
 
-        $this->writeRequestLog(
-            [
-                'data' => $xml
-            ]
+        $tag = sprintf('%sRequest | %s', $this->getName(__CLASS__), $attributes['token']);
+        Log::daily(
+            $xml,
+            self::companyCode,
+            $tag
         );
 
         $data = $this->sendRequest('/Policy/CalculatePolicy', $xml, $attributes['token']);
@@ -79,10 +81,6 @@ class VskCalculatePolicyService extends VskService implements VskCalculatePolicy
      */
     public function processCallback(InsuranceCompany $company, array $token_data, array $parsed_response): array
     {
-        $this->writeResponseLog([
-            'data' => $parsed_response
-        ]);
-
         $tokenData = $this->getTokenData($token_data['token'], true);
 
         foreach ($parsed_response as $tag) {

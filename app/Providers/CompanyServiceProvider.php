@@ -38,13 +38,14 @@ use App\Contracts\Company\Tinkoff\TinkoffCalculateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffCreateServiceContract;
 use App\Contracts\Company\Tinkoff\TinkoffGuidesSourceContract;
 use App\Contracts\Company\Tinkoff\TinkoffMasterServiceContract;
-use App\Contracts\Company\Vsk\VskBuyPolicyServiceContract;
-use App\Contracts\Company\Vsk\VskCalculatePolicyServiceContract;
-use App\Contracts\Company\Vsk\VskCallbackServiceContract;
-use App\Contracts\Company\Vsk\VskLoginServiceContract;
-use App\Contracts\Company\Vsk\VskMasterServiceContract;
-use App\Contracts\Company\Vsk\VskSavePolicyServiceContract;
-use App\Contracts\Company\Vsk\VskSignPolicyServiceContract;
+use App\Contracts\Company\Vsk\VskBuyPolicyServiceContract as VskOsagoBuyPolicyServiceContract;
+use App\Contracts\Company\Vsk\VskCalculatePolicyServiceContract as VskOsagoCalculatePolicyServiceContract;
+use App\Contracts\Company\Vsk\VskCallbackServiceContract as VskOsagoCallbackServiceContract;
+use App\Contracts\Company\Vsk\VskErrorHandlerServiceContract as VskOsagoErrorHandlerServiceContract;
+use App\Contracts\Company\Vsk\VskLoginServiceContract as VskOsagoLoginServiceContract;
+use App\Contracts\Company\Vsk\VskMasterServiceContract as VskOsagoMasterServiceContract;
+use App\Contracts\Company\Vsk\VskSavePolicyServiceContract as VskOsagoSavePolicyServiceContract;
+use App\Contracts\Company\Vsk\VskSignPolicyServiceContract as VskOsagoSignPolicyServiceContract;
 use App\Services\Company\Ingosstrah\IngosstrahBillLinkService;
 use App\Services\Company\Ingosstrah\IngosstrahBillService;
 use App\Services\Company\Ingosstrah\IngosstrahBillStatusService;
@@ -79,13 +80,14 @@ use App\Services\Company\Tinkoff\TinkoffCalculateService;
 use App\Services\Company\Tinkoff\TinkoffCreateService;
 use App\Services\Company\Tinkoff\TinkoffGuidesService;
 use App\Services\Company\Tinkoff\TinkoffMasterService;
-use App\Services\Company\Vsk\VskBuyPolicyService;
-use App\Services\Company\Vsk\VskCalculatePolicyService;
-use App\Services\Company\Vsk\VskCallbackService;
-use App\Services\Company\Vsk\VskLoginService;
-use App\Services\Company\Vsk\VskMasterService;
-use App\Services\Company\Vsk\VskSavePolicyService;
-use App\Services\Company\Vsk\VskSignPolicyService;
+use App\Services\Company\Vsk\VskBuyPolicyService as VskOsagoBuyPolicyService;
+use App\Services\Company\Vsk\VskCalculatePolicyService as VskOsagoCalculatePolicyService;
+use App\Services\Company\Vsk\VskCallbackService as VskOsagoCallbackService;
+use App\Services\Company\Vsk\VskErrorHandlerService as VskOsagoErrorHandlerService;
+use App\Services\Company\Vsk\VskLoginService as VskOsagoLoginService;
+use App\Services\Company\Vsk\VskMasterService as VskOsagoMasterService;
+use App\Services\Company\Vsk\VskSavePolicyService as VskOsagoSavePolicyService;
+use App\Services\Company\Vsk\VskSignPolicyService as VskOsagoSignPolicyService;
 use Illuminate\Support\ServiceProvider;
 
 class CompanyServiceProvider extends ServiceProvider
@@ -101,7 +103,7 @@ class CompanyServiceProvider extends ServiceProvider
         $this->registerTinkoffServices();
         $this->registerIngosstrahServices();
         $this->registerSoglasieServices();
-        $this->registerVSKServices();
+        $this->registerVskOsagoServices();
 
         // сервис процессингов
         $this->app->bind(ProcessingServiceContract::class, ProcessingService::class);
@@ -176,19 +178,21 @@ class CompanyServiceProvider extends ServiceProvider
         $this->app->singleton(SoglasieGuidesSourceContract::class, SoglasieGuidesService::class);
     }
 
-    protected function registerVSKServices()
+    protected function registerVskOsagoServices()
     {
         // master
-        $this->app->singleton(VskMasterServiceContract::class, VskMasterService::class);
+        $this->app->singleton(VskOsagoMasterServiceContract::class, VskOsagoMasterService::class);
         //callback
-        $this->app->singleton(VskCallbackServiceContract::class, VskCallbackService::class);
+        $this->app->singleton(VskOsagoCallbackServiceContract::class, VskOsagoCallbackService::class);
         //login
-        $this->app->singleton(VskLoginServiceContract::class, VskLoginService::class);
+        $this->app->singleton(VskOsagoLoginServiceContract::class, VskOsagoLoginService::class);
         //calculate
-        $this->app->singleton(VskCalculatePolicyServiceContract::class, VskCalculatePolicyService::class);
+        $this->app->singleton(VskOsagoCalculatePolicyServiceContract::class, VskOsagoCalculatePolicyService::class);
         //create
-        $this->app->singleton(VskSavePolicyServiceContract::class, VskSavePolicyService::class);
-        $this->app->singleton(VskSignPolicyServiceContract::class, VskSignPolicyService::class);
-        $this->app->singleton(VskBuyPolicyServiceContract::class, VskBuyPolicyService::class);
+        $this->app->singleton(VskOsagoSavePolicyServiceContract::class, VskOsagoSavePolicyService::class);
+        $this->app->singleton(VskOsagoSignPolicyServiceContract::class, VskOsagoSignPolicyService::class);
+        $this->app->singleton(VskOsagoBuyPolicyServiceContract::class, VskOsagoBuyPolicyService::class);
+        //error handler
+        $this->app->singleton(VskOsagoErrorHandlerServiceContract::class, VskOsagoErrorHandlerService::class);
     }
 }

@@ -7,6 +7,7 @@ namespace App\Services\Company\Vsk;
 use App\Contracts\Company\Vsk\VskLoginServiceContract;
 use App\Exceptions\TokenException;
 use App\Models\InsuranceCompany;
+use Benfin\Log\Facades\Log;
 use Exception;
 use Spatie\ArrayToXml\ArrayToXml;
 
@@ -26,10 +27,11 @@ class VskLoginService extends VskService implements VskLoginServiceContract
         $data = [];
         $xml = $this->prepareXml($attributes)->toXml();
 
-        $this->writeRequestLog(
-            [
-                'data' => $xml
-            ]
+        $tag = sprintf('%sRequest | %s', $this->getName(__CLASS__), $attributes['token']);
+        Log::daily(
+            $xml,
+            self::companyCode,
+            $tag
         );
 
         $data = $this->sendRequest('/Auth/Login', $xml, $attributes['token']);
@@ -70,10 +72,6 @@ class VskLoginService extends VskService implements VskLoginServiceContract
      */
     public function processCallback(InsuranceCompany $company, array $token_data, array $parsed_response): array
     {
-        $this->writeResponseLog([
-            'data' => $parsed_response
-        ]);
-
         $tokenData = $this->getTokenData($token_data['token'], true);
 
         foreach ($parsed_response as $tag) {
@@ -90,8 +88,14 @@ class VskLoginService extends VskService implements VskLoginServiceContract
             'data' => json_encode($tokenData),
         ]);
 
-        return [
-            'nextMethod' => 'preCalculating'
-        ];
+        if (!empty($tokenData[self::companyCode]['nextMethod'])) {
+            return  [
+                'nextMethod' => $tokenData[self::companyCode]['nextMethod']
+            ];
+        } else {
+            return [
+                'nextMethod' => 'preCalculating'
+            ];
+        }
     }
 }
