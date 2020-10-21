@@ -170,7 +170,9 @@ class Qiwi
             ) {
                 throw new ResolutionException($this->errorRepository->getReportErrorByCode(1002));
             }
-            throw new BillingDeclinedException($this->errorRepository->getReportErrorByCode(1001));
+            $taxStatus = GlobalStorage::getUserTaxStatus();
+            $erCode = $taxStatus === 'self_employed' ? 1001 : 1003;
+            throw new BillingDeclinedException($this->errorRepository->getReportErrorByCode($erCode));
         }
 
         // check gate errors
