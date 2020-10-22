@@ -187,6 +187,13 @@ abstract class CompanyService
         );
     }
 
+    public function getName($full)
+    {
+        $tmp = explode('\\', $full);
+
+        return(end($tmp));
+    }
+
     public function writeResponseLog(array $data)
     {
         if (!config('api.debugLog')) {
