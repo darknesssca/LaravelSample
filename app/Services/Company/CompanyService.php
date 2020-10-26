@@ -198,36 +198,24 @@ abstract class CompanyService
     public function writeDatabaseLog(string $token, $requestData, $responseData, string $code, string $companyName,
                                      string $serviceName, int $user_id = null)
     {
-        try {
-            $logMicroservice = app(LogMicroserviceContract::class);
+        /** @var LogMicroserviceContract $logMicroservice */
+        $logMicroservice = app(LogMicroserviceContract::class);
 
-            $logs = $logMicroservice->getLogsList([
-                'message' => $token,
-            ]);
+        $fields = [
+            'token' => $token,
+            'sk_code' => $companyName,
+            'service_name' => $serviceName,
+        ];
 
-            $message = [];
-            if (!empty($logs['data'])) {
-                $log = array_shift($logs['data']);
-                $message = json_decode($log['message'], true);
-
-                $message[$companyName][$serviceName] = [
-                    'request' => $requestData,
-                    'response' => $responseData,
-                ];
-
-                $logMicroservice->updateLog($message, $log['id']);
-            } else {
-                $message['car_insurance_request_token'] = $token;
-                $message[$companyName][$serviceName] = [
-                    'request' => $requestData,
-                    'response' => $responseData,
-                ];
-
-                $logMicroservice->sendLog($message, $code, $user_id ?? GlobalStorage::getUserId());
-            }
-        } catch (\Exception $ex) {
-            //ignore
+        if (!empty($requestData)) {
+            $fields['data']['request'] = $requestData;
         }
+
+        if (!empty($responseData)) {
+            $fields['data']['response'] = $responseData;
+        }
+
+        $logMicroservice->updateSkLog($fields);
     }
 
     public function getName($full)
