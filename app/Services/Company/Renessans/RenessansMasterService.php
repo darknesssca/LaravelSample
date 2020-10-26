@@ -47,7 +47,6 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
 
     public function create($company, $attributes):array
     {
-        GlobalStorage::setUser($attributes['data']['user']);
         $this->pushForm($attributes);
         $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);
         $attributes['calcId'] = $tokenData['calcId'];
