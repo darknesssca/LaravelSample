@@ -3372,12 +3372,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/spatie/array-to-xml.git",
-                "reference": "bdb5bc735b0639f6f438e935b13f7ac216239679"
+                "reference": "9067a5b041a04e74d08657519c2d8ffed91b4879"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/spatie/array-to-xml/zipball/bdb5bc735b0639f6f438e935b13f7ac216239679",
-                "reference": "bdb5bc735b0639f6f438e935b13f7ac216239679",
+                "url": "https://api.github.com/repos/spatie/array-to-xml/zipball/9067a5b041a04e74d08657519c2d8ffed91b4879",
+                "reference": "9067a5b041a04e74d08657519c2d8ffed91b4879",
                 "shasum": ""
             },
             "require": {
@@ -3414,7 +3414,7 @@
                 "convert",
                 "xml"
             ],
-            "time": "2019-08-21T06:32:31+00:00"
+            "time": "2020-08-22T08:46:19+00:00"
         },
         {
             "name": "symfony/console",
@@ -6296,6 +6296,5 @@
         "ext-soap": "*",
         "ext-xml": "*"
     },
-    "platform-dev": [],
-    "plugin-api-version": "1.1.0"
+    "platform-dev": []
 }
