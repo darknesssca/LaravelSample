@@ -17,6 +17,7 @@ use Benfin\Api\Traits\HttpRequest;
 use Benfin\Api\Traits\SoapRequest;
 use Benfin\Log\Facades\Log;
 use Carbon\Carbon;
+use Exception;
 
 abstract class CompanyService
 {
@@ -45,7 +46,7 @@ abstract class CompanyService
      * @param $email
      * @param $billUrl
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function sendBillUrl($email, $billUrl)
     {
@@ -200,24 +201,28 @@ abstract class CompanyService
     public function writeDatabaseLog(string $token, $requestData, $responseData, string $code, string $companyName,
                                      string $serviceName, int $user_id = null)
     {
-        /** @var LogMicroserviceContract $logMicroservice */
-        $logMicroservice = app(LogMicroserviceContract::class);
+        try {
+            /** @var LogMicroserviceContract $logMicroservice */
+            $logMicroservice = app(LogMicroserviceContract::class);
 
-        $fields = [
-            'token' => $token,
-            'sk_code' => $companyName,
-            'service_name' => $serviceName,
-        ];
+            $fields = [
+                'token' => $token,
+                'sk_code' => $companyName,
+                'service_name' => $serviceName,
+            ];
 
-        if (!empty($requestData)) {
-            $fields['data']['request'] = $requestData;
+            if (!empty($requestData)) {
+                $fields['data']['request'] = $requestData;
+            }
+
+            if (!empty($responseData)) {
+                $fields['data']['response'] = $responseData;
+            }
+
+            $logMicroservice->updateSkLog($fields);
+        } catch (Exception $exception) {
+            //ignore
         }
-
-        if (!empty($responseData)) {
-            $fields['data']['response'] = $responseData;
-        }
-
-        $logMicroservice->updateSkLog($fields);
     }
 
     public function getName($full)
