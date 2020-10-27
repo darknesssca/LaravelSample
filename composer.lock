@@ -92,11 +92,11 @@
         },
         {
             "name": "benfin/packages/api-communication",
-            "version": "1.5.49",
+            "version": "1.5.51",
             "source": {
                 "type": "git",
                 "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/api-communication.git",
-                "reference": "ffbdd735f8f1dc067b01f8d20079b812b4b18b60"
+                "reference": "1a28da95bc5b3bf1dbc504ec2085351733a8787e"
             },
             "require": {
                 "benfin/packages/requests": ">=1.1",
@@ -125,7 +125,7 @@
                 }
             ],
             "description": "BENFIN Api communication",
-            "time": "2020-09-25T11:11:50+00:00"
+            "time": "2020-10-26T12:36:44+00:00"
         },
         {
             "name": "benfin/packages/auth",
@@ -6296,5 +6296,6 @@
         "ext-soap": "*",
         "ext-xml": "*"
     },
-    "platform-dev": []
+    "platform-dev": [],
+    "plugin-api-version": "1.1.0"
 }
