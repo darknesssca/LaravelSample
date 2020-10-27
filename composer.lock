@@ -4629,16 +4629,16 @@
         },
         {
             "name": "spatie/array-to-xml",
-            "version": "2.14.0",
+            "version": "2.13.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/spatie/array-to-xml.git",
-                "reference": "15b5229fe8c9c14954b21f2bac0cc003ffbc54a5"
+                "reference": "9067a5b041a04e74d08657519c2d8ffed91b4879"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/spatie/array-to-xml/zipball/15b5229fe8c9c14954b21f2bac0cc003ffbc54a5",
-                "reference": "15b5229fe8c9c14954b21f2bac0cc003ffbc54a5",
+                "url": "https://api.github.com/repos/spatie/array-to-xml/zipball/9067a5b041a04e74d08657519c2d8ffed91b4879",
+                "reference": "9067a5b041a04e74d08657519c2d8ffed91b4879",
                 "shasum": ""
             },
             "require": {
@@ -4675,7 +4675,7 @@
                 "convert",
                 "xml"
             ],
-            "time": "2020-09-14T19:07:17+00:00"
+            "time": "2020-08-22T08:46:19+00:00"
         },
         {
             "name": "symfony/console",

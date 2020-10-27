@@ -26,6 +26,11 @@ trait UserTrait
         $user['password'] = $this->generatePassword();
         $user['confirm_password'] = $user['password'];
         $user['temp_user'] = true;
+
+        if (!empty($formData['referral'])) {
+            $user['referral_code'] = $formData['referral'];
+        }
+
         return $user;
     }
 

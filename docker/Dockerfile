@@ -63,7 +63,7 @@ RUN bash -c "if [ "$BUILD_ENV" == "devel" ]; \
    fi"
 
 ADD https://getcomposer.org/installer /tmp/composer
-RUN php /tmp/composer --install-dir=/usr/bin --filename=composer \
+RUN php /tmp/composer --version=1.10.16 --install-dir=/usr/bin --filename=composer \
     && su -s /bin/bash www-data -c "if [ "$BUILD_ENV" == "devel" ]; then echo 'Skipping deps installing...'; else cd /var/www && composer install; fi"
 
 RUN unitd --control unix:/var/run/unit.sock \

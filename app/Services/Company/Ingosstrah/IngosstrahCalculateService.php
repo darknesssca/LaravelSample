@@ -4,6 +4,7 @@
 namespace App\Services\Company\Ingosstrah;
 
 use App\Contracts\Company\Ingosstrah\IngosstrahCalculateServiceContract;
+use App\Contracts\Repositories\Services\CarCategoryServiceContract;
 use App\Contracts\Repositories\Services\CarModelServiceContract;
 use App\Contracts\Repositories\Services\CountryServiceContract;
 use App\Contracts\Repositories\Services\DocTypeServiceContract;
@@ -27,6 +28,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
     protected $docTypeService;
     protected $genderService;
     protected $countryService;
+    protected $carCategoryService;
 
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
@@ -36,7 +38,8 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
         CarModelServiceContract $carModelService,
         DocTypeServiceContract $docTypeService,
         GenderServiceContract $genderService,
-        CountryServiceContract $countryService
+        CountryServiceContract $countryService,
+        CarCategoryServiceContract $carCategoryService
     )
     {
         $this->usageTargetService = $usageTargetService;
@@ -44,6 +47,7 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
         $this->docTypeService = $docTypeService;
         $this->genderService = $genderService;
         $this->countryService = $countryService;
+        $this->carCategoryService = $carCategoryService;
         parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
@@ -164,11 +168,18 @@ class IngosstrahCalculateService extends IngosstrahService implements Ingosstrah
             'MobilePhone' => 'phone',
             'Email' => 'email',
         ], $insurer);
-        $this->setValuesByArray($data['TariffParameters']['Agreement']['Vehicle'], [
-            'NetWeight' => 'minWeight',
-            'GrossWeigh' => 'maxWeight',
-            'Seats' => 'seats',
-        ], $attributes['car']);
+
+        $category = $this->carCategoryService->getCategoryById($attributes['car']['category']);
+        if (strtolower($category['code']) == 'c') {
+            $this->setValuesByArray($data['TariffParameters']['Agreement']['Vehicle'], [
+                'NetWeight' => 'minWeight',
+                'GrossWeigh' => 'maxWeight',
+            ], $attributes['car']);
+        } elseif (strtolower($category['code']) == 'd') {
+            $this->setValuesByArray($data['TariffParameters']['Agreement']['Vehicle'], [
+                'Seats' => 'seats',
+            ], $attributes['car']);
+        }
         //SubjectList
         foreach ($attributes['subjects'] as $iSubject => $subject) {
             $pSubject = [

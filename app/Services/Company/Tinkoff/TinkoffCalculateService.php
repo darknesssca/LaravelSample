@@ -240,8 +240,7 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 'mileage' => $attributes['car']['mileage'] ?? 0,
                 'numberOfOwners' => 1,
                 'registrationNumber' => [
-                    'isNoRegistrationNumber' => false,
-                    'registrationNumber' => $attributes['car']['regNumber']
+                    'isNoRegistrationNumber' => empty($attributes['car']['regNumber']),
                 ],
                 'sourceAcquisition' => (int)$attributes['car']['sourceAcquisition'] > 0 ? $this->sourceAcquisitionService->getCompanySourceAcquisitions($attributes['car']['sourceAcquisition'],
                     $company->id) : 'PURCHASED_FROM_PERSON',
@@ -260,6 +259,11 @@ class TinkoffCalculateService extends TinkoffService implements TinkoffCalculate
                 ],
             ],
         ];
+
+        $this->setValuesByArray($data['vehicleInfo']['vehicleDetails']['registrationNumber'], [
+            'registrationNumber' => 'regNumber',
+        ], $attributes['car']);
+
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $insurerRegAddress = $this->searchAddressByType($insurer, 'registration');
         if (isset($insurerRegAddress['regionKladr'])) {

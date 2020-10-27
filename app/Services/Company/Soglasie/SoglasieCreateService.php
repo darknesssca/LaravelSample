@@ -4,6 +4,7 @@
 namespace App\Services\Company\Soglasie;
 
 use App\Contracts\Company\Soglasie\SoglasieCreateServiceContract;
+use App\Contracts\Repositories\Services\CarCategoryServiceContract;
 use App\Contracts\Repositories\Services\CarMarkServiceContract;
 use App\Contracts\Repositories\Services\CarModelServiceContract;
 use App\Contracts\Repositories\Services\CountryServiceContract;
@@ -30,6 +31,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
     protected $countryService;
     protected $addressTypeService;
     protected $carMarkService;
+    protected $carCategoryService;
 
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
@@ -41,7 +43,8 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         GenderServiceContract $genderService,
         CountryServiceContract $countryService,
         AddressTypeService $addressTypeService,
-        CarMarkServiceContract $carMarkService
+        CarMarkServiceContract $carMarkService,
+        CarCategoryServiceContract $carCategoryService
     )
     {
         $this->usageTargetService = $usageTargetService;
@@ -51,6 +54,7 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         $this->countryService = $countryService;
         $this->addressTypeService = $addressTypeService;
         $this->carMarkService = $carMarkService;
+        $this->carCategoryService = $carCategoryService;
         $this->apiRestUrl = config('api_sk.soglasie.createUrl');
         if (!$this->apiRestUrl) {
             throw new ConmfigurationException('Ошибка конфигурации API ' . static::companyCode);
@@ -207,11 +211,18 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
                 ];
             }
         }
-        $this->setValuesByArray($data['CarInfo'], [
-            "MaxMass" => 'maxWeight',
-            "PasQuant" => 'seats',
-        ], $attributes['car']);
 
+        $category = $this->carCategoryService->getCategoryById($attributes['car']['category']);
+        if (strtolower($category['code']) == 'c') {
+            $this->setValuesByArray($data['CarInfo'], [
+                "MaxMass" => 'maxWeight',
+            ], $attributes['car']);
+        } elseif (strtolower($category['code']) == 'd') {
+            $this->setValuesByArray($data['CarInfo'], [
+                "MaxMass" => 'maxWeight',
+                "PasQuant" => 'seats',
+            ], $attributes['car']);
+        }
         //car.documents
         $data['CarInfo']['DocumentCar'] = [
             'TypeRSA' => $this->docTypeService->getCompanyCarDocType3($attributes['car']['document']['documentType'], $company->id),

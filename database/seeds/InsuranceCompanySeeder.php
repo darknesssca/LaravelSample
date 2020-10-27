@@ -36,6 +36,13 @@ class InsuranceCompanySeeder extends Seeder
             'content_type' => 'image/svg+xml',
             'size' => 3728,
         ],
+        [
+
+            'name' => 'vsk.svg',
+            'dir' => '/insurance-companies_logo/vsk.svg',
+            'content_type' => 'image/svg+xml',
+            'size' => 3728,
+        ],
     ];
 
     protected static $insuranceCompanies = [
@@ -67,18 +74,27 @@ class InsuranceCompanySeeder extends Seeder
             'code' => 'tinkoff',
             'name' => 'Тинькофф',
         ],
+        [
+            'id' => 5,
+            'active' => true,
+            'logo_id' => 5,
+            'code' => 'vsk',
+            'name' => 'ВСК',
+        ],
     ];
 
     public function run()
     {
-        foreach (self::$files as &$file) {
+        foreach (self::$files as $key => &$file) {
             $file['dir'] = config('filesystems.disks.minio.bucket') . $file['dir'];
-            File::updateOrCreate(
+            $file_object = File::updateOrCreate(
                 [
-                    'id' => $file['id']
+                    'name' => $file['name']
                 ],
                 $file
             );
+            
+            self::$insuranceCompanies[$key]['logo_id'] = $file_object->id;
         }
         foreach (self::$insuranceCompanies as $insuranceCompany) {
             InsuranceCompany::updateOrCreate(

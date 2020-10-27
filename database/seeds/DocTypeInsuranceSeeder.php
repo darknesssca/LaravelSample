@@ -36,6 +36,13 @@ class DocTypeInsuranceSeeder extends Seeder
             'reference_doctype_code2' => "PTS",
             'reference_doctype_code3' => "PTS",
         ],
+        [
+            'doctype_id' => 1,
+            'insurance_company_id' => 5,
+            'reference_doctype_code' => "VEHICLE_PASSPORT",
+            'reference_doctype_code2' => "VEHICLE_PASSPORT",
+            'reference_doctype_code3' => "VEHICLE_PASSPORT",
+        ],
         //СТС
         [
             'doctype_id' => 2,
@@ -64,6 +71,13 @@ class DocTypeInsuranceSeeder extends Seeder
             'reference_doctype_code' => "STS",
             'reference_doctype_code2' => "STS",
             'reference_doctype_code3' => "STS",
+        ],
+        [
+            'doctype_id' => 2,
+            'insurance_company_id' => 5,
+            'reference_doctype_code' => "VEHICLE_REGISTRATION_CERTIFICATE",
+            'reference_doctype_code2' => "VEHICLE_REGISTRATION_CERTIFICATE",
+            'reference_doctype_code3' => "VEHICLE_REGISTRATION_CERTIFICATE",
         ],
         //Паспорт
         [
@@ -94,6 +108,13 @@ class DocTypeInsuranceSeeder extends Seeder
             'reference_doctype_code2' => "passport_russian",
             'reference_doctype_code3' => "passport_russian",
         ],
+        [
+            'doctype_id' => 3,
+            'insurance_company_id' => 5,
+            'reference_doctype_code' => "PASSPORT_RF",
+            'reference_doctype_code2' => "PASSPORT_RF",
+            'reference_doctype_code3' => "PASSPORT_RF",
+        ],
         //ВУ
         [
             'doctype_id' => 5,
@@ -123,6 +144,13 @@ class DocTypeInsuranceSeeder extends Seeder
             'reference_doctype_code2' => "driver_license_russian_B",
             'reference_doctype_code3' => "driver_license_russian_B",
         ],
+        [
+            'doctype_id' => 5,
+            'insurance_company_id' => 5,
+            'reference_doctype_code' => "DRIVER_LICENSE",
+            'reference_doctype_code2' => "DRIVER_LICENSE",
+            'reference_doctype_code3' => "DRIVER_LICENSE",
+        ],
         //Иностранное ВУ
         [
             'doctype_id' => 6,
@@ -151,6 +179,13 @@ class DocTypeInsuranceSeeder extends Seeder
             'reference_doctype_code' => "driver_license_international", //в справочнике: "Международное водительское удостоверение"
             'reference_doctype_code2' => "driver_license_international",
             'reference_doctype_code3' => "driver_license_international",
+        ],
+        [
+            'doctype_id' => 6,
+            'insurance_company_id' => 5,
+            'reference_doctype_code' => "DRIVER_LICENSE",
+            'reference_doctype_code2' => "DRIVER_LICENSE",
+            'reference_doctype_code3' => "DRIVER_LICENSE",
         ],
 
         //Иностранный паспорт
@@ -182,6 +217,13 @@ class DocTypeInsuranceSeeder extends Seeder
             'reference_doctype_code2' => "passport_foreign",
             'reference_doctype_code3' => "passport_foreign",
         ],
+        [
+            'doctype_id' => 4,
+            'insurance_company_id' => 5,
+            'reference_doctype_code' => "FOREIGN_PASSPORT",
+            'reference_doctype_code2' => "FOREIGN_PASSPORT",
+            'reference_doctype_code3' => "FOREIGN_PASSPORT",
+        ],
 
         //талон ТО
         [
@@ -212,6 +254,13 @@ class DocTypeInsuranceSeeder extends Seeder
             'reference_doctype_code2' => "DIAGNOSTIC_CARD",
             'reference_doctype_code3' => "DIAGNOSTIC_CARD",
         ],
+        [
+            'doctype_id' => 7,
+            'insurance_company_id' => 5,
+            'reference_doctype_code' => "DIAGNOSTIC_CARD",
+            'reference_doctype_code2' => "DIAGNOSTIC_CARD",
+            'reference_doctype_code3' => "DIAGNOSTIC_CARD",
+        ],
 
         //Иностранный талон ТО
         [
@@ -238,6 +287,13 @@ class DocTypeInsuranceSeeder extends Seeder
         [
             'doctype_id' => 8,
             'insurance_company_id' => 4,
+            'reference_doctype_code' => "DIAGNOSTIC_CARD",
+            'reference_doctype_code2' => "DIAGNOSTIC_CARD",
+            'reference_doctype_code3' => "DIAGNOSTIC_CARD",
+        ],
+        [
+            'doctype_id' => 8,
+            'insurance_company_id' => 5,
             'reference_doctype_code' => "DIAGNOSTIC_CARD",
             'reference_doctype_code2' => "DIAGNOSTIC_CARD",
             'reference_doctype_code3' => "DIAGNOSTIC_CARD",
