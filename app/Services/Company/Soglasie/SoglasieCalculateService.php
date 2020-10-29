@@ -193,7 +193,7 @@ class SoglasieCalculateService extends SoglasieService implements SoglasieCalcul
                 ],
             ],
         ];
-        if (isset($attributes['car']['regNumber'])) {
+        if (!empty($attributes['car']['regNumber']) && $attributes['car']['document']['documentType'] === 'sts') {
             $data['contract']['param'][] = [
                 'id' => 761,
                 'val' => $attributes['car']['regNumber'],
