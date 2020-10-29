@@ -175,6 +175,7 @@ abstract class VskService extends CompanyService
                 'model:vin' => $attributes['car']['vin'],
                 'model:bodyNumber' => '',
                 'model:chassisNumber' => '',
+                'model:licensePlate' => $attributes['car']['regNumber'] ?? '',
                 'model:purpose' => [
                     'model:vehiclePurposeCode' => $this->usageTargetService->getCompanyUsageTarget($attributes['car']['vehicleUsage'],
                         $company->id)
@@ -210,10 +211,6 @@ abstract class VskService extends CompanyService
             'model:period1BeginDate' => $attributes['policy']['beginDate'],
             'model:period1EndDate' => $attributes['policy']['endDate'],
         ];
-
-        $this->setValuesByArray($data['model:object'], [
-            'model:licensePlate' => 'regNumber',
-        ], $attributes['car']);
 
         if (!empty($attributes['car']['inspection']['number'])) {
             $data['model:object']['model:docs'][] = [
