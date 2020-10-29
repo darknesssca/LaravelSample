@@ -91,14 +91,6 @@
             "time": "2020-05-04T18:13:52+00:00"
         },
         {
-<<<<<<< HEAD
-            "name": "benfin/packages/api-communication",
-            "version": "1.5.51",
-            "source": {
-                "type": "git",
-                "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/api-communication.git",
-                "reference": "1a28da95bc5b3bf1dbc504ec2085351733a8787e"
-=======
             "name": "benfin-packages/api-communication",
             "version": "1.5.51",
             "dist": {
@@ -106,7 +98,6 @@
                 "url": "https://gitlab.qsoft.ru/api/v4/projects/814/packages/composer/archives/benfin-packages/api-communication.zip?sha=f8441db18158e30a3e3442a9099fb2b4b9aa8c3e",
                 "reference": "f8441db18158e30a3e3442a9099fb2b4b9aa8c3e",
                 "shasum": ""
->>>>>>> ca72d70f9ab267579923565c0491f263085ba99b
             },
             "require": {
                 "benfin-packages/requests": ">=1.1",
@@ -134,12 +125,7 @@
                     "email": "v.mett@qsoft.ru"
                 }
             ],
-<<<<<<< HEAD
-            "description": "BENFIN Api communication",
-            "time": "2020-10-26T12:36:44+00:00"
-=======
             "description": "BENFIN Api communication"
->>>>>>> ca72d70f9ab267579923565c0491f263085ba99b
         },
         {
             "name": "benfin-packages/auth",
