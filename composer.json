@@ -17,13 +17,13 @@
         "ext-simplexml": "*",
         "ext-soap": "*",
         "ext-xml": "*",
-        "benfin/packages/api-communication": ">=1.2",
-        "benfin/packages/auth": ">=1.1",
-        "benfin/packages/cache": "^1.0",
-        "benfin/packages/check-admin": "^1.0",
-        "benfin/packages/log": "^1.0",
-        "benfin/packages/requests": ">=1.1",
-        "benfin/packages/restrictions": ">=1.0",
+        "benfin-packages/api-communication": "^1.5",
+        "benfin-packages/auth": "^1.2",
+        "benfin-packages/cache": "^1.0",
+        "benfin-packages/check-admin": "^1.0",
+        "benfin-packages/log": "^1.1",
+        "benfin-packages/requests": "^1.1",
+        "benfin-packages/restrictions": "^1.0",
         "coraxster/flysystem-aws-s3-v3-minio": "^1.0",
         "doctrine/dbal": "^2.10",
         "guzzlehttp/guzzle": "^6.5",
@@ -41,32 +41,8 @@
     },
     "repositories": [
         {
-            "type": "vcs",
-            "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/api-communication.git"
-        },
-        {
-            "type": "vcs",
-            "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/auth.git"
-        },
-        {
-            "type": "vcs",
-            "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/requests.git"
-        },
-        {
-            "type": "vcs",
-            "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/cache.git"
-        },
-        {
-            "type": "vcs",
-            "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/log.git"
-        },
-        {
-            "type": "vcs",
-            "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/restrictions.git"
-        },
-        {
-            "type": "vcs",
-            "url": "https://packages:iRkrCyktQhX3KxJEs9aL@gitlab.qsoft.ru/benfin/packages/check-admin.git"
+            "type":"composer",
+            "url":"https://gitlab.qsoft.ru/api/v4/group/989/-/packages/composer/packages.json"
         }
     ],
     "autoload": {
