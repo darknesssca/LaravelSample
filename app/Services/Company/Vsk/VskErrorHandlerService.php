@@ -21,6 +21,12 @@ class VskErrorHandlerService extends VskService implements VskErrorHandlerServic
             'eng' => 'Cannot find RDM data by Mark, Model, Modification',
             'rus' => 'Не найдены данные в справочнике',
         ],
+
+        2 => [
+            'code' => 'segment_error',
+            'eng' => 'Something goes wrong',
+            'rus' => 'Страховая компания не произвела расчет',
+        ],
     ];
 
     /** @var array $rsaErrorsMessages Массив ошибок для обработки ошибки RSA_CHECK_ERROR  */
@@ -36,6 +42,7 @@ class VskErrorHandlerService extends VskService implements VskErrorHandlerServic
         'PROCESS_ERROR' => 'parseProcessError',
         'RSA_CHECK_ERROR' => 'parseRsaError',
         'INCORRECT_CODE' => 'parseIncorrectCodeError',
+        'VALIDATIONERROR' => 'parseValidationError',
     ];
 
     /** @var array $foundError Массив ошибки найденной при проверке ответа */
@@ -58,7 +65,7 @@ class VskErrorHandlerService extends VskService implements VskErrorHandlerServic
 
     private function parseError()
     {
-        if (!empty($this->errorCodes[$this->foundError['code']])) {
+        if (!empty($this->errorCodes[strtoupper($this->foundError['code'])])) {
             $method = $this->errorCodes[$this->foundError['code']];
             $this->$method($this->foundError['error']);
         } else {
@@ -212,5 +219,11 @@ class VskErrorHandlerService extends VskService implements VskErrorHandlerServic
         $this->intermediateDataService->update($this->token, [
             'data' => json_encode($tokenData),
         ]);
+    }
+
+    private function parseValidationError()
+    {
+        $this->parsedErrors[] = 'Страховая компания не произвела расчет';
+        $this->writeErrorsToToken();
     }
 }
