@@ -92,7 +92,7 @@ abstract class VskService extends CompanyService
     protected function getOwnerArray($company, array $attributes): array
     {
         $owner = $this->searchSubjectById($attributes, $attributes['policy']['ownerId']);
-        $full_name = sprintf('%s %s %s', $owner['lastName'], $owner['middleName'], $owner['lastName']);
+        $full_name = sprintf('%s %s %s', $owner['lastName'], $owner['firstName'], $owner['middleName']);
 
         $data = [
             'model:objectType' => [
@@ -229,7 +229,7 @@ abstract class VskService extends CompanyService
     protected function getInsurerArray($company, array $attributes): array
     {
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
-        $full_name = sprintf('%s %s %s', $insurer['lastName'], $insurer['middleName'], $insurer['lastName']);
+        $full_name = sprintf('%s %s %s', $insurer['lastName'], $insurer['firstName'], $insurer['middleName']);
 
         $data = [
             'model:contractor' => [
@@ -267,7 +267,7 @@ abstract class VskService extends CompanyService
 
         foreach ($attributes['drivers'] as $driver) {
             $driver_subject = $this->searchSubjectById($attributes, $driver['driver']['driverId']);
-            $full_name = sprintf('%s %s %s', $driver_subject['lastName'], $driver_subject['middleName'], $driver_subject['lastName']);
+            $full_name = sprintf('%s %s %s', $driver_subject['lastName'], $driver_subject['firstName'], $driver_subject['middleName']);
             $data['model:object'][] = [
                 '_attributes' => [
                     'xsi:type' => 'model:IndividualsXT'
