@@ -268,7 +268,7 @@ abstract class VskService extends CompanyService
         foreach ($attributes['drivers'] as $driver) {
             $driver_subject = $this->searchSubjectById($attributes, $driver['driver']['driverId']);
             $full_name = sprintf('%s %s %s', $driver_subject['lastName'], $driver_subject['firstName'], $driver_subject['middleName']);
-            $data['model:object'][] = [
+            $data[]['model:object'] = [
                 '_attributes' => [
                     'xsi:type' => 'model:IndividualsXT'
                 ],
@@ -391,7 +391,7 @@ abstract class VskService extends CompanyService
         ];
 
         if (count($attributes['drivers'])) {
-            $data['policy:policy']['model:policyObjects'][] = $this->getDriversArray($company, $attributes);
+            $data['policy:policy']['model:policyObjects'] = array_merge($data['policy:policy']['model:policyObjects'], $this->getDriversArray($company, $attributes));
         }
 
         return $data;
