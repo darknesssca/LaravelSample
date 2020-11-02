@@ -51,6 +51,15 @@ class VskSignPolicyService extends VskService implements VskSignPolicyServiceCon
             'policy:code' => $attributes['code']
         ];
 
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            $fields,
+            false,
+            config('api_sk.logMicroserviceCode'),
+            static::companyCode,
+            $this->getName(__CLASS__)
+        );
+
         return new ArrayToXml($fields, [
             'rootElementName' => 'policy:signPolicyRequest',
             '_attributes' => [
