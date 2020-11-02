@@ -13,6 +13,7 @@ use Spatie\ArrayToXml\ArrayToXml;
 
 class VskCalculatePolicyService extends VskService implements VskCalculatePolicyServiceContract
 {
+    private $method = 'CalculatePolicy';
 
     /**
      * Метод подготавливает данные и отправляет их в СК
@@ -35,6 +36,7 @@ class VskCalculatePolicyService extends VskService implements VskCalculatePolicy
         );
 
         $data = $this->sendRequest('/Policy/CalculatePolicy', $xml, $attributes['token']);
+        $data['method'] = $this->method;
 
         return $data;
     }
@@ -44,7 +46,7 @@ class VskCalculatePolicyService extends VskService implements VskCalculatePolicy
 
         $structure = [
             'common:systemId' => '',
-            'common:messageId' => 'CalculatePolicy.' . $attributes['token'],
+            'common:messageId' => $this->method . '.' . $attributes['token'],
         ];
         $structure = array_merge($structure, $this->getPolicyArray($company, $attributes));
 
