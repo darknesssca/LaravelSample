@@ -165,12 +165,12 @@ abstract class VskService extends CompanyService
                 ],
                 'model:model' => [
                     'model:mark' => [
-                        'model:name' => ucfirst($attributes['car']['maker_name'])
+                        'model:name' => $attributes['car']['maker_name']
                     ],
                     'model:type' => [
                         'model:vehicleTypeCode' => $category['name']
                     ],
-                    'model:name' => ucfirst($attributes['car']['model'])
+                    'model:name' => $attributes['car']['model']
                 ],
                 'model:vin' => $attributes['car']['vin'],
                 'model:bodyNumber' => '',
