@@ -28,4 +28,9 @@ class IntermediateDataRepository implements IntermediateDataRepositoryContract
     {
         return IntermediateData::where('token', $token)->delete();
     }
+
+    public function getByData(string $data)
+    {
+        return IntermediateData::where('data', 'ilike', '%' . $data . '%')->first();
+    }
 }

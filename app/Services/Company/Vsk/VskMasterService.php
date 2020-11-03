@@ -46,6 +46,7 @@ class VskMasterService extends VskService implements VskMasterServiceContract
         $tokenData[$company->code] = [
             'status' => 'calculating',
             'stage' => 'login',
+            'method' => $loginData['method'],
             'loginUniqueId' => $loginData['uniqueId'],
             'user' => GlobalStorage::getUser(),
         ];
@@ -82,6 +83,7 @@ class VskMasterService extends VskService implements VskMasterServiceContract
         $tokenData = $this->getTokenData($attributes['token'], true);
         $tokenData[$company->code]['status'] = 'processing';
         $tokenData[$company->code]['stage'] = 'create';
+        $tokenData[$company->code]['method'] = $savePolicyData['method'];
         $tokenData[$company->code]['savePolicyUniqueId'] = $savePolicyData['uniqueId'];
         $this->intermediateDataService->update($attributes['token'], [
             'data' => json_encode($tokenData),
@@ -124,6 +126,7 @@ class VskMasterService extends VskService implements VskMasterServiceContract
 
         $tokenData = $this->getTokenData($attributes['token'], true);
         $tokenData[$company->code]['stage'] = 'calculate';
+        $tokenData[$company->code]['method'] = $calcData['method'];
         $tokenData[$company->code]['calculateUniqueId'] = $calcData['uniqueId'];
 
         $this->intermediateDataService->update($attributes['token'], [
@@ -176,6 +179,7 @@ class VskMasterService extends VskService implements VskMasterServiceContract
 
             $tokenData = $this->getTokenData($attributes['token'], true);
             $tokenData[$company->code]['stage'] = 'buy';
+            $tokenData[$company->code]['method'] = $buyPolicyData['method'];
             $tokenData[$company->code]['buyUniqueId'] = $buyPolicyData['uniqueId'];
         } else {
             /** @var VskSignPolicyServiceContract $signPolicyService */
@@ -185,6 +189,7 @@ class VskMasterService extends VskService implements VskMasterServiceContract
             $tokenData = $this->getTokenData($attributes['token'], true);
             $tokenData[$company->code]['status'] = 'processing';
             $tokenData[$company->code]['stage'] = 'sign';
+            $tokenData[$company->code]['method'] = $signPolicyData['method'];
             $tokenData[$company->code]['signUniqueId'] = $signPolicyData['uniqueId'];
         }
 

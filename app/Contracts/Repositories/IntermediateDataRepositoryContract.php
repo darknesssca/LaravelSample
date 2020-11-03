@@ -31,4 +31,6 @@ interface IntermediateDataRepositoryContract
     public function create($data);
 
     public function delete($token);
+
+    public function getByData(string $data);
 }

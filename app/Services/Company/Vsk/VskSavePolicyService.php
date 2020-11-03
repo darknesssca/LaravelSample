@@ -13,6 +13,7 @@ use Spatie\ArrayToXml\ArrayToXml;
 
 class VskSavePolicyService extends VskService implements VskSavePolicyServiceContract
 {
+    private $method = 'SavePolicy';
 
     /**
      * Метод подготавливает данные и отправляет их в СК
@@ -36,6 +37,7 @@ class VskSavePolicyService extends VskService implements VskSavePolicyServiceCon
         );
 
         $data = $this->sendRequest('/Policy/SavePolicy', $xml, $attributes['token']);
+        $data['method'] = $this->method;
 
         return $data;
     }
@@ -52,7 +54,7 @@ class VskSavePolicyService extends VskService implements VskSavePolicyServiceCon
 
         $structure = [
             'common:systemId' => '',
-            'common:messageId' => 'SavePolicy.' . $attributes['token'],
+            'common:messageId' => $this->method . '.' . $attributes['token'],
             'common:bpId' => $tokenData['bpId'],
             'common:sessionId' => $tokenData['sessionId']
         ];

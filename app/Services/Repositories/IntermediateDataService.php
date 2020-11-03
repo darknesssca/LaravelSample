@@ -53,4 +53,9 @@ class IntermediateDataService implements IntermediateDataServiceContract
         $this->drop($token);
         $this->repository->delete($token);
     }
+
+    public function getByData(string $data)
+    {
+        return $this->repository->getByData($data);
+    }
 }

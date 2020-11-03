@@ -16,6 +16,7 @@ use Spatie\ArrayToXml\ArrayToXml;
 
 class VskBuyPolicyService extends VskService implements VskBuyPolicyServiceContract
 {
+    private $method = 'BuyPolicy';
 
     /**
      * Метод подготавливает данные и отправляет их в СК
@@ -38,6 +39,7 @@ class VskBuyPolicyService extends VskService implements VskBuyPolicyServiceContr
         );
 
         $data = $this->sendRequest('/Policy/BuyPolicy', $xml, $attributes['token']);
+        $data['method'] = $this->method;
 
         return $data;
     }
@@ -47,7 +49,7 @@ class VskBuyPolicyService extends VskService implements VskBuyPolicyServiceContr
         $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code, true);
 
         $fields = [
-            'common:messageId' => 'BuyPolicy.' . $attributes['token'],
+            'common:messageId' => $this->method . '.' . $attributes['token'],
             'common:bpId' => $tokenData['bpId'],
             'common:sessionId' => $tokenData['sessionId'],
             'policy:policyNumber' => $tokenData['policyNumber'],

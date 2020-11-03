@@ -11,6 +11,7 @@ use App\Exceptions\CompanyException;
 use App\Exceptions\MethodNotFoundException;
 use App\Traits\CompanyServicesTrait;
 use Benfin\Log\Facades\Log;
+use Exception;
 
 class VskCallbackService extends VskService implements VskCallbackServiceContract
 {
@@ -29,7 +30,12 @@ class VskCallbackService extends VskService implements VskCallbackServiceContrac
         $this->errorHandlerService = app(VskErrorHandlerServiceContract::class);
 
         $callback_info = $this->parseContent($callback_response['content']);
-        $token_data = $this->getTokenFromCallback($callback_info);
+
+        try {
+            $token_data = $this->getTokenFromCallback($callback_info);
+        } catch (Exception $exception) {
+            $token_data = $this->getTokenFromDB($callback_response['callback_id']);
+        }
 
         $tag = sprintf('Vsk%sServiceResponse | %s', $token_data['method'], $token_data['token']);
         Log::daily(
@@ -47,7 +53,7 @@ class VskCallbackService extends VskService implements VskCallbackServiceContrac
             sprintf('Vsk%sService', $token_data['method'])
         );
 
-        if (!$this->errorHandlerService->checkError($token_data['token'], $callback_info)){
+        if (!$this->errorHandlerService->checkError($token_data['token'], $callback_info)) {
             $company = $this->getCompany(self::companyCode);
             $contract = 'App\\Contracts\\Company\\Vsk\\Vsk' . $token_data['method'] . 'ServiceContract';
 
@@ -88,5 +94,19 @@ class VskCallbackService extends VskService implements VskCallbackServiceContrac
             }
         }
         return $token;
+    }
+
+    private function getTokenFromDB(string $callback_id)
+    {
+        $tokenData = $this->getByData($callback_id);
+
+        $return = [
+            'token' => $tokenData->token,
+        ];
+
+        $tokenData = json_decode($tokenData->data, true);
+        $return['method'] = $tokenData[self::companyCode]['method'];
+
+        return $return;
     }
 }

@@ -13,6 +13,7 @@ use Spatie\ArrayToXml\ArrayToXml;
 
 class VskLoginService extends VskService implements VskLoginServiceContract
 {
+    private $method = 'Login';
 
     /**
      * Метод подготавливает данные и отправляет их в СК
@@ -35,6 +36,7 @@ class VskLoginService extends VskService implements VskLoginServiceContract
         );
 
         $data = $this->sendRequest('/Auth/Login', $xml, $attributes['token']);
+        $data['method'] = $this->method;
 
         return $data;
     }
@@ -44,7 +46,7 @@ class VskLoginService extends VskService implements VskLoginServiceContract
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
 
         $fields = [
-            'common:messageId' => 'Login.' . $attributes['token'],
+            'common:messageId' => $this->method . '.' . $attributes['token'],
             'auth:partnerClientId' => $insurer['phone']
         ];
 

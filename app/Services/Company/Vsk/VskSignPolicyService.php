@@ -13,6 +13,7 @@ use Spatie\ArrayToXml\ArrayToXml;
 
 class VskSignPolicyService extends VskService implements VskSignPolicyServiceContract
 {
+    private $method = 'SignPolicy';
 
     /**
      * Метод подготавливает данные и отправляет их в СК
@@ -35,6 +36,7 @@ class VskSignPolicyService extends VskService implements VskSignPolicyServiceCon
         );
 
         $data = $this->sendRequest('/Policy/SignPolicy', $xml, $attributes['token']);
+        $data['method'] = $this->method;
 
         return $data;
     }
@@ -44,7 +46,7 @@ class VskSignPolicyService extends VskService implements VskSignPolicyServiceCon
         $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code, true);
 
         $fields = [
-            'common:messageId' => 'SignPolicy.' . $attributes['token'],
+            'common:messageId' => $this->method . '.' . $attributes['token'],
             'common:bpId' => $tokenData['bpId'],
             'common:sessionId' => $tokenData['sessionId'],
             'policy:partnerClientId' => '',

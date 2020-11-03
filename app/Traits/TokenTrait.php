@@ -90,4 +90,13 @@ trait TokenTrait
     {
         $this->intermediateDataService->delete($token);
     }
+
+    protected function getByData($data)
+    {
+        $object = $this->intermediateDataService->getByData($data);
+        if (!$object) {
+            throw new TokenException('Данные не найдены');
+        }
+        return $object;
+    }
 }
