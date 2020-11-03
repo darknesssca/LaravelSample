@@ -38,6 +38,15 @@ class VskCallbackService extends VskService implements VskCallbackServiceContrac
             $tag
         );
 
+        $this->writeDatabaseLog(
+            $token_data['token'],
+            false,
+            $callback_info,
+            config('api_sk.logMicroserviceCode'),
+            static::companyCode,
+            sprintf('Vsk%sService', $token_data['method'])
+        );
+
         if (!$this->errorHandlerService->checkError($token_data['token'], $callback_info)){
             $company = $this->getCompany(self::companyCode);
             $contract = 'App\\Contracts\\Company\\Vsk\\Vsk' . $token_data['method'] . 'ServiceContract';

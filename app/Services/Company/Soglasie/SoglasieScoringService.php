@@ -46,7 +46,7 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
         parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
-    public function run($company, $attributes): array
+    public function run($company, $attributes, $token = false): array
     {
         $data = $this->prepareData($company, $attributes);
         $headers = $this->getHeaders();
@@ -58,14 +58,27 @@ class SoglasieScoringService extends SoglasieService implements SoglasieScoringS
             ],
         ];
 
-        $this->writeRequestLog([
+        $requestLogData = [
             'url' => $this->apiWsdlUrl,
             'payload' => $data
-        ]);
+        ];
+
+        $this->writeRequestLog($requestLogData);
 
         $response = $this->requestBySoap($this->apiWsdlUrl, 'getScoringId', $data, $auth, $headers, $xmlAttributes);
 
         $this->writeResponseLog($response);
+
+        if ($token !== false) {
+            $this->writeDatabaseLog(
+                $token,
+                $requestLogData,
+                $response,
+                config('api_sk.logMicroserviceCode'),
+                static::companyCode,
+                $this->getName(__CLASS__)
+            );
+        }
 
         if (isset($response['fault']) && $response['fault']) {
             throw new ApiRequestsException(

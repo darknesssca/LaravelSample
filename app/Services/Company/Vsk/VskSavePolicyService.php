@@ -58,6 +58,14 @@ class VskSavePolicyService extends VskService implements VskSavePolicyServiceCon
         ];
         $structure = array_merge($structure, $this->getPolicyArray($company, $attributes));
 
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            $structure,
+            false,
+            config('api_sk.logMicroserviceCode'),
+            static::companyCode,
+            $this->getName(__CLASS__)
+        );
 
         return ArrayToXml::convert($structure,
             [

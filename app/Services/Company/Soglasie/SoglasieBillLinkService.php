@@ -27,21 +27,34 @@ class SoglasieBillLinkService extends SoglasieService implements SoglasieBillLin
         parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
-    public function run($company, $data, $additionalFields = []): array
+    public function run($company, $data, $token = false): array
     {
         $url = $this->getUrl([
             'policyId' => $data['data']['policyId'],
         ]);
         $headers = $this->getHeaders();
 
-        $this->writeRequestLog([
+        $requestLogData = [
             'url' => $url,
             'payload' => $data
-        ]);
+        ];
+
+        $this->writeRequestLog($requestLogData);
 
         $response = $this->getRequest($url, [], $headers, false);
 
         $this->writeResponseLog($response);
+
+        if ($token !== false) {
+            $this->writeDatabaseLog(
+                $token,
+                $requestLogData,
+                $response,
+                config('api_sk.logMicroserviceCode'),
+                static::companyCode,
+                $this->getName(__CLASS__)
+            );
+        }
 
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');

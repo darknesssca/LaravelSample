@@ -11,11 +11,13 @@ use App\Traits\TokenTrait;
 use App\Traits\ValueSetterTrait;
 use Benfin\Api\Contracts\CommissionCalculationMicroserviceContract;
 use Benfin\Api\Contracts\NotifyMicroserviceContract;
+use Benfin\Api\Contracts\LogMicroserviceContract;
 use Benfin\Api\GlobalStorage;
 use Benfin\Api\Traits\HttpRequest;
 use Benfin\Api\Traits\SoapRequest;
 use Benfin\Log\Facades\Log;
 use Carbon\Carbon;
+use Exception;
 
 abstract class CompanyService
 {
@@ -28,7 +30,6 @@ abstract class CompanyService
     protected $intermediateDataService;
     protected $requestProcessService;
     protected $policyService;
-
 
     public function __construct(
         IntermediateDataServiceContract $intermediateDataService,
@@ -45,7 +46,7 @@ abstract class CompanyService
      * @param $email
      * @param $billUrl
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function sendBillUrl($email, $billUrl)
     {
@@ -185,6 +186,43 @@ abstract class CompanyService
             static::companyCode,
             $tag
         );
+    }
+
+    /**
+     * Метод записи данных request и response от мс в базу данных (logs)
+     * @param string $token
+     * @param $requestData
+     * @param $responseData
+     * @param string $code
+     * @param string $companyName
+     * @param string $serviceName
+     * @param int|null $user_id
+     */
+    public function writeDatabaseLog(string $token, $requestData, $responseData, string $code, string $companyName,
+                                     string $serviceName, int $user_id = null)
+    {
+        try {
+            /** @var LogMicroserviceContract $logMicroservice */
+            $logMicroservice = app(LogMicroserviceContract::class);
+
+            $fields = [
+                'token' => $token,
+                'sk_code' => $companyName,
+                'service_name' => $serviceName,
+            ];
+
+            if (!empty($requestData)) {
+                $fields['data']['request'] = $requestData;
+            }
+
+            if (!empty($responseData)) {
+                $fields['data']['response'] = $responseData;
+            }
+
+            $logMicroservice->updateSkLog($fields);
+        } catch (Exception $exception) {
+            //ignore
+        }
     }
 
     public function getName($full)

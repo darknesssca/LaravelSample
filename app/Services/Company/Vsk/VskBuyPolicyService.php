@@ -56,6 +56,15 @@ class VskBuyPolicyService extends VskService implements VskBuyPolicyServiceContr
             'policy:amount' => $this->RubToCop($tokenData['finalPremium']),
         ];
 
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            $fields,
+            false,
+            config('api_sk.logMicroserviceCode'),
+            static::companyCode,
+            $this->getName(__CLASS__)
+        );
+
         return new ArrayToXml($fields, [
             'rootElementName' => 'policy:buyPolicyRequest',
             '_attributes' => [

@@ -20,7 +20,7 @@ class TinkoffMasterService extends TinkoffService implements TinkoffMasterServic
         $this->pushForm($attributes);
         $attributes['prevData'] = $this->getPrevTokenDataByCompany($attributes['token'], $company->code);
         $calculateService = app(TinkoffCalculateServiceContract::class);
-        $dataCalculate = $calculateService->run($company, $attributes);
+        $dataCalculate = $calculateService->run($company, $attributes, $attributes['token']);
         if ($dataCalculate['error']) {
             $tokenData = $this->getTokenData($attributes['token'], true);
             $tokenData[$company->code] = [
@@ -58,9 +58,9 @@ class TinkoffMasterService extends TinkoffService implements TinkoffMasterServic
         $tokenData = $this->getTokenDataByCompany($attributes['token'], $company->code);
         $attributes['setNumber'] = $tokenData['setNumber'];
         $createService = app(TinkoffCreateServiceContract::class);
-        $createData = $createService->run($company, $attributes);
+        $createData = $createService->run($company, $attributes, $attributes['token']);
         $billLinkService = app(TinkoffBillLinkServiceContract::class);
-        $billLinkData = $billLinkService->run($company, $attributes);
+        $billLinkData = $billLinkService->run($company, $attributes, $attributes['token']);
         $this->pushForm($attributes);
         $insurer = $this->searchSubjectById($attributes, $attributes['policy']['insurantId']);
         $this->sendBillUrl($insurer['email'], $billLinkData['billUrl']);

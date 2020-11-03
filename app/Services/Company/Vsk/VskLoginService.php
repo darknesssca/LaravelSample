@@ -48,6 +48,15 @@ class VskLoginService extends VskService implements VskLoginServiceContract
             'auth:partnerClientId' => $insurer['phone']
         ];
 
+        $this->writeDatabaseLog(
+            $attributes['token'],
+            $fields,
+            false,
+            config('api_sk.logMicroserviceCode'),
+            static::companyCode,
+            $this->getName(__CLASS__)
+        );
+
         return new ArrayToXml($fields, [
             'rootElementName' => 'auth:loginRequest',
             '_attributes' => [

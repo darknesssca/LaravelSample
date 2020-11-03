@@ -47,19 +47,32 @@ class RenessansCreateService extends RenessansService implements RenessansCreate
         $attributes['CheckSegment'] = intval(isset($attributes['CheckSegment']) && $attributes['CheckSegment']);
     }
 
-    public function run($company, $attributes): array
+    public function run($company, $attributes, $token = false): array
     {
         $this->setAdditionalFields($attributes);
         $this->setAuth($attributes);
         $url = $this->getUrl();
         $data = $this->prepareData($company, $attributes);
 
-        $this->writeRequestLog([
+        $requestLogData = [
             'url' => $url,
             'payload' => $data
-        ]);
+        ];
+
+        $this->writeRequestLog($requestLogData);
 
         $response = $this->postRequest($url, $data, [], false);
+
+        if ($token !== false) {
+            $this->writeDatabaseLog(
+                $token,
+                $requestLogData,
+                $response,
+                config('api_sk.logMicroserviceCode'),
+                static::companyCode,
+                $this->getName(__CLASS__)
+            );
+        }
 
         $this->writeResponseLog($response);
 

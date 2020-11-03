@@ -63,20 +63,33 @@ class SoglasieCreateService extends SoglasieService implements SoglasieCreateSer
         parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
-    public function run($company, $attributes): array
+    public function run($company, $attributes, $token = false): array
     {
         $data = $this->prepareData($company, $attributes);
         $headers = $this->getHeaders();
         $url = $this->getUrl();
 
-        $this->writeRequestLog([
+        $requestLogData = [
             'url' => $url,
             'payload' => $data
-        ]);
+        ];
+
+        $this->writeRequestLog($requestLogData);
 
         $response = $this->postRequest($url, $data, $headers, false, false, true);
 
         $this->writeResponseLog($response);
+
+        if ($token !== false) {
+            $this->writeDatabaseLog(
+                $token,
+                $requestLogData,
+                $response,
+                config('api_sk.logMicroserviceCode'),
+                static::companyCode,
+                $this->getName(__CLASS__)
+            );
+        }
 
         if (!$response) {
             throw new ApiRequestsException('API страховой компании не вернуло ответ');

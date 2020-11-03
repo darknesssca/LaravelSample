@@ -23,18 +23,31 @@ class RenessansGetPdfService extends RenessansService implements RenessansGetPdf
         parent::__construct($intermediateDataService, $requestProcessService, $policyService);
     }
 
-    public function run ($company, $attributes): array
+    public function run ($company, $attributes, $token = false): array
     {
         $data = [];
         $this->setAuth($data);
         $url = $this->getUrl($attributes);
 
-        $this->writeRequestLog([
+        $requestLogData = [
             'url' => $url,
             'payload' => $data
-        ]);
+        ];
+
+        $this->writeRequestLog($requestLogData);
 
         $response = $this->getRequest($url, $data, [], false);
+
+        if ($token !== false) {
+            $this->writeDatabaseLog(
+                $token,
+                $requestLogData,
+                $response,
+                config('api_sk.logMicroserviceCode'),
+                static::companyCode,
+                $this->getName(__CLASS__)
+            );
+        }
 
         $this->writeResponseLog($response);
 
