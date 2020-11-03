@@ -23,10 +23,10 @@ abstract class InsuranceGuides
     {
         //список объектов, реализующих интерфейс GuidesSourceContract
         $companies = [
+            app(IngosstrahGuidesSourceContract::class),
             app(TinkoffGuidesSourceContract::class),
             app(SoglasieGuidesSourceContract::class),
             app(RenessansGuidesSourceContract::class),
-            app(IngosstrahGuidesSourceContract::class),
         ];
 
         self::loadCountries();
