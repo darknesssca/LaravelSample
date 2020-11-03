@@ -43,6 +43,7 @@ class VskErrorHandlerService extends VskService implements VskErrorHandlerServic
         'RSA_CHECK_ERROR' => 'parseRsaError',
         'INCORRECT_CODE' => 'parseIncorrectCodeError',
         'VALIDATIONERROR' => 'parseValidationError',
+        'PAYMENT_GATE_ERROR' => 'parsePaymentGateError',
     ];
 
     /** @var array $foundError Массив ошибки найденной при проверке ответа */
@@ -70,6 +71,7 @@ class VskErrorHandlerService extends VskService implements VskErrorHandlerServic
             $this->$method($this->foundError['error']);
         } else {
             $this->parsedErrors[] = 'Произошла ошибка, попробуйте позже';
+            $this->writeErrorsToToken();
         }
     }
 
@@ -137,7 +139,6 @@ class VskErrorHandlerService extends VskService implements VskErrorHandlerServic
         } else {
             $this->parsedErrors[] = 'Произошла ошибка, попробуйте позже';
         }
-
 
         $this->writeErrorsToToken();
     }
@@ -224,6 +225,12 @@ class VskErrorHandlerService extends VskService implements VskErrorHandlerServic
     private function parseValidationError()
     {
         $this->parsedErrors[] = 'Страховая компания не произвела расчет';
+        $this->writeErrorsToToken();
+    }
+
+    private function parsePaymentGateError()
+    {
+        $this->parsedErrors[] = 'Произошла системная ошибка. Попробуйте повторить операцию позднее.';
         $this->writeErrorsToToken();
     }
 }
