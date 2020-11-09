@@ -16,6 +16,7 @@ use App\Contracts\Repositories\ErrorRepositoryContract;
 use App\Contracts\Repositories\GenderRepositoryContract;
 use App\Contracts\Repositories\InsuranceCompanyRepositoryContract;
 use App\Contracts\Repositories\IntermediateDataRepositoryContract;
+use App\Contracts\Repositories\KaskoTariffRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\PolicyTypeRepositoryContract;
 use App\Contracts\Repositories\ReportRepositoryContract;
@@ -51,6 +52,7 @@ use App\Repositories\ErrorRepository;
 use App\Repositories\GenderRepository;
 use App\Repositories\InsuranceCompanyRepository;
 use App\Repositories\IntermediateDataRepository;
+use App\Repositories\KaskoTariffRepository;
 use App\Repositories\PolicyRepository;
 use App\Repositories\PolicyTypeRepository;
 use App\Repositories\ReportRepository;
@@ -107,6 +109,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(AddressTypeRepositoryContract::class, AddressTypeRepository::class);
         $this->app->bind(ReportRepositoryContract::class, ReportRepository::class);
         $this->app->bind(ErrorRepositoryContract::class, ErrorRepository::class);
+        $this->app->bind(KaskoTariffRepositoryContract::class, KaskoTariffRepository::class);
     }
 
     protected function registerRepositoryServiceProviders()
