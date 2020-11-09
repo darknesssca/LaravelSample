@@ -7,7 +7,6 @@ namespace App\Repositories;
 use App\Cache\KaskoTariffTags;
 use App\Contracts\Repositories\KaskoTariffRepositoryContract;
 use App\Models\KaskoTariff;
-use App\Models\Policy;
 use Benfin\Cache\CacheKeysTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
