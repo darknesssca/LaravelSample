@@ -333,12 +333,11 @@ class RenessansMasterService extends RenessansService implements RenessansMaster
         $attributes = [
             'policyId' => (int)$processData['number']
         ];
-        GlobalStorage::setUser($processData['data']['user']);
         $serviceStatus = app(RenessansGetStatusServiceContract::class);
-        $dataStatus = $serviceStatus->run($company, $attributes, $processData['token']);
+        $dataStatus = $serviceStatus->run($company, $attributes);
         if ($dataStatus['result'] && $dataStatus['payStatus'] && $dataStatus['policyNumber']) {
             $serviceGetPdf = app(RenessansGetPdfServiceContract::class);
-            $serviceGetPdf->run($company, $attributes, $processData['token']);
+            $serviceGetPdf->run($company, $attributes);
             $this->policyService->update($processData['id'], [
                 'paid' => true,
                 'number' => $dataStatus['policyNumber'],

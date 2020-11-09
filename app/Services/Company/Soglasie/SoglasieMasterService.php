@@ -299,7 +299,7 @@ class SoglasieMasterService extends SoglasieService implements SoglasieMasterSer
             ]
         ];
         $checkService = app(SoglasieCheckCreateServiceContract::class);
-        $dataStatus = $checkService->run($company, $attributes, $attributes['token']);
+        $dataStatus = $checkService->run($company, $attributes);
         if (
             $dataStatus['policyStatus'] == 'SIGNED' &&
             isset($dataStatus['policySerial']) && $dataStatus['policySerial'] &&
