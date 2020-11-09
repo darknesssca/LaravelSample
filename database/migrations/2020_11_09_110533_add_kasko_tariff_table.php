@@ -21,6 +21,8 @@ class AddKaskoTariffTable extends Migration
             $table->string('ref_code');
             $table->text('description');
             $table->timestamps();
+
+            $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');
         });
     }
 
