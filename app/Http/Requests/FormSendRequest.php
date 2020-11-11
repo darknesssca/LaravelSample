@@ -103,8 +103,8 @@ class FormSendRequest extends AbstractRequest
             'isTaxi' => 'sometimes|boolean',
 
             'city' => 'sometimes',
-            'city.name' => 'required|string',
-            'city.kladr' => 'required|string',
+            'city.name' => 'string',
+            'city.kladr' => 'string',
         ];
     }
 
