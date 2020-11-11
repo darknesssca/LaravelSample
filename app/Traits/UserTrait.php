@@ -21,8 +21,8 @@ trait UserTrait
         $user['offer_accepted'] = true;
         $user['personal_data_agree'] = true;
         $user['phone_confirm'] = $formData['phone_confirm'];
-        $user['city'] = $insurer['addresses'][0]['address']['city'];
-        $user['city_kladr'] = $insurer['addresses'][0]['address']['cityKladr'];
+        $user['city'] = $formData['city']['name'];
+        $user['city_kladr'] = $formData['city']['kladr'];
         $user['password'] = $this->generatePassword();
         $user['confirm_password'] = $user['password'];
         $user['temp_user'] = true;

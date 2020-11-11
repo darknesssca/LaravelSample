@@ -100,7 +100,11 @@ class FormSendRequest extends AbstractRequest
             'prevToken' => 'string|size:32',
             'phone_confirm' => 'sometimes|regex:/^\d{6}/',
             'referral' => 'sometimes|string',
-            'isTaxi' => 'sometimes|boolean'
+            'isTaxi' => 'sometimes|boolean',
+
+            'city' => 'sometimes',
+            'city.name' => 'required|string',
+            'city.kladr' => 'required|string',
         ];
     }
 
