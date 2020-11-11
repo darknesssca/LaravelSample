@@ -11,5 +11,16 @@ class KaskoTariff extends Model
 {
     use KaskoTariffObserver;
 
+    protected $fillable = [
+        'name',
+        'active',
+        'description'
+    ];
+
     protected $table = 'kasko_tariffs';
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\InsuranceCompany', 'insurance_company_id', 'id');
+    }
 }

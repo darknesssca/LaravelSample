@@ -31,6 +31,7 @@ use App\Contracts\Repositories\Services\DraftServiceContract;
 use App\Contracts\Repositories\Services\GenderServiceContract;
 use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
+use App\Contracts\Repositories\Services\KaskoTariffServiceContract;
 use App\Contracts\Repositories\Services\PolicyTypeServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Contracts\Repositories\Services\SourceAcquisitionServiceContract;
@@ -71,6 +72,7 @@ use App\Services\Repositories\GenderService;
 use App\Services\Qiwi\ReportService;
 use App\Services\Repositories\InsuranceCompanyService;
 use App\Services\Repositories\IntermediateDataService;
+use App\Services\Repositories\KaskoTariffService;
 use App\Services\Repositories\PolicyTypeService;
 use App\Services\Repositories\RequestProcessService;
 use App\Contracts\Repositories\DraftRepositoryContract;
@@ -130,5 +132,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(AddressTypeServiceContract::class, AddressTypeService::class);
         $this->app->bind(PolicyTypeServiceContract::class, PolicyTypeService::class);
         $this->app->bind(ReportServiceContract::class, ReportService::class);
+        $this->app->bind(KaskoTariffServiceContract::class, KaskoTariffService::class);
     }
 }

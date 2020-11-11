@@ -55,6 +55,13 @@ $router->group(
                     $router->post('/unauthorized-report', 'AutocodController@requestReportUnauthorized');
                     $router->post('/unauthorized-check-taxi', 'AutocodController@unauthorizedCheckTaxi');
                 });
+
+                //kasko tariffs
+                $router->group(['prefix' => 'kasko'], function () use ($router) {
+                    $router->get('/tariffs', 'KaskoTariffController@kaskoTariffs');
+                    $router->get('/tariffs/{id}', 'KaskoTariffController@getById');
+                    $router->patch('/tariffs/{id}', 'KaskoTariffController@update');
+                });
             }
         );
     }

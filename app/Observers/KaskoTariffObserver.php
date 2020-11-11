@@ -16,17 +16,17 @@ trait KaskoTariffObserver
         parent::boot();
 
         static::created(function ($tariff) {
-            Cache::tags(self::getKaskoTariffListTag())->flush();
+            Cache::tags(self::getKaskoTariffTag())->flush();
         });
 
         static::updated(function ($tariff) {
             if ($tariff->isDirty()) {
-                Cache::tags(self::getKaskoTariffListTag())->flush();
+                Cache::tags(self::getKaskoTariffTag())->flush();
             }
         });
 
         static::deleted(function ($tariff) {
-            Cache::tags(self::getKaskoTariffListTag())->flush();
+            Cache::tags(self::getKaskoTariffTag())->flush();
         });
     }
 }

@@ -30,13 +30,14 @@ class KaskoTariffRepository implements KaskoTariffRepositoryContract
     public function getActiveTariffs()
     {
         $cacheTag = self::getKaskoTariffTag();
-        $cacheKey = self::getKaskoTariffListKey();
+        $cacheKey = self::getCacheKey(true);
 
         return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, function () {
             return KaskoTariff::query()->whereHas('company', function (Builder $q){
                 $q->where('active', true);
             })
-                ->where('active', true)->get();
+                ->where('active', true)
+                ->get();
         });
     }
 
