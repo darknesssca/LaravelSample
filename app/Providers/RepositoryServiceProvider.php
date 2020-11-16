@@ -16,7 +16,6 @@ use App\Contracts\Repositories\ErrorRepositoryContract;
 use App\Contracts\Repositories\GenderRepositoryContract;
 use App\Contracts\Repositories\InsuranceCompanyRepositoryContract;
 use App\Contracts\Repositories\IntermediateDataRepositoryContract;
-use App\Contracts\Repositories\KaskoTariffRepositoryContract;
 use App\Contracts\Repositories\PolicyRepositoryContract;
 use App\Contracts\Repositories\PolicyTypeRepositoryContract;
 use App\Contracts\Repositories\ReportRepositoryContract;
@@ -31,7 +30,6 @@ use App\Contracts\Repositories\Services\DraftServiceContract;
 use App\Contracts\Repositories\Services\GenderServiceContract;
 use App\Contracts\Repositories\Services\InsuranceCompanyServiceContract;
 use App\Contracts\Repositories\Services\IntermediateDataServiceContract;
-use App\Contracts\Repositories\Services\KaskoTariffServiceContract;
 use App\Contracts\Repositories\Services\PolicyTypeServiceContract;
 use App\Contracts\Repositories\Services\RequestProcessServiceContract;
 use App\Contracts\Repositories\Services\SourceAcquisitionServiceContract;
@@ -53,7 +51,6 @@ use App\Repositories\ErrorRepository;
 use App\Repositories\GenderRepository;
 use App\Repositories\InsuranceCompanyRepository;
 use App\Repositories\IntermediateDataRepository;
-use App\Repositories\KaskoTariffRepository;
 use App\Repositories\PolicyRepository;
 use App\Repositories\PolicyTypeRepository;
 use App\Repositories\ReportRepository;
@@ -72,7 +69,6 @@ use App\Services\Repositories\GenderService;
 use App\Services\Qiwi\ReportService;
 use App\Services\Repositories\InsuranceCompanyService;
 use App\Services\Repositories\IntermediateDataService;
-use App\Services\Repositories\KaskoTariffService;
 use App\Services\Repositories\PolicyTypeService;
 use App\Services\Repositories\RequestProcessService;
 use App\Contracts\Repositories\DraftRepositoryContract;
@@ -111,7 +107,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(AddressTypeRepositoryContract::class, AddressTypeRepository::class);
         $this->app->bind(ReportRepositoryContract::class, ReportRepository::class);
         $this->app->bind(ErrorRepositoryContract::class, ErrorRepository::class);
-        $this->app->bind(KaskoTariffRepositoryContract::class, KaskoTariffRepository::class);
     }
 
     protected function registerRepositoryServiceProviders()
@@ -132,6 +127,5 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(AddressTypeServiceContract::class, AddressTypeService::class);
         $this->app->bind(PolicyTypeServiceContract::class, PolicyTypeService::class);
         $this->app->bind(ReportServiceContract::class, ReportService::class);
-        $this->app->bind(KaskoTariffServiceContract::class, KaskoTariffService::class);
     }
 }
