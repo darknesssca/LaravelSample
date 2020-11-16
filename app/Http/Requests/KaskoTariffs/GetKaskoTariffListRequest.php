@@ -12,7 +12,8 @@ class GetKaskoTariffListRequest extends AbstractRequest
     public function rules(): array
     {
         return [
-            'active' => 'sometimes|boolean'
+            'active' => 'sometimes|boolean',
+            'insurance_company_id' => 'sometimes',
         ];
     }
 }

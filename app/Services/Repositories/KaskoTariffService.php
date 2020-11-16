@@ -19,10 +19,10 @@ class KaskoTariffService implements KaskoTariffServiceContract
         $this->kaskoTariffRepository = $kaskoTariffRepository;
     }
 
-    public function getList()
+    public function getList($fields)
     {
         /** @var Collection $tariffs */
-        $tariffs = $this->kaskoTariffRepository->getList();
+        $tariffs = $this->kaskoTariffRepository->getList($fields);
 
         if ($tariffs->isEmpty()) {
             throw new GuidesNotFoundException('Не найдены данные в справочнике');
@@ -65,7 +65,7 @@ class KaskoTariffService implements KaskoTariffServiceContract
         if (!empty($fields['active'])) {
             return $this->getActiveTariffs();
         } else {
-            return $this->getList();
+            return $this->getList($fields);
         }
     }
 }

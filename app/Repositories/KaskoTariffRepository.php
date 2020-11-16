@@ -17,13 +17,19 @@ class KaskoTariffRepository implements KaskoTariffRepositoryContract
 
     private $CACHE_DAY_TTL = 24 * 60 * 60;
 
-    public function getList()
+    public function getList($fields)
     {
         $cacheTag = self::getKaskoTariffTag();
-        $cacheKey = self::getKaskoTariffListKey();
+        $cacheKey = self::getCacheKey($fields);
 
-        return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, function () {
-            return KaskoTariff::all();
+        return Cache::tags($cacheTag)->remember($cacheKey, $this->CACHE_DAY_TTL, function () use ($fields) {
+            $query = KaskoTariff::query();
+
+            if (!empty($fields['insurance_company_id'])) {
+                $query->where('insurance_company_id', $fields['insurance_company_id']);
+            }
+
+            return $query->get();
         });
     }
 

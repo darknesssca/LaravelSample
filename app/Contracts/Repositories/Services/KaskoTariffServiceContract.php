@@ -6,7 +6,7 @@ namespace App\Contracts\Repositories\Services;
 
 interface KaskoTariffServiceContract
 {
-    public function getList();
+    public function getList($fields);
 
     public function getActiveTariffs();
 
