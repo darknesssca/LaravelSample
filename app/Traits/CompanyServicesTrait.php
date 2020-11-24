@@ -22,17 +22,17 @@ trait CompanyServicesTrait
     }
 
     public function checkCommissionAvailable($companyId, $formData) {
-        $insurerId = $formData['policy']['insurantId'];
-        $insurer = [];
+        $ownerId = $formData['policy']['ownerId'];
+        $owner = [];
         $needleAddress = [];
 
         foreach ($formData['subjects'] as $subject) {
-            if ($subject['id'] == $insurerId) {
-                $insurer = $subject['fields'];
+            if ($subject['id'] == $ownerId) {
+                $owner = $subject['fields'];
             }
         }
-        if (!empty($insurer) && !empty($insurer['addresses'])) {
-            foreach ($insurer['addresses'] as $address) {
+        if (!empty($owner) && !empty($owner['addresses'])) {
+            foreach ($owner['addresses'] as $address) {
                 if ($address['address']['addressType'] == 'registration') {
                     $needleAddress = $address['address'];
                 }
