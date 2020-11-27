@@ -92,11 +92,11 @@
         },
         {
             "name": "benfin-packages/api-communication",
-            "version": "1.5.51",
+            "version": "1.5.54",
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.qsoft.ru/api/v4/projects/814/packages/composer/archives/benfin-packages/api-communication.zip?sha=f8441db18158e30a3e3442a9099fb2b4b9aa8c3e",
-                "reference": "f8441db18158e30a3e3442a9099fb2b4b9aa8c3e",
+                "url": "https://gitlab.qsoft.ru/api/v4/projects/814/packages/composer/archives/benfin-packages/api-communication.zip?sha=d4cc420ab255cfb10c244167272deef8849de341",
+                "reference": "d4cc420ab255cfb10c244167272deef8849de341",
                 "shasum": ""
             },
             "require": {
@@ -4765,6 +4765,7 @@
                 "faker",
                 "fixtures"
             ],
+            "abandoned": true,
             "time": "2019-12-12T13:22:17+00:00"
         },
         {
@@ -6296,5 +6297,6 @@
         "ext-soap": "*",
         "ext-xml": "*"
     },
-    "platform-dev": []
+    "platform-dev": [],
+    "plugin-api-version": "1.1.0"
 }
