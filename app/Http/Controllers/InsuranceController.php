@@ -232,14 +232,15 @@ class InsuranceController extends Controller
     {
         $autocodVinIsTaxiId = $this->getId('autocod', GlobalStorage::getUserId(), 'VIN', $formData['car']['vin'], 'isTaxi');
         $autocodVinIsExistId = $this->getId('autocod', GlobalStorage::getUserId(), 'VIN', $formData['car']['vin'], 'isExist');
-        $autocodGrzIsTaxiId = $this->getId('autocod', GlobalStorage::getUserId(), 'GRZ', $formData['car']['vin'], 'isTaxi');
-        $autocodGrzIsExistId = $this->getId('autocod', GlobalStorage::getUserId(), 'GRZ', $formData['car']['vin'], 'isExist');
+        $autocodGrzIsTaxiId = $this->getId('autocod', GlobalStorage::getUserId(), 'GRZ', $formData['car']['regNumber'], 'isTaxi');
+        $autocodGrzIsExistId = $this->getId('autocod', GlobalStorage::getUserId(), 'GRZ', $formData['car']['regNumber'], 'isExist');
         if(
             (!$this->exist($autocodVinIsTaxiId) || !$this->exist($autocodVinIsExistId)) &&
             (!$this->exist($autocodGrzIsTaxiId) || !$this->exist($autocodGrzIsExistId))
         ) {
             throw new AutocodException('Проверка на использование ТС в такси не выполнялась');
         }
+
         if($autocodVinIsExistId != null) {
             $formData['autocod'] = [
                 'isTaxi' => $this->look($autocodVinIsTaxiId)['status'],
